@@ -1,0 +1,39 @@
+name: Feature
+description: 기능 개발 이슈
+title: "[FEAT] "
+labels: ["feature"]
+body:
+  - type: input
+    attributes:
+      label: 연관 기능/도메인(scope)
+      placeholder: "예: member, auction, bid, payment"
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 작업 내용
+      description: |
+        복잡한 기능에서는 참고 스크린샷/설명도 첨부해주세요.
+        특별한 기능을 추가할 때는 왜 이런 기능을, 이런 방식으로 구현했는지 적어주세요.
+      placeholder: |
+        - [ ] 주요 구현 항목 1
+        - [ ] 주요 구현 항목 2
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 코드 변경사항(있다면)
+      description: "ex. API 주소 추가/변경, 이벤트 추가/변경"
+      placeholder: |
+        - API: /api/v1/...
+        - Event: ...
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: 공유자료 / 참고 링크
+    validations:
+      required: false
