@@ -1,0 +1,48 @@
+version: '3.8'
+
+# .env 파일에 환경 변수가 등록되어 있어야 합니다. 환경변수 항목 등은 논의가 필요해 보입니다.
+
+services:
+  db:
+    # MySQL 8.4.5 (LTS) 최신 버전 사용
+    image: mysql:8.4.5
+
+    # 컨테이너 이름 지정 (docker ps에서 확인 용도)
+    container_name: rarego-mysql
+
+    # 비정상 종료 시 자동 재시작
+    restart: always
+
+    # 포트 매핑 (호스트 포트 : 3306)
+    # .env 파일의 DB_PORT 변수를 사용하여 로컬 포트 충돌 방지
+    ports:
+      - "${DB_PORT}:3306"
+
+    # 환경변수 설정 (.env 파일 참조)
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD} # 루트 비밀번호
+      MYSQL_DATABASE: ${DB_NAME}               # 초기 생성할 DB 이름
+      MYSQL_USER: ${DB_USERNAME}               # 사용할 유저 아이디
+      MYSQL_PASSWORD: ${DB_PASSWORD}           # 사용할 유저 비밀번호
+      TZ: Asia/Seoul                           # 로그 시간 확인용 타임존 (한국)
+
+    # 한글/이모지 깨짐 방지 설정 (utf8mb4)
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+
+    # 데이터 영속성 설정 (컨테이너 삭제돼도 데이터 보존)
+    volumes:
+      - db_data:/var/lib/mysql
+
+    # 컨테이너 상태 체크 (Spring Boot의 depends_on 조건 등으로 활용 가능)
+    # DB가 완전히 부팅되어 쿼리를 받을 수 있는지 주기적으로 확인
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# 도커 볼륨 생성 (최상위 레벨 정의)
+volumes:
+  db_data:
