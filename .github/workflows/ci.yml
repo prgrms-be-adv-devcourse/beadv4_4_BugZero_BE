@@ -10,13 +10,21 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
         with:
           distribution: "temurin"
           java-version: "21"
           cache: "gradle"
 
-      - run: chmod +x ./gradlew
-      - run: ./gradlew test jacocoTestCoverageVerification
+      - name: Grant execute permission
+        run: chmod +x ./gradlew
+
+      - name: Test + Coverage verify (JaCoCo)
+        run: ./gradlew test jacocoTestCoverageVerification
+
+      - name: Build (optional)
+        run: ./gradlew build -x test
