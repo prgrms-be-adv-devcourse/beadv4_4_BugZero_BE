@@ -29,7 +29,7 @@ replay_pid*
 ### Spring Boot / Gradle ###
 .gradle/
 build/
-out/
+/out/
 target/
 
 ### IDE (IntelliJ / VSCode) ###
