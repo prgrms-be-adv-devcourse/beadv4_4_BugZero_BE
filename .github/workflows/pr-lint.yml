@@ -1,0 +1,37 @@
+name: pr-lint
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR title
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          echo "PR Title: $TITLE"
+
+          # [TYPE/scope] subject
+          REGEX='^\[(FEAT|FIX|DOCS|STYLE|REFACTOR|TEST|CHORE)\/[a-z0-9_-]+\] .+'
+
+          if [[ ! "$TITLE" =~ $REGEX ]]; then
+            echo "::error::PR 제목이 규칙을 만족하지 않습니다."
+            echo "예) [FEAT/member] 회원 로그인 기능 개발"
+            exit 1
+          fi
+
+      - name: Validate branch name
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          echo "Branch: $BRANCH"
+
+          # feat/member/#3 형태
+          REGEX='^(feat|fix|docs|style|refactor|test|chore)\/[a-z0-9_-]+\/#([0-9]+)$'
+
+          if [[ ! "$BRANCH" =~ $REGEX ]]; then
+            echo "::error::브랜치명이 규칙을 만족하지 않습니다."
+            echo "예) feat/member/#3"
+            exit 1
+          fi
