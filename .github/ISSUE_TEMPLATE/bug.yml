@@ -1,0 +1,41 @@
+name: Bug
+description: 버그 수정 이슈
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: textarea
+    attributes:
+      label: 🚨 문제점
+      placeholder: "상세 문제 설명 기재"
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 🔍 원인 분석(추정)
+      placeholder: "발생 원인 설명"
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: 💡 해결 방법(아이디어/방향)
+      placeholder: "적용할 해결 방안 설명"
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: 재현 방법
+      placeholder: |
+        1) ...
+        2) ...
+        3) ...
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 로그/스크린샷
+    validations:
+      required: false
