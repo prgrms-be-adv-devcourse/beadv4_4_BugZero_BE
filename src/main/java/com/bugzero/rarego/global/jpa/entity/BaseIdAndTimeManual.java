@@ -10,7 +10,7 @@ import lombok.Getter;
 @Getter
 public abstract class BaseIdAndTimeManual extends BaseEntity {
     @Id
-    private int id;
+    private Long id;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

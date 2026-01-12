@@ -18,13 +18,13 @@ import lombok.NoArgsConstructor;
 @Getter
 public abstract class BaseManualIdAndTime extends BaseEntity {
     @Id
-    private int id;
+    private Long id;
     @CreatedDate
     private LocalDateTime createdAt;
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    public BaseManualIdAndTime(int id) {
+    public BaseManualIdAndTime(Long id) {
         this.id = id;
     }
 }
