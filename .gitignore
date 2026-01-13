@@ -53,8 +53,6 @@ target/
 ### Spring config (local/prod secrets) ###
 application-local.yml
 application-local.yaml
-application-dev.yml
-application-dev.yaml
 application-prod.yml
 application-prod.yaml
 application-prod.properties
