@@ -1,4 +1,4 @@
-package com.bugzero.rarego.global.exception;
+package com.bugzero.rarego.global.response;
 
 import com.bugzero.rarego.standard.response.ResponseDto;
 
