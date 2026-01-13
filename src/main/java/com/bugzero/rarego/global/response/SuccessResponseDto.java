@@ -5,11 +5,21 @@ public record SuccessResponseDto<T>(
 	String message,
 	T data
 ) {
-	public static <T> SuccessResponseDto<T> of(Integer status, String message, T data) {
-		return new SuccessResponseDto<>(status, message, data);
+	// SuccessType만 받는 경우 (data 없음)
+	public static SuccessResponseDto<Void> from(SuccessType successType) {
+		return new SuccessResponseDto<>(
+			successType.getStatus(),
+			successType.getMessage(),
+			null
+		);
 	}
 
-	public static SuccessResponseDto<Void> of(Integer status, String message) {
-		return new SuccessResponseDto<>(status, message, null);
+	// SuccessType + data 받는 경우
+	public static <T> SuccessResponseDto<T> from(SuccessType successType, T data) {
+		return new SuccessResponseDto<>(
+			successType.getStatus(),
+			successType.getMessage(),
+			data
+		);
 	}
 }
