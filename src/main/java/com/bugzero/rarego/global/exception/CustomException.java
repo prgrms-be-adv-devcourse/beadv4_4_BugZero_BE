@@ -1,5 +1,7 @@
 package com.bugzero.rarego.global.exception;
 
+import com.bugzero.rarego.global.response.ErrorType;
+
 import lombok.Getter;
 
 @Getter

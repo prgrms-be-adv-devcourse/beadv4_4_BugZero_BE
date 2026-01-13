@@ -1,4 +1,4 @@
-package com.bugzero.rarego.global.exception;
+package com.bugzero.rarego.global.response;
 
 public record ExceptionResponseDto(Integer status, String message) {
 
