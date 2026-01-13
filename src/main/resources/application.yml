@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: board
+    name: rarego
   config:
     import: optional:file:.env[.properties]
   profiles:
