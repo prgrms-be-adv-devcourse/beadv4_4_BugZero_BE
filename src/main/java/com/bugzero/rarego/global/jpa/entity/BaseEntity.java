@@ -12,27 +12,34 @@ import com.bugzero.rarego.standard.modelType.HasModelTypeCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @MappedSuperclass
-@EntityListeners(AuditingEntityListener.class)
+@SuperBuilder
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public abstract class BaseEntity implements HasModelTypeCode {
 
+	@Builder.Default
 	@Column(nullable = false)
-	protected boolean isDeleted = false;
-
-	@CreatedDate
-	@Column(nullable = false, updatable = false)
-	protected LocalDateTime createdAt;
-
-	@LastModifiedDate
-	@Column(nullable = false)
-	protected LocalDateTime updatedAt;
+	protected boolean deleted = false;
 
 	public void softDelete() {
-		this.isDeleted = true;
-		this.updatedAt = LocalDateTime.now();	// 자동 갱신 가능
+		this.deleted = true;
+	}
+
+	public abstract Long getId();
+
+	public abstract LocalDateTime getCreatedAt();
+
+	public abstract LocalDateTime getUpdatedAt();
+
+	public boolean isDeleted() {
+		return deleted;
 	}
 
 	@Override
@@ -40,7 +47,7 @@ public abstract class BaseEntity implements HasModelTypeCode {
 		return this.getClass().getSimpleName();
 	}
 
-	protected void publishEvent(Object event){
+	protected void publishEvent(Object event) {
 		GlobalConfig.getEventPublisher().publish(event);
 	}
 }
