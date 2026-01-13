@@ -11,9 +11,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
+@SuperBuilder
 @NoArgsConstructor
 @Getter
 public abstract class BaseManualIdAndTime extends BaseEntity {
