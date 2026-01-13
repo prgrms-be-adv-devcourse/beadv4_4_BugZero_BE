@@ -12,6 +12,6 @@ public enum SuccessType {
 	OK(HttpStatus.OK.value(), "요청이 성공적으로 처리되었습니다."),
 	CREATED(HttpStatus.CREATED.value(), "생성이 완료되었습니다.");
 
-	private final Integer status;
+	private final Integer httpStatus;
 	private final String message;
 }
