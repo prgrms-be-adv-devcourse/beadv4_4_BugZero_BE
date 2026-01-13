@@ -67,9 +67,8 @@ tasks.jacocoTestCoverageVerification {
 	dependsOn(tasks.test)
 	violationRules {
 		rule {
-			// CI 통과용 0.00 시작
 			limit {
-				minimum = "0.00".toBigDecimal()
+				minimum = "0.60".toBigDecimal()
 			}
 		}
 	}
