@@ -1,0 +1,11 @@
+package com.bugzero.rarego.boundedContext.auction.out;
+
+import com.bugzero.rarego.boundedContext.auction.domain.Bid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface BidRepository extends JpaRepository<Bid, Long> {
+	// auctionId를 기준으로 필드명을 검색
+	Page<Bid> findAllByAuctionIdOrderByBidTimeDesc(Long auctionId, Pageable pageable);
+}

@@ -1,7 +1,5 @@
 package com.bugzero.rarego.boundedContext.auction.domain;
 
-import java.math.BigInteger;
-
 import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
 
 import jakarta.persistence.Column;
@@ -17,16 +15,16 @@ import lombok.NoArgsConstructor;
 public class AuctionBookmark extends BaseIdAndTime {
 
 	@Column(nullable = false)
-	private BigInteger auctionId;
+	private Long auctionId;
 
 	@Column(nullable = false)
-	private BigInteger memberId;
+	private Long memberId;
 
 	@Column(nullable = false)
-	private BigInteger productId;
+	private Long productId;
 
 	@Builder
-	public AuctionBookmark(BigInteger auctionId, BigInteger memberId, BigInteger productId) {
+	public AuctionBookmark(Long auctionId, Long memberId, Long productId) {
 		this.auctionId = auctionId;
 		this.memberId = memberId;
 		this.productId = productId;

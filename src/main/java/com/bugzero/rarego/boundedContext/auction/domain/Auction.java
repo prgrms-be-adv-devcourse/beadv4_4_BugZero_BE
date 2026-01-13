@@ -21,7 +21,7 @@ import lombok.NoArgsConstructor;
 public class Auction extends BaseIdAndTime {
 
 	@Column(nullable = false)
-	private BigInteger productId;
+	private Long productId;
 
 	private LocalDateTime startTime;
 
@@ -30,17 +30,17 @@ public class Auction extends BaseIdAndTime {
 	@Enumerated(EnumType.STRING)
 	private AuctionStatus status;
 
-	private Integer startPrice;
+	private int startPrice;
 
-	private Integer currentPrice;
+	private int currentPrice;
 
-	private Integer tickSize;
+	private int tickSize;
 
 	@Version // 낙관적 락
 	private Long version;
 
 	@Builder
-	public Auction(BigInteger productId, LocalDateTime startTime, LocalDateTime endTime, Integer startPrice, Integer tickSize) {
+	public Auction(Long productId, LocalDateTime startTime, LocalDateTime endTime, int startPrice, int tickSize) {
 		this.productId = productId;
 		this.startTime = startTime;
 		this.endTime = endTime;

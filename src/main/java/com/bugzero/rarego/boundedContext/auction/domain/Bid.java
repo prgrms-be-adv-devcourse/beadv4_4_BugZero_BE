@@ -1,6 +1,5 @@
 package com.bugzero.rarego.boundedContext.auction.domain;
 
-import java.math.BigInteger;
 import java.time.LocalDateTime;
 
 import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
@@ -12,11 +11,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class AuctionOrder extends BaseIdAndTime {
+public class Bid extends BaseIdAndTime {
 
 	@Column(nullable = false)
 	private Long auctionId;
@@ -28,16 +26,11 @@ public class AuctionOrder extends BaseIdAndTime {
 
 	private int bidAmount;
 
-	private int finalPrice;
-
-	private AuctionOrderStatus status;
-
 	@Builder
-	public AuctionOrder(Long auctionId, Long bidderId, int bidAmount) {
+	public Bid(Long auctionId, Long bidderId, int bidAmount) {
 		this.auctionId = auctionId;
 		this.bidderId = bidderId;
 		this.bidAmount = bidAmount;
 		this.bidTime = LocalDateTime.now();
 	}
-
 }
