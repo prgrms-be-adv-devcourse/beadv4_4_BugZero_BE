@@ -5,6 +5,7 @@ import java.util.List;
 import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -32,6 +33,7 @@ public class Product extends BaseIdAndTime {
 	private InspectionStatus inspectionStatus;
 	@OneToMany(mappedBy = "product", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
 	List<ProductImage> images;
+	@Column(length = 100, nullable = false)
 	private String name;
 	private String description;
 

@@ -2,6 +2,7 @@ package com.bugzero.rarego.boundedContext.product.domain;
 
 import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
@@ -23,6 +24,7 @@ public class ProductImage extends BaseIdAndTime {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "product_id", nullable = false)
 	private Product	product;
+	@Column(length = 500, nullable = false)
 	private String imageUrl;
 	private boolean isThumbnail;
 	private int sortOrder;
