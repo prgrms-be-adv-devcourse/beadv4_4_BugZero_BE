@@ -1,10 +1,12 @@
 package com.bugzero.rarego.global.response;
 
+import com.bugzero.rarego.standard.response.ResponseDto;
+
 public record SuccessResponseDto<T>(
 	Integer status,
 	String message,
 	T data
-) {
+) implements ResponseDto {
 	// SuccessType만 받는 경우 (data 없음)
 	public static SuccessResponseDto<Void> from(SuccessType successType) {
 		return new SuccessResponseDto<>(
