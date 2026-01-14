@@ -1,5 +1,6 @@
 package com.bugzero.rarego.boundedContext.auth.in;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.Mapping;
@@ -33,6 +34,14 @@ public class AuthController {
 	// 테스트용 인증 확인 엔드포인트
 	@GetMapping("/test/check")
 	public SuccessResponseDto<String> login(@AuthenticationPrincipal MemberPrincipal memberPrincipal) {
+		return SuccessResponseDto.from(SuccessType.OK, memberPrincipal.toString());
+	}
+
+	// 테스트용 인증 확인 엔드포인트
+	// 오직 5번 멤버(관리자)만 접근 가능
+	@PreAuthorize("hasRole('ADMIN')")
+	@GetMapping("/test/admin")
+	public SuccessResponseDto<String> justAdmin(@AuthenticationPrincipal MemberPrincipal memberPrincipal) {
 		return SuccessResponseDto.from(SuccessType.OK, memberPrincipal.toString());
 	}
 
