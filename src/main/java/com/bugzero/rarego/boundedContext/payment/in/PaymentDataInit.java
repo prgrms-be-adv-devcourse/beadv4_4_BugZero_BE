@@ -1,0 +1,56 @@
+package com.bugzero.rarego.boundedContext.payment.in;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+
+import com.bugzero.rarego.boundedContext.payment.domain.PaymentMember;
+import com.bugzero.rarego.boundedContext.payment.out.PaymentMemberRepository;
+import com.bugzero.rarego.shared.member.domain.MemberRole;
+import com.bugzero.rarego.shared.member.domain.Provider;
+
+import lombok.extern.slf4j.Slf4j;
+
+@Configuration
+@Slf4j
+@Profile("dev")
+public class PaymentDataInit {
+	private final PaymentDataInit self;
+	private final PaymentMemberRepository paymentMemberRepository;
+
+	public PaymentDataInit(@Lazy PaymentDataInit self, PaymentMemberRepository paymentMemberRepository) {
+		this.self = self;
+		this.paymentMemberRepository = paymentMemberRepository;
+	}
+
+	@Bean
+	public ApplicationRunner paymentBaseInitDataRunner() {
+		return args -> {
+			self.makeBasePaymentMember();
+		};
+	}
+
+	public void makeBasePaymentMember() {
+		if (paymentMemberRepository.count() > 0)
+			return;
+
+		paymentMemberRepository.save(
+			PaymentMember.builder()
+				.id(1L)
+				.publicId(UUID.randomUUID().toString())
+				.email("test@bugzero.com")
+				.nickname("테스트유저")
+				.role(MemberRole.USER)
+				.provider(Provider.GOOGLE)
+				.providerId("test_provider_id")
+				.createdAt(LocalDateTime.now())
+				.updatedAt(LocalDateTime.now())
+				.build()
+		);
+	}
+}
