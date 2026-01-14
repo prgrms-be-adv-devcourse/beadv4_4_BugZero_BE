@@ -1,6 +1,7 @@
 package com.bugzero.rarego.boundedContext.auction.controller;
 
 import com.bugzero.rarego.boundedContext.auction.app.AuctionSettlementFacade;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionAutoResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.InternalAuctionController;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
 import com.bugzero.rarego.global.response.SuccessType;
@@ -15,7 +16,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
@@ -39,14 +39,14 @@ class InternalAuctionControllerTest {
     @Test
     @DisplayName("경매 자동 낙찰 처리 API 호출 성공")
     void settle_Success() throws Exception {
-        // given
-        Map<String, Object> mockResponse = Map.of(
-                "requestTime", LocalDateTime.now(),
-                "processedCount", 10,
-                "successCount", 8,
-                "failCount", 2,
-                "details", List.of()
-        );
+        // given - DTO 빌더 활용
+        AuctionAutoResponseDto mockResponse = AuctionAutoResponseDto.builder()
+                .requestTime(LocalDateTime.now())
+                .processedCount(10)
+                .successCount(8)
+                .failCount(2)
+                .details(List.of())
+                .build();
 
         given(facade.settle()).willReturn(mockResponse);
 
@@ -67,13 +67,13 @@ class InternalAuctionControllerTest {
     @DisplayName("처리할 경매가 없는 경우")
     void settle_NoAuctions() throws Exception {
         // given
-        Map<String, Object> mockResponse = Map.of(
-                "requestTime", LocalDateTime.now(),
-                "processedCount", 0,
-                "successCount", 0,
-                "failCount", 0,
-                "details", List.of()
-        );
+        AuctionAutoResponseDto mockResponse = AuctionAutoResponseDto.builder()
+                .requestTime(LocalDateTime.now())
+                .processedCount(0)
+                .successCount(0)
+                .failCount(0)
+                .details(List.of())
+                .build();
 
         given(facade.settle()).willReturn(mockResponse);
 

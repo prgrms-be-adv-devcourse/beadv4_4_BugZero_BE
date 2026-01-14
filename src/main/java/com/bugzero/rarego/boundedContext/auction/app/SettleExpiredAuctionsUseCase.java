@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -21,7 +20,7 @@ public class SettleExpiredAuctionsUseCase {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public Map<String, Object> execute() {
+    public AuctionAutoResponseDto execute() {
 
         LocalDateTime now = LocalDateTime.now();
         List<Auction> auctions = support.findExpiredAuctions(now);
@@ -51,12 +50,12 @@ public class SettleExpiredAuctionsUseCase {
             }
         }
 
-        return Map.of(
-                "requestTime", now,
-                "processedCount", auctions.size(),
-                "successCount", success,
-                "failCount", fail,
-                "details", details
+        return AuctionAutoResponseDto.from(
+                now,
+                auctions,
+                success,
+                fail,
+                details
         );
     }
 

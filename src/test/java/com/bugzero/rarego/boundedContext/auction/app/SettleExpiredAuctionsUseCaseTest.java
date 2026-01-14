@@ -10,7 +10,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.*;
@@ -54,22 +53,18 @@ class SettleExpiredAuctionsUseCaseTest {
     void 입찰이_없으면_유찰_이벤트가_발생한다() {
         // given
         Auction auction = createExpiredAuction(1L);
+        given(support.findExpiredAuctions(any())).willReturn(List.of(auction));
+        given(support.hasBids(auction.getId())).willReturn(false);
 
-        given(support.findExpiredAuctions(any()))
-                .willReturn(List.of(auction));
-
-        given(support.hasBids(auction.getId()))
-                .willReturn(false);
-
-        // when
-        Map<String, Object> result = useCase.execute();
+        // when - Map 대신 DTO로 받음
+        AuctionAutoResponseDto result = useCase.execute();
 
         // then
         verify(eventPublisher).publishEvent(any(AuctionFailedEvent.class));
         verify(support).saveAuction(auction);
 
-        assertThat(result.get("failCount")).isEqualTo(1);
-        assertThat(result.get("successCount")).isEqualTo(0);
+        assertThat(result.getFailCount()).isEqualTo(1);
+        assertThat(result.getSuccessCount()).isEqualTo(0);
     }
 
     @Test
@@ -77,26 +72,20 @@ class SettleExpiredAuctionsUseCaseTest {
         // given
         Auction auction = createExpiredAuction(1L);
         Bid bid = createWinningBid();
-
-        given(support.findExpiredAuctions(any()))
-                .willReturn(List.of(auction));
-
-        given(support.hasBids(auction.getId()))
-                .willReturn(true);
-
-        given(support.findWinningBid(auction.getId()))
-                .willReturn(bid);
+        given(support.findExpiredAuctions(any())).willReturn(List.of(auction));
+        given(support.hasBids(auction.getId())).willReturn(true);
+        given(support.findWinningBid(auction.getId())).willReturn(bid);
 
         // when
-        Map<String, Object> result = useCase.execute();
+        AuctionAutoResponseDto result = useCase.execute();
 
         // then
         verify(eventPublisher).publishEvent(any(AuctionEndedEvent.class));
         verify(support).saveOrder(any(AuctionOrder.class));
         verify(support).saveAuction(auction);
 
-        assertThat(result.get("successCount")).isEqualTo(1);
-        assertThat(result.get("failCount")).isEqualTo(0);
+        assertThat(result.getSuccessCount()).isEqualTo(1);
+        assertThat(result.getFailCount()).isEqualTo(0);
     }
 
     @Test
@@ -104,22 +93,17 @@ class SettleExpiredAuctionsUseCaseTest {
         // given
         Auction successAuction = createExpiredAuction(1L);
         Auction failAuction = createExpiredAuction(2L);
-
-        given(support.findExpiredAuctions(any()))
-                .willReturn(List.of(successAuction, failAuction));
-
+        given(support.findExpiredAuctions(any())).willReturn(List.of(successAuction, failAuction));
         given(support.hasBids(successAuction.getId())).willReturn(true);
         given(support.hasBids(failAuction.getId())).willReturn(false);
-
-        given(support.findWinningBid(successAuction.getId()))
-                .willReturn(createWinningBid());
+        given(support.findWinningBid(successAuction.getId())).willReturn(createWinningBid());
 
         // when
-        Map<String, Object> result = useCase.execute();
+        AuctionAutoResponseDto result = useCase.execute();
 
         // then
-        assertThat(result.get("processedCount")).isEqualTo(2);
-        assertThat(result.get("successCount")).isEqualTo(1);
-        assertThat(result.get("failCount")).isEqualTo(1);
+        assertThat(result.getProcessedCount()).isEqualTo(2);
+        assertThat(result.getSuccessCount()).isEqualTo(1);
+        assertThat(result.getFailCount()).isEqualTo(1);
     }
 }

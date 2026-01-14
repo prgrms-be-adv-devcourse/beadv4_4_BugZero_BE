@@ -1,9 +1,8 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionAutoResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
-import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -11,7 +10,7 @@ public class AuctionSettlementFacade {
 
     private final SettleExpiredAuctionsUseCase useCase;
 
-    public Map<String, Object> settle() {
+    public AuctionAutoResponseDto settle() {
         return useCase.execute();
     }
 }
