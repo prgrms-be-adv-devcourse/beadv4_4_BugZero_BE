@@ -22,3 +22,5 @@ custom:
 
 jwt:
   secret: ${JWT_SECRET:abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890}
+  access-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:3600}
+  refresh-token-expire-seconds: ${JWT_REFRESH_TOKEN_EXPIRE_SECONDS:1209600} # 14일(선택)
