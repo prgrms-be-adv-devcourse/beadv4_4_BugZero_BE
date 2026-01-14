@@ -10,9 +10,9 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class PaymentFacade {
-	private final PaymentRequestPaymentUseCase paymentRequestPaymentUsecase;
+	private final PaymentRequestPaymentUseCase paymentRequestPaymentUseCase;
 
 	public PaymentRequestResponseDto requestPayment(long memberId, PaymentRequestDto requestDto) {
-		return paymentRequestPaymentUsecase.requestPayment(memberId, requestDto);
+		return paymentRequestPaymentUseCase.requestPayment(memberId, requestDto);
 	}
 }
