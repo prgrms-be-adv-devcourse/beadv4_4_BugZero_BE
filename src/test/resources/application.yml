@@ -19,3 +19,7 @@ logging:
 custom:
   global:
     internalBackUrl: http://localhost:8080
+
+jwt:
+  secret: ${JWT_SECRET:abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890}
+  auth-token-expire-seconds: ${JWT_AUTH_TOKEN_EXPIRE_SECONDS:3600}
