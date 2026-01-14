@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/internal/payments/deposits")
 @RequiredArgsConstructor
-public class ApiV1PaymentController {
+public class InternalPaymentController {
     private final PaymentFacade paymentFacade;
 
     @PostMapping("/hold")
