@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
-	name = "payment_deposit",
+	name = "PAYMENT_DEPOSIT",
 	indexes = {
 		@Index(name = "idx_deposit_auction_id", columnList = "auction_id")
 	},

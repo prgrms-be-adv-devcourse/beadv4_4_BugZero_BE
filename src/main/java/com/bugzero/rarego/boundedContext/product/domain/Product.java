@@ -35,6 +35,7 @@ public class Product extends BaseIdAndTime {
 	List<ProductImage> images;
 	@Column(length = 100, nullable = false)
 	private String name;
+	@Column(columnDefinition = "TEXT")
 	private String description;
 
 	//TODO 추후 상품이미지 등록 로직에 따라 파라미터 값 변경 예정
