@@ -14,6 +14,8 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
+import com.bugzero.rarego.shared.member.domain.MemberRole;
+
 class JwtProviderTest {
 	private static final String SECRET = "abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890";
 
@@ -24,7 +26,7 @@ class JwtProviderTest {
 
 		String jwt = jwtProvider.issueToken(
 			60 * 60,
-			Map.of("id", 1L, "nickname", "친절한 옥수수")
+			Map.of("id", 1L, "nickname", "친절한 옥수수", "role", MemberRole.USER.name())
 		);
 
 		assertThat(jwt).isNotBlank();
@@ -38,5 +40,6 @@ class JwtProviderTest {
 
 		assertThat(((Number) claims.get("id")).longValue()).isEqualTo(1L);
 		assertThat(claims.get("nickname")).isEqualTo("친절한 옥수수");
+		assertThat(claims.get("role")).isEqualTo(MemberRole.USER.name());
 	}
 }

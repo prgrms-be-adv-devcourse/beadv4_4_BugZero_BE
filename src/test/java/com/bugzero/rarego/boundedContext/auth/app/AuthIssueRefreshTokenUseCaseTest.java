@@ -19,6 +19,7 @@ import com.bugzero.rarego.boundedContext.auth.domain.AuthMember;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.security.JwtProvider;
+import com.bugzero.rarego.shared.member.domain.MemberRole;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -40,11 +41,13 @@ class AuthIssueRefreshTokenUseCaseTest {
 		AuthMember member = AuthMember.builder()
 			.id(1L)
 			.nickname("친절한 옥수수")
+			.role(MemberRole.USER)
 			.build();
 
 		when(jwtProvider.issueToken(eq(3600), argThat(body ->
 			((Number) body.get("id")).longValue() == 1L
 				&& "친절한 옥수수".equals(body.get("nickname"))
+				&& MemberRole.USER.name().equals(body.get("role"))
 		))).thenReturn("token");
 
 		String token = authIssueAccessTokenUseCase.issueToken(member);
@@ -60,6 +63,7 @@ class AuthIssueRefreshTokenUseCaseTest {
 		AuthMember member = AuthMember.builder()
 			.id(1L)
 			.nickname("친절한 옥수수")
+			.role(MemberRole.USER)
 			.build();
 
 		when(jwtProvider.issueToken(anyInt(), anyMap())).thenThrow(new RuntimeException("boom"));
@@ -85,6 +89,7 @@ class AuthIssueRefreshTokenUseCaseTest {
 		AuthMember member = AuthMember.builder()
 			.id(0L)
 			.nickname("친절한 옥수수")
+			.role(MemberRole.USER)
 			.build();
 
 		assertThatThrownBy(() -> authIssueAccessTokenUseCase.issueToken(member))
@@ -99,6 +104,7 @@ class AuthIssueRefreshTokenUseCaseTest {
 		AuthMember member = AuthMember.builder()
 			.id(1L)
 			.nickname(" ")
+			.role(MemberRole.USER)
 			.build();
 
 		assertThatThrownBy(() -> authIssueAccessTokenUseCase.issueToken(member))

@@ -56,7 +56,8 @@ public class JwtParser {
 
 		Long id = toLong(payload.get("id"));
 		String nickname = (String) payload.get("nickname");
-		return new MemberPrincipal(id, nickname);
+		String role = toRoleString(payload.get("role"));
+		return new MemberPrincipal(id, nickname, role);
 	}
 
 	private static Long toLong(Object value) {
@@ -76,5 +77,16 @@ public class JwtParser {
 			}
 		}
 		return null;
+	}
+
+	private static String toRoleString(Object value) {
+		if (value == null)
+			return null;
+		if (value instanceof String stringValue) {
+			if (stringValue.startsWith("ROLE_"))
+				return stringValue.substring("ROLE_".length());
+			return stringValue;
+		}
+		return value.toString();
 	}
 }

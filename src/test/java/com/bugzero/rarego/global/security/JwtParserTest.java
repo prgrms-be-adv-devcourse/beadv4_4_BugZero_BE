@@ -8,6 +8,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.bugzero.rarego.shared.member.domain.MemberRole;
+
 class JwtParserTest {
 	private static final String SECRET_KEY = "abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890";
 	private JwtProvider jwtProvider;
@@ -24,7 +26,7 @@ class JwtParserTest {
 	void parsePrincipalReturnsMemberPrincipal() {
 		String jwt = jwtProvider.issueToken(
 			60 * 60,
-			Map.of("id", 1L, "nickname", "친절한 옥수수")
+			Map.of("id", 1L, "nickname", "친절한 옥수수", "role", MemberRole.USER.name())
 		);
 
 		MemberPrincipal principal = jwtParser.parsePrincipal(jwt);
@@ -32,6 +34,7 @@ class JwtParserTest {
 		assertThat(principal).isNotNull();
 		assertThat(principal.id()).isEqualTo(1L);
 		assertThat(principal.nickname()).isEqualTo("친절한 옥수수");
+		assertThat(principal.role()).isEqualTo(MemberRole.USER.name());
 	}
 
 	@Test
@@ -39,7 +42,7 @@ class JwtParserTest {
 	void parsePrincipalConvertsIntegerIdToLong() {
 		String jwt = jwtProvider.issueToken(
 			60 * 60,
-			Map.of("id", 1, "nickname", "친절한 옥수수")
+			Map.of("id", 1, "nickname", "친절한 옥수수", "role", MemberRole.USER.name())
 		);
 
 		MemberPrincipal principal = jwtParser.parsePrincipal(jwt);
@@ -47,6 +50,7 @@ class JwtParserTest {
 		assertThat(principal).isNotNull();
 		assertThat(principal.id()).isEqualTo(1L);
 		assertThat(principal.nickname()).isEqualTo("친절한 옥수수");
+		assertThat(principal.role()).isEqualTo(MemberRole.USER.name());
 	}
 
 	@Test
@@ -59,6 +63,7 @@ class JwtParserTest {
 		assertThat(principal).isNotNull();
 		assertThat(principal.id()).isNull();
 		assertThat(principal.nickname()).isNull();
+		assertThat(principal.role()).isNull();
 	}
 
 	@Test

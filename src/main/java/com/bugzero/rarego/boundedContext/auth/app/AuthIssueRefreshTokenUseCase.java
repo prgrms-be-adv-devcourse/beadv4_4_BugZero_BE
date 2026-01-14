@@ -30,7 +30,8 @@ public class AuthIssueRefreshTokenUseCase {
 				refreshTokenExpireSeconds,
 				Map.of(
 					"id", member.getId(),
-					"nickname", member.getNickname()
+					"nickname", member.getNickname(),
+					"role", member.getRole().name()
 				)
 			);
 		} catch (Exception e) {
