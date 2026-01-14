@@ -2,7 +2,10 @@ package com.bugzero.rarego.global.security;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
+
+import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -30,7 +33,8 @@ public class JwtProvider {
 		Claims claims = claimsBuilder.build();
 
 		Date issuedAt = new Date();
-		Date expiration = new Date(issuedAt.getTime() + 86400L * expireSeconds);
+		// 만료 시간 = 발급 시간 + 만료 기간(초)
+		Date expiration = new Date(issuedAt.getTime() + 1000L * expireSeconds);
 
 		Key secretKey = Keys.hmacShaKeyFor(secret.getBytes());
 
