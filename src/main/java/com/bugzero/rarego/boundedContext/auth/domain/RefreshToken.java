@@ -17,7 +17,6 @@ import lombok.NoArgsConstructor;
 @Table(name = "AUTH_REFRESH_TOKEN",
 	indexes = {
 		@Index(name = "idx_auth_refresh_token_member_id", columnList = "member_id"),
-		@Index(name = "idx_auth_refresh_token_expires_at", columnList = "expires_at"),
 		@Index(name = "idx_auth_refresh_token_revoked_expires", columnList = "revoked, expires_at")
 	}
 )
