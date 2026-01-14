@@ -5,6 +5,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldRequestDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
 
@@ -20,11 +21,12 @@ public class PaymentApiClient {
 
     public DepositHoldResponseDto holdDeposit(int amount, Long memberId, Long auctionId) {
         DepositHoldRequestDto request = new DepositHoldRequestDto(amount, memberId, auctionId);
-        return restClient.post()
+        SuccessResponseDto<DepositHoldResponseDto> response = restClient.post()
                 .uri("/deposits/hold")
                 .body(request)
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {
                 });
+        return response != null ? response.data() : null;
     }
 }
