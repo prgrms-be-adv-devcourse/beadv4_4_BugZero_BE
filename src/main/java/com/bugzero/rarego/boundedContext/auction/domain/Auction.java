@@ -1,6 +1,8 @@
 package com.bugzero.rarego.boundedContext.auction.domain;
 
+import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
+import com.bugzero.rarego.global.response.ErrorType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -47,9 +49,16 @@ public class Auction extends BaseIdAndTime {
         this.status = AuctionStatus.SCHEDULED;
     }
 
+    public void start() {
+        if (this.status != AuctionStatus.SCHEDULED) {
+            throw new CustomException(ErrorType.AUCTION_NOT_SCHEDULED);
+        }
+        this.status = AuctionStatus.IN_PROGRESS;
+    }
+
     public void end() {
         if (this.status != AuctionStatus.IN_PROGRESS) {
-            throw new IllegalStateException("진행 중인 경매만 종료할 수 있습니다.");
+            throw new CustomException(ErrorType.AUCTION_NOT_IN_PROGRESS);
         }
         this.status = AuctionStatus.ENDED;
     }
@@ -57,4 +66,10 @@ public class Auction extends BaseIdAndTime {
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(this.endTime);
     }
+
+    public void forceStartForTest() {
+        // 테스트/로컬 초기화 전용
+        this.status = AuctionStatus.IN_PROGRESS;
+    }
+
 }
