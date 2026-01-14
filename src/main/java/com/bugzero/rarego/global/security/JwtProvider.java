@@ -4,13 +4,23 @@ import java.security.Key;
 import java.util.Date;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ClaimsBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
+@Component
 public class JwtProvider {
-	public static String createToken(String secret, int expireSeconds, Map<String, Object> body) {
+	private final String secret;
+
+	public JwtProvider(@Value("${jwt.secret}") String secret) {
+		this.secret = secret;
+	}
+
+	public String issueToken(int expireSeconds, Map<String, Object> body) {
 		ClaimsBuilder claimsBuilder = Jwts.claims();
 
 		for (Map.Entry<String, Object> entry : body.entrySet()) {
