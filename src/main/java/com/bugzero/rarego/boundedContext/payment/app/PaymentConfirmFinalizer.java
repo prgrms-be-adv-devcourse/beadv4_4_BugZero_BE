@@ -10,6 +10,7 @@ import com.bugzero.rarego.boundedContext.payment.domain.Wallet;
 import com.bugzero.rarego.boundedContext.payment.domain.WalletTransactionType;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.TossPaymentsConfirmResponseDto;
+import com.bugzero.rarego.boundedContext.payment.out.PaymentRepository;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentTransactionRepository;
 import com.bugzero.rarego.boundedContext.payment.out.WalletRepository;
 import com.bugzero.rarego.global.exception.CustomException;
@@ -20,14 +21,17 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class PaymentConfirmFinalizer {
+	private final PaymentRepository paymentRepository;
 	private final WalletRepository walletRepository;
 	private final PaymentTransactionRepository paymentTransactionRepository;
 
 	@Transactional
-	protected PaymentConfirmResponseDto finalizePayment(Payment payment,
+	public PaymentConfirmResponseDto finalizePayment(Payment payment,
 		TossPaymentsConfirmResponseDto tossResponse) {
 		// 결제 완료 처리
 		payment.complete(tossResponse.paymentKey());
+
+		paymentRepository.save(payment); // payment는 영속성 컨텍스트와 연결이 끊긴 상태라 명시적으로 저장
 
 		Wallet wallet = walletRepository.findByMemberId(payment.getMember().getId())
 			.orElseThrow(() -> new CustomException(ErrorType.WALLET_NOT_FOUND));
