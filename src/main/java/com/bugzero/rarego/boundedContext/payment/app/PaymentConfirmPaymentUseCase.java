@@ -13,7 +13,9 @@ import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentConfirmPaymentUseCase {
@@ -22,11 +24,16 @@ public class PaymentConfirmPaymentUseCase {
 	private final PaymentConfirmFinalizer paymentConfirmFinalizer;
 
 	public PaymentConfirmResponseDto confirmPayment(Long memberId, PaymentConfirmRequestDto requestDto) {
-		Payment payment = validateRequest(memberId, requestDto);
+		try {
+			Payment payment = validateRequest(memberId, requestDto);
 
-		TossPaymentsConfirmResponseDto tossResponse = tossPaymentsApiClient.confirm(requestDto);
+			TossPaymentsConfirmResponseDto tossResponse = tossPaymentsApiClient.confirm(requestDto);
 
-		return paymentConfirmFinalizer.finalizePayment(payment, tossResponse);
+			return paymentConfirmFinalizer.finalizePayment(payment, tossResponse);
+		} catch (Exception e) { // 결제 승인 중 에러 발생 시 결제 상태를 실패로 변경
+			handlePaymentFailure(requestDto.orderId());
+			throw e;
+		}
 	}
 
 	private Payment validateRequest(Long memberId, PaymentConfirmRequestDto requestDto) {
@@ -49,5 +56,14 @@ public class PaymentConfirmPaymentUseCase {
 		}
 
 		return payment;
+	}
+
+	private void handlePaymentFailure(String orderId) {
+		paymentRepository.findByOrderId(orderId).ifPresent(payment -> {
+			if (payment.getStatus() == PaymentStatus.PENDING) {
+				payment.fail();
+				paymentRepository.save(payment); // 트랜잭션 처리가 되어있지 않으므로 명시적으로 저장
+			}
+		});
 	}
 }

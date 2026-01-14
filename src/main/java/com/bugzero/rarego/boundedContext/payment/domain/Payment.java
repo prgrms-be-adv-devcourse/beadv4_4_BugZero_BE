@@ -43,4 +43,8 @@ public class Payment extends BaseIdAndTime {
 		this.paymentKey = paymentKey;
 		this.status = PaymentStatus.DONE;
 	}
+
+	public void fail() {
+		this.status = PaymentStatus.FAILED;
+	}
 }
