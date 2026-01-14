@@ -22,6 +22,13 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ExceptionResponseDto handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
 		log.error("MethodArgumentNotValidException 발생: {}", e.getMessage());
-		return ExceptionResponseDto.to(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+
+		// 에러가 발생한 필드 중 첫 번째 필드의 에러 메시지만 가져온다.
+		String errorMessage = e.getBindingResult()
+			.getAllErrors()
+			.getFirst()
+			.getDefaultMessage();
+
+		return ExceptionResponseDto.to(HttpStatus.BAD_REQUEST.value(), errorMessage);
 	}
 }
