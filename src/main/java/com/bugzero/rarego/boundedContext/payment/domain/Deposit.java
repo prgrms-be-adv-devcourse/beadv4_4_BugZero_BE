@@ -49,4 +49,25 @@ public class Deposit extends BaseIdAndTime {
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	private DepositStatus status;
+
+	public static Deposit create(PaymentMember member, Long auctionId, int amount) {
+		return Deposit.builder()
+				.member(member)
+				.auctionId(auctionId)
+				.amount(amount)
+				.status(DepositStatus.HOLD)
+				.build();
+	}
+
+	public void release() {
+		this.status = DepositStatus.RELEASED;
+	}
+
+	public void use() {
+		this.status = DepositStatus.USED;
+	}
+
+	public void forfeit() {
+		this.status = DepositStatus.FORFEITED;
+	}
 }
