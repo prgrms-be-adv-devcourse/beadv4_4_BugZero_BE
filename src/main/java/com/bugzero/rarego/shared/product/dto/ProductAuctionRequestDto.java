@@ -1,4 +1,4 @@
-package com.bugzero.rarego.boundedContext.product.domain;
+package com.bugzero.rarego.shared.product.dto;
 
 public record ProductAuctionRequestDto(
 	int startPrice,
