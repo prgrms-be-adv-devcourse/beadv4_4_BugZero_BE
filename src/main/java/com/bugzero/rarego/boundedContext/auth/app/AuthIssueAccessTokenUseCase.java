@@ -30,7 +30,8 @@ public class AuthIssueAccessTokenUseCase {
 				accessTokenExpireSeconds,
 				Map.of(
 					"id", member.getId(),
-					"nickname", member.getNickname()
+					"nickname", member.getNickname(),
+					"role", member.getRole().name()
 				)
 			);
 		} catch (Exception e) {
