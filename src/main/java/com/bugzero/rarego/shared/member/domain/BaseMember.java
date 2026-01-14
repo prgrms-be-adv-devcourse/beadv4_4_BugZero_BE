@@ -21,10 +21,6 @@ public abstract class BaseMember extends BaseEntity {
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
-	private MemberStatus status;
-
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
 	private MemberRole role;
 
 	@Enumerated(EnumType.STRING)
