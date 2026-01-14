@@ -28,6 +28,6 @@ public class PaymentController {
 		@RequestParam Long memberId,
 		@Valid @RequestBody PaymentRequestDto requestDto
 	) {
-		return SuccessResponseDto.from(SuccessType.OK, paymentFacade.requestPayment(memberId, requestDto));
+		return SuccessResponseDto.from(SuccessType.CREATED, paymentFacade.requestPayment(memberId, requestDto));
 	}
 }
