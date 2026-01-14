@@ -25,7 +25,7 @@ public enum ErrorType {
     INSUFFICIENT_BALANCE(400, 4002, "예치금 잔액이 부족합니다."),
     INSUFFICIENT_HOLDING(400, 4003, "환급할 보증금이 부족합니다.");
 
-    private final Integer httpStatus;
-    private final int code;
-    private final String message;
+	private final Integer httpStatus;
+	private final int code;
+	private final String message;
 }

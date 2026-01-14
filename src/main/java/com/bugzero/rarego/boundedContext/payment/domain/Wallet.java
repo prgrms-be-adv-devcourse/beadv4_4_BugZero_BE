@@ -1,6 +1,8 @@
 package com.bugzero.rarego.boundedContext.payment.domain;
 
+import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
+import com.bugzero.rarego.global.response.ErrorType;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -33,4 +35,18 @@ public class Wallet extends BaseIdAndTime {
 
 	@Version
 	private int version;
+
+	public void hold(int amount) {
+		if (balance - holdingAmount < amount) {
+			throw new CustomException(ErrorType.INSUFFICIENT_BALANCE);
+		}
+		this.holdingAmount += amount;
+	}
+
+	public void release(int amount) {
+		if (holdingAmount < amount) {
+			throw new CustomException(ErrorType.INSUFFICIENT_HOLDING);
+		}
+		this.holdingAmount -= amount;
+	}
 }
