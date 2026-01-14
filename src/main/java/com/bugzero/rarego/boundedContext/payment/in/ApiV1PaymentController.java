@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bugzero.rarego.boundedContext.payment.app.PaymentFacade;
+import com.bugzero.rarego.global.response.SuccessResponseDto;
+import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldRequestDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
 
@@ -19,7 +21,8 @@ public class ApiV1PaymentController {
     private final PaymentFacade paymentFacade;
 
     @PostMapping("/hold")
-    public DepositHoldResponseDto holdDeposit(@Valid @RequestBody DepositHoldRequestDto request) {
-        return paymentFacade.holdDeposit(request);
+    public SuccessResponseDto<DepositHoldResponseDto> holdDeposit(
+            @Valid @RequestBody DepositHoldRequestDto request) {
+        return SuccessResponseDto.from(SuccessType.CREATED, paymentFacade.holdDeposit(request));
     }
 }
