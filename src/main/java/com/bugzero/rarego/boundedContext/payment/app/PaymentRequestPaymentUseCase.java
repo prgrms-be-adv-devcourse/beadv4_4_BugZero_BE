@@ -39,11 +39,6 @@ public class PaymentRequestPaymentUseCase {
 
 		paymentRepository.save(payment);
 
-		return new PaymentRequestResponseDto(
-			orderId,
-			payment.getAmount(),
-			member.getEmail(),
-			member.getNickname()
-		);
+		return PaymentRequestResponseDto.from(payment);
 	}
 }
