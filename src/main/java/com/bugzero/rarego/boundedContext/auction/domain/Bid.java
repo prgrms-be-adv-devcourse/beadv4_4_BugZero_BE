@@ -22,8 +22,10 @@ public class Bid extends BaseIdAndTime {
 	@Column(nullable = false)
 	private Long bidderId;
 
+	@Column(nullable = false)
 	private LocalDateTime bidTime;
 
+	@Column(nullable = false)
 	private int bidAmount;
 
 	@Builder

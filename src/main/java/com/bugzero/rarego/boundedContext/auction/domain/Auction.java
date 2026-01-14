@@ -1,6 +1,5 @@
 package com.bugzero.rarego.boundedContext.auction.domain;
 
-import java.math.BigInteger;
 import java.time.LocalDateTime;
 
 import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
@@ -9,13 +8,14 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.Version;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Table(name = "AUCTION_AUCTION")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public class Auction extends BaseIdAndTime {
@@ -23,21 +23,23 @@ public class Auction extends BaseIdAndTime {
 	@Column(nullable = false)
 	private Long productId;
 
+	@Column(nullable = false)
 	private LocalDateTime startTime;
 
+	@Column(nullable = false)
 	private LocalDateTime endTime;
 
+	@Column(nullable = false)
 	@Enumerated(EnumType.STRING)
 	private AuctionStatus status;
 
+	@Column(nullable = false)
 	private int startPrice;
 
-	private int currentPrice;
+	private int currentPrice; // 초기값 null 가능
 
+	@Column(nullable = false)
 	private int tickSize;
-
-	@Version // 낙관적 락
-	private Long version;
 
 	@Builder
 	public Auction(Long productId, LocalDateTime startTime, LocalDateTime endTime, int startPrice, int tickSize) {
@@ -46,7 +48,7 @@ public class Auction extends BaseIdAndTime {
 		this.endTime = endTime;
 		this.startPrice = startPrice;
 		this.tickSize = tickSize;
-		this.status = AuctionStatus.SCHEDULED; // 기본값 설정 용이
+		this.status = AuctionStatus.SCHEDULED;
 	}
 
 	// 입찰 가격 갱신
