@@ -12,14 +12,14 @@ import io.jsonwebtoken.security.Keys;
 
 @Component
 public class JwtParser {
-	private final String secret;
+	private final String jwtSecretKey;
 
-	public JwtParser(@Value("${jwt.secret}") String secret) {
-		this.secret = secret;
+	public JwtParser(@Value("${jwt.secret}") String jwtSecretKey) {
+		this.jwtSecretKey = jwtSecretKey;
 	}
 
 	public boolean isValid(String jwtStr) {
-		SecretKey secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+		SecretKey secretKey = Keys.hmacShaKeyFor(jwtSecretKey.getBytes());
 
 		try {
 			Jwts
@@ -35,7 +35,7 @@ public class JwtParser {
 	}
 
 	public Map<String, Object> payload(String jwtStr) {
-		SecretKey secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+		SecretKey secretKey = Keys.hmacShaKeyFor(jwtSecretKey.getBytes());
 
 		try {
 			return (Map<String, Object>) Jwts

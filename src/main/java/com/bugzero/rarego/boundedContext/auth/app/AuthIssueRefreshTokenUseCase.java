@@ -14,20 +14,20 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class AuthIssueTokenUseCase {
+public class AuthIssueRefreshTokenUseCase {
 	private final JwtProvider jwtProvider;
-	@Value("${jwt.auth-token-expire-seconds}")
-	private int authTokenExpireSeconds;
+	@Value("${jwt.refresh-token-expire-seconds}")
+	private int refreshTokenExpireSeconds;
 
 	public String issueToken(AuthMember member) {
 		validateMember(member);
-		if (authTokenExpireSeconds <= 0) {
+		if (refreshTokenExpireSeconds <= 0) {
 			throw new CustomException(ErrorType.JWT_EXPIRE_SECONDS_INVALID);
 		}
 
 		try {
 			return jwtProvider.issueToken(
-				authTokenExpireSeconds,
+				refreshTokenExpireSeconds,
 				Map.of(
 					"id", member.getId(),
 					"nickname", member.getNickname()

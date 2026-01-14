@@ -31,4 +31,5 @@ logging:
 
 jwt:
   secret: ${JWT_SECRET:dev-secret-key-have-to-change-abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz}
-  auth-token-expire-seconds: ${JWT_AUTH_TOKEN_EXPIRE_SECONDS:3600}
+  access-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:3600}
+  refresh-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:86400}

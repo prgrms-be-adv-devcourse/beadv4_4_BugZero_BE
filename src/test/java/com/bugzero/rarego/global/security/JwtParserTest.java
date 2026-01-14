@@ -9,14 +9,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 class JwtParserTest {
-	private static final String SECRET = "abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890";
+	private static final String SECRET_KEY = "abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890";
 	private JwtProvider jwtProvider;
 	private JwtParser jwtParser;
 
 	@BeforeEach
 	void setUp() {
-		jwtProvider = new JwtProvider(SECRET);
-		jwtParser = new JwtParser(SECRET);
+		jwtProvider = new JwtProvider(SECRET_KEY);
+		jwtParser = new JwtParser(SECRET_KEY);
 	}
 
 	@Test
