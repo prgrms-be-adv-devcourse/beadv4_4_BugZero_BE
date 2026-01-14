@@ -5,8 +5,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
-import com.bugzero.rarego.shared.payment.dto.DepositHoldRequest;
-import com.bugzero.rarego.shared.payment.dto.DepositHoldResponse;
+import com.bugzero.rarego.shared.payment.dto.DepositHoldRequestDto;
+import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
 import com.bugzero.rarego.boundedContext.payment.domain.Deposit;
 import com.bugzero.rarego.boundedContext.payment.domain.PaymentMember;
 import com.bugzero.rarego.boundedContext.payment.domain.PaymentTransaction;
@@ -30,14 +30,14 @@ public class PaymentHoldDepositUseCase {
         private final PaymentTransactionRepository transactionRepository;
 
         @Transactional
-        public DepositHoldResponse holdDeposit(DepositHoldRequest request) {
+        public DepositHoldResponseDto holdDeposit(DepositHoldRequestDto request) {
                 // 1. 멱등성 체크
                 return depositRepository.findByMemberIdAndAuctionId(request.memberId(), request.auctionId())
-                                .map(DepositHoldResponse::from)
+                                .map(DepositHoldResponseDto::from)
                                 .orElseGet(() -> executeHold(request));
         }
 
-        private DepositHoldResponse executeHold(DepositHoldRequest request) {
+        private DepositHoldResponseDto executeHold(DepositHoldRequestDto request) {
                 PaymentMember member = memberRepository.findById(request.memberId())
                                 .orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
 
@@ -64,6 +64,6 @@ public class PaymentHoldDepositUseCase {
                                 .build();
                 transactionRepository.save(transaction);
 
-                return DepositHoldResponse.from(deposit);
+                return DepositHoldResponseDto.from(deposit);
         }
 }

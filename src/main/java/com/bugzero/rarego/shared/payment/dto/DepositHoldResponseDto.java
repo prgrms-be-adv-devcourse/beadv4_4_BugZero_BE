@@ -4,14 +4,14 @@ import java.time.LocalDateTime;
 
 import com.bugzero.rarego.boundedContext.payment.domain.Deposit;
 
-public record DepositHoldResponse(
+public record DepositHoldResponseDto(
         Long depositId,
         Long auctionId,
         int amount,
         String status,
         LocalDateTime createdAt) {
-    public static DepositHoldResponse from(Deposit deposit) {
-        return new DepositHoldResponse(
+    public static DepositHoldResponseDto from(Deposit deposit) {
+        return new DepositHoldResponseDto(
                 deposit.getId(),
                 deposit.getAuctionId(),
                 deposit.getAmount(),

@@ -5,8 +5,8 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
-import com.bugzero.rarego.shared.payment.dto.DepositHoldRequest;
-import com.bugzero.rarego.shared.payment.dto.DepositHoldResponse;
+import com.bugzero.rarego.shared.payment.dto.DepositHoldRequestDto;
+import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
 
 @Service
 public class PaymentApiClient {
@@ -18,8 +18,8 @@ public class PaymentApiClient {
                 .build();
     }
 
-    public DepositHoldResponse holdDeposit(int amount, Long memberId, Long auctionId) {
-        DepositHoldRequest request = new DepositHoldRequest(amount, memberId, auctionId);
+    public DepositHoldResponseDto holdDeposit(int amount, Long memberId, Long auctionId) {
+        DepositHoldRequestDto request = new DepositHoldRequestDto(amount, memberId, auctionId);
         return restClient.post()
                 .uri("/deposits/hold")
                 .body(request)
