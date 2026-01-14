@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 public enum ErrorType {
 	// Global (9000 ~ 9999)
 	INTERNAL_SERVER_ERROR(500, 9000, "서버 오류가 발생했습니다."),
+	INVALID_INPUT(400, 9001, "잘못된 입력값입니다."),
 
 	// Member (1000 ~ 1999)
 	MEMBER_NOT_FOUND(404, 1001, "존재하지 않는 회원입니다."),
