@@ -11,6 +11,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.bugzero.rarego.global.security.CustomAccessDeniedHandler;
+import com.bugzero.rarego.global.security.CustomAuthenticationEntryPoint;
 import com.bugzero.rarego.global.security.JwtAuthenticationFilter;
 import com.bugzero.rarego.global.security.JwtParser;
 
@@ -21,7 +23,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 	@Bean
-	public SecurityFilterChain filterChain(HttpSecurity http, JwtParser jwtParser) throws Exception {
+	public SecurityFilterChain filterChain(HttpSecurity http, JwtParser jwtParser,
+		CustomAuthenticationEntryPoint authenticationEntryPoint,
+		CustomAccessDeniedHandler accessDeniedHandler) throws Exception {
 		http.authorizeHttpRequests(
 
 				auth -> auth
@@ -39,6 +43,10 @@ public class SecurityConfig {
 				AbstractHttpConfigurer::disable
 			).sessionManagement(
 				sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+			)
+			.exceptionHandling(ex -> ex
+				.authenticationEntryPoint(authenticationEntryPoint)
+				.accessDeniedHandler(accessDeniedHandler)
 			)
 			.addFilterBefore(new JwtAuthenticationFilter(jwtParser), UsernamePasswordAuthenticationFilter.class);
 
