@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,93 +25,96 @@ import com.bugzero.rarego.boundedContext.payment.out.PaymentTransactionRepositor
 @ExtendWith(MockitoExtension.class)
 class PaymentReleaseDepositUseCaseTest {
 
-    @InjectMocks
-    private PaymentReleaseDepositUseCase paymentReleaseDepositUseCase;
+        @InjectMocks
+        private PaymentReleaseDepositUseCase paymentReleaseDepositUseCase;
 
-    @Mock
-    private DepositRepository depositRepository;
+        @Mock
+        private DepositRepository depositRepository;
 
-    @Mock
-    private PaymentTransactionRepository transactionRepository;
+        @Mock
+        private PaymentTransactionRepository transactionRepository;
 
-	@Mock
-	private PaymentSupport paymentSupport;
+        @Mock
+        private PaymentSupport paymentSupport;
 
-    @Test
-    @DisplayName("성공: 낙찰자 제외 보증금 환급")
-    void releaseDeposits_ExcludesWinner() {
-        // given
-        Long auctionId = 1L;
-        Long winnerId = 100L;
+        @Test
+        @DisplayName("성공: 낙찰자 제외 보증금 환급")
+        void releaseDeposits_ExcludesWinner() {
+                // given
+                Long auctionId = 1L;
+                Long winnerId = 100L;
 
-        PaymentMember loser1 = mock(PaymentMember.class);
-        when(loser1.getId()).thenReturn(101L);
-        PaymentMember loser2 = mock(PaymentMember.class);
-        when(loser2.getId()).thenReturn(102L);
+                PaymentMember loser1 = mock(PaymentMember.class);
+                when(loser1.getId()).thenReturn(101L);
+                PaymentMember loser2 = mock(PaymentMember.class);
+                when(loser2.getId()).thenReturn(102L);
 
-        Deposit deposit1 = Deposit.create(loser1, auctionId, 10000);
-        Deposit deposit2 = Deposit.create(loser2, auctionId, 10000);
+                Deposit deposit1 = Deposit.create(loser1, auctionId, 10000);
+                Deposit deposit2 = Deposit.create(loser2, auctionId, 10000);
 
-        Wallet wallet1 = Wallet.builder().balance(50000).holdingAmount(10000).build();
-        Wallet wallet2 = Wallet.builder().balance(50000).holdingAmount(10000).build();
+                Wallet wallet1 = Wallet.builder().balance(50000).holdingAmount(10000).build();
+                Wallet wallet2 = Wallet.builder().balance(50000).holdingAmount(10000).build();
 
-        when(depositRepository.findAllByAuctionIdAndStatusAndMemberIdNot(auctionId, DepositStatus.HOLD, winnerId))
-                .thenReturn(List.of(deposit1, deposit2));
-        when(paymentSupport.findWalletByMemberIdForUpdate(101L)).thenReturn(wallet1);
-        when(paymentSupport.findWalletByMemberIdForUpdate(102L)).thenReturn(wallet2);
+                when(depositRepository.findAllByAuctionIdAndStatusAndMemberIdNotWithMember(auctionId,
+                                DepositStatus.HOLD, winnerId))
+                                .thenReturn(List.of(deposit1, deposit2));
+                when(paymentSupport.findWalletsByMemberIdsForUpdate(List.of(101L, 102L)))
+                                .thenReturn(Map.of(101L, wallet1, 102L, wallet2));
 
-        // when
-        paymentReleaseDepositUseCase.releaseDeposits(auctionId, winnerId);
+                // when
+                paymentReleaseDepositUseCase.releaseDeposits(auctionId, winnerId);
 
-        // then
-        assertThat(deposit1.getStatus()).isEqualTo(DepositStatus.RELEASED);
-        assertThat(deposit2.getStatus()).isEqualTo(DepositStatus.RELEASED);
-        assertThat(wallet1.getHoldingAmount()).isEqualTo(0);
-        assertThat(wallet2.getHoldingAmount()).isEqualTo(0);
-        verify(transactionRepository, times(2)).save(any(PaymentTransaction.class));
-    }
+                // then
+                assertThat(deposit1.getStatus()).isEqualTo(DepositStatus.RELEASED);
+                assertThat(deposit2.getStatus()).isEqualTo(DepositStatus.RELEASED);
+                assertThat(wallet1.getHoldingAmount()).isEqualTo(0);
+                assertThat(wallet2.getHoldingAmount()).isEqualTo(0);
+                verify(transactionRepository).saveAll(anyList());
+        }
 
-    @Test
-    @DisplayName("성공: 유찰 시 전체 환급")
-    void releaseDeposits_AllReleasedWhenNoWinner() {
-        // given
-        Long auctionId = 1L;
-        Long winnerId = null; // 유찰
+        @Test
+        @DisplayName("성공: 유찰 시 전체 환급")
+        void releaseDeposits_AllReleasedWhenNoWinner() {
+                // given
+                Long auctionId = 1L;
+                Long winnerId = null;
 
-        PaymentMember bidder = mock(PaymentMember.class);
-        when(bidder.getId()).thenReturn(101L);
+                PaymentMember bidder = mock(PaymentMember.class);
+                when(bidder.getId()).thenReturn(101L);
 
-        Deposit deposit = Deposit.create(bidder, auctionId, 10000);
-        Wallet wallet = Wallet.builder().balance(50000).holdingAmount(10000).build();
+                Deposit deposit = Deposit.create(bidder, auctionId, 10000);
+                Wallet wallet = Wallet.builder().balance(50000).holdingAmount(10000).build();
 
-        when(depositRepository.findAllByAuctionIdAndStatus(auctionId, DepositStatus.HOLD))
-                .thenReturn(List.of(deposit));
-        when(paymentSupport.findWalletByMemberIdForUpdate(101L)).thenReturn(wallet);
+                when(depositRepository.findAllByAuctionIdAndStatusWithMember(auctionId, DepositStatus.HOLD))
+                    .thenReturn(List.of(deposit));
+                when(paymentSupport.findWalletsByMemberIdsForUpdate(List.of(101L)))
+                    .thenReturn(Map.of(101L, wallet));
 
-        // when
-        paymentReleaseDepositUseCase.releaseDeposits(auctionId, winnerId);
+                // when
+                paymentReleaseDepositUseCase.releaseDeposits(auctionId, winnerId);
 
-        // then
-        assertThat(deposit.getStatus()).isEqualTo(DepositStatus.RELEASED);
-        assertThat(wallet.getHoldingAmount()).isEqualTo(0);
-        verify(transactionRepository, times(1)).save(any(PaymentTransaction.class));
-    }
+                // then
+                assertThat(deposit.getStatus()).isEqualTo(DepositStatus.RELEASED);
+                assertThat(wallet.getHoldingAmount()).isEqualTo(0);
+                verify(transactionRepository).saveAll(anyList());
+        }
 
-    @Test
-    @DisplayName("성공: 환급 대상 없음")
-    void releaseDeposits_NoDepositsToRelease() {
-        // given
-        Long auctionId = 1L;
-        Long winnerId = 100L;
+        @Test
+        @DisplayName("성공: 환급 대상 없음")
+        void releaseDeposits_NoDepositsToRelease() {
+                // given
+                Long auctionId = 1L;
+                Long winnerId = 100L;
 
-        when(depositRepository.findAllByAuctionIdAndStatusAndMemberIdNot(auctionId, DepositStatus.HOLD, winnerId))
-                .thenReturn(List.of());
+                when(depositRepository.findAllByAuctionIdAndStatusAndMemberIdNotWithMember(auctionId,
+                                DepositStatus.HOLD, winnerId))
+                                .thenReturn(List.of());
 
-        // when
-        paymentReleaseDepositUseCase.releaseDeposits(auctionId, winnerId);
+                // when
+                paymentReleaseDepositUseCase.releaseDeposits(auctionId, winnerId);
 
-        // then
-        verify(paymentSupport, never()).findWalletByMemberIdForUpdate(anyLong());
-        verify(transactionRepository, never()).save(any());
-    }
+                // then
+                verify(paymentSupport, never()).findWalletsByMemberIdsForUpdate(anyList());
+                verify(transactionRepository, never()).saveAll(anyList());
+        }
 }

@@ -1,6 +1,8 @@
 package com.bugzero.rarego.boundedContext.payment.app;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +15,8 @@ import com.bugzero.rarego.boundedContext.payment.domain.Wallet;
 import com.bugzero.rarego.boundedContext.payment.domain.WalletTransactionType;
 import com.bugzero.rarego.boundedContext.payment.out.DepositRepository;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentTransactionRepository;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,36 +33,54 @@ public class PaymentReleaseDepositUseCase {
     @Transactional
     public void releaseDeposits(Long auctionId, Long winnerId) {
         List<Deposit> depositsToRelease = findDepositsToRelease(auctionId, winnerId);
-
-        for (Deposit deposit : depositsToRelease) {
-            releaseDeposit(deposit);
+        if (depositsToRelease.isEmpty()) {
+            log.info("경매 {} 환급 대상 없음", auctionId);
+            return;
         }
 
+        List<Long> memberIds = depositsToRelease.stream()
+                .map(d -> d.getMember().getId())
+                .toList();
+        Map<Long, Wallet> walletMap = paymentSupport.findWalletsByMemberIdsForUpdate(memberIds);
+
+        // 트랜잭션 이력 벌크 저장
+        List<PaymentTransaction> transactions = new ArrayList<>();
+        for (Deposit deposit : depositsToRelease) {
+            Long memberId = deposit.getMember().getId();
+            Wallet wallet = walletMap.get(memberId);
+
+            if (wallet == null) {
+                throw new CustomException(ErrorType.WALLET_NOT_FOUND);
+            }
+
+            PaymentTransaction transaction = releaseDeposit(deposit, wallet);
+            transactions.add(transaction);
+        }
+
+        transactionRepository.saveAll(transactions);
         log.info("경매 {} 보증금 환급 완료: {}명", auctionId, depositsToRelease.size());
     }
 
     private List<Deposit> findDepositsToRelease(Long auctionId, Long winnerId) {
         if (winnerId == null) {
             // 유찰인 경우: 모든 HOLD 상태 보증금 환급
-            return depositRepository.findAllByAuctionIdAndStatus(auctionId, DepositStatus.HOLD);
+            return depositRepository.findAllByAuctionIdAndStatusWithMember(auctionId, DepositStatus.HOLD);
         }
         // 낙찰자 제외
-        return depositRepository.findAllByAuctionIdAndStatusAndMemberIdNot(
-			auctionId, DepositStatus.HOLD, winnerId);
+        return depositRepository.findAllByAuctionIdAndStatusAndMemberIdNotWithMember(auctionId, DepositStatus.HOLD, winnerId);
     }
 
-    private void releaseDeposit(Deposit deposit) {
-        Long memberId = deposit.getMember().getId();
-
+    private PaymentTransaction releaseDeposit(Deposit deposit, Wallet wallet) {
         // 1. Deposit 상태 변경
         deposit.release();
 
         // 2. Wallet holdingAmount 감소
-        Wallet wallet = paymentSupport.findWalletByMemberIdForUpdate(memberId);
         wallet.release(deposit.getAmount());
 
-        // 3. 이력 기록
-        PaymentTransaction transaction = PaymentTransaction.builder()
+        log.info("보증금 환급: memberId={}, amount={}", deposit.getMember().getId(), deposit.getAmount());
+
+        // 3. 이력 기록 반환
+        return PaymentTransaction.builder()
                 .member(deposit.getMember())
                 .wallet(wallet)
                 .transactionType(WalletTransactionType.DEPOSIT_RELEASE)
@@ -68,8 +90,5 @@ public class PaymentReleaseDepositUseCase {
                 .referenceType(ReferenceType.DEPOSIT)
                 .referenceId(deposit.getId())
                 .build();
-        transactionRepository.save(transaction);
-
-        log.info("보증금 환급: memberId={}, amount={}", memberId, deposit.getAmount());
     }
 }

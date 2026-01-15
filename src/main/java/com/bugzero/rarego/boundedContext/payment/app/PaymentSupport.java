@@ -1,5 +1,9 @@
 package com.bugzero.rarego.boundedContext.payment.app;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Component;
 
 import com.bugzero.rarego.boundedContext.payment.domain.Payment;
@@ -20,11 +24,6 @@ public class PaymentSupport {
 	private final PaymentRepository paymentRepository;
 	private final PaymentMemberRepository paymentMemberRepository;
 
-	public Wallet findWalletByMemberId(Long memberId) {
-		return walletRepository.findByMemberId(memberId)
-			.orElseThrow(() -> new CustomException(ErrorType.WALLET_NOT_FOUND));
-	}
-
 	public Payment findPaymentByOrderId(String orderId) {
 		return paymentRepository.findByOrderId(orderId)
 			.orElseThrow(() -> new CustomException(ErrorType.PAYMENT_NOT_FOUND));
@@ -37,6 +36,14 @@ public class PaymentSupport {
 
 	public Wallet findWalletByMemberIdForUpdate(Long memberId) {
 		return walletRepository.findByMemberIdForUpdate(memberId)
-				.orElseThrow(() -> new CustomException(ErrorType.WALLET_NOT_FOUND));
+			.orElseThrow(() -> new CustomException(ErrorType.WALLET_NOT_FOUND));
+	}
+
+	public Map<Long, Wallet> findWalletsByMemberIdsForUpdate(List<Long> memberIds) {
+		if (memberIds.isEmpty()) {
+			return Map.of();
+		}
+		return walletRepository.findAllByMemberIdInForUpdate(memberIds).stream()
+			.collect(Collectors.toMap(w -> w.getMember().getId(), w -> w));
 	}
 }
