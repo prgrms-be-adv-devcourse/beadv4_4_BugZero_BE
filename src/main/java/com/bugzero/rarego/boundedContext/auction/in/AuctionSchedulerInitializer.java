@@ -8,6 +8,8 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,6 +25,7 @@ public class AuctionSchedulerInitializer {
     private final AuctionRepository auctionRepository;
     private final AuctionScheduler scheduler;
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @EventListener(ApplicationReadyEvent.class)
     public void initializeSchedules() {
         log.info("경매 정산 스케줄 복구 시작...");
