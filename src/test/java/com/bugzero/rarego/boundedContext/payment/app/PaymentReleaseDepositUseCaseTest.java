@@ -56,8 +56,8 @@ class PaymentReleaseDepositUseCaseTest {
 
         when(depositRepository.findAllByAuctionIdAndStatusAndMemberIdNot(auctionId, DepositStatus.HOLD, winnerId))
                 .thenReturn(List.of(deposit1, deposit2));
-		when(paymentSupport.findWalletByMemberId(101L)).thenReturn(wallet1);
-		when(paymentSupport.findWalletByMemberId(102L)).thenReturn(wallet2);
+        when(paymentSupport.findWalletByMemberIdForUpdate(101L)).thenReturn(wallet1);
+        when(paymentSupport.findWalletByMemberIdForUpdate(102L)).thenReturn(wallet2);
 
         // when
         paymentReleaseDepositUseCase.releaseDeposits(auctionId, winnerId);
@@ -85,7 +85,7 @@ class PaymentReleaseDepositUseCaseTest {
 
         when(depositRepository.findAllByAuctionIdAndStatus(auctionId, DepositStatus.HOLD))
                 .thenReturn(List.of(deposit));
-		when(paymentSupport.findWalletByMemberId(101L)).thenReturn(wallet);
+        when(paymentSupport.findWalletByMemberIdForUpdate(101L)).thenReturn(wallet);
 
         // when
         paymentReleaseDepositUseCase.releaseDeposits(auctionId, winnerId);
@@ -110,7 +110,7 @@ class PaymentReleaseDepositUseCaseTest {
         paymentReleaseDepositUseCase.releaseDeposits(auctionId, winnerId);
 
         // then
-		verify(paymentSupport, never()).findWalletByMemberId(anyLong());
+        verify(paymentSupport, never()).findWalletByMemberIdForUpdate(anyLong());
         verify(transactionRepository, never()).save(any());
     }
 }

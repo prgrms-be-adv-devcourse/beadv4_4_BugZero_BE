@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional(readOnly = true)
 public class PaymentReleaseDepositUseCase {
     private final DepositRepository depositRepository;
-	private final PaymentSupport paymentSupport;
+    private final PaymentSupport paymentSupport;
     private final PaymentTransactionRepository transactionRepository;
 
     @Transactional
@@ -54,7 +54,7 @@ public class PaymentReleaseDepositUseCase {
         deposit.release();
 
         // 2. Wallet holdingAmount 감소
-        Wallet wallet = paymentSupport.findWalletByMemberId(memberId);
+        Wallet wallet = paymentSupport.findWalletByMemberIdForUpdate(memberId);
         wallet.release(deposit.getAmount());
 
         // 3. 이력 기록

@@ -34,4 +34,9 @@ public class PaymentSupport {
 		return paymentMemberRepository.findById(id)
 			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
 	}
+
+	public Wallet findWalletByMemberIdForUpdate(Long memberId) {
+		return walletRepository.findByMemberIdForUpdate(memberId)
+				.orElseThrow(() -> new CustomException(ErrorType.WALLET_NOT_FOUND));
+	}
 }
