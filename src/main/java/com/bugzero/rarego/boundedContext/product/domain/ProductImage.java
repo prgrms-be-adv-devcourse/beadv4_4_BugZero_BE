@@ -26,7 +26,6 @@ public class ProductImage extends BaseIdAndTime {
 	private Product	product;
 	@Column(length = 500, nullable = false)
 	private String imageUrl;
-	private boolean isThumbnail;
 	private int sortOrder;
 
 }
