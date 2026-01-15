@@ -11,9 +11,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 import com.bugzero.rarego.boundedContext.auth.domain.AuthMember;
+import com.bugzero.rarego.boundedContext.auth.domain.Provider;
 import com.bugzero.rarego.boundedContext.auth.out.AuthMemberRepository;
 import com.bugzero.rarego.shared.member.domain.MemberRole;
-import com.bugzero.rarego.shared.member.domain.Provider;
 
 @Configuration
 @Profile("dev")
@@ -54,8 +54,6 @@ public class AuthDataInit {
 			.email(email)
 			.nickname(nickname)
 			.role(role)
-			.provider(Provider.GOOGLE)
-			.providerId("provider_" + id)
 			.createdAt(now)
 			.updatedAt(now)
 			.build();
