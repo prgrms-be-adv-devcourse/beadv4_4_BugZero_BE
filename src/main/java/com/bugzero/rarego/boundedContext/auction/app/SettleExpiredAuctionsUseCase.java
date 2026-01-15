@@ -1,6 +1,8 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
 import com.bugzero.rarego.boundedContext.auction.domain.*;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -17,11 +19,12 @@ import java.util.List;
 public class SettleExpiredAuctionsUseCase {
 
     private final AuctionSettlementSupport support;
+    private final AuctionRepository auctionRepository;
+    private final AuctionOrderRepository auctionOrderRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public AuctionAutoResponseDto execute() {
-
         LocalDateTime now = LocalDateTime.now();
         List<Auction> auctions = support.findExpiredAuctions(now);
 
@@ -50,19 +53,12 @@ public class SettleExpiredAuctionsUseCase {
             }
         }
 
-        return AuctionAutoResponseDto.from(
-                now,
-                auctions,
-                success,
-                fail,
-                details
-        );
+        return AuctionAutoResponseDto.from(now, auctions, success, fail, details);
     }
 
     private void handleFail(Auction auction) {
         auction.end();
-
-        support.saveAuction(auction);
+        auctionRepository.save(auction);
 
         eventPublisher.publishEvent(
                 AuctionFailedEvent.builder()
@@ -72,14 +68,13 @@ public class SettleExpiredAuctionsUseCase {
         );
     }
 
-
     private void handleSuccess(Auction auction) {
         Bid winningBid = support.findWinningBid(auction.getId());
 
         auction.end();
-        support.saveAuction(auction);
+        auctionRepository.save(auction);
 
-        support.saveOrder(
+        auctionOrderRepository.save(
                 AuctionOrder.builder()
                         .auctionId(auction.getId())
                         .bidderId(winningBid.getBidderId())
