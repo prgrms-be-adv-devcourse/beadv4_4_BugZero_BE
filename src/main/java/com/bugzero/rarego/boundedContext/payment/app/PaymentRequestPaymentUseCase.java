@@ -10,23 +10,19 @@ import com.bugzero.rarego.boundedContext.payment.domain.PaymentMember;
 import com.bugzero.rarego.boundedContext.payment.domain.PaymentStatus;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestResponseDto;
-import com.bugzero.rarego.boundedContext.payment.out.PaymentMemberRepository;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentRepository;
-import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.response.ErrorType;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class PaymentRequestPaymentUseCase {
-	private final PaymentMemberRepository paymentMemberRepository;
 	private final PaymentRepository paymentRepository;
+	private final PaymentSupport paymentSupport;
 
 	@Transactional
 	public PaymentRequestResponseDto requestPayment(Long memberId, PaymentRequestDto requestDto) {
-		PaymentMember member = paymentMemberRepository.findById(memberId)
-			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
+		PaymentMember member = paymentSupport.findMemberById(memberId);
 
 		String orderId = UUID.randomUUID().toString();
 
