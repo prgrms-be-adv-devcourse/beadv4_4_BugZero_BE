@@ -61,10 +61,10 @@ public class AuctionSettleOneUseCase {
         auctionRepository.save(auction);
 
         eventPublisher.publishEvent(
-                AuctionFailedEvent.builder()
-                        .auctionId(auction.getId())
-                        .productId(auction.getProductId())
-                        .build()
+                new AuctionFailedEvent(
+                        auction.getId(),
+                        auction.getProductId()
+                )
         );
     }
 
@@ -83,12 +83,12 @@ public class AuctionSettleOneUseCase {
         );
 
         eventPublisher.publishEvent(
-                AuctionEndedEvent.builder()
-                        .auctionId(auction.getId())
-                        .winnerId(winningBid.getBidderId())
-                        .finalPrice(winningBid.getBidAmount())
-                        .productId(auction.getProductId())
-                        .build()
+                new AuctionEndedEvent(
+                        auction.getId(),
+                        winningBid.getBidderId(),
+                        winningBid.getBidAmount(),
+                        auction.getProductId()
+                )
         );
     }
 }

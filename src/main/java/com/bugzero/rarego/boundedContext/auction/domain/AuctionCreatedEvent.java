@@ -1,13 +1,15 @@
 package com.bugzero.rarego.boundedContext.auction.domain;
 
-import lombok.Builder;
-import lombok.Getter;
-
 import java.time.LocalDateTime;
 
-@Getter
-@Builder
-public class AuctionCreatedEvent {
-    private final Long auctionId;
-    private final LocalDateTime endTime;
+/**
+ * 경매 생성 시 발행되는 이벤트
+ *
+ * @param auctionId 경매 ID
+ * @param endTime   경매 종료 시간
+ */
+public record AuctionCreatedEvent(
+        Long auctionId,
+        LocalDateTime endTime
+) {
 }

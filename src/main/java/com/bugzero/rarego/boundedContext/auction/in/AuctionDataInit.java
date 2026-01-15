@@ -111,7 +111,7 @@ public class AuctionDataInit {
         log.info("정상 경매 생성 완료 - AuctionId: {}, ProductId: {}", normalAuction.getId(), product1.getId());
 
         // ========== 3. 정산 테스트용 경매 생성 (내 코드) ==========
-        
+
         // 3-1. 종료 + 입찰 있음 (낙찰 대상)
         Product product2 = createProduct(seller.getId(), "테스트 상품 1", 10_000);
         Auction auction1 = createAuction(product2.getId(), -2, -1, 10_000, 1_000);
@@ -140,12 +140,12 @@ public class AuctionDataInit {
         auction4.forceStartForTest();
         auctionRepository.save(auction4);
         bidRepository.save(createBid(auction4.getId(), buyer.getId(), 45_000));
-        
+
         eventPublisher.publishEvent(
-                AuctionCreatedEvent.builder()
-                        .auctionId(auction4.getId())
-                        .endTime(auction4.getEndTime())
-                        .build()
+                new AuctionCreatedEvent(
+                        auction4.getId(),
+                        auction4.getEndTime()
+                )
         );
 
         // 3-5. 진행 중 + 5분 후 종료 (동적 스케줄링 테스트용)
@@ -154,12 +154,12 @@ public class AuctionDataInit {
         auction5.forceStartForTest();
         auctionRepository.save(auction5);
         bidRepository.save(createBid(auction5.getId(), buyer.getId(), 55_000));
-        
+
         eventPublisher.publishEvent(
-                AuctionCreatedEvent.builder()
-                        .auctionId(auction5.getId())
-                        .endTime(auction5.getEndTime())
-                        .build()
+                new AuctionCreatedEvent(
+                        auction5.getId(),
+                        auction5.getEndTime()
+                )
         );
 
         log.info("=== 경매 테스트 데이터 초기화 완료 ===");
@@ -209,8 +209,8 @@ public class AuctionDataInit {
         return Auction.builder()
                 .productId(productId)
                 .startTime(now.plusHours(startHoursOffset))
-                .endTime(endMinutesOffset > 0 
-                        ? now.plusMinutes(endMinutesOffset) 
+                .endTime(endMinutesOffset > 0
+                        ? now.plusMinutes(endMinutesOffset)
                         : now.plusHours(startHoursOffset).minusMinutes(-endMinutesOffset))
                 .startPrice(startPrice)
                 .tickSize(tickSize)
