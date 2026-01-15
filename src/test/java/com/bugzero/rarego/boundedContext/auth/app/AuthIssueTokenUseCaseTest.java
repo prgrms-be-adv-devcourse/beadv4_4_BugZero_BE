@@ -15,11 +15,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.bugzero.rarego.boundedContext.auth.domain.AuthRole;
 import com.bugzero.rarego.boundedContext.auth.domain.TokenIssueDto;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.security.JwtProvider;
-import com.bugzero.rarego.shared.member.domain.MemberRole;
 
 @ExtendWith(MockitoExtension.class)
 class AuthIssueTokenUseCaseTest {
@@ -38,11 +38,11 @@ class AuthIssueTokenUseCaseTest {
 	@Test
 	@DisplayName("access 토큰 발급 시 멤버 id/role과 access 만료시간을 전달한다.")
 	void issueAccessTokenPassesMemberClaimsAndExpireSeconds() {
-		TokenIssueDto tokenIssueDto = new TokenIssueDto(1L, MemberRole.USER.name());
+		TokenIssueDto tokenIssueDto = new TokenIssueDto(1L, AuthRole.USER.name());
 
 		when(jwtProvider.issueToken(eq(3600), argThat(body ->
 			((Number) body.get("id")).longValue() == 1L
-				&& MemberRole.USER.name().equals(body.get("role"))
+				&& AuthRole.USER.name().equals(body.get("role"))
 				&& body.size() == 2
 		))).thenReturn("token");
 
@@ -55,11 +55,11 @@ class AuthIssueTokenUseCaseTest {
 	@Test
 	@DisplayName("refresh 토큰 발급 시 멤버 id/role과 refresh 만료시간을 전달한다.")
 	void issueRefreshTokenPassesMemberClaimsAndExpireSeconds() {
-		TokenIssueDto tokenIssueDto = new TokenIssueDto(2L, MemberRole.ADMIN.name());
+		TokenIssueDto tokenIssueDto = new TokenIssueDto(2L, AuthRole.ADMIN.name());
 
 		when(jwtProvider.issueToken(eq(7200), argThat(body ->
 			((Number) body.get("id")).longValue() == 2L
-				&& MemberRole.ADMIN.name().equals(body.get("role"))
+				&& AuthRole.ADMIN.name().equals(body.get("role"))
 				&& body.size() == 2
 		))).thenReturn("refresh-token");
 
@@ -72,7 +72,7 @@ class AuthIssueTokenUseCaseTest {
 	@Test
 	@DisplayName("refresh 토큰 발급 시 access 만료시간으로는 호출하지 않는다.")
 	void issueRefreshTokenDoesNotUseAccessExpireSeconds() {
-		TokenIssueDto tokenIssueDto = new TokenIssueDto(3L, MemberRole.USER.name());
+		TokenIssueDto tokenIssueDto = new TokenIssueDto(3L, AuthRole.USER.name());
 
 		when(jwtProvider.issueToken(eq(7200), anyMap())).thenReturn("refresh-token");
 
@@ -85,7 +85,7 @@ class AuthIssueTokenUseCaseTest {
 	@Test
 	@DisplayName("jwtProvider가 예외를 던지면 JWT_ISSUE_FAILED로 감싼다.")
 	void issueTokenWrapsUnexpectedException() {
-		TokenIssueDto tokenIssueDto = new TokenIssueDto(1L, MemberRole.USER.name());
+		TokenIssueDto tokenIssueDto = new TokenIssueDto(1L, AuthRole.USER.name());
 
 		when(jwtProvider.issueToken(anyInt(), anyMap())).thenThrow(new RuntimeException("boom"));
 
@@ -100,7 +100,7 @@ class AuthIssueTokenUseCaseTest {
 	void issueTokenFailsWhenAccessExpireSecondsInvalid() throws Exception {
 		setField(authIssueTokenUseCase, "accessTokenExpireSeconds", 0);
 
-		TokenIssueDto tokenIssueDto = new TokenIssueDto(1L, MemberRole.USER.name());
+		TokenIssueDto tokenIssueDto = new TokenIssueDto(1L, AuthRole.USER.name());
 
 		assertThatThrownBy(() -> authIssueTokenUseCase.issueToken(tokenIssueDto, true))
 			.isInstanceOf(CustomException.class)
@@ -113,7 +113,7 @@ class AuthIssueTokenUseCaseTest {
 	void issueTokenFailsWhenRefreshExpireSecondsInvalid() throws Exception {
 		setField(authIssueTokenUseCase, "refreshTokenExpireSeconds", -1);
 
-		TokenIssueDto tokenIssueDto = new TokenIssueDto(1L, MemberRole.USER.name());
+		TokenIssueDto tokenIssueDto = new TokenIssueDto(1L, AuthRole.USER.name());
 
 		assertThatThrownBy(() -> authIssueTokenUseCase.issueToken(tokenIssueDto, false))
 			.isInstanceOf(CustomException.class)
@@ -135,7 +135,7 @@ class AuthIssueTokenUseCaseTest {
 	@Test
 	@DisplayName("member id가 없으면 AUTH_MEMBER_ID_INVALID 예외가 발생한다.")
 	void issueTokenFailsWhenMemberIdMissing() {
-		TokenIssueDto tokenIssueDto = new TokenIssueDto(null, MemberRole.USER.name());
+		TokenIssueDto tokenIssueDto = new TokenIssueDto(null, AuthRole.USER.name());
 
 		assertThatThrownBy(() -> authIssueTokenUseCase.issueToken(tokenIssueDto, true))
 			.isInstanceOf(CustomException.class)

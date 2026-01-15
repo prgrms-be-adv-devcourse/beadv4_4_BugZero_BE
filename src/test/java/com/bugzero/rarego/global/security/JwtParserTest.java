@@ -8,7 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.bugzero.rarego.shared.member.domain.MemberRole;
+import com.bugzero.rarego.boundedContext.auth.domain.AuthRole;
 
 class JwtParserTest {
 	private static final String SECRET_KEY = "abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890";
@@ -26,14 +26,14 @@ class JwtParserTest {
 	void parsePrincipalReturnsMemberPrincipal() {
 		String jwt = jwtProvider.issueToken(
 			60 * 60,
-			Map.of("id", 1L, "nickname", "친절한 옥수수", "role", MemberRole.USER.name())
+			Map.of("id", 1L, "role", AuthRole.USER.name())
 		);
 
 		MemberPrincipal principal = jwtParser.parsePrincipal(jwt);
 
 		assertThat(principal).isNotNull();
 		assertThat(principal.id()).isEqualTo(1L);
-		assertThat(principal.role()).isEqualTo(MemberRole.USER.name());
+		assertThat(principal.role()).isEqualTo(AuthRole.USER.name());
 	}
 
 	@Test
@@ -41,14 +41,14 @@ class JwtParserTest {
 	void parsePrincipalConvertsIntegerIdToLong() {
 		String jwt = jwtProvider.issueToken(
 			60 * 60,
-			Map.of("id", 1, "role", MemberRole.USER.name())
+			Map.of("id", 1, "role", AuthRole.USER.name())
 		);
 
 		MemberPrincipal principal = jwtParser.parsePrincipal(jwt);
 
 		assertThat(principal).isNotNull();
 		assertThat(principal.id()).isEqualTo(1L);
-		assertThat(principal.role()).isEqualTo(MemberRole.USER.name());
+		assertThat(principal.role()).isEqualTo(AuthRole.USER.name());
 	}
 
 	@Test

@@ -9,12 +9,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
-import com.bugzero.rarego.boundedContext.auth.domain.Provider;
 import com.bugzero.rarego.boundedContext.payment.domain.PaymentMember;
 import com.bugzero.rarego.boundedContext.payment.domain.Wallet;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentMemberRepository;
 import com.bugzero.rarego.boundedContext.payment.out.WalletRepository;
-import com.bugzero.rarego.shared.member.domain.MemberRole;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -49,7 +47,6 @@ public class PaymentDataInit {
 			.publicId(UUID.randomUUID().toString())
 			.email("test@bugzero.com")
 			.nickname("테스트유저")
-			.role(MemberRole.USER)
 			.createdAt(LocalDateTime.now())
 			.updatedAt(LocalDateTime.now())
 			.build();
