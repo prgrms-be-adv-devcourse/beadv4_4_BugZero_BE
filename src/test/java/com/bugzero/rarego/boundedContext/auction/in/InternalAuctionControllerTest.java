@@ -1,7 +1,7 @@
 package com.bugzero.rarego.boundedContext.auction.in;
 
 import com.bugzero.rarego.boundedContext.auction.app.AuctionSettleAuctionFacade;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionAutoResponseDto;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionAutoSettleResponseDto;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
 import com.bugzero.rarego.global.response.SuccessType;
 import org.junit.jupiter.api.DisplayName;
@@ -39,7 +39,7 @@ class InternalAuctionControllerTest {
     @DisplayName("경매 자동 낙찰 처리 API 호출 성공")
     void settle_Success() throws Exception {
         // given - DTO 빌더 활용
-        AuctionAutoResponseDto mockResponse = AuctionAutoResponseDto.builder()
+        AuctionAutoSettleResponseDto mockResponse = AuctionAutoSettleResponseDto.builder()
                 .requestTime(LocalDateTime.now())
                 .processedCount(10)
                 .successCount(8)
@@ -66,7 +66,7 @@ class InternalAuctionControllerTest {
     @DisplayName("처리할 경매가 없는 경우")
     void settle_NoAuctions() throws Exception {
         // given
-        AuctionAutoResponseDto mockResponse = AuctionAutoResponseDto.builder()
+        AuctionAutoSettleResponseDto mockResponse = AuctionAutoSettleResponseDto.builder()
                 .requestTime(LocalDateTime.now())
                 .processedCount(0)
                 .successCount(0)

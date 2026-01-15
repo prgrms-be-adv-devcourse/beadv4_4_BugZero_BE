@@ -1,7 +1,7 @@
 package com.bugzero.rarego.boundedContext.auction.in;
 
 import com.bugzero.rarego.boundedContext.auction.app.AuctionSettleAuctionFacade;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionAutoResponseDto;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionAutoSettleResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 
@@ -24,7 +24,7 @@ public class InternalAuctionController {
 
     @Operation(summary = "경매 정산", description = "종료된 경매를 정산합니다")
     @PostMapping("/settle")
-    public SuccessResponseDto<AuctionAutoResponseDto> settle() {
+    public SuccessResponseDto<AuctionAutoSettleResponseDto> settle() {
         return SuccessResponseDto.from(SuccessType.OK, facade.settle());
     }
 }

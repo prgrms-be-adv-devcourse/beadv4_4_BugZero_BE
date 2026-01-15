@@ -1,6 +1,6 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionAutoResponseDto;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionAutoSettleResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +15,7 @@ public class AuctionSettleAuctionFacade {
      * 만료된 모든 경매 일괄 정산 (수동 호출용)
      * 추후에 사용하지 않는다면 삭제 예정
      */
-    public AuctionAutoResponseDto settle() {
+    public AuctionAutoSettleResponseDto settle() {
         return auctionSettleExpiredUseCase.execute();
     }
 

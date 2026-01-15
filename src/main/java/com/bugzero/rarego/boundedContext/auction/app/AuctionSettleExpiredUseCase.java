@@ -1,6 +1,10 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
-import com.bugzero.rarego.boundedContext.auction.domain.*;
+import com.bugzero.rarego.boundedContext.auction.domain.Auction;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionFailedEvent;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
+import com.bugzero.rarego.boundedContext.auction.domain.Bid;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionAutoSettleResponseDto;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.shared.auction.event.AuctionEndedEvent;
@@ -25,26 +29,26 @@ public class AuctionSettleExpiredUseCase {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public AuctionAutoResponseDto execute() {
+    public AuctionAutoSettleResponseDto execute() {
         LocalDateTime now = LocalDateTime.now();
         List<Auction> auctions = support.findExpiredAuctions(now);
 
         int success = 0;
         int fail = 0;
-        List<AuctionAutoResponseDto.SettlementDetail> details = new ArrayList<>();
+        List<AuctionAutoSettleResponseDto.SettlementDetail> details = new ArrayList<>();
 
         for (Auction auction : auctions) {
             try {
                 if (support.hasBids(auction.getId())) {
                     handleSuccess(auction);
                     Bid winningBid = support.findWinningBid(auction.getId());
-                    details.add(AuctionAutoResponseDto.SettlementDetail.success(
+                    details.add(AuctionAutoSettleResponseDto.SettlementDetail.success(
                             auction.getId(),
                             winningBid.getBidderId()));
                     success++;
                 } else {
                     handleFail(auction);
-                    details.add(AuctionAutoResponseDto.SettlementDetail.failed(auction.getId()));
+                    details.add(AuctionAutoSettleResponseDto.SettlementDetail.failed(auction.getId()));
                     fail++;
                 }
             } catch (Exception e) {
@@ -53,7 +57,7 @@ public class AuctionSettleExpiredUseCase {
             }
         }
 
-        return AuctionAutoResponseDto.from(now, auctions, success, fail, details);
+        return AuctionAutoSettleResponseDto.from(now, auctions, success, fail, details);
     }
 
     private void handleFail(Auction auction) {
