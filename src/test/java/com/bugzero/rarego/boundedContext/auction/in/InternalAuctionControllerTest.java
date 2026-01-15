@@ -1,8 +1,7 @@
-package com.bugzero.rarego.boundedContext.auction.controller;
+package com.bugzero.rarego.boundedContext.auction.in;
 
 import com.bugzero.rarego.boundedContext.auction.app.AuctionSettleAuctionFacade;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionAutoResponseDto;
-import com.bugzero.rarego.boundedContext.auction.in.InternalAuctionController;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
 import com.bugzero.rarego.global.response.SuccessType;
 import org.junit.jupiter.api.DisplayName;
