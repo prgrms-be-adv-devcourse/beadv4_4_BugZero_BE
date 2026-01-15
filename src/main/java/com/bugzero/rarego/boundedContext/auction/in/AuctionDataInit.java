@@ -12,12 +12,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
 @Configuration
 @Slf4j
-@Profile("local") // local 환경에서만 실행
+@Profile("dev")
 public class AuctionDataInit {
 
     private final AuctionDataInit self;
@@ -44,6 +45,7 @@ public class AuctionDataInit {
         };
     }
 
+    @Transactional
     public void makeBaseAuctionData() {
         if (auctionRepository.count() > 0) {
             log.info("이미 경매 데이터가 존재합니다. 초기화를 건너뜁니다.");
