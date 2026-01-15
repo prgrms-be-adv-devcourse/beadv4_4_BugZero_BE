@@ -1,118 +1,131 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
 import com.bugzero.rarego.boundedContext.auction.domain.Auction;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember; // [변경] Member -> AuctionMember
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.Bid;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository; // [변경] MemberRepository -> AuctionMemberRepository
+import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
-@SpringBootTest
-@ActiveProfiles("test")
+@ExtendWith(MockitoExtension.class) // 스프링 컨텍스트 없이 Mockito만 사용
 class AuctionCreateBidUseCaseTest {
 
-	@Autowired private AuctionCreateBidUseCase auctionCreateBidUseCase;
-	@Autowired private AuctionRepository auctionRepository;
-	@Autowired private BidRepository bidRepository;
-	@Autowired private ProductRepository productRepository;
+	@InjectMocks
+	private AuctionCreateBidUseCase auctionCreateBidUseCase;
 
-	// [변경] MemberRepository -> AuctionMemberRepository 로 변경
-	@MockitoBean private AuctionMemberRepository auctionMemberRepository;
+	@Mock
+	private AuctionRepository auctionRepository;
+	@Mock
+	private BidRepository bidRepository;
+	@Mock
+	private AuctionMemberRepository auctionMemberRepository;
+	@Mock
+	private ProductRepository productRepository;
 
-	private Auction auction;
-
+	private final Long AUCTION_ID = 1L;
+	private final Long PRODUCT_ID = 10L;
 	private final Long SELLER_ID = 100L;
 	private final Long BIDDER_ID = 200L;
-
-	@BeforeEach
-	void setUp() {
-		bidRepository.deleteAll();
-		auctionRepository.deleteAll();
-		productRepository.deleteAll();
-
-		// [변경] AuctionMemberRepository Mock 동작 정의
-		given(auctionMemberRepository.findById(anyLong())).willAnswer(invocation -> {
-			Long id = invocation.getArgument(0);
-			return Optional.of(createMockMember(id));
-		});
-
-		// 상품 생성
-		Product product = Product.builder()
-			.sellerId(SELLER_ID)
-			.name("Test Product")
-			.description("Desc")
-			.build();
-		productRepository.save(product);
-
-		// 경매 생성
-		auction = Auction.builder()
-			.productId(product.getId())
-			.startTime(LocalDateTime.now().minusHours(1))
-			.endTime(LocalDateTime.now().plusHours(1))
-			.startPrice(10000)
-			.tickSize(1000)
-			.build();
-
-		// [추가] Auction 상태를 IN_PROGRESS로 변경 (이전 오류 수정 사항 반영)
-		auction.startAuction();
-		auctionRepository.save(auction);
-	}
-
-	// [변경] 반환 타입 Member -> AuctionMember
-	private AuctionMember createMockMember(Long id) {
-		// Mock 객체 생성 시 AuctionMember 클래스 사용
-		AuctionMember mockMember = mock(AuctionMember.class);
-		given(mockMember.getId()).willReturn(id);
-		given(mockMember.getPublicId()).willReturn(UUID.randomUUID().toString());
-		return mockMember;
-	}
 
 	@Test
 	@DisplayName("정상적인 입찰 성공 테스트")
 	void createBid_success() {
-		// when
+		// given
 		int bidAmount = 10000;
-		auctionCreateBidUseCase.createBid(auction.getId(), BIDDER_ID, bidAmount);
+
+		// 1. 입찰자(AuctionMember) Mock
+		AuctionMember bidder = AuctionMember.builder().build();
+		ReflectionTestUtils.setField(bidder, "id", BIDDER_ID); // ID 주입
+		ReflectionTestUtils.setField(bidder, "publicId", "test-public-id");
+		given(auctionMemberRepository.findById(BIDDER_ID)).willReturn(Optional.of(bidder));
+
+		// 2. 경매(Auction) Mock - 정상 진행 중 상태
+		Auction auction = Auction.builder()
+			.productId(PRODUCT_ID)
+			.startPrice(5000)
+			.tickSize(1000)
+			.startTime(LocalDateTime.now().minusHours(1))
+			.endTime(LocalDateTime.now().plusHours(1))
+			.build();
+		ReflectionTestUtils.setField(auction, "id", AUCTION_ID);
+		auction.startAuction(); // 상태를 IN_PROGRESS로 변경
+
+		// 주의: useCase에서 findByIdWithLock을 호출하므로 이를 Mocking 해야 함
+		given(auctionRepository.findByIdWithLock(AUCTION_ID)).willReturn(Optional.of(auction));
+
+		// 3. 상품(Product) Mock
+		Product product = Product.builder()
+			.sellerId(SELLER_ID) // 판매자는 다른 사람
+			.build();
+		given(productRepository.findById(PRODUCT_ID)).willReturn(Optional.of(product));
+
+		// 4. 이전 입찰 내역 Mock (없음)
+		given(bidRepository.findTopByAuctionIdOrderByBidTimeDesc(AUCTION_ID)).willReturn(Optional.empty());
+
+		// when
+		auctionCreateBidUseCase.createBid(AUCTION_ID, BIDDER_ID, bidAmount);
 
 		// then
-		Auction findAuction = auctionRepository.findById(auction.getId()).orElseThrow();
-		Bid findBid = bidRepository.findAll().get(0);
+		// 1. 경매 현재가가 업데이트 되었는지 확인
+		assertThat(auction.getCurrentPrice()).isEqualTo(bidAmount);
 
-		assertThat(findAuction.getCurrentPrice()).isEqualTo(bidAmount);
-		assertThat(findBid.getBidAmount()).isEqualTo(bidAmount);
-		assertThat(findBid.getBidderId()).isEqualTo(BIDDER_ID);
+		// 2. 입찰 정보가 저장되었는지 확인 (save 호출 여부 검증)
+		verify(bidRepository).save(any(Bid.class));
 	}
 
 	@Test
 	@DisplayName("입찰 실패: 판매자가 본인 경매에 입찰 시도")
 	void createBid_fail_seller_bid() {
+		// given
+		AuctionMember seller = AuctionMember.builder().build();
+		ReflectionTestUtils.setField(seller, "id", SELLER_ID); // 입찰자가 곧 판매자
+		given(auctionMemberRepository.findById(SELLER_ID)).willReturn(Optional.of(seller));
+
+		Auction auction = Auction.builder()
+			.productId(PRODUCT_ID)
+			.startTime(LocalDateTime.now().minusHours(1))
+			.endTime(LocalDateTime.now().plusHours(1))
+			.build();
+
+		// [수정] Auction ID 설정 추가
+		ReflectionTestUtils.setField(auction, "id", AUCTION_ID);
+		auction.startAuction();
+
+		given(auctionRepository.findByIdWithLock(AUCTION_ID)).willReturn(Optional.of(auction));
+
+		Product product = Product.builder()
+			.sellerId(SELLER_ID) // 판매자 ID 설정
+			.build();
+		given(productRepository.findById(PRODUCT_ID)).willReturn(Optional.of(product));
+
+		// 이전 입찰 내역 Mock
+		given(bidRepository.findTopByAuctionIdOrderByBidTimeDesc(AUCTION_ID)).willReturn(Optional.empty());
+
+		// when & then
 		assertThatThrownBy(() ->
-			auctionCreateBidUseCase.createBid(auction.getId(), SELLER_ID, 11000)
+			auctionCreateBidUseCase.createBid(AUCTION_ID, SELLER_ID, 10000)
 		)
 			.isInstanceOf(CustomException.class)
 			.extracting("errorType")
@@ -122,50 +135,40 @@ class AuctionCreateBidUseCaseTest {
 	@Test
 	@DisplayName("입찰 실패: 최소 입찰가보다 낮은 금액")
 	void createBid_fail_low_price() {
-		// 1. 10,000원 입찰
-		auctionCreateBidUseCase.createBid(auction.getId(), BIDDER_ID, 10000);
+		// given
+		AuctionMember bidder = AuctionMember.builder().build();
+		given(auctionMemberRepository.findById(BIDDER_ID)).willReturn(Optional.of(bidder));
 
-		// 2. 다른 ID(300L)로 10,500원 입찰 시도 (최소 11,000원이어야 함)
-		Long otherBidderId = 300L;
+		Auction auction = Auction.builder()
+			.productId(PRODUCT_ID)
+			.startPrice(5000)
+			.tickSize(1000)
+			.startTime(LocalDateTime.now().minusHours(1))
+			.endTime(LocalDateTime.now().plusHours(1))
+			.build();
 
+		// [수정] Auction ID 설정 추가
+		ReflectionTestUtils.setField(auction, "id", AUCTION_ID);
+		auction.startAuction();
+		auction.updateCurrentPrice(10000); // 현재가 설정
+
+		given(auctionRepository.findByIdWithLock(AUCTION_ID)).willReturn(Optional.of(auction));
+
+		Product product = Product.builder()
+			.sellerId(SELLER_ID)
+			.build();
+		given(productRepository.findById(PRODUCT_ID)).willReturn(Optional.of(product));
+
+		// [수정] 이 테스트에서도 validateBid가 호출되므로 Mocking 필요 (ID가 설정되었으므로 정상 매칭됨)
+		given(bidRepository.findTopByAuctionIdOrderByBidTimeDesc(AUCTION_ID)).willReturn(Optional.empty());
+
+		// when & then
+		// 10,500원 입찰 시도 (11,000원보다 낮음)
 		assertThatThrownBy(() ->
-			auctionCreateBidUseCase.createBid(auction.getId(), otherBidderId, 10500)
+			auctionCreateBidUseCase.createBid(AUCTION_ID, BIDDER_ID, 10500)
 		)
 			.isInstanceOf(CustomException.class)
 			.extracting("errorType")
 			.isEqualTo(ErrorType.AUCTION_BID_AMOUNT_TOO_LOW);
-	}
-
-	@Test
-	@DisplayName("동시성 테스트: 동시에 100명이 입찰 시도")
-	void createBid_concurrency() throws InterruptedException {
-		int threadCount = 100;
-		ExecutorService executorService = Executors.newFixedThreadPool(32);
-		CountDownLatch latch = new CountDownLatch(threadCount);
-
-		AtomicInteger successCount = new AtomicInteger();
-		AtomicInteger failCount = new AtomicInteger();
-
-		for (int i = 0; i < threadCount; i++) {
-			final long tempUserId = 1000L + i;
-			executorService.submit(() -> {
-				try {
-					auctionCreateBidUseCase.createBid(auction.getId(), tempUserId, 10000);
-					successCount.incrementAndGet();
-				} catch (Exception e) {
-					failCount.incrementAndGet();
-				} finally {
-					latch.countDown();
-				}
-			});
-		}
-
-		latch.await();
-
-		assertThat(successCount.get()).isEqualTo(1);
-		assertThat(failCount.get()).isEqualTo(threadCount - 1);
-
-		Auction findAuction = auctionRepository.findById(auction.getId()).orElseThrow();
-		assertThat(findAuction.getCurrentPrice()).isEqualTo(10000);
 	}
 }

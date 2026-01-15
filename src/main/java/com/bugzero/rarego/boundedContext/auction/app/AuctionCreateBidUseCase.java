@@ -13,8 +13,6 @@ import com.bugzero.rarego.boundedContext.auction.domain.Bid;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
-import com.bugzero.rarego.boundedContext.member.domain.Member;
-import com.bugzero.rarego.boundedContext.member.out.MemberRepository;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.global.exception.CustomException;
@@ -30,7 +28,6 @@ import lombok.RequiredArgsConstructor;
 public class AuctionCreateBidUseCase {
 	private final AuctionRepository auctionRepository;
 	private final BidRepository bidRepository;
-	private final MemberRepository memberRepository;
 	private final AuctionMemberRepository auctionMemberRepository;
 	private final ProductRepository productRepository;
 
