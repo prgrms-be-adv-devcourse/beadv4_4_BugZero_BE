@@ -13,7 +13,6 @@ import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductCondition;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.shared.member.domain.MemberRole;
-import com.bugzero.rarego.shared.member.domain.Provider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.ApplicationEventPublisher;
@@ -179,8 +178,6 @@ public class AuctionDataInit {
                             .email(email)
                             .nickname(nickname)
                             .role(role)
-                            .provider(Provider.GOOGLE)
-                            .providerId("provider_" + UUID.randomUUID())
                             .build();
                     return auctionMemberRepository.save(member);
                 });
