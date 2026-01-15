@@ -12,9 +12,6 @@ import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmResponseDt
 import com.bugzero.rarego.boundedContext.payment.in.dto.TossPaymentsConfirmResponseDto;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentRepository;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentTransactionRepository;
-import com.bugzero.rarego.boundedContext.payment.out.WalletRepository;
-import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.response.ErrorType;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,8 +19,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PaymentConfirmFinalizer {
 	private final PaymentRepository paymentRepository;
-	private final WalletRepository walletRepository;
 	private final PaymentTransactionRepository paymentTransactionRepository;
+	private final PaymentSupport paymentSupport;
 
 	@Transactional
 	public PaymentConfirmResponseDto finalizePayment(Payment payment,
@@ -33,8 +30,7 @@ public class PaymentConfirmFinalizer {
 
 		paymentRepository.save(payment); // payment는 영속성 컨텍스트와 연결이 끊긴 상태라 명시적으로 저장
 
-		Wallet wallet = walletRepository.findByMemberId(payment.getMember().getId())
-			.orElseThrow(() -> new CustomException(ErrorType.WALLET_NOT_FOUND));
+		Wallet wallet = paymentSupport.findWalletByMemberId(payment.getMember().getId());
 
 		// 지갑 잔액 증가
 		wallet.addBalance(payment.getAmount());

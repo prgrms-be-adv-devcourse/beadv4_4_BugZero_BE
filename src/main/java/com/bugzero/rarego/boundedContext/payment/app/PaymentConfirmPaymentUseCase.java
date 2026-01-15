@@ -22,6 +22,7 @@ public class PaymentConfirmPaymentUseCase {
 	private final TossPaymentsApiClient tossPaymentsApiClient;
 	private final PaymentRepository paymentRepository;
 	private final PaymentConfirmFinalizer paymentConfirmFinalizer;
+	private final PaymentSupport paymentSupport;
 
 	public PaymentConfirmResponseDto confirmPayment(Long memberId, PaymentConfirmRequestDto requestDto) {
 		try {
@@ -37,8 +38,7 @@ public class PaymentConfirmPaymentUseCase {
 	}
 
 	private Payment validateRequest(Long memberId, PaymentConfirmRequestDto requestDto) {
-		Payment payment = paymentRepository.findByOrderId(requestDto.orderId())
-			.orElseThrow(() -> new CustomException(ErrorType.PAYMENT_NOT_FOUND));
+		Payment payment = paymentSupport.findPaymentByOrderId(requestDto.orderId());
 
 		// 내 주문이 맞는지 확인
 		if (!payment.getMember().getId().equals(memberId)) {

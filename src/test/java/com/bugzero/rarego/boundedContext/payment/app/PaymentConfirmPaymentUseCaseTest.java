@@ -38,6 +38,9 @@ class PaymentConfirmPaymentUseCaseTest {
 	@Mock
 	private PaymentConfirmFinalizer paymentConfirmFinalizer;
 
+	@Mock
+	private PaymentSupport paymentSupport;
+
 	@Test
 	@DisplayName("결제 승인 성공: 모든 검증을 통과하고 최종 저장까지 호출되어야 한다")
 	void confirmPayment_success() {
@@ -59,7 +62,7 @@ class PaymentConfirmPaymentUseCaseTest {
 		TossPaymentsConfirmResponseDto tossResponse = new TossPaymentsConfirmResponseDto(orderId, "paymentKey", amount);
 		PaymentConfirmResponseDto expectedResponse = new PaymentConfirmResponseDto(orderId, amount, 20000);
 
-		given(paymentRepository.findByOrderId(orderId)).willReturn(Optional.of(payment));
+		given(paymentSupport.findPaymentByOrderId(orderId)).willReturn(payment);
 		given(tossApiClient.confirm(requestDto)).willReturn(tossResponse);
 		given(paymentConfirmFinalizer.finalizePayment(payment, tossResponse)).willReturn(expectedResponse);
 
@@ -71,7 +74,7 @@ class PaymentConfirmPaymentUseCaseTest {
 		assertThat(result.orderId()).isEqualTo(orderId);
 
 		// 순서대로 호출되었는지 확인
-		verify(paymentRepository).findByOrderId(orderId); // 1. 검증
+		verify(paymentSupport).findPaymentByOrderId(orderId); // 1. 검증
 		verify(tossApiClient).confirm(requestDto);        // 2. 외부 통신
 		verify(paymentConfirmFinalizer).finalizePayment(payment, tossResponse); // 3. 최종 저장
 	}
@@ -92,7 +95,10 @@ class PaymentConfirmPaymentUseCaseTest {
 			.status(PaymentStatus.PENDING)
 			.build();
 
-		// findByOrderId는 validateRequest에서도 불리고, handlePaymentFailure에서도 불림
+		// 1. validateRequest 단계 (Support 사용)
+		given(paymentSupport.findPaymentByOrderId(orderId)).willReturn(payment);
+
+		// 2. 예외 발생 후 handlePaymentFailure 단계 (Repository 사용)
 		given(paymentRepository.findByOrderId(orderId)).willReturn(Optional.of(payment));
 
 		// when & then
@@ -124,6 +130,8 @@ class PaymentConfirmPaymentUseCaseTest {
 			.status(PaymentStatus.PENDING)
 			.build();
 
+		given(paymentSupport.findPaymentByOrderId(orderId)).willReturn(payment);
+
 		given(paymentRepository.findByOrderId(orderId)).willReturn(Optional.of(payment));
 
 		// when & then
@@ -133,6 +141,7 @@ class PaymentConfirmPaymentUseCaseTest {
 
 		// 상태가 FAILED로 변했는지 확인
 		assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
+		verify(paymentRepository, times(1)).save(payment);
 	}
 
 	@Test
@@ -150,6 +159,8 @@ class PaymentConfirmPaymentUseCaseTest {
 			.amount(10000)
 			.status(PaymentStatus.DONE) // 이미 완료된 상태
 			.build();
+
+		given(paymentSupport.findPaymentByOrderId(orderId)).willReturn(payment);
 
 		given(paymentRepository.findByOrderId(orderId)).willReturn(Optional.of(payment));
 
@@ -177,7 +188,10 @@ class PaymentConfirmPaymentUseCaseTest {
 			.status(PaymentStatus.PENDING)
 			.build();
 
+		given(paymentSupport.findPaymentByOrderId(orderId)).willReturn(payment);
+
 		given(paymentRepository.findByOrderId(orderId)).willReturn(Optional.of(payment));
+		;
 
 		// Toss API 호출 시 예외 발생시키기
 		given(tossApiClient.confirm(any())).willThrow(new CustomException(ErrorType.PAYMENT_CONFIRM_FAILED));
