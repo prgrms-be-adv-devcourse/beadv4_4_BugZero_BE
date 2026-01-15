@@ -17,6 +17,15 @@ toss:
     secretKey: ${TOSS_PAYMENTS_SECRET_KEY}
     url: "https://api.tosspayments.com/v1/payments"
 
+aws:
+  s3:
+    bucket: rarego-auction-product-images
+    expiration-minutes: 5
+  credentials:
+    access-key: ${AWS_ACCESS_KEY}
+    secret-key: ${AWS_SECRET_KEY}
+  region: ap-northeast-2
+
 custom:
   global:
     internalBackUrl: ${INTERNAL_BACK_URL:http://localhost:8080}
