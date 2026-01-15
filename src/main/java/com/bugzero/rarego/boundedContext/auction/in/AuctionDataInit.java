@@ -49,59 +49,89 @@ public class AuctionDataInit implements CommandLineRunner {
             return;
         }
 
-        log.info("🚀 경매 테스트 데이터 초기화 시작...");
+        log.info("🚀 경매 전체 테스트 데이터 초기화 시작...");
 
-        // 1. 회원 생성
+        // 0. 회원 생성
         AuctionMember seller = createOrGetMember(1L, "seller@test.com", "판매자_제로", MemberRole.SELLER);
-        AuctionMember me = createOrGetMember(2L, "me@test.com", "입찰자_나", MemberRole.USER); // 로그인 ID
+        AuctionMember me = createOrGetMember(2L, "me@test.com", "입찰자_나", MemberRole.USER); // 로그인할 계정
         AuctionMember competitor = createOrGetMember(3L, "comp@test.com", "경쟁자_A", MemberRole.USER);
 
         // ==========================================
-        // [Part 1] API 조회 테스트용 시나리오 (GET /auctions, GET /me/bids)
+        // [Part 1] API 조회 테스트용 (GET /auctions, /me/bids) (내 코드)
         // ==========================================
+        log.info("--- [Part 1] API 연동 테스트 데이터 ---");
 
-        // 1-1. 진행 중인 경매 (나 vs 경쟁자)
-        Product product1 = createProduct(seller.getId(), "레고 밀레니엄 팔콘 (진행중)", 10_000);
-        Auction auctionInProgress = createAuction(product1, 10_000, AuctionStatus.IN_PROGRESS, 1440); // 24시간 후 종료
+        // 1-1. 진행 중 (나 vs 경쟁자) -> 24시간 후 종료
+        Product product1 = createProduct(seller.getId(), "[1-1] 레고 밀레니엄 팔콘", 10_000);
+        Auction auction1 = createAuctionWithTime(product1.getId(), -60, 1440, 10_000, 1_000);
 
-        createBid(auctionInProgress, competitor, 15_000);
-        createBid(auctionInProgress, me, 20_000);
-        createBid(auctionInProgress, competitor, 25_000); // 현재가 25,000 (내가 지고 있음)
+        createBid(auction1, competitor, 15_000);
+        createBid(auction1, me, 20_000); // 내가 입찰 중
+        createBid(auction1, competitor, 25_000);
 
-        // 1-2. 종료된 경매 (내가 낙찰 - WON)
-        Product product2 = createProduct(seller.getId(), "아이폰 15 Pro (낙찰)", 500_000);
-        Auction auctionWon = createAuction(product2, 500_000, AuctionStatus.ENDED, -60); // 1시간 전 종료
+        // 1-2. 종료됨 (내가 낙찰 - WON) -> 1시간 전 종료
+        Product product2 = createProduct(seller.getId(), "[1-2] 아이폰 15 Pro (낙찰)", 500_000);
+        Auction auction2 = createAuctionWithTime(product2.getId(), -120, -60, 500_000, 10_000);
 
-        createBid(auctionWon, competitor, 550_000);
-        createBid(auctionWon, me, 600_000); // 최종 낙찰
+        createBid(auction2, competitor, 550_000);
+        createBid(auction2, me, 600_000); // 최종가: 600,000 (내꺼)
 
-        // 1-3. 종료된 경매 (내가 패찰 - LOST)
-        Product product3 = createProduct(seller.getId(), "맥북 프로 M3 (패찰)", 2_000_000);
-        Auction auctionLost = createAuction(product3, 2_000_000, AuctionStatus.ENDED, -120); // 2시간 전 종료
+        // 1-3. 종료됨 (내가 패찰 - LOST) -> 2시간 전 종료
+        Product product3 = createProduct(seller.getId(), "[1-3] 맥북 프로 M3 (패찰)", 2_000_000);
+        Auction auction3 = createAuctionWithTime(product3.getId(), -180, -120, 2_000_000, 50_000);
 
-        createBid(auctionLost, me, 2_100_000);
-        createBid(auctionLost, competitor, 2_200_000); // 최종 낙찰자는 경쟁자
+        createBid(auction3, me, 400_000);
+        createBid(auction3, competitor, 2_200_000); // 최종가: 2,200,000 (경쟁자꺼)
 
-        log.info("✅ API 테스트용 데이터 생성 완료");
 
         // ==========================================
-        // [Part 2] 정산/스케줄러 테스트용 (기존 코드 반영)
+        // [Part 2] 정산 로직 검증용 (2-1 ~ 2-5) (다른 팀원 코드)
         // ==========================================
+        log.info("--- [Part 2] 정산 로직 검증 데이터 ---");
 
-        // 2-1. 유찰 대상 (입찰 없음, 종료됨)
-        Product product4 = createProduct(seller.getId(), "유찰 테스트 상품", 50_000);
-        createAuction(product4, 50_000, AuctionStatus.ENDED, -10);
+        // 2-1. 낙찰 대상 (종료, 입찰3건)
+        Product product4 = createProduct(seller.getId(), "[2-1] 정산테스트(낙찰)", 10_000);
+        Auction auction4 = createAuctionWithTime(product4.getId(), -120, -1, 10_000, 1_000);
+        createBid(auction4, me, 15_000);
+        createBid(auction4, competitor, 20_000);
+        createBid(auction4, me, 25_000);
 
-        // 2-2. 마감 임박 (1분 후 종료 -> 자동 정산 테스트)
-        Product product5 = createProduct(seller.getId(), "마감임박 상품(1분)", 1_000);
-        Auction auctionEndingSoon = createAuction(product5, 1_000, AuctionStatus.IN_PROGRESS, 1);
-        createBid(auctionEndingSoon, me, 5_000);
+        // 2-2. 유찰 대상 (종료, 입찰0건)
+        Product product5 = createProduct(seller.getId(), "[2-2] 정산테스트(유찰)", 20_000);
+        Auction auction5 = createAuctionWithTime(product5.getId(), -120, -1, 20_000, 2_000);
 
-        // 이벤트 발행 (스케줄러가 있다면 감지)
-        eventPublisher.publishEvent(new AuctionCreatedEvent(auctionEndingSoon.getId(), auctionEndingSoon.getEndTime()));
+        // 2-3. 낙찰 대상 (종료, 단독입찰)
+        Product product6 = createProduct(seller.getId(), "[2-3] 정산테스트(단독낙찰)", 30_000);
+        Auction auction6 = createAuctionWithTime(product6.getId(), -180, -1, 30_000, 3_000);
+        createBid(auction6, me, 35_000);
 
-        log.info("✅ 정산 테스트용 데이터 생성 완료");
-        log.info("=== 초기화 종료 (내 ID: 2L) ===");
+        // 2-4. 진행 중 (1분 후 종료)
+        Product product7 = createProduct(seller.getId(), "[2-4] 동적스케줄(1분)", 40_000);
+        Auction auction7 = createAuctionWithTime(product7.getId(), -60, 1, 40_000, 4_000);
+        createBid(auction7, me, 45_000);
+        eventPublisher.publishEvent(new AuctionCreatedEvent(auction7.getId(), auction7.getEndTime()));
+
+        // 2-5. 진행 중 (5분 후 종료)
+        Product product8 = createProduct(seller.getId(), "[2-5] 동적스케줄(5분)", 50_000);
+        Auction auction8 = createAuctionWithTime(product8.getId(), -60, 5, 50_000, 5_000);
+        createBid(auction8, me, 55_000);
+        eventPublisher.publishEvent(new AuctionCreatedEvent(auction8.getId(), auction8.getEndTime()));
+
+        // ==========================================
+        // 로그 출력 (ID 확인용)
+        // ==========================================
+        log.info(" [Part 1: API 테스트]");
+        log.info("  1-1. 진행 중 (입찰중)   : ID={}", auction1.getId());
+        log.info("  1-2. 종료됨 (내가 낙찰) : ID={}", auction2.getId());
+        log.info("  1-3. 종료됨 (내가 패찰) : ID={}", auction3.getId());
+        log.info("----------------------------------------------------------------");
+        log.info(" [Part 2: 정산 로직]");
+        log.info("  2-1. 종료됨 (낙찰,입찰3): ID={}", auction4.getId());
+        log.info("  2-2. 종료됨 (유찰)      : ID={}", auction5.getId());
+        log.info("  2-3. 종료됨 (단독낙찰)  : ID={}", auction6.getId());
+        log.info("  2-4. 진행 중 (1분 남음) : ID={}", auction7.getId());
+        log.info("  2-5. 진행 중 (5분 남음) : ID={}", auction8.getId());
+        log.info("----------------------------------------------------------------");
     }
 
     // --- Helper Methods ---
@@ -109,7 +139,7 @@ public class AuctionDataInit implements CommandLineRunner {
     private AuctionMember createOrGetMember(Long id, String email, String nickname, MemberRole role) {
         return auctionMemberRepository.findById(id)
             .orElseGet(() -> auctionMemberRepository.save(AuctionMember.builder()
-                .id(id) // 테스트용 ID 지정
+                .id(id)
                 .publicId(UUID.randomUUID().toString())
                 .email(email)
                 .nickname(nickname)
@@ -123,42 +153,45 @@ public class AuctionDataInit implements CommandLineRunner {
         return productRepository.save(Product.builder()
             .sellerId(sellerId)
             .name(name)
-            .description("테스트용 상품입니다.")
+            .description("테스트용 상품 설명")
             .category(Category.스타워즈)
             .productCondition(ProductCondition.MISB)
             .inspectionStatus(InspectionStatus.PENDING)
             .build());
     }
 
-    private Auction createAuction(Product product, int startPrice, AuctionStatus status, int endMinutesOffset) {
+    // 통합된 경매 생성 헬퍼 (시간 오프셋 기준)
+    private Auction createAuctionWithTime(Long productId, int startOffsetMinutes, int endOffsetMinutes, int startPrice, int tickSize) {
         LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startTime = now.plusMinutes(startOffsetMinutes);
+        LocalDateTime endTime = now.plusMinutes(endOffsetMinutes);
+
+        // 시간이 과거면 ENDED, 아니면 IN_PROGRESS
+        AuctionStatus status = (endTime.isBefore(now)) ? AuctionStatus.ENDED : AuctionStatus.IN_PROGRESS;
+
         Auction auction = Auction.builder()
-            .productId(product.getId())
+            .productId(productId)
             .startPrice(startPrice)
-            .tickSize(1_000)
-            .startTime(now.minusHours(1)) // 1시간 전 시작
-            .endTime(now.plusMinutes(endMinutesOffset)) // 종료 시간 설정
+            .tickSize(tickSize)
+            .startTime(startTime)
+            .endTime(endTime)
             .build();
 
-        // 상태 설정
-        if (status == AuctionStatus.IN_PROGRESS) {
-            auction.startAuction();
-        } else if (status == AuctionStatus.ENDED) {
-            // ENDED 상태 강제 주입 (Reflection)
-            // 엔티티에 endAuction() 메서드가 있다면 그걸 쓰는 게 좋습니다.
-            try {
-                auction.startAuction(); // 일단 시작 후
-                var field = Auction.class.getDeclaredField("status");
-                field.setAccessible(true);
-                field.set(auction, AuctionStatus.ENDED);
+        // 상태 강제 주입
+        try {
+            auction.forceStartForTest(); // 기본 시작 처리
+            if (status == AuctionStatus.ENDED) {
+                var statusField = Auction.class.getDeclaredField("status");
+                statusField.setAccessible(true);
+                statusField.set(auction, AuctionStatus.ENDED);
 
-                // 가격 초기화 (입찰이 없는 경우를 대비)
+                // 가격 초기화 (유찰 대비)
                 if (auction.getCurrentPrice() == null) {
                     auction.updateCurrentPrice(startPrice);
                 }
-            } catch (Exception e) {
-                log.error("상태 변경 에러", e);
             }
+        } catch (Exception e) {
+            log.error("상태 설정 에러", e);
         }
 
         return auctionRepository.save(auction);
@@ -170,10 +203,8 @@ public class AuctionDataInit implements CommandLineRunner {
             .bidderId(bidder.getId())
             .bidAmount(amount)
             .build();
-
         bidRepository.save(bid);
 
-        // 경매 현재가 업데이트
         auction.updateCurrentPrice(amount);
         auctionRepository.save(auction);
     }
