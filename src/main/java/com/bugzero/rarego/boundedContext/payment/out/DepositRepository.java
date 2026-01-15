@@ -12,4 +12,6 @@ public interface DepositRepository extends JpaRepository<Deposit, Long> {
     Optional<Deposit> findByMemberIdAndAuctionId(Long memberId, Long auctionId);
 
     List<Deposit> findAllByAuctionIdAndStatus(Long auctionId, DepositStatus status);
+
+    List<Deposit> findAllByAuctionIdAndStatusAndMemberIdNot(Long auctionId, DepositStatus status, Long memberId);
 }
