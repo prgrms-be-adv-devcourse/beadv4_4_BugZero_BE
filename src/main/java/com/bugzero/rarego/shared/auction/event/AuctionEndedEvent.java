@@ -1,4 +1,4 @@
-package com.bugzero.rarego.boundedContext.auction.domain;
+package com.bugzero.rarego.shared.auction.event;
 
 import lombok.Builder;
 import lombok.Getter;
