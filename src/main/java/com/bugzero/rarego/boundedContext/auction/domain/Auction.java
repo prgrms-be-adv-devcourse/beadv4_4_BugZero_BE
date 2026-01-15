@@ -33,7 +33,7 @@ public class Auction extends BaseIdAndTime {
     @Column(nullable = false)
     private int startPrice;
 
-    private int currentPrice; // 초기값 null 가능
+    private Integer currentPrice; // 초기값 null 가능
 
     @Column(nullable = false)
     private int tickSize;
@@ -62,7 +62,7 @@ public class Auction extends BaseIdAndTime {
         }
         this.status = AuctionStatus.ENDED;
     }
-
+  
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(this.endTime);
     }
@@ -70,6 +70,16 @@ public class Auction extends BaseIdAndTime {
     public void forceStartForTest() {
         // 테스트/로컬 초기화 전용
         this.status = AuctionStatus.IN_PROGRESS;
+    }
+
+    // 입찰 가격 갱신
+    public void updateCurrentPrice(int price) {
+      this.currentPrice = price;
+    }
+
+    // 경매 시작 상태로 전이
+    public void startAuction() {
+      this.status = AuctionStatus.IN_PROGRESS;
     }
 
 }

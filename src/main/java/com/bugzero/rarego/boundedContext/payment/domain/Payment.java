@@ -38,4 +38,13 @@ public class Payment extends BaseIdAndTime {
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	private PaymentStatus status;
+
+	public void complete(String paymentKey) {
+		this.paymentKey = paymentKey;
+		this.status = PaymentStatus.DONE;
+	}
+
+	public void fail() {
+		this.status = PaymentStatus.FAILED;
+	}
 }
