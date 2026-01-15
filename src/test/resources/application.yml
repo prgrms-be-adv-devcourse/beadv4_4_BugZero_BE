@@ -12,13 +12,24 @@ spring:
       hibernate:
         format_sql: true
 
+  batch:
+    job:
+      enabled: false
+
 logging:
   level:
     org.hibernate.SQL: debug
 
+toss:
+  payments:
+    secretKey: ${TOSS_PAYMENTS_SECRET_KEY:test}
+    url: "https://api.tosspayments.com/v1/payments"
+
 custom:
   global:
-    internalBackUrl: http://localhost:8080
+    internalBackUrl: ${INTERNAL_BACK_URL:http://localhost:8080}
+  payment:
+    systemMemberId: 2
 
 jwt:
   secret: ${JWT_SECRET:abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890}
