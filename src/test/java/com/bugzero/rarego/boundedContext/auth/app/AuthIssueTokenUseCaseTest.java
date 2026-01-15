@@ -41,13 +41,11 @@ class AuthIssueTokenUseCaseTest {
 	void issueAccessTokenPassesMemberClaimsAndExpireSeconds() throws Exception {
 		AuthMember member = AuthMember.builder()
 			.id(1L)
-			.nickname("친절한 옥수수")
 			.role(MemberRole.USER)
 			.build();
 
 		when(jwtProvider.issueToken(eq(3600), argThat(body ->
 			((Number) body.get("id")).longValue() == 1L
-				&& "친절한 옥수수".equals(body.get("nickname"))
 				&& MemberRole.USER.name().equals(body.get("role"))
 		))).thenReturn("token");
 
@@ -62,15 +60,13 @@ class AuthIssueTokenUseCaseTest {
 	void issueRefreshTokenPassesMemberClaimsAndExpireSeconds() throws Exception {
 		AuthMember member = AuthMember.builder()
 			.id(2L)
-			.nickname("상냥한 포도")
 			.role(MemberRole.ADMIN)
 			.build();
 
 		when(jwtProvider.issueToken(eq(7200), argThat(body ->
 			((Number) body.get("id")).longValue() == 2L
-				&& "상냥한 포도".equals(body.get("nickname"))
 				&& MemberRole.ADMIN.name().equals(body.get("role"))
-				&& body.size() == 3
+				&& body.size() == 2
 		))).thenReturn("refresh-token");
 
 		String token = authIssueTokenUseCase.issueToken(member, false);
@@ -84,7 +80,6 @@ class AuthIssueTokenUseCaseTest {
 	void issueRefreshTokenDoesNotUseAccessExpireSeconds() throws Exception {
 		AuthMember member = AuthMember.builder()
 			.id(3L)
-			.nickname("친절한 자두")
 			.role(MemberRole.USER)
 			.build();
 
@@ -101,7 +96,6 @@ class AuthIssueTokenUseCaseTest {
 	void issueTokenWrapsUnexpectedException() throws Exception {
 		AuthMember member = AuthMember.builder()
 			.id(1L)
-			.nickname("친절한 옥수수")
 			.role(MemberRole.USER)
 			.build();
 
@@ -120,7 +114,6 @@ class AuthIssueTokenUseCaseTest {
 
 		AuthMember member = AuthMember.builder()
 			.id(1L)
-			.nickname("친절한 옥수수")
 			.role(MemberRole.USER)
 			.build();
 
@@ -137,7 +130,6 @@ class AuthIssueTokenUseCaseTest {
 
 		AuthMember member = AuthMember.builder()
 			.id(1L)
-			.nickname("친절한 옥수수")
 			.role(MemberRole.USER)
 			.build();
 
@@ -163,7 +155,6 @@ class AuthIssueTokenUseCaseTest {
 
 		AuthMember member = AuthMember.builder()
 			.id(0L)
-			.nickname("친절한 옥수수")
 			.role(MemberRole.USER)
 			.build();
 
@@ -173,20 +164,6 @@ class AuthIssueTokenUseCaseTest {
 			.isEqualTo(ErrorType.AUTH_MEMBER_ID_INVALID);
 	}
 
-	@Test
-	@DisplayName("member nickname이 비어 있으면 AUTH_MEMBER_NICKNAME_REQUIRED 예외가 발생한다.")
-	void issueTokenFailsWhenMemberNicknameMissing() throws Exception {
-		AuthMember member = AuthMember.builder()
-			.id(1L)
-			.nickname(" ")
-			.role(MemberRole.USER)
-			.build();
-
-		assertThatThrownBy(() -> authIssueTokenUseCase.issueToken(member, true))
-			.isInstanceOf(CustomException.class)
-			.extracting("errorType")
-			.isEqualTo(ErrorType.AUTH_MEMBER_NICKNAME_REQUIRED);
-	}
 
 	private static void setField(Object target, String fieldName, Object value) throws Exception {
 		Field field = target.getClass().getDeclaredField(fieldName);

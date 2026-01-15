@@ -22,7 +22,7 @@ class JwtParserTest {
 	}
 
 	@Test
-	@DisplayName("parsePrincipal은 id/nickname을 가진 MemberPrincipal을 반환한다.")
+	@DisplayName("parsePrincipal은 id 가진 MemberPrincipal을 반환한다.")
 	void parsePrincipalReturnsMemberPrincipal() {
 		String jwt = jwtProvider.issueToken(
 			60 * 60,
@@ -33,7 +33,6 @@ class JwtParserTest {
 
 		assertThat(principal).isNotNull();
 		assertThat(principal.id()).isEqualTo(1L);
-		assertThat(principal.nickname()).isEqualTo("친절한 옥수수");
 		assertThat(principal.role()).isEqualTo(MemberRole.USER.name());
 	}
 
@@ -42,14 +41,13 @@ class JwtParserTest {
 	void parsePrincipalConvertsIntegerIdToLong() {
 		String jwt = jwtProvider.issueToken(
 			60 * 60,
-			Map.of("id", 1, "nickname", "친절한 옥수수", "role", MemberRole.USER.name())
+			Map.of("id", 1, "role", MemberRole.USER.name())
 		);
 
 		MemberPrincipal principal = jwtParser.parsePrincipal(jwt);
 
 		assertThat(principal).isNotNull();
 		assertThat(principal.id()).isEqualTo(1L);
-		assertThat(principal.nickname()).isEqualTo("친절한 옥수수");
 		assertThat(principal.role()).isEqualTo(MemberRole.USER.name());
 	}
 
@@ -62,7 +60,6 @@ class JwtParserTest {
 
 		assertThat(principal).isNotNull();
 		assertThat(principal.id()).isNull();
-		assertThat(principal.nickname()).isNull();
 		assertThat(principal.role()).isNull();
 	}
 

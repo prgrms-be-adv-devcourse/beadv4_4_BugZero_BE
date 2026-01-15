@@ -41,7 +41,6 @@ public class AuthIssueTokenUseCase {
 				expireSeconds,
 				Map.of(
 					"id", member.getId(),
-					"nickname", member.getNickname(),
 					"role", member.getRole().name()
 				)
 			);
@@ -56,9 +55,6 @@ public class AuthIssueTokenUseCase {
 		}
 		if (member.getId() == null || member.getId() <= 0) {
 			throw new CustomException(ErrorType.AUTH_MEMBER_ID_INVALID);
-		}
-		if (member.getNickname() == null || member.getNickname().isBlank()) {
-			throw new CustomException(ErrorType.AUTH_MEMBER_NICKNAME_REQUIRED);
 		}
 	}
 }

@@ -55,9 +55,8 @@ public class JwtParser {
 			return null;
 
 		Long id = toLong(payload.get("id"));
-		String nickname = (String) payload.get("nickname");
 		String role = toRoleString(payload.get("role"));
-		return new MemberPrincipal(id, nickname, role);
+		return new MemberPrincipal(id, role);
 	}
 
 	private static Long toLong(Object value) {
