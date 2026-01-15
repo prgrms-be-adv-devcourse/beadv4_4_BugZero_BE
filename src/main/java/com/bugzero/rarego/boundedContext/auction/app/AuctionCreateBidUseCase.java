@@ -40,19 +40,13 @@ public class AuctionCreateBidUseCase {
 		AuctionMember bidder = auctionMemberRepository.findById(memberId)
 			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
 
-		/*
-		// 회원 조회
-		Member bidder = memberRepository.findById(memberId)
-			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
-		 */
-
 		// 경매 조회
 		Auction auction = auctionRepository.findByIdWithLock(auctionId)
 			.orElseThrow(() -> new CustomException(ErrorType.AUCTION_NOT_FOUND));
 
 		// 상품 조회
 		// 추후 Auction 에러 작성되면 교체 예정
-		Product product = productRepository.findById(auction.getProduct().getId())
+		Product product = productRepository.findById(auction.getProductId())
 			.orElseThrow(() -> new CustomException(ErrorType.INTERNAL_SERVER_ERROR));
 
 		// 유효성 검증
@@ -71,8 +65,8 @@ public class AuctionCreateBidUseCase {
 		}
 
 		Bid bid = Bid.builder()
-			.auction(auction)
-			.bidder(bidder)
+			.auctionId(auctionId)
+			.bidderId(memberId)
 			.bidAmount(bidAmount)
 			.build();
 
@@ -95,7 +89,7 @@ public class AuctionCreateBidUseCase {
 
 		// 연속 입찰 방지(현재 최고 입찰자 = 본인이면 거절)
 		Optional<Bid> lastBid = bidRepository.findTopByAuctionIdOrderByBidTimeDesc(auction.getId());
-		if (lastBid.isPresent() && lastBid.get().getBidder().getId().equals(memberId)) {
+		if (lastBid.isPresent() && lastBid.get().getBidderId().equals(memberId)) {
 			throw new CustomException(ErrorType.AUCTION_ALREADY_HIGHEST_BIDDER, "연속 입찰은 불가합니다. (현재 최고 입찰자)");
 		}
 

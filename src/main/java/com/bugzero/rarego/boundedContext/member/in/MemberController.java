@@ -29,7 +29,11 @@ public class MemberController {
 		@AuthenticationPrincipal UserDetails userDetails,
 		@PageableDefault(size = 20) Pageable pageable
 	) {
+
 		Long memberId = Long.valueOf(userDetails.getUsername());
+		// 혹시나하는 테스트 편의를 위해 토큰이 없으면 2번 유저로 간주하는 임시 코드
+		// Long memberId = (userDetails != null) ? Long.valueOf(userDetails.getUsername()) : 2L;
+
 		return auctionFacade.getMyBids(memberId, auctionStatus, pageable);
 	}
 

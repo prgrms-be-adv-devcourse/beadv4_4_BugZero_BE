@@ -133,7 +133,7 @@ public class AuctionDataInit implements CommandLineRunner {
     private Auction createAuction(Product product, int startPrice, AuctionStatus status, int endMinutesOffset) {
         LocalDateTime now = LocalDateTime.now();
         Auction auction = Auction.builder()
-            .product(product) // [중요] 객체 연관관계 설정
+            .productId(product.getId())
             .startPrice(startPrice)
             .tickSize(1_000)
             .startTime(now.minusHours(1)) // 1시간 전 시작
@@ -166,8 +166,8 @@ public class AuctionDataInit implements CommandLineRunner {
 
     private void createBid(Auction auction, AuctionMember bidder, int amount) {
         Bid bid = Bid.builder()
-            .auction(auction) // [중요] 객체 주입
-            .bidder(bidder)   // [중요] 객체 주입
+            .auctionId(auction.getId())
+            .bidderId(bidder.getId())
             .bidAmount(amount)
             .build();
 

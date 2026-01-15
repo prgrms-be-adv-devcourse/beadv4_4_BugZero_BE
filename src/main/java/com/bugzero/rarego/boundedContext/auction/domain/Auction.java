@@ -2,7 +2,6 @@ package com.bugzero.rarego.boundedContext.auction.domain;
 
 import java.time.LocalDateTime;
 
-import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
 import com.bugzero.rarego.global.response.ErrorType;
@@ -11,16 +10,11 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "AUCTION_AUCTION")
@@ -28,10 +22,8 @@ import java.time.LocalDateTime;
 @Getter
 public class Auction extends BaseIdAndTime {
 
-	// 상품명 조회를 위해 연관관계 매핑
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "product_id", nullable = false)
-	private Product product;
+	@Column(nullable = false)
+	private Long productId;
 
     @Column(nullable = false)
     private LocalDateTime startTime;
@@ -52,8 +44,8 @@ public class Auction extends BaseIdAndTime {
     private int tickSize;
 
 	@Builder
-	public Auction(Product product, LocalDateTime startTime, LocalDateTime endTime, int startPrice, int tickSize) {
-		this.product = product;
+	public Auction(Long productId, LocalDateTime startTime, LocalDateTime endTime, int startPrice, int tickSize) {
+		this.productId = productId;
 		this.startTime = startTime;
 		this.endTime = endTime;
 		this.startPrice = startPrice;

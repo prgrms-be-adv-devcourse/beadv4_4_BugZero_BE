@@ -10,10 +10,10 @@ public record BidLogResponseDto(
 	LocalDateTime bidTime,
 	long bidAmount
 ) {
-	public static BidLogResponseDto from(Bid bid) {
+	public static BidLogResponseDto from(Bid bid, String publicId) {
 		return new BidLogResponseDto(
 			bid.getId(),
-			bid.getBidder().getPublicId(),
+			publicId,
 			bid.getBidTime(),
 			bid.getBidAmount()
 		);

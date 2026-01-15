@@ -6,7 +6,6 @@ import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.Bid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,7 +15,7 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
 
 	@Query("""
                 SELECT b FROM Bid b
-                WHERE b.auction.id = :auctionId
+                WHERE b.auctionId = :auctionId
                 ORDER BY b.bidAmount DESC, b.bidTime ASC
             """)
 	Optional<Bid> findTopByAuctionId(@Param("auctionId") Long auctionId);
@@ -31,38 +30,37 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
 
 	// auctionId를 기준으로 필드명을 검색
 	// publicId 조회를 위해 bidder fetch join 필요
-	@EntityGraph(attributePaths = {"bidder"})
-	@Query("SELECT b FROM Bid b WHERE b.auction.id = :auctionId ORDER BY b.bidTime DESC")
+	@Query("SELECT b FROM Bid b WHERE b.auctionId = :auctionId ORDER BY b.bidTime DESC")
 	Page<Bid> findAllByAuctionIdOrderByBidTimeDesc(@Param("auctionId") Long auctionId, Pageable pageable);
 
 	// 내가 입찰한 기록 중, 각 경매별로 '가장 마지막에 입찰한(MAX(id))' 건만 추출
 	// @EntityGraph: auction 연관관계를 Eager로 가져와 N+1 문제 해결 (JPQL의 FETCH JOIN 대체)
 	// 계획에서는 JOIN FETCH로 구현 예정이었으나 메모리 페이징 경고가 생길 수 있다고 하여 변경
-	@EntityGraph(attributePaths = {"auction"})
 	@Query(value = """
-
-		SELECT b 
+        SELECT b 
         FROM Bid b 
-        WHERE b.bidder.id = :memberId 
-          AND (:status IS NULL OR b.auction.status = :status)
+        LEFT JOIN Auction a ON b.auctionId = a.id 
+        WHERE b.bidderId = :memberId 
+          AND (:status IS NULL OR a.status = :status)
           AND b.id IN (
               SELECT MAX(b2.id) 
               FROM Bid b2 
-              WHERE b2.bidder.id = :memberId 
-              GROUP BY b2.auction.id
+              WHERE b2.bidderId = :memberId 
+              GROUP BY b2.auctionId
           )
         ORDER BY b.bidTime DESC
         """,
 		countQuery = """
         SELECT COUNT(b) 
         FROM Bid b 
-        WHERE b.bidder.id = :memberId 
-          AND (:status IS NULL OR b.auction.status = :status)
+        LEFT JOIN Auction a ON b.auctionId = a.id 
+        WHERE b.bidderId = :memberId 
+          AND (:status IS NULL OR a.status = :status)
           AND b.id IN (
               SELECT MAX(b2.id) 
               FROM Bid b2 
-              WHERE b2.bidder.id = :memberId 
-              GROUP BY b2.auction.id
+              WHERE b2.bidderId = :memberId 
+              GROUP BY b2.auctionId
           )
         """)
 	Page<Bid> findMyBids(@Param("memberId") Long memberId,

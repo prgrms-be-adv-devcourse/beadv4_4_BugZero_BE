@@ -10,7 +10,6 @@ public record MyBidResponseDto(
 	Long bidId,
 	Long auctionId,
 	Long productId,
-	String productName,
 	long bidAmount,
 	LocalDateTime bidTime,
 	AuctionStatus auctionStatus,
@@ -21,8 +20,7 @@ public record MyBidResponseDto(
 		return new MyBidResponseDto(
 			bid.getId(),
 			auction.getId(),
-			auction.getProduct().getId(),
-			auction.getProduct().getName(),
+			auction.getProductId(),
 			bid.getBidAmount(),
 			bid.getBidTime(),
 			auction.getStatus(),
