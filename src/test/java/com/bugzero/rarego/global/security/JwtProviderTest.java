@@ -1,0 +1,45 @@
+package com.bugzero.rarego.global.security;
+
+import static org.assertj.core.api.Assertions.*;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+
+import javax.crypto.SecretKey;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+
+import com.bugzero.rarego.shared.member.domain.MemberRole;
+
+class JwtProviderTest {
+	private static final String SECRET = "abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890";
+
+	@Test
+	@DisplayName("issueToken은 id/nickname 클레임을 포함한 JWT를 발급한다.")
+	void issueTokenIncludesClaims() {
+		JwtProvider jwtProvider = new JwtProvider(SECRET);
+
+		String jwt = jwtProvider.issueToken(
+			60 * 60,
+			Map.of("id", 1L, "nickname", "친절한 옥수수", "role", MemberRole.USER.name())
+		);
+
+		assertThat(jwt).isNotBlank();
+
+		SecretKey secretKey = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+		Claims claims = Jwts.parser()
+			.verifyWith(secretKey)
+			.build()
+			.parseSignedClaims(jwt)
+			.getPayload();
+
+		assertThat(((Number) claims.get("id")).longValue()).isEqualTo(1L);
+		assertThat(claims.get("nickname")).isEqualTo("친절한 옥수수");
+		assertThat(claims.get("role")).isEqualTo(MemberRole.USER.name());
+	}
+}

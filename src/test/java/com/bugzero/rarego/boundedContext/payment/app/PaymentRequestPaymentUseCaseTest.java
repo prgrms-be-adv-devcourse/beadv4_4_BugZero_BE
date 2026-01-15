@@ -3,8 +3,6 @@ package com.bugzero.rarego.boundedContext.payment.app;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
 
-import java.util.Optional;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,7 +16,6 @@ import com.bugzero.rarego.boundedContext.payment.domain.PaymentMember;
 import com.bugzero.rarego.boundedContext.payment.domain.PaymentStatus;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestResponseDto;
-import com.bugzero.rarego.boundedContext.payment.out.PaymentMemberRepository;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
@@ -29,10 +26,10 @@ class PaymentRequestPaymentUseCaseTest {
 	private PaymentRequestPaymentUseCase useCase;
 
 	@Mock
-	private PaymentMemberRepository paymentMemberRepository;
+	private PaymentRepository paymentRepository;
 
 	@Mock
-	private PaymentRepository paymentRepository;
+	private PaymentSupport paymentSupport;
 
 	@Test
 	@DisplayName("예치금 결제 요청 성공 테스트")
@@ -46,8 +43,7 @@ class PaymentRequestPaymentUseCaseTest {
 		PaymentMember member = PaymentMember.builder().id(memberId).build();
 
 		// repository.findById 호출 시 가짜 멤버 리턴하도록 설정
-		given(paymentMemberRepository.findById(memberId))
-			.willReturn(Optional.of(member));
+		given(paymentSupport.findMemberById(memberId)).willReturn(member);
 
 		// when
 		PaymentRequestResponseDto response = useCase.requestPayment(memberId, requestDto);
@@ -78,8 +74,8 @@ class PaymentRequestPaymentUseCaseTest {
 		PaymentRequestDto requestDto = new PaymentRequestDto(amount);
 
 		// repository가 빈 값을 반환하도록 설정
-		given(paymentMemberRepository.findById(memberId))
-			.willReturn(Optional.empty());
+		given(paymentSupport.findMemberById(memberId))
+			.willThrow(new CustomException(ErrorType.MEMBER_NOT_FOUND));
 
 		// when & then
 		assertThatThrownBy(() -> useCase.requestPayment(memberId, requestDto))
