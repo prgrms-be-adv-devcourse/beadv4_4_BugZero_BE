@@ -21,33 +21,33 @@ public class AuctionEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onAuctionCreated(AuctionCreatedEvent event) {
         try {
-            if (event == null || event.getAuctionId() == null || event.getEndTime() == null) {
+            if (event == null || event.auctionId() == null || event.endTime() == null) {
                 log.error("유효하지 않은 AuctionCreatedEvent: {}", event);
                 return;
             }
 
-            log.info("경매 생성 이벤트 수신 - auctionId: {}", event.getAuctionId());
-            scheduler.scheduleSettlement(event.getAuctionId(), event.getEndTime());
+            log.info("경매 생성 이벤트 수신 - auctionId: {}", event.auctionId());
+            scheduler.scheduleSettlement(event.auctionId(), event.endTime());
 
         } catch (Exception e) {
-            log.error("경매 {} 생성 이벤트 처리 실패", event.getAuctionId(), e);
+            log.error("경매 {} 생성 이벤트 처리 실패", event.auctionId(), e);
         }
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onAuctionUpdated(AuctionUpdatedEvent event) {
         try {
-            if (event == null || event.getAuctionId() == null || event.getNewEndTime() == null) {
+            if (event == null || event.auctionId() == null || event.newEndTime() == null) {
                 log.error("유효하지 않은 AuctionUpdatedEvent: {}", event);
                 return;
             }
 
-            log.info("경매 수정 이벤트 수신 - auctionId: {}", event.getAuctionId());
-            scheduler.cancelSchedule(event.getAuctionId());
-            scheduler.scheduleSettlement(event.getAuctionId(), event.getNewEndTime());
+            log.info("경매 수정 이벤트 수신 - auctionId: {}", event.auctionId());
+            scheduler.cancelSchedule(event.auctionId());
+            scheduler.scheduleSettlement(event.auctionId(), event.newEndTime());
 
         } catch (Exception e) {
-            log.error("경매 {} 수정 이벤트 처리 실패", event.getAuctionId(), e);
+            log.error("경매 {} 수정 이벤트 처리 실패", event.auctionId(), e);
         }
     }
 }
