@@ -9,7 +9,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,9 +31,6 @@ public class Wallet extends BaseIdAndTime {
 
 	@Builder.Default
 	private int holdingAmount = 0;
-
-	@Version
-	private int version;
 
 	public void hold(int amount) {
 		if (balance - holdingAmount < amount) {

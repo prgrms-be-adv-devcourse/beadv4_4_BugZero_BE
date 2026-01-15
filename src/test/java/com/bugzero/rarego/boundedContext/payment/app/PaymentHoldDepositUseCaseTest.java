@@ -2,7 +2,7 @@ package com.bugzero.rarego.boundedContext.payment.app;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.BDDMockito.*;
 
 import java.util.Optional;
 
@@ -13,19 +13,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.response.ErrorType;
-import com.bugzero.rarego.shared.payment.dto.DepositHoldRequestDto;
-import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
 import com.bugzero.rarego.boundedContext.payment.domain.Deposit;
 import com.bugzero.rarego.boundedContext.payment.domain.DepositStatus;
 import com.bugzero.rarego.boundedContext.payment.domain.PaymentMember;
 import com.bugzero.rarego.boundedContext.payment.domain.PaymentTransaction;
 import com.bugzero.rarego.boundedContext.payment.domain.Wallet;
 import com.bugzero.rarego.boundedContext.payment.out.DepositRepository;
-import com.bugzero.rarego.boundedContext.payment.out.PaymentMemberRepository;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentTransactionRepository;
-import com.bugzero.rarego.boundedContext.payment.out.WalletRepository;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
+import com.bugzero.rarego.shared.payment.dto.DepositHoldRequestDto;
+import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentHoldDepositUseCaseTest {
@@ -37,13 +35,10 @@ class PaymentHoldDepositUseCaseTest {
 	private DepositRepository depositRepository;
 
 	@Mock
-	private WalletRepository walletRepository;
-
-	@Mock
-	private PaymentMemberRepository memberRepository;
-
-	@Mock
 	private PaymentTransactionRepository transactionRepository;
+
+	@Mock
+	private PaymentSupport paymentSupport;
 
 	@Test
 	@DisplayName("보증금 홀딩 성공")
@@ -54,8 +49,8 @@ class PaymentHoldDepositUseCaseTest {
 		Wallet wallet = Wallet.builder().balance(100000).holdingAmount(0).build();
 
 		when(depositRepository.findByMemberIdAndAuctionId(4L, 3L)).thenReturn(Optional.empty());
-		when(memberRepository.findById(4L)).thenReturn(Optional.of(member));
-		when(walletRepository.findByMemberId(4L)).thenReturn(Optional.of(wallet));
+		given(paymentSupport.findMemberById(4L)).willReturn(member);
+		given(paymentSupport.findWalletByMemberIdForUpdate(4L)).willReturn(wallet);
 
 		// when
 		DepositHoldResponseDto response = paymentHoldDepositUseCase.holdDeposit(request);
@@ -77,8 +72,8 @@ class PaymentHoldDepositUseCaseTest {
 		Wallet wallet = Wallet.builder().balance(10000).holdingAmount(0).build();
 
 		when(depositRepository.findByMemberIdAndAuctionId(4L, 3L)).thenReturn(Optional.empty());
-		when(memberRepository.findById(4L)).thenReturn(Optional.of(mock(PaymentMember.class)));
-		when(walletRepository.findByMemberId(4L)).thenReturn(Optional.of(wallet));
+		given(paymentSupport.findMemberById(4L)).willReturn(mock(PaymentMember.class));
+		given(paymentSupport.findWalletByMemberIdForUpdate(4L)).willReturn(wallet);
 
 		// when & then
 		assertThatThrownBy(() -> paymentHoldDepositUseCase.holdDeposit(request))
@@ -107,7 +102,7 @@ class PaymentHoldDepositUseCaseTest {
 		// then
 		assertThat(response.depositId()).isEqualTo(100L);
 		assertThat(response.status()).isEqualTo("HOLD");
-		verify(walletRepository, never()).findByMemberId(anyLong());
+		verify(paymentSupport, never()).findWalletByMemberIdForUpdate(anyLong());
 		verify(depositRepository, never()).save(any());
 		verify(transactionRepository, never()).save(any());
 	}

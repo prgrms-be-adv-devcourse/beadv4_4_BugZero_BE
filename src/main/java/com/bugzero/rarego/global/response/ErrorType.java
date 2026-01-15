@@ -1,5 +1,7 @@
 package com.bugzero.rarego.global.response;
 
+import org.springframework.http.HttpStatus;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -10,10 +12,26 @@ public enum ErrorType {
 	INTERNAL_SERVER_ERROR(500, 9000, "서버 오류가 발생했습니다."),
 	INVALID_INPUT(400, 9001, "잘못된 입력값입니다."),
 
-	// Member (1000 ~ 1999)
+	// Member (1000 ~ 1499)
 	MEMBER_NOT_FOUND(404, 1001, "존재하지 않는 회원입니다."),
 
+	// Member (1500 ~ 1999)
+	// Auth/JWT
+	AUTH_MEMBER_REQUIRED(400, 1501, "회원 정보가 필요합니다."),
+	AUTH_MEMBER_ID_INVALID(400, 1502,"회원 식별자가 올바르지 않습니다."),
+	AUTH_MEMBER_NICKNAME_REQUIRED(400,1503, "닉네임이 필요합니다."),
+	JWT_EXPIRE_SECONDS_INVALID(500, 1504,"토큰 만료 설정이 올바르지 않습니다."),
+	JWT_ISSUE_FAILED(500, 1505, "토큰 발급에 실패했습니다."),
+	AUTH_UNAUTHORIZED(401, 1506, "인증이 필요합니다."),
+	AUTH_FORBIDDEN(403, 1507, "권한이 없습니다."),
+
 	// Auction (2000 ~ 2999)
+	AUCTION_NOT_FOUND(404, 2001, "경매를 찾을 수 없습니다."),
+	AUCTION_NOT_IN_PROGRESS(400, 2002, "경매가 진행 중인 상태가 아닙니다."),
+	AUCTION_ALREADY_HIGHEST_BIDDER(409, 2003, "현재 최고 입찰자이므로 연속 입찰할 수 없습니다."),
+	AUCTION_SELLER_CANNOT_BID(403, 2004, "본인의 경매에는 입찰할 수 없습니다."),
+	AUCTION_TIME_INVALID(400, 2005, "입찰 가능한 시간이 아닙니다."),
+	AUCTION_BID_AMOUNT_TOO_LOW(400, 2006, "입찰 금액이 현재가 또는 시작가보다 낮습니다."),
 
 	// Product (3000 ~ 3999)
 

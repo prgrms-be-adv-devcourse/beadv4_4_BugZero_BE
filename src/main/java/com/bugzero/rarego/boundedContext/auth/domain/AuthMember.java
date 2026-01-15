@@ -1,7 +1,6 @@
-package com.bugzero.rarego.boundedContext.member.domain;
+package com.bugzero.rarego.boundedContext.auth.domain;
 
-import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
-import com.bugzero.rarego.shared.member.domain.SourceMember;
+import com.bugzero.rarego.shared.member.domain.ReplicaMember;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -11,9 +10,10 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "MEMBER_MEMBER")
+@Getter
+@Table(name = "AUTH_MEMBER")
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Getter
-public class Member extends SourceMember {
+public class AuthMember extends ReplicaMember{
 }
+
