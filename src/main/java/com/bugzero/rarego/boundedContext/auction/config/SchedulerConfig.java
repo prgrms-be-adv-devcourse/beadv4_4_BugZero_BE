@@ -1,4 +1,4 @@
-package com.bugzero.rarego.global.config;
+package com.bugzero.rarego.boundedContext.auction.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
