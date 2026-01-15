@@ -3,9 +3,9 @@ package com.bugzero.rarego.boundedContext.auth.in;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.Mapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,7 +27,7 @@ public class AuthController {
 
 	// 테스트용 로그인 엔드포인트
 	@PostMapping("/test/login")
-	public SuccessResponseDto<String> login(TokenIssueDto tokenIssueDto) {
+	public SuccessResponseDto<String> login(@RequestBody TokenIssueDto tokenIssueDto) {
 		String accessToken = authService.issueAccessToken(tokenIssueDto);
 		return SuccessResponseDto.from(SuccessType.OK,accessToken);
 	}
