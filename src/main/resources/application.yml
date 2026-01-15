@@ -12,6 +12,11 @@ spring:
     ansi:
       enabled: always
 
+toss:
+  payments:
+    secretKey: ${TOSS_PAYMENTS_SECRET_KEY}
+    url: "https://api.tosspayments.com/v1/payments"
+
 custom:
   global:
     internalBackUrl: ${INTERNAL_BACK_URL:http://localhost:8080}
