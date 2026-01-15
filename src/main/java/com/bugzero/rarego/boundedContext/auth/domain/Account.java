@@ -32,12 +32,12 @@ import lombok.NoArgsConstructor;
 public class Account extends BaseIdAndTime{
 
 	// TODO: member와 연관관계 publicId로 변경
-	@Column(name = "member_public_id", nullable = false)
-	private Long memberPublicId;
+	@Column(name = "member_public_id", nullable = false, unique = true, length = 36)
+	private String memberPublicId;
 
 	@Enumerated(EnumType.STRING)
-	@Column(name = "auth_role", nullable = false)
-	private AuthRole authRole;
+	@Column(name = "role", nullable = false)
+	private AuthRole role;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "provider", nullable = false)

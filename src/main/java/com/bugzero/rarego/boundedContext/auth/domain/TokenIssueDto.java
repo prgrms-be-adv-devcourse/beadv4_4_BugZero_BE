@@ -5,6 +5,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 public record TokenIssueDto(
-	@NotNull @Positive Long memberId,
+	@NotNull @Positive String memberPublicId,
 	@NotBlank String role
 ) { }

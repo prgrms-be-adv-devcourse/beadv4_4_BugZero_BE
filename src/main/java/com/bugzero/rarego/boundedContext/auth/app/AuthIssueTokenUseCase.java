@@ -40,7 +40,7 @@ public class AuthIssueTokenUseCase {
 			return jwtProvider.issueToken(
 				expireSeconds,
 				Map.of(
-					"id", tokenIssueDto.memberId(),
+					"id", tokenIssueDto.memberPublicId(),
 					"role", tokenIssueDto.role()
 				)
 			);
@@ -53,7 +53,7 @@ public class AuthIssueTokenUseCase {
 		if (tokenIssueDto.role() == null) {
 			throw new CustomException(ErrorType.INVALID_INPUT);
 		}
-		if (tokenIssueDto.memberId() == null) {
+		if (tokenIssueDto.memberPublicId() == null) {
 			throw new CustomException(ErrorType.INVALID_INPUT);
 		}
 	}
