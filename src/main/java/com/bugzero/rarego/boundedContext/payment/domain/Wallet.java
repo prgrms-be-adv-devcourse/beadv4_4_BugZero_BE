@@ -49,4 +49,8 @@ public class Wallet extends BaseIdAndTime {
 		}
 		this.holdingAmount -= amount;
 	}
+
+	public void addBalance(int amount) {
+		this.balance += amount;
+	}
 }

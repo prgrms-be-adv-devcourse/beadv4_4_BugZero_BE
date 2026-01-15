@@ -20,7 +20,13 @@ public enum ErrorType {
 	// Payment (4000 ~ 4999)
 	WALLET_NOT_FOUND(404, 4001, "회원의 지갑이 존재하지 않습니다."),
 	INSUFFICIENT_BALANCE(400, 4002, "예치금 잔액이 부족합니다."),
-	INSUFFICIENT_HOLDING(400, 4003, "환급할 보증금이 부족합니다.");
+	INSUFFICIENT_HOLDING(400, 4003, "환급할 보증금이 부족합니다."),
+
+	PAYMENT_CONFIRM_FAILED(400, 4101, "토스 결제 승인에 실패했습니다."),
+	PAYMENT_NOT_FOUND(404, 4102, "존재하지 않는 결제입니다."),
+	INVALID_PAYMENT_AMOUNT(400, 4103, "결제 금액이 일치하지 않습니다."),
+	ALREADY_PROCESSED_PAYMENT(409, 4104, "이미 처리된 결제입니다."),
+	PAYMENT_OWNER_MISMATCH(403, 4105, "해당 결제에 대한 접근 권한이 없습니다.");
 
 	private final Integer httpStatus;
 	private final int code;

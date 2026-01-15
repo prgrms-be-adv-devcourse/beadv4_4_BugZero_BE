@@ -69,3 +69,6 @@ log/
 **/docker-data/
 **/docker_data/
 **/data/
+
+### Custom ###
+src/main/resources/static/*
