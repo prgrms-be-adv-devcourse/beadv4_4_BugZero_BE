@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.boundedContext.product.domain.Category;
@@ -21,8 +20,6 @@ import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductCondition;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.shared.member.domain.MemberRole;
-import com.bugzero.rarego.shared.member.domain.Provider;
-import com.bugzero.rarego.shared.member.domain.SourceMember;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -68,8 +65,6 @@ public class AuctionDataInit {
 					.email("seller@auction.com")
 					.nickname("AuctionSeller")
 					.role(MemberRole.SELLER)
-					.provider(Provider.GOOGLE)
-					.providerId("auction_provider_" + UUID.randomUUID())
 					.build();
 				return auctionMemberRepository.save(newMember);
 			});
@@ -81,8 +76,6 @@ public class AuctionDataInit {
 				.email("buyer@auction.com")
 				.nickname("AuctionBuyer")
 				.role(MemberRole.USER)
-				.provider(Provider.GOOGLE)
-				.providerId("buyer_provider_" + UUID.randomUUID())
 				.build()));
 
 		// 2. 상품(Product) 생성
