@@ -51,12 +51,30 @@ public class PaymentDataInit {
 			.updatedAt(LocalDateTime.now())
 			.build();
 
+		PaymentMember system = PaymentMember.builder()
+			.id(2L)
+			.publicId(UUID.randomUUID().toString())
+			.email("system@bugzero.com")
+			.nickname("시스템")
+			.role(MemberRole.ADMIN)
+			.provider(Provider.GOOGLE)
+			.providerId("test_system_id")
+			.createdAt(LocalDateTime.now())
+			.updatedAt(LocalDateTime.now())
+			.build();
+
 		member = paymentMemberRepository.save(member);
+		system = paymentMemberRepository.save(system);
 
 		Wallet wallet = Wallet.builder()
 			.member(member)
 			.build();
 
+		Wallet systemWallet = Wallet.builder()
+			.member(system)
+			.build();
+
 		walletRepository.save(wallet);
+		walletRepository.save(systemWallet);
 	}
 }

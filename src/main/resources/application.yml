@@ -32,6 +32,9 @@ aws:
 custom:
   global:
     internalBackUrl: ${INTERNAL_BACK_URL:http://localhost:8080}
+  payment:
+    systemMemberId: 2
+
 
 springdoc:
   api-docs:

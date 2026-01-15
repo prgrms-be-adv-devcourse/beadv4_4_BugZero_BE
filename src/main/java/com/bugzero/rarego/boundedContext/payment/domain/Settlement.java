@@ -60,4 +60,8 @@ public class Settlement extends BaseIdAndTime {
 				.status(SettlementStatus.READY)
 				.build();
 	}
+
+	public void complete() {
+		this.status = SettlementStatus.DONE;
+	}
 }
