@@ -15,7 +15,7 @@ public record BidResponseDto(
 	public static BidResponseDto from(Bid bid, String publicId, Long updatedCurrentPrice) {
 		return new BidResponseDto(
 			bid.getId(),
-			bid.getAuctionId(),
+			bid.getAuction().getId(),
 			publicId,
 			bid.getBidTime(),
 			Long.valueOf(bid.getBidAmount()),
