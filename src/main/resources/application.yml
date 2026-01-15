@@ -11,6 +11,9 @@ spring:
   output:
     ansi:
       enabled: always
+  batch:
+    job:
+      enabled: false
 
 toss:
   payments:
