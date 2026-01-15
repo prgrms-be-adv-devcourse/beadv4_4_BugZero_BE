@@ -18,7 +18,6 @@ public enum ErrorType {
 	// Member (1500 ~ 1999)
 	// Auth/JWT
 	AUTH_MEMBER_REQUIRED(400, 1501, "회원 정보가 필요합니다."),
-	AUTH_MEMBER_ID_INVALID(400, 1502,"회원 식별자가 올바르지 않습니다."),
 	JWT_EXPIRE_SECONDS_INVALID(500, 1504,"토큰 만료 설정이 올바르지 않습니다."),
 	JWT_ISSUE_FAILED(500, 1505, "토큰 발급에 실패했습니다."),
 	AUTH_UNAUTHORIZED(401, 1506, "인증이 필요합니다."),

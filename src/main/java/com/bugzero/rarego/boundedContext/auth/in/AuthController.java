@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bugzero.rarego.boundedContext.auth.app.AuthService;
+import com.bugzero.rarego.boundedContext.auth.domain.TokenIssueDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.global.security.MemberPrincipal;
@@ -25,9 +26,9 @@ public class AuthController {
 	private final AuthService authService;
 
 	// 테스트용 로그인 엔드포인트
-	@PostMapping("/test/login/{memberId}")
-	public SuccessResponseDto<String> login(@PathVariable Long memberId) {
-		String accessToken = authService.testIssueAccessToken(memberId);
+	@PostMapping("/test/login")
+	public SuccessResponseDto<String> login(TokenIssueDto tokenIssueDto) {
+		String accessToken = authService.issueAccessToken(tokenIssueDto);
 		return SuccessResponseDto.from(SuccessType.OK,accessToken);
 	}
 
