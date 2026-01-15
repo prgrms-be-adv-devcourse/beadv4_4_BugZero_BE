@@ -21,4 +21,8 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
     Optional<Bid> findTopByAuctionId(@Param("auctionId") Long auctionId);
 
     boolean existsByAuctionId(Long auctionId);
+
+    // 가장 높은 입찰 1개만 (같은 금액이면 먼저 입찰한 것)
+    Optional<Bid> findTopByAuctionIdOrderByBidAmountDescBidTimeAsc(Long auctionId);
+
 }

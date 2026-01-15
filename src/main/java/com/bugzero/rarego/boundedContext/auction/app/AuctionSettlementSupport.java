@@ -35,7 +35,7 @@ public class AuctionSettlementSupport {
     }
 
     public Bid findWinningBid(Long auctionId) {
-        return bidRepository.findTopByAuctionId(auctionId)
-                .orElseThrow(() -> new CustomException(ErrorType.HIGHEST_BID_NOT_FOUND));
+        return bidRepository.findTopByAuctionIdOrderByBidAmountDescBidTimeAsc(auctionId)
+                .orElseThrow(() -> new CustomException(ErrorType.BID_NOT_FOUND));
     }
 }

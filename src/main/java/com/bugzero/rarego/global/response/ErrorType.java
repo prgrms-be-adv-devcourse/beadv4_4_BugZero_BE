@@ -15,7 +15,7 @@ public enum ErrorType {
 
     // Auction (2000 ~ 2999)
     AUCTION_NOT_FOUND(404, 2001, "존재하지 않는 경매입니다."),
-    HIGHEST_BID_NOT_FOUND(404, 2501, "최고 입찰가를 찾을 수 없습니다."),
+    BID_NOT_FOUND(404, 2501, "입찰가를 찾을 수 없습니다."),
     AUCTION_NOT_IN_PROGRESS(400, 2502, "현재 진행 중인 경매가 아닙니다."),
     AUCTION_NOT_SCHEDULED(400, 2503, "예정된 경매가 아닙니다."),
     AUCTION_SCHEDULE_FAILED(500, 2504, "경매 정산 예약에 실패했습니다."),
