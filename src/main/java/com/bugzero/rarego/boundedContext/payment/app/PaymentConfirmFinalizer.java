@@ -30,7 +30,7 @@ public class PaymentConfirmFinalizer {
 
 		paymentRepository.save(payment); // payment는 영속성 컨텍스트와 연결이 끊긴 상태라 명시적으로 저장
 
-		Wallet wallet = paymentSupport.findWalletByMemberId(payment.getMember().getId());
+		Wallet wallet = paymentSupport.findWalletByMemberIdForUpdate(payment.getMember().getId());
 
 		// 지갑 잔액 증가
 		wallet.addBalance(payment.getAmount());

@@ -35,7 +35,7 @@ public class PaymentHoldDepositUseCase {
 	private DepositHoldResponseDto executeHold(DepositHoldRequestDto request) {
 		PaymentMember member = paymentSupport.findMemberById(request.memberId());
 
-		Wallet wallet = paymentSupport.findWalletByMemberId(request.memberId());
+		Wallet wallet = paymentSupport.findWalletByMemberIdForUpdate(request.memberId());
 
 		// 2. 잔액 검증 & Wallet 업데이트
 		wallet.hold(request.amount());
