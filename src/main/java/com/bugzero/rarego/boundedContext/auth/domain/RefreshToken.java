@@ -25,8 +25,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RefreshToken extends BaseIdAndTime {
 
-	@Column(name = "member_id", nullable = false)
-	private Long memberId;
+	@Column(name = "member_public_id", nullable = false)
+	private Long memberPublicId;
 
 	@Column(name = "refresh_token_hash", nullable = false, length = 255)
 	private String refreshTokenHash;

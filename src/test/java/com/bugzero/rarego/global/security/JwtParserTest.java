@@ -52,15 +52,13 @@ class JwtParserTest {
 	}
 
 	@Test
-	@DisplayName("parsePrincipal은 유효한 토큰이지만 클레임이 없으면 null 값을 담아 반환한다.")
-	void parsePrincipalReturnsPrincipalWithNullFieldsWhenClaimsMissing() {
+	@DisplayName("parsePrincipal은 유효한 토큰이더라도 필수 클레임(id, role)이 없으면 null을 반환한다.")
+	void parsePrincipalReturnsNullWhenClaimsMissing() {
 		String jwt = jwtProvider.issueToken(60 * 60, Map.of());
 
 		MemberPrincipal principal = jwtParser.parsePrincipal(jwt);
 
-		assertThat(principal).isNotNull();
-		assertThat(principal.id()).isNull();
-		assertThat(principal.role()).isNull();
+		assertThat(principal).isNull();
 	}
 
 	@Test
