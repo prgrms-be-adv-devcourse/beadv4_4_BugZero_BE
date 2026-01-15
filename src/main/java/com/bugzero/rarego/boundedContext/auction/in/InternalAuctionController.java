@@ -1,6 +1,6 @@
 package com.bugzero.rarego.boundedContext.auction.in;
 
-import com.bugzero.rarego.boundedContext.auction.app.AuctionSettlementFacade;
+import com.bugzero.rarego.boundedContext.auction.app.AuctionSettleAuctionFacade;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionAutoResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class InternalAuctionController {
 
-    private final AuctionSettlementFacade facade;
+    private final AuctionSettleAuctionFacade facade;
 
     @PostMapping("/settle")
     public SuccessResponseDto<AuctionAutoResponseDto> settle() {

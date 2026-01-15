@@ -1,6 +1,6 @@
 package com.bugzero.rarego.boundedContext.auction.in;
 
-import com.bugzero.rarego.boundedContext.auction.app.AuctionSettlementFacade;
+import com.bugzero.rarego.boundedContext.auction.app.AuctionSettleAuctionFacade;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import java.util.concurrent.ScheduledFuture;
 public class AuctionScheduler {
 
     private final TaskScheduler taskScheduler;
-    private final AuctionSettlementFacade facade;
+    private final AuctionSettleAuctionFacade facade;
 
     private final Map<Long, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
 

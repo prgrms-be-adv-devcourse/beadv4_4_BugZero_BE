@@ -3,6 +3,8 @@ package com.bugzero.rarego.boundedContext.auction.app;
 import com.bugzero.rarego.boundedContext.auction.domain.*;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.shared.auction.event.AuctionEndedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,13 +13,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class SettleExpiredAuctionsUseCase {
+public class AuctionSettleOneUseCase {
 
     private final AuctionSettlementSupport support;
     private final AuctionRepository auctionRepository;
@@ -25,36 +25,35 @@ public class SettleExpiredAuctionsUseCase {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public AuctionAutoResponseDto execute() {
-        LocalDateTime now = LocalDateTime.now();
-        List<Auction> auctions = support.findExpiredAuctions(now);
+    public void execute(Long auctionId) {
+        Auction auction = auctionRepository.findById(auctionId)
+                .orElseThrow(() -> new CustomException(ErrorType.AUCTION_NOT_FOUND));
 
-        int success = 0;
-        int fail = 0;
-        List<AuctionAutoResponseDto.SettlementDetail> details = new ArrayList<>();
-
-        for (Auction auction : auctions) {
-            try {
-                if (support.hasBids(auction.getId())) {
-                    handleSuccess(auction);
-                    Bid winningBid = support.findWinningBid(auction.getId());
-                    details.add(AuctionAutoResponseDto.SettlementDetail.success(
-                            auction.getId(),
-                            winningBid.getBidderId()
-                    ));
-                    success++;
-                } else {
-                    handleFail(auction);
-                    details.add(AuctionAutoResponseDto.SettlementDetail.failed(auction.getId()));
-                    fail++;
-                }
-            } catch (Exception e) {
-                log.error("경매 낙찰 처리 실패 - auctionId: {}", auction.getId(), e);
-                fail++;
-            }
+        // 상태 검증
+        if (auction.getStatus() == AuctionStatus.ENDED) {
+            log.warn("경매 {}는 이미 종료되었습니다.", auctionId);
+            return;
         }
 
-        return AuctionAutoResponseDto.from(now, auctions, success, fail, details);
+        if (auction.getStatus() != AuctionStatus.IN_PROGRESS) {
+            log.warn("경매 {}는 진행 중 상태가 아닙니다. 현재 상태: {}", auctionId, auction.getStatus());
+            throw new CustomException(ErrorType.AUCTION_NOT_IN_PROGRESS);
+        }
+
+        // 시간 검증
+        if (auction.getEndTime().isAfter(LocalDateTime.now())) {
+            log.warn("경매 {}는 아직 종료 시간이 아닙니다. 종료 시간: {}", auctionId, auction.getEndTime());
+            throw new CustomException(ErrorType.AUCTION_NOT_IN_PROGRESS);
+        }
+
+        // 입찰 여부에 따라 처리
+        if (support.hasBids(auctionId)) {
+            handleSuccess(auction);
+            log.info("경매 {} 낙찰 처리 완료", auctionId);
+        } else {
+            handleFail(auction);
+            log.info("경매 {} 유찰 처리 완료", auctionId);
+        }
     }
 
     private void handleFail(Auction auction) {

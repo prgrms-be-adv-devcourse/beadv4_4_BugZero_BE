@@ -1,6 +1,6 @@
 package com.bugzero.rarego.boundedContext.auction.controller;
 
-import com.bugzero.rarego.boundedContext.auction.app.AuctionSettlementFacade;
+import com.bugzero.rarego.boundedContext.auction.app.AuctionSettleAuctionFacade;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionAutoResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.InternalAuctionController;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
@@ -34,7 +34,7 @@ class InternalAuctionControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private AuctionSettlementFacade facade;
+    private AuctionSettleAuctionFacade facade;
 
     @Test
     @DisplayName("경매 자동 낙찰 처리 API 호출 성공")

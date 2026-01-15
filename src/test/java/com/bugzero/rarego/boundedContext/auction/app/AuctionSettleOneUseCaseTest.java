@@ -25,7 +25,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(org.mockito.junit.jupiter.MockitoExtension.class)
-class SettleOneAuctionUseCaseTest {
+class AuctionSettleOneUseCaseTest {
 
     @Mock
     AuctionSettlementSupport support;
@@ -40,7 +40,7 @@ class SettleOneAuctionUseCaseTest {
     ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
-    SettleOneAuctionUseCase useCase;
+    AuctionSettleOneUseCase useCase;
 
     private Auction createAuction(Long id, AuctionStatus status, LocalDateTime endTime) {
         Auction auction = Auction.builder()

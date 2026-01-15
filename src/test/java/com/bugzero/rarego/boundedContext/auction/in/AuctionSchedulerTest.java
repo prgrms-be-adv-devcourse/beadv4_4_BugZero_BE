@@ -1,6 +1,6 @@
 package com.bugzero.rarego.boundedContext.auction.in;
 
-import com.bugzero.rarego.boundedContext.auction.app.AuctionSettlementFacade;
+import com.bugzero.rarego.boundedContext.auction.app.AuctionSettleAuctionFacade;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,7 +30,7 @@ class AuctionSchedulerTest {
     TaskScheduler taskScheduler;
 
     @Mock
-    AuctionSettlementFacade facade;
+    AuctionSettleAuctionFacade facade;
 
     @InjectMocks
     AuctionScheduler scheduler;
