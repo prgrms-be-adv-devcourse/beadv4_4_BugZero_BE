@@ -50,7 +50,7 @@ class PaymentHoldDepositUseCaseTest {
 
 		when(depositRepository.findByMemberIdAndAuctionId(4L, 3L)).thenReturn(Optional.empty());
 		given(paymentSupport.findMemberById(4L)).willReturn(member);
-		given(paymentSupport.findWalletByMemberId(4L)).willReturn(wallet);
+		given(paymentSupport.findWalletByMemberIdForUpdate(4L)).willReturn(wallet);
 
 		// when
 		DepositHoldResponseDto response = paymentHoldDepositUseCase.holdDeposit(request);
@@ -73,7 +73,7 @@ class PaymentHoldDepositUseCaseTest {
 
 		when(depositRepository.findByMemberIdAndAuctionId(4L, 3L)).thenReturn(Optional.empty());
 		given(paymentSupport.findMemberById(4L)).willReturn(mock(PaymentMember.class));
-		given(paymentSupport.findWalletByMemberId(4L)).willReturn(wallet);
+		given(paymentSupport.findWalletByMemberIdForUpdate(4L)).willReturn(wallet);
 
 		// when & then
 		assertThatThrownBy(() -> paymentHoldDepositUseCase.holdDeposit(request))
@@ -102,7 +102,7 @@ class PaymentHoldDepositUseCaseTest {
 		// then
 		assertThat(response.depositId()).isEqualTo(100L);
 		assertThat(response.status()).isEqualTo("HOLD");
-		verify(paymentSupport, never()).findWalletByMemberId(anyLong());
+		verify(paymentSupport, never()).findWalletByMemberIdForUpdate(anyLong());
 		verify(depositRepository, never()).save(any());
 		verify(transactionRepository, never()).save(any());
 	}
