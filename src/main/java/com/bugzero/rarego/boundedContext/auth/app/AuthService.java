@@ -12,13 +12,14 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthService {
 	private final AuthIssueAccessTokenUseCase authIssueAccessTokenUseCase;
+	private final AuthIssueRefreshTokenUseCase authIssueRefreshTokenUseCase;
 	private final AuthMemberRepository authMemberRepository;
 
 	public String issueAccessToken(AuthMember member) {
 		return authIssueAccessTokenUseCase.issueToken(member);
 	}
 
-	public String issueRefreshToken(AuthMember member, AuthIssueRefreshTokenUseCase authIssueRefreshTokenUseCase) {
+	public String issueRefreshToken(AuthMember member) {
 		return authIssueRefreshTokenUseCase.issueToken(member);
 	}
 
