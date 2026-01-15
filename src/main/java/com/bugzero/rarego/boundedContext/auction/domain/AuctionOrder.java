@@ -1,8 +1,8 @@
 package com.bugzero.rarego.boundedContext.auction.domain;
 
-import java.time.LocalDateTime;
-
+import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
+import com.bugzero.rarego.global.response.ErrorType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,9 +14,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-
 @Entity
-@Table(name="AUCTION_AUCTIONORDER")
+@Table(name = "AUCTION_AUCTIONORDER")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public class AuctionOrder extends BaseIdAndTime {
@@ -43,4 +42,10 @@ public class AuctionOrder extends BaseIdAndTime {
 		this.status = AuctionOrderStatus.PROCESSING;
 	}
 
+	public void complete() {
+		if (this.status != AuctionOrderStatus.PROCESSING) {
+			throw new CustomException(ErrorType.INVALID_ORDER_STATUS);
+		}
+		this.status = AuctionOrderStatus.SUCCESS;
+	}
 }
