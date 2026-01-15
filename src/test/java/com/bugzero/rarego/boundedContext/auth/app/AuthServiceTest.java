@@ -1,19 +1,32 @@
 package com.bugzero.rarego.boundedContext.auth.app;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.springframework.test.util.ReflectionTestUtils.*;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@SpringBootTest
-@Transactional
+@ExtendWith(MockitoExtension.class)
 public class AuthServiceTest {
-	@Autowired
+	@Mock
+	private AuthIssueTokenUseCase authIssueTokenUseCase;
+
+	@Mock
+	private com.bugzero.rarego.boundedContext.auth.out.AuthMemberRepository authMemberRepository;
+
+	@InjectMocks
 	private AuthService authService;
+
+	@BeforeEach
+	void setUp() throws Exception {
+		setField(authIssueTokenUseCase, "accessTokenExpireSeconds", 3600);
+		setField(authIssueTokenUseCase, "refreshTokenExpireSeconds", 7200);
+	}
 
 	@Test
 	@DisplayName("authTokenService 서비스가 존재한다.")
