@@ -8,9 +8,21 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AuctionSettlementFacade {
 
-    private final SettleExpiredAuctionsUseCase useCase;
+    private final SettleExpiredAuctionsUseCase settleExpiredAuctionsUseCase;
+    private final SettleOneAuctionUseCase settleOneAuctionUseCase;
 
+    /**
+     * 만료된 모든 경매 일괄 정산 (수동 호출용)
+     * 추후에 사용하지 않는다면 삭제 예정
+     */
     public AuctionAutoResponseDto settle() {
-        return useCase.execute();
+        return settleExpiredAuctionsUseCase.execute();
+    }
+
+    /**
+     * 특정 경매 하나만 정산 (동적 스케줄링용)
+     */
+    public void settleOne(Long auctionId) {
+        settleOneAuctionUseCase.execute(auctionId);
     }
 }

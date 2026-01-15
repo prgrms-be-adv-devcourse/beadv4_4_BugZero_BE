@@ -1,11 +1,13 @@
 package com.bugzero.rarego.boundedContext.auction.in;
 
 import com.bugzero.rarego.boundedContext.auction.domain.Auction;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionCreatedEvent;
 import com.bugzero.rarego.boundedContext.auction.domain.Bid;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -21,15 +23,18 @@ public class AuctionDataInit {
     private final AuctionDataInit self;
     private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public AuctionDataInit(
             @Lazy AuctionDataInit self,
             AuctionRepository auctionRepository,
-            BidRepository bidRepository
+            BidRepository bidRepository,
+            ApplicationEventPublisher eventPublisher
     ) {
         this.self = self;
         this.auctionRepository = auctionRepository;
         this.bidRepository = bidRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Bean
@@ -86,23 +91,51 @@ public class AuctionDataInit {
 
         bidRepository.save(createBid(auction3.getId(), 104L, 35_000));
 
-        // 4. 아직 진행 중 (처리 대상 아님)
+        // 4. 진행 중 + 1분 후 종료 (동적 스케줄링 테스트용)
         Auction auction4 = createAuction(
                 4L,
                 LocalDateTime.now().minusHours(1),
-                LocalDateTime.now().plusHours(1),
+                LocalDateTime.now().plusMinutes(1), // 1분 후 종료
                 40_000,
                 4_000
         );
         auction4.forceStartForTest();
         auctionRepository.save(auction4);
-
         bidRepository.save(createBid(auction4.getId(), 105L, 45_000));
 
+        // 동적 스케줄링 등록 (1분 후 자동 정산됨)
+        eventPublisher.publishEvent(
+                AuctionCreatedEvent.builder()
+                        .auctionId(auction4.getId())
+                        .endTime(auction4.getEndTime())
+                        .build()
+        );
+
+        // 5. 진행 중 + 5분 후 종료 (동적 스케줄링 테스트용)
+        Auction auction5 = createAuction(
+                5L,
+                LocalDateTime.now().minusHours(1),
+                LocalDateTime.now().plusMinutes(5), // 5분 후 종료
+                50_000,
+                5_000
+        );
+        auction5.forceStartForTest();
+        auctionRepository.save(auction5);
+        bidRepository.save(createBid(auction5.getId(), 106L, 55_000));
+
+        // 동적 스케줄링 등록 (5분 후 자동 정산됨)
+        eventPublisher.publishEvent(
+                AuctionCreatedEvent.builder()
+                        .auctionId(auction5.getId())
+                        .endTime(auction5.getEndTime())
+                        .build()
+        );
+
         log.info("=== 경매 테스트 데이터 초기화 완료 ===");
-        log.info("- 낙찰 대상: 2건 (auction1, auction3)");
-        log.info("- 유찰 대상: 1건 (auction2)");
-        log.info("- 진행 중: 1건 (auction4)");
+        log.info("- 낙찰 대상 (종료됨): 2건 (auction1, auction3)");
+        log.info("- 유찰 대상 (종료됨): 1건 (auction2)");
+        log.info("- 진행 중 (1분 후 자동 정산): 1건 (auction4)");
+        log.info("- 진행 중 (5분 후 자동 정산): 1건 (auction5)");
     }
 
     private Auction createAuction(
