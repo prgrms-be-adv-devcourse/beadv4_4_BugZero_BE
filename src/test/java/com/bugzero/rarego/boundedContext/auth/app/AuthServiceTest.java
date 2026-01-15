@@ -16,9 +16,6 @@ public class AuthServiceTest {
 	@Mock
 	private AuthIssueTokenUseCase authIssueTokenUseCase;
 
-	@Mock
-	private com.bugzero.rarego.boundedContext.auth.out.AuthMemberRepository authMemberRepository;
-
 	@InjectMocks
 	private AuthService authService;
 
