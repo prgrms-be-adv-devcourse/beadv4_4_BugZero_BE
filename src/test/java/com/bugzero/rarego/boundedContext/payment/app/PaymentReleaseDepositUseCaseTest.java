@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,7 +20,6 @@ import com.bugzero.rarego.boundedContext.payment.domain.PaymentTransaction;
 import com.bugzero.rarego.boundedContext.payment.domain.Wallet;
 import com.bugzero.rarego.boundedContext.payment.out.DepositRepository;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentTransactionRepository;
-import com.bugzero.rarego.boundedContext.payment.out.WalletRepository;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentReleaseDepositUseCaseTest {
@@ -33,10 +31,10 @@ class PaymentReleaseDepositUseCaseTest {
     private DepositRepository depositRepository;
 
     @Mock
-    private WalletRepository walletRepository;
-
-    @Mock
     private PaymentTransactionRepository transactionRepository;
+
+	@Mock
+	private PaymentSupport paymentSupport;
 
     @Test
     @DisplayName("성공: 낙찰자 제외 보증금 환급")
@@ -58,8 +56,8 @@ class PaymentReleaseDepositUseCaseTest {
 
         when(depositRepository.findAllByAuctionIdAndStatusAndMemberIdNot(auctionId, DepositStatus.HOLD, winnerId))
                 .thenReturn(List.of(deposit1, deposit2));
-        when(walletRepository.findByMemberId(101L)).thenReturn(Optional.of(wallet1));
-        when(walletRepository.findByMemberId(102L)).thenReturn(Optional.of(wallet2));
+		when(paymentSupport.findWalletByMemberId(101L)).thenReturn(wallet1);
+		when(paymentSupport.findWalletByMemberId(102L)).thenReturn(wallet2);
 
         // when
         paymentReleaseDepositUseCase.releaseDeposits(auctionId, winnerId);
@@ -87,7 +85,7 @@ class PaymentReleaseDepositUseCaseTest {
 
         when(depositRepository.findAllByAuctionIdAndStatus(auctionId, DepositStatus.HOLD))
                 .thenReturn(List.of(deposit));
-        when(walletRepository.findByMemberId(101L)).thenReturn(Optional.of(wallet));
+		when(paymentSupport.findWalletByMemberId(101L)).thenReturn(wallet);
 
         // when
         paymentReleaseDepositUseCase.releaseDeposits(auctionId, winnerId);
@@ -112,7 +110,7 @@ class PaymentReleaseDepositUseCaseTest {
         paymentReleaseDepositUseCase.releaseDeposits(auctionId, winnerId);
 
         // then
-        verify(walletRepository, never()).findByMemberId(anyLong());
+		verify(paymentSupport, never()).findWalletByMemberId(anyLong());
         verify(transactionRepository, never()).save(any());
     }
 }

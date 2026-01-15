@@ -5,8 +5,6 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.boundedContext.payment.domain.Deposit;
 import com.bugzero.rarego.boundedContext.payment.domain.DepositStatus;
 import com.bugzero.rarego.boundedContext.payment.domain.PaymentTransaction;
@@ -15,7 +13,6 @@ import com.bugzero.rarego.boundedContext.payment.domain.Wallet;
 import com.bugzero.rarego.boundedContext.payment.domain.WalletTransactionType;
 import com.bugzero.rarego.boundedContext.payment.out.DepositRepository;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentTransactionRepository;
-import com.bugzero.rarego.boundedContext.payment.out.WalletRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional(readOnly = true)
 public class PaymentReleaseDepositUseCase {
     private final DepositRepository depositRepository;
-    private final WalletRepository walletRepository;
+	private final PaymentSupport paymentSupport;
     private final PaymentTransactionRepository transactionRepository;
 
     @Transactional
@@ -47,7 +44,7 @@ public class PaymentReleaseDepositUseCase {
         }
         // 낙찰자 제외
         return depositRepository.findAllByAuctionIdAndStatusAndMemberIdNot(
-                auctionId, DepositStatus.HOLD, winnerId);
+			auctionId, DepositStatus.HOLD, winnerId);
     }
 
     private void releaseDeposit(Deposit deposit) {
@@ -57,8 +54,7 @@ public class PaymentReleaseDepositUseCase {
         deposit.release();
 
         // 2. Wallet holdingAmount 감소
-        Wallet wallet = walletRepository.findByMemberId(memberId)
-                .orElseThrow(() -> new CustomException(ErrorType.WALLET_NOT_FOUND));
+        Wallet wallet = paymentSupport.findWalletByMemberId(memberId);
         wallet.release(deposit.getAmount());
 
         // 3. 이력 기록
