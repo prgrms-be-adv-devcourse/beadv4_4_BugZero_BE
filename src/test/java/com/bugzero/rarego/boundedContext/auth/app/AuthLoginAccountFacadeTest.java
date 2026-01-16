@@ -54,7 +54,7 @@ class AuthLoginAccountFacadeTest {
 		);
 
 		assertThat(token).isEqualTo("token");
-		verify(authJoinAccountUseCase, never()).join(any(), anyString());
+		verify(authJoinAccountUseCase, never()).join(any(), anyString(), anyString());
 		verify(authFindAccountUseCase).findByProviderAndProviderId(Provider.GOOGLE, "google-123");
 		verify(authIssueTokenUseCase).issueToken(argThat(dto ->
 			existing.getMemberPublicId().equals(dto.memberPublicId())
@@ -74,7 +74,7 @@ class AuthLoginAccountFacadeTest {
 
 		when(authFindAccountUseCase.findByProviderAndProviderId(Provider.KAKAO, "kakao-456"))
 			.thenReturn(Optional.empty());
-		when(authJoinAccountUseCase.join(Provider.KAKAO, "kakao-456"))
+		when(authJoinAccountUseCase.join(Provider.KAKAO, "kakao-456", "kakao@example.com"))
 			.thenReturn(created);
 		when(authIssueTokenUseCase.issueToken(any(TokenIssueDto.class), eq(true)))
 			.thenReturn("token");
@@ -86,7 +86,7 @@ class AuthLoginAccountFacadeTest {
 		ArgumentCaptor<TokenIssueDto> captor = ArgumentCaptor.forClass(TokenIssueDto.class);
 
 		assertThat(token).isEqualTo("token");
-		verify(authJoinAccountUseCase).join(Provider.KAKAO, "kakao-456");
+		verify(authJoinAccountUseCase).join(Provider.KAKAO, "kakao-456", "kakao@example.com");
 		verify(authIssueTokenUseCase).issueToken(captor.capture(), eq(true));
 		assertThat(captor.getValue().memberPublicId()).isEqualTo(created.getMemberPublicId());
 		assertThat(captor.getValue().role()).isEqualTo(created.getRole().name());
