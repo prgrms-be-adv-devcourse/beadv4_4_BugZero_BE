@@ -29,3 +29,11 @@ aws:
 custom:
   global:
     internalBackUrl: ${INTERNAL_BACK_URL:http://localhost:8080}
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
