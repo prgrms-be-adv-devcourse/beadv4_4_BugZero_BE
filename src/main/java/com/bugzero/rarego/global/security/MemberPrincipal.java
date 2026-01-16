@@ -1,4 +1,4 @@
 package com.bugzero.rarego.global.security;
 
-public record MemberPrincipal(Long id, String role) {
+public record MemberPrincipal(String publicId, String role) {
 }

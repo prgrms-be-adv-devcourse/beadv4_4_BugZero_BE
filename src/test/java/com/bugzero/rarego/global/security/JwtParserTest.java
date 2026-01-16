@@ -22,37 +22,37 @@ class JwtParserTest {
 	}
 
 	@Test
-	@DisplayName("parsePrincipal은 id 가진 MemberPrincipal을 반환한다.")
+	@DisplayName("parsePrincipal은 publicId 가진 MemberPrincipal을 반환한다.")
 	void parsePrincipalReturnsMemberPrincipal() {
 		String jwt = jwtProvider.issueToken(
 			60 * 60,
-			Map.of("id", 1L, "role", AuthRole.USER.name())
+			Map.of("publicId", "member-123", "role", AuthRole.USER.name())
 		);
 
 		MemberPrincipal principal = jwtParser.parsePrincipal(jwt);
 
 		assertThat(principal).isNotNull();
-		assertThat(principal.id()).isEqualTo(1L);
+		assertThat(principal.publicId()).isEqualTo("member-123");
 		assertThat(principal.role()).isEqualTo(AuthRole.USER.name());
 	}
 
 	@Test
-	@DisplayName("parsePrincipal은 id가 Integer여도 Long으로 변환한다.")
-	void parsePrincipalConvertsIntegerIdToLong() {
+	@DisplayName("parsePrincipal은 publicId가 없으면 id를 publicId로 사용한다.")
+	void parsePrincipalFallsBackToLegacyId() {
 		String jwt = jwtProvider.issueToken(
 			60 * 60,
-			Map.of("id", 1, "role", AuthRole.USER.name())
+			Map.of("id", "legacy-id", "role", AuthRole.USER.name())
 		);
 
 		MemberPrincipal principal = jwtParser.parsePrincipal(jwt);
 
 		assertThat(principal).isNotNull();
-		assertThat(principal.id()).isEqualTo(1L);
+		assertThat(principal.publicId()).isEqualTo("legacy-id");
 		assertThat(principal.role()).isEqualTo(AuthRole.USER.name());
 	}
 
 	@Test
-	@DisplayName("parsePrincipal은 유효한 토큰이더라도 필수 클레임(id, role)이 없으면 null을 반환한다.")
+	@DisplayName("parsePrincipal은 유효한 토큰이더라도 필수 클레임(publicId, role)이 없으면 null을 반환한다.")
 	void parsePrincipalReturnsNullWhenClaimsMissing() {
 		String jwt = jwtProvider.issueToken(60 * 60, Map.of());
 
