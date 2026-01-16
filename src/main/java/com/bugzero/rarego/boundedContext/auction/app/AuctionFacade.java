@@ -121,15 +121,15 @@ public class AuctionFacade {
 		Map<Long, Product> productMap = productRepository.findAllByIdIn(productIds).stream()
 			.collect(Collectors.toMap(Product::getId, p -> p));
 
-		// 4-2. 주문 정보 (거래 상태)
+		// 주문 정보 (거래 상태)
 		Map<Long, AuctionOrder> orderMap = auctionOrderRepository.findAllByAuctionIdIn(auctionIds).stream()
 			.collect(Collectors.toMap(AuctionOrder::getAuctionId, Function.identity()));
 
-		// 4-3. 입찰 횟수 정보
+		// 입찰 횟수 정보
 		Map<Long, Integer> bidCountMap = bidRepository.countByAuctionIdIn(auctionIds).stream()
 			.collect(Collectors.toMap(row -> (Long) row[0], row -> ((Long) row[1]).intValue()));
 
-		// 5. DTO 변환
+		// DTO 변환
 		List<MySaleResponseDto> dtoList = auctions.stream()
 			.map(auction -> MySaleResponseDto.from(
 				auction,
