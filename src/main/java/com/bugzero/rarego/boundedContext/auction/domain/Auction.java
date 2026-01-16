@@ -28,13 +28,13 @@ public class Auction extends BaseIdAndTime {
     @Column(nullable = false)
     private Long sellerId;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private LocalDateTime startTime;
 
     @Column(nullable = false)
     private Integer durationDays;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private LocalDateTime endTime;
 
     @Column(nullable = false)
