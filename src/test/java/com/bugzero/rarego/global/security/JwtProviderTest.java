@@ -10,23 +10,23 @@ import javax.crypto.SecretKey;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.bugzero.rarego.boundedContext.auth.domain.AuthRole;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-
-import com.bugzero.rarego.shared.member.domain.MemberRole;
 
 class JwtProviderTest {
 	private static final String SECRET = "abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890";
 
 	@Test
-	@DisplayName("issueToken은 id/nickname 클레임을 포함한 JWT를 발급한다.")
+	@DisplayName("issueToken은 id, role 클레임을 포함한 JWT를 발급한다.")
 	void issueTokenIncludesClaims() {
 		JwtProvider jwtProvider = new JwtProvider(SECRET);
 
 		String jwt = jwtProvider.issueToken(
 			60 * 60,
-			Map.of("id", 1L, "nickname", "친절한 옥수수", "role", MemberRole.USER.name())
+			Map.of("id", 1L, "role", AuthRole.USER.name())
 		);
 
 		assertThat(jwt).isNotBlank();
@@ -39,7 +39,6 @@ class JwtProviderTest {
 			.getPayload();
 
 		assertThat(((Number) claims.get("id")).longValue()).isEqualTo(1L);
-		assertThat(claims.get("nickname")).isEqualTo("친절한 옥수수");
-		assertThat(claims.get("role")).isEqualTo(MemberRole.USER.name());
+		assertThat(claims.get("role")).isEqualTo(AuthRole.USER.name());
 	}
 }

@@ -25,8 +25,13 @@ import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.shared.member.domain.MemberRole;
 import com.bugzero.rarego.shared.member.domain.Provider;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+
+import lombok.RequiredArgsConstructor;
 
 @Slf4j
 @Component
@@ -45,11 +50,11 @@ public class AuctionDataInit implements CommandLineRunner {
     public void run(String... args) {
         // 중복 초기화 방지
         if (auctionRepository.count() > 0) {
-            log.info("ℹ️ 경매 데이터가 이미 존재합니다. 초기화를 건너뜁니다.");
+            log.info("경매 데이터가 이미 존재합니다. 초기화를 건너뜁니다.");
             return;
         }
 
-        log.info("🚀 경매 전체 테스트 데이터 초기화 시작...");
+        log.info("경매 전체 테스트 데이터 초기화 시작...");
 
         // 0. 회원 생성
         AuctionMember seller = createOrGetMember(1L, "seller@test.com", "판매자_제로", MemberRole.SELLER);

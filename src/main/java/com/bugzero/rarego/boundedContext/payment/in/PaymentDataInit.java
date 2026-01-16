@@ -13,8 +13,6 @@ import com.bugzero.rarego.boundedContext.payment.domain.PaymentMember;
 import com.bugzero.rarego.boundedContext.payment.domain.Wallet;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentMemberRepository;
 import com.bugzero.rarego.boundedContext.payment.out.WalletRepository;
-import com.bugzero.rarego.shared.member.domain.MemberRole;
-import com.bugzero.rarego.shared.member.domain.Provider;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -49,9 +47,6 @@ public class PaymentDataInit {
 			.publicId(UUID.randomUUID().toString())
 			.email("test@bugzero.com")
 			.nickname("테스트유저")
-			.role(MemberRole.USER)
-			.provider(Provider.GOOGLE)
-			.providerId("test_provider_id")
 			.createdAt(LocalDateTime.now())
 			.updatedAt(LocalDateTime.now())
 			.build();
