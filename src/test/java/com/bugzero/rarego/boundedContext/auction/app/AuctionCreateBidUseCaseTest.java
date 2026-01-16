@@ -64,6 +64,7 @@ class AuctionCreateBidUseCaseTest {
 		// 2. 경매(Auction) Mock - 정상 진행 중 상태
 		Auction auction = Auction.builder()
 			.productId(PRODUCT_ID)
+			.sellerId(SELLER_ID)
 			.startPrice(5000)
 			.tickSize(1000)
 			.startTime(LocalDateTime.now().minusHours(1))
@@ -105,6 +106,7 @@ class AuctionCreateBidUseCaseTest {
 
 		Auction auction = Auction.builder()
 			.productId(PRODUCT_ID)
+			.sellerId(SELLER_ID)
 			.startTime(LocalDateTime.now().minusHours(1))
 			.endTime(LocalDateTime.now().plusHours(1))
 			.build();
@@ -141,6 +143,7 @@ class AuctionCreateBidUseCaseTest {
 
 		Auction auction = Auction.builder()
 			.productId(PRODUCT_ID)
+			.sellerId(SELLER_ID)
 			.startPrice(5000)
 			.tickSize(1000)
 			.startTime(LocalDateTime.now().minusHours(1))

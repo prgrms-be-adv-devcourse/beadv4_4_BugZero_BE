@@ -77,6 +77,7 @@ public class AuctionSettleOneUseCase {
         auctionOrderRepository.save(
                 AuctionOrder.builder()
                         .auctionId(auction.getId())
+                        .sellerId(auction.getSellerId())
                         .bidderId(winningBid.getBidderId())
                         .finalPrice(winningBid.getBidAmount())
                         .build()
