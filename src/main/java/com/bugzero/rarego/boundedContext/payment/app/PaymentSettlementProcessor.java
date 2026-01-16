@@ -6,6 +6,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.bugzero.rarego.boundedContext.payment.domain.Settlement;
 import com.bugzero.rarego.boundedContext.payment.domain.SettlementStatus;
 import com.bugzero.rarego.boundedContext.payment.domain.Wallet;
+import com.bugzero.rarego.boundedContext.payment.out.WalletRepository;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 
 import lombok.RequiredArgsConstructor;
 
@@ -13,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PaymentSettlementProcessor {
 	private final PaymentSupport paymentSupport;
+	private final WalletRepository walletRepository;
 
 	@Transactional
 	public int process(Long settlementId) {
@@ -41,5 +45,14 @@ public class PaymentSettlementProcessor {
 		}
 
 		settlement.fail();
+	}
+
+	@Transactional
+	public void depositSystemFee(Long systemMemberId, int totalSystemFee) {
+		int affectedRows = walletRepository.increaseBalance(systemMemberId, totalSystemFee);
+
+		if (affectedRows == 0) {
+			throw new CustomException(ErrorType.SYSTEM_WALLET_NOT_FOUND);
+		}
 	}
 }

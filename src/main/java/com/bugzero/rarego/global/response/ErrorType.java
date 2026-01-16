@@ -47,6 +47,7 @@ public enum ErrorType {
 	PAYMENT_OWNER_MISMATCH(403, 4105, "해당 결제에 대한 접근 권한이 없습니다."),
 	SETTLEMENT_BATCH_FAILED(500, 4106, "정산 배치 실행에 실패했습니다."),
 	SETTLEMENT_NOT_FOUND(404, 4107, "정산 정보를 찾을 수 없습니다."),
+	SYSTEM_WALLET_NOT_FOUND(404, 4108, "시스템 지갑을 찾을 수 없습니다."),
 
 	AUCTION_ORDER_NOT_FOUND(404, 4201, "주문 정보를 찾을 수 없습니다."),
 	NOT_AUCTION_WINNER(403, 4202, "낙찰자만 결제할 수 있습니다."),
