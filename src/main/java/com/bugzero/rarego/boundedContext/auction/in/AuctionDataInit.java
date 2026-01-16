@@ -12,8 +12,7 @@ import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductCondition;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
-import com.bugzero.rarego.shared.member.domain.MemberRole;
-import com.bugzero.rarego.shared.member.domain.Provider;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.ApplicationEventPublisher;
@@ -74,15 +73,13 @@ public class AuctionDataInit {
         AuctionMember seller = createOrGetMember(
                 1L,
                 "seller@auction.com",
-                "AuctionSeller",
-                MemberRole.SELLER
+                "AuctionSeller"
         );
 
         AuctionMember buyer = createOrGetMember(
                 2L,
                 "buyer@auction.com",
-                "AuctionBuyer",
-                MemberRole.USER
+                "AuctionBuyer"
         );
 
         log.info("회원 데이터 생성 완료 - Seller: {}, Buyer: {}", seller.getId(), buyer.getId());
@@ -170,7 +167,7 @@ public class AuctionDataInit {
         log.info("- 진행 중 (5분 후 자동 정산): 1건 (auction5)");
     }
 
-    private AuctionMember createOrGetMember(Long id, String email, String nickname, MemberRole role) {
+    private AuctionMember createOrGetMember(Long id, String email, String nickname) {
         return auctionMemberRepository.findById(id)
                 .orElseGet(() -> {
                     AuctionMember member = AuctionMember.builder()
@@ -178,9 +175,6 @@ public class AuctionDataInit {
                             .publicId(UUID.randomUUID().toString())
                             .email(email)
                             .nickname(nickname)
-                            .role(role)
-                            .provider(Provider.GOOGLE)
-                            .providerId("provider_" + UUID.randomUUID())
                             .build();
                     return auctionMemberRepository.save(member);
                 });

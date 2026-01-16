@@ -1,6 +1,7 @@
-package com.bugzero.rarego.shared.member.domain;
+package com.bugzero.rarego.boundedContext.auth.domain;
 
-public enum MemberRole {
+
+public enum AuthRole {
 	USER, ADMIN, SELLER;
 
 	public String securityRole() {
