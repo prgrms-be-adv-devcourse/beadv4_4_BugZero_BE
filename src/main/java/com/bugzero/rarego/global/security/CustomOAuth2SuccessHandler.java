@@ -1,6 +1,7 @@
 package com.bugzero.rarego.global.security;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -42,7 +43,8 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
 			return;
 		}
 
-		SuccessResponseDto<String> body = SuccessResponseDto.from(SuccessType.OK, accessToken);
+		// 토큰을 SuccessResponseDto에 JSON 형태로 담아 응답해줌
+		SuccessResponseDto<Map<String, String>> body = SuccessResponseDto.from(SuccessType.OK, Map.of("accessToken", accessToken));
 		response.setStatus(body.status());
 		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 		objectMapper.writeValue(response.getOutputStream(), body);
