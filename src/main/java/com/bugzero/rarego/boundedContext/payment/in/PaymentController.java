@@ -74,7 +74,7 @@ public class PaymentController {
 	}
 
 	// 로컬 정산 배치 테스트용 api
-	@PostMapping("/settlements")
+	@PostMapping("/settlement")
 	public SuccessResponseDto<Void> runSettlementJob() {
 		try {
 			// JobParameter에 실행 시간을 넣어 중복 실행 방지
