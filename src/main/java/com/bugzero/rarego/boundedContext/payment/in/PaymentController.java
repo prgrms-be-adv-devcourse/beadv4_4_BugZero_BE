@@ -1,6 +1,10 @@
 package com.bugzero.rarego.boundedContext.payment.in;
 
+import java.time.LocalDateTime;
+
 import org.springframework.batch.core.job.Job;
+import org.springframework.batch.core.job.parameters.JobParameters;
+import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -65,7 +69,8 @@ public class PaymentController {
 		@PathVariable Long auctionId,
 		@Valid @RequestBody AuctionFinalPaymentRequestDto requestDto
 	) {
-		return SuccessResponseDto.from(SuccessType.OK, paymentFacade.auctionFinalPayment(memberId, auctionId, requestDto));
+		return SuccessResponseDto.from(SuccessType.OK,
+			paymentFacade.auctionFinalPayment(memberId, auctionId, requestDto));
 	}
 
 	// 로컬 정산 배치 테스트용 api
