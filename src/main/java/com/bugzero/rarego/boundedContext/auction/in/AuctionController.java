@@ -13,17 +13,20 @@ import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidRequestDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/auctions")
 @RequiredArgsConstructor
+@Tag(name = "Auction", description = "경매 관련 API")
 public class AuctionController {
 
 	private final AuctionFacade auctionFacade;
 
-	// 경매 입찰 (POST /api/v1/auctions/{auctionId}/bids)
+	@Operation(summary = "경매 입찰", description = "경매에 입찰합니다")
 	@PostMapping("/{auctionId}/bids")
 	public SuccessResponseDto<BidResponseDto> createBid(
 		@PathVariable Long auctionId,
