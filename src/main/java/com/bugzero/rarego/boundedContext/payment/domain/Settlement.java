@@ -23,6 +23,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class Settlement extends BaseIdAndTime {
+	// TODO: 수수료율은 팀원들과 합의 후 확정 필요
+	private static final double FEE_RATE = 0.1; // 10% 수수료
+
 	@Column(nullable = false, unique = true)
 	private Long auctionId;
 
@@ -41,5 +44,20 @@ public class Settlement extends BaseIdAndTime {
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
-	private SettlementStatus status;
+	@Builder.Default
+	private SettlementStatus status = SettlementStatus.READY;
+
+	public static Settlement create(Long auctionId, PaymentMember seller, int salesAmount) {
+		int feeAmount = (int) (salesAmount * FEE_RATE);
+		int settlementAmount = salesAmount - feeAmount;
+
+		return Settlement.builder()
+				.auctionId(auctionId)
+				.seller(seller)
+				.salesAmount(salesAmount)
+				.feeAmount(feeAmount)
+				.settlementAmount(settlementAmount)
+				.status(SettlementStatus.READY)
+				.build();
+	}
 }

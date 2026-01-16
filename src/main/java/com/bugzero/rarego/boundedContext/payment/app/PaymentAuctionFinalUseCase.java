@@ -10,12 +10,14 @@ import com.bugzero.rarego.boundedContext.payment.domain.DepositStatus;
 import com.bugzero.rarego.boundedContext.payment.domain.PaymentMember;
 import com.bugzero.rarego.boundedContext.payment.domain.PaymentTransaction;
 import com.bugzero.rarego.boundedContext.payment.domain.ReferenceType;
+import com.bugzero.rarego.boundedContext.payment.domain.Settlement;
 import com.bugzero.rarego.boundedContext.payment.domain.Wallet;
 import com.bugzero.rarego.boundedContext.payment.domain.WalletTransactionType;
 import com.bugzero.rarego.boundedContext.payment.in.dto.AuctionFinalPaymentRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.AuctionFinalPaymentResponseDto;
 import com.bugzero.rarego.boundedContext.payment.out.DepositRepository;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentTransactionRepository;
+import com.bugzero.rarego.boundedContext.payment.out.SettlementRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.shared.auction.dto.AuctionOrderDto;
@@ -32,6 +34,7 @@ public class PaymentAuctionFinalUseCase {
         private final AuctionOrderPort auctionOrderPort;
         private final DepositRepository depositRepository;
         private final PaymentTransactionRepository transactionRepository;
+        private final SettlementRepository settlementRepository;
         private final PaymentSupport paymentSupport;
 
         @Transactional
@@ -51,29 +54,34 @@ public class PaymentAuctionFinalUseCase {
 
                 // 4. 지갑 조회
                 Wallet wallet = paymentSupport.findWalletByMemberIdForUpdate(memberId);
-                PaymentMember member = paymentSupport.findMemberById(memberId);
+                PaymentMember buyer = paymentSupport.findMemberById(memberId);
 
                 // 5. 보증금 사용 처리
                 deposit.use();
                 wallet.useDeposit(depositAmount);
-                recordTransaction(member, wallet, WalletTransactionType.DEPOSIT_USED,
+                recordTransaction(buyer, wallet, WalletTransactionType.DEPOSIT_USED,
                                 -depositAmount, -depositAmount, ReferenceType.DEPOSIT, deposit.getId());
 
                 // 6. 잔금 결제 처리
                 wallet.pay(paymentAmount);
-                recordTransaction(member, wallet, WalletTransactionType.AUCTION_PAYMENT,
+                recordTransaction(buyer, wallet, WalletTransactionType.AUCTION_PAYMENT,
                                 -paymentAmount, 0, ReferenceType.AUCTION_ORDER, order.orderId());
 
                 // 7. 주문 완료 처리 (Port를 통해 Auction 모듈에 요청)
                 auctionOrderPort.completeOrder(auctionId);
 
-                log.info("낙찰 결제 완료: auctionId={}, memberId={}, finalPrice={}, paid={}",
-                                auctionId, memberId, finalPrice, paymentAmount);
+                // 8. 정산 정보 생성 (status = READY)
+                PaymentMember seller = paymentSupport.findMemberById(order.sellerId());
+                Settlement settlement = Settlement.create(auctionId, seller, finalPrice);
+                settlementRepository.save(settlement);
+
+                log.info("낙찰 결제 완료: auctionId={}, memberId={}, finalPrice={}, paid={}, settlementId={}",
+                                auctionId, memberId, finalPrice, paymentAmount, settlement.getId());
 
                 return AuctionFinalPaymentResponseDto.of(
                                 order.orderId(),
                                 auctionId,
-                                member.getPublicId(),
+                                buyer.getPublicId(),
                                 finalPrice,
                                 depositAmount,
                                 wallet.getBalance(),
