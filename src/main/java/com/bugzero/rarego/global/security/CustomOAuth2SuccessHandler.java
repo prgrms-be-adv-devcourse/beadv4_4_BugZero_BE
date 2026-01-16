@@ -5,15 +5,10 @@ import java.io.IOException;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
-import com.bugzero.rarego.boundedContext.auth.app.AuthService;
-import com.bugzero.rarego.boundedContext.auth.domain.AccountDto;
-import com.bugzero.rarego.boundedContext.auth.domain.OAuth2AttributeMapper;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 
@@ -23,15 +18,11 @@ import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler {
-	private final AuthService authService;
-	private final ClientRegistrationRepository clientRegistrationRepository;
 	private final ObjectMapper objectMapper;
 
-	public CustomOAuth2SuccessHandler(AuthService authService,
-		ClientRegistrationRepository clientRegistrationRepository,
-		ObjectMapper objectMapper) {
-		this.authService = authService;
-		this.clientRegistrationRepository = clientRegistrationRepository;
+	private static final String ACCESS_TOKEN_ATTRIBUTE = "accessToken";
+
+	public CustomOAuth2SuccessHandler(ObjectMapper objectMapper) {
 		this.objectMapper = objectMapper;
 	}
 
@@ -43,20 +34,13 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
 			return;
 		}
 
-		String registrationId = oauthToken.getAuthorizedClientRegistrationId();
-		ClientRegistration registration = clientRegistrationRepository.findByRegistrationId(registrationId);
-		if (registration == null) {
+		OAuth2User oauth2User = oauthToken.getPrincipal();
+
+		Object accessTokenValue = oauth2User.getAttributes().get(ACCESS_TOKEN_ATTRIBUTE);
+		if (!(accessTokenValue instanceof String accessToken)) {
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
-
-		String userNameAttributeName = registration.getProviderDetails()
-			.getUserInfoEndpoint().getUserNameAttributeName();
-		OAuth2User oauth2User = oauthToken.getPrincipal();
-
-		AccountDto accountDto = OAuth2AttributeMapper.toAccountDto(
-			registrationId, userNameAttributeName, oauth2User.getAttributes());
-		String accessToken = authService.login(accountDto);
 
 		SuccessResponseDto<String> body = SuccessResponseDto.from(SuccessType.OK, accessToken);
 		response.setStatus(body.status());

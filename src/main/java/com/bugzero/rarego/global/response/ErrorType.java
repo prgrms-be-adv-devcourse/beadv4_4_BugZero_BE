@@ -12,9 +12,10 @@ public enum ErrorType {
 
     // Member (1000 ~ 1499)
     MEMBER_NOT_FOUND(404, 1001, "존재하지 않는 회원입니다."),
-
-	// Member (1500 ~ 1999)
-	// Auth/JWT
+	MEMBER_EMAIL_ALREADY_EXISTS(409, 1002, "이미 사용 중인 이메일입니다."),
+	MEMBER_EMAIL_EMPTY(400, 1003, "이메일은 필수 입력값입니다."),
+	MEMBER_JOIN_FAILED(500, 1004, "회원 가입에 실패했습니다."),
+	// Auth/JWT (1500 ~ 1999)
 	AUTH_MEMBER_REQUIRED(400, 1501, "회원 정보가 필요합니다."),
 	JWT_EXPIRE_SECONDS_INVALID(500, 1504,"토큰 만료 설정이 올바르지 않습니다."),
 	JWT_ISSUE_FAILED(500, 1505, "토큰 발급에 실패했습니다."),

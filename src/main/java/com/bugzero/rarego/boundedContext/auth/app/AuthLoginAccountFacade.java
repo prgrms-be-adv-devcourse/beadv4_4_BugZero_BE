@@ -21,7 +21,7 @@ public class AuthLoginAccountFacade {
 		String providerId = accountDto.providerId();
 		Account account = authFindAccountUseCase
 			.findByProviderAndProviderId(provider, providerId)
-			.orElseGet(() -> authJoinAccountUseCase.join(provider, providerId));
+			.orElseGet(() -> authJoinAccountUseCase.join(provider, providerId, accountDto.email()));
 		TokenIssueDto tokenIssueDto = new TokenIssueDto(account.getMemberPublicId(), account.getRole().name());
 		return authIssueTokenUseCase.issueToken(tokenIssueDto, true);
 	}

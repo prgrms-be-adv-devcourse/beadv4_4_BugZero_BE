@@ -10,6 +10,8 @@ import com.bugzero.rarego.boundedContext.auth.domain.Provider;
 import com.bugzero.rarego.boundedContext.auth.out.AccountRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
+import com.bugzero.rarego.shared.member.domain.MemberJoinResponseDto;
+import com.bugzero.rarego.shared.member.out.MemberApiClient;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,14 +19,24 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthJoinAccountUseCase {
 	private final AccountRepository accountRepository;
+	private final MemberApiClient memberApiClient;
 	// Member 서비스 호출 (동기)
 
 	@Transactional
-	public Account join(Provider provider, String providerId) {
+	public Account join(Provider provider, String providerId, String email) {
 		// 1) Member 생성/조회(멱등하게) -> memberPublicId 받기
-		// String memberPublicId = AuthJoinMemberClient.getOrCreateMember(email);
-		String memberPublicId = java.util.UUID.randomUUID().toString(); // 임시 UUID, Member 서비스에서 받아와야 함
+		MemberJoinResponseDto memberResponse = memberApiClient.join(email);
+		String memberPublicId = memberResponse.memberPublicId();
 
+		if (memberPublicId == null || memberPublicId.isBlank()) {
+			throw new CustomException(ErrorType.INTERNAL_SERVER_ERROR);
+		}
+		// 멱등성 처리: 이미 같은 memberPublicId가 있으면 Account 생성하지 않고 기존 Account 반환
+		return accountRepository.findByMemberPublicId(memberPublicId)
+			.orElseGet(() -> createAccount(provider, providerId, memberPublicId));
+	}
+
+	private Account createAccount(Provider provider, String providerId, String memberPublicId) {
 		// 2) Account 생성 (provider+providerId 유니크)
 		try {
 			Account account = Account.builder()

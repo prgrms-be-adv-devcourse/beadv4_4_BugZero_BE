@@ -12,6 +12,8 @@ import java.util.Map;
 
 import com.bugzero.rarego.boundedContext.auth.app.AuthService;
 import com.bugzero.rarego.boundedContext.auth.domain.TokenIssueDto;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.global.security.MemberPrincipal;
@@ -40,6 +42,9 @@ public class AuthController {
 	@Operation(summary = "인증 확인", description = "현재 인증된 사용자 정보를 확인합니다")
 	@GetMapping("/test/check")
 	public SuccessResponseDto<String> login(@AuthenticationPrincipal MemberPrincipal memberPrincipal) {
+		if (memberPrincipal == null) {
+			throw new CustomException(ErrorType.AUTH_MEMBER_REQUIRED);
+		}
 		return SuccessResponseDto.from(SuccessType.OK, memberPrincipal.toString());
 	}
 
@@ -49,6 +54,9 @@ public class AuthController {
 	@PreAuthorize("hasRole('ADMIN')")
 	@GetMapping("/test/admin")
 	public SuccessResponseDto<String> justAdmin(@AuthenticationPrincipal MemberPrincipal memberPrincipal) {
+		if (memberPrincipal == null) {
+			throw new CustomException(ErrorType.AUTH_MEMBER_REQUIRED);
+		}
 		return SuccessResponseDto.from(SuccessType.OK, memberPrincipal.toString());
 	}
 

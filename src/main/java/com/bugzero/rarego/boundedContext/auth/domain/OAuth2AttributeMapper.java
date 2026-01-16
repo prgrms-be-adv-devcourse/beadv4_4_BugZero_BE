@@ -50,6 +50,9 @@ public final class OAuth2AttributeMapper {
 		if (kakaoAccount != null) {
 			email = safeAsString(kakaoAccount.get("email")); // 개발에서 email 비허용. null 가능
 		}
+		if (email == null || email.isBlank()) {
+			email = buildPlaceholderEmail("kakao", providerId);
+		}
 
 		return new AccountDto(providerId, email, Provider.KAKAO);
 	}
@@ -66,5 +69,13 @@ public final class OAuth2AttributeMapper {
 
 	private static String safeAsString(Object v) {
 		return v == null ? null : v.toString();
+	}
+
+	// 이메일이 없는 경우 대체 이메일 생성 => 카카오는 개발 단계에서 이메일 제공 해주지 않음
+	private static String buildPlaceholderEmail(String provider, String providerId) {
+		if (providerId == null || providerId.isBlank()) {
+			throw new CustomException(ErrorType.AUTH_OAUTH2_INVALID_RESPONSE);
+		}
+		return provider + "_" + providerId + "@noemail.invalid";
 	}
 }

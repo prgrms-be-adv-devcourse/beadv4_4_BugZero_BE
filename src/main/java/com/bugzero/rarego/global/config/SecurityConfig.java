@@ -17,10 +17,18 @@ import com.bugzero.rarego.global.security.CustomOAuth2SuccessHandler;
 import com.bugzero.rarego.global.security.JwtAuthenticationFilter;
 import com.bugzero.rarego.global.security.JwtParser;
 
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import lombok.RequiredArgsConstructor;
 
-@EnableMethodSecurity
 @Configuration
+@SecurityScheme(
+	name = "bearerAuth",
+	type = SecuritySchemeType.HTTP,
+	scheme = "bearer",
+	bearerFormat = "JWT"
+)
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 	@Bean
