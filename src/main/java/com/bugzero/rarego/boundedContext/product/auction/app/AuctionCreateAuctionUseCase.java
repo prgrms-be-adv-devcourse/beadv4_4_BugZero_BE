@@ -1,6 +1,7 @@
 package com.bugzero.rarego.boundedContext.product.auction.app;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionRequestDto;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 public class AuctionCreateAuctionUseCase {
 	private final AuctionRepository auctionRepository;
 
+	@Transactional
 	// 신규상품 경매 정보 생성
 	public long createAuction(Long productId,String sellerUUID, ProductAuctionRequestDto productAuctionRequestDto) {
 		//TODO sellerUUID를 통해 memberId를 반환하는 메서드 추가 (support에 생성)
