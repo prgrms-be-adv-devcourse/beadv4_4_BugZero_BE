@@ -97,6 +97,7 @@ public class AuctionDataInit {
 
         Auction normalAuction = Auction.builder()
                 .productId(product1.getId())
+                .sellerId(product1.getSellerId())
                 .startTime(LocalDateTime.now())
                 .endTime(LocalDateTime.now().plusDays(3))
                 .startPrice(1_000_000)
@@ -111,7 +112,7 @@ public class AuctionDataInit {
 
         // 3-1. 종료 + 입찰 있음 (낙찰 대상)
         Product product2 = createProduct(seller.getId(), "테스트 상품 1", 10_000);
-        Auction auction1 = createAuction(product2.getId(), -2, -1, 10_000, 1_000);
+        Auction auction1 = createAuction(product2.getId(), product2.getSellerId(), -2, -1, 10_000, 1_000);
         auction1.forceStartForTest();
         auctionRepository.save(auction1);
         bidRepository.save(createBid(auction1.getId(), buyer.getId(), 15_000));
@@ -120,20 +121,20 @@ public class AuctionDataInit {
 
         // 3-2. 종료 + 입찰 없음 (유찰 대상)
         Product product3 = createProduct(seller.getId(), "테스트 상품 2", 20_000);
-        Auction auction2 = createAuction(product3.getId(), -2, 0, 20_000, 2_000);
+        Auction auction2 = createAuction(product3.getId(), product3.getSellerId(), -2, 0, 20_000, 2_000);
         auction2.forceStartForTest();
         auctionRepository.save(auction2);
 
         // 3-3. 종료 + 입찰 1건 (낙찰 대상)
         Product product4 = createProduct(seller.getId(), "테스트 상품 3", 30_000);
-        Auction auction3 = createAuction(product4.getId(), -3, 0, 30_000, 3_000);
+        Auction auction3 = createAuction(product4.getId(), product4.getSellerId(), -3, 0, 30_000, 3_000);
         auction3.forceStartForTest();
         auctionRepository.save(auction3);
         bidRepository.save(createBid(auction3.getId(), buyer.getId(), 35_000));
 
         // 3-4. 진행 중 + 1분 후 종료 (동적 스케줄링 테스트용)
         Product product5 = createProduct(seller.getId(), "테스트 상품 4", 40_000);
-        Auction auction4 = createAuction(product5.getId(), -1, 1, 40_000, 4_000);
+        Auction auction4 = createAuction(product5.getId(), product5.getSellerId(), -1, 1, 40_000, 4_000);
         auction4.forceStartForTest();
         auctionRepository.save(auction4);
         bidRepository.save(createBid(auction4.getId(), buyer.getId(), 45_000));
@@ -141,13 +142,11 @@ public class AuctionDataInit {
         eventPublisher.publishEvent(
                 new AuctionCreatedEvent(
                         auction4.getId(),
-                        auction4.getEndTime()
-                )
-        );
+                                auction4.getEndTime()));
 
         // 3-5. 진행 중 + 5분 후 종료 (동적 스케줄링 테스트용)
         Product product6 = createProduct(seller.getId(), "테스트 상품 5", 50_000);
-        Auction auction5 = createAuction(product6.getId(), -1, 5, 50_000, 5_000);
+        Auction auction5 = createAuction(product6.getId(), product6.getSellerId(), -1, 5, 50_000, 5_000);
         auction5.forceStartForTest();
         auctionRepository.save(auction5);
         bidRepository.save(createBid(auction5.getId(), buyer.getId(), 55_000));
@@ -155,9 +154,7 @@ public class AuctionDataInit {
         eventPublisher.publishEvent(
                 new AuctionCreatedEvent(
                         auction5.getId(),
-                        auction5.getEndTime()
-                )
-        );
+                                auction5.getEndTime()));
 
         log.info("=== 경매 테스트 데이터 초기화 완료 ===");
         log.info("- 정상 경매: 1건 (3일 후 종료)");
@@ -194,6 +191,7 @@ public class AuctionDataInit {
 
     private Auction createAuction(
             Long productId,
+            Long sellerId,
             int startHoursOffset,
             int endMinutesOffset,
             int startPrice,
@@ -202,6 +200,7 @@ public class AuctionDataInit {
         LocalDateTime now = LocalDateTime.now();
         return Auction.builder()
                 .productId(productId)
+                .sellerId(sellerId)
                 .startTime(now.plusHours(startHoursOffset))
                 .endTime(endMinutesOffset > 0
                         ? now.plusMinutes(endMinutesOffset)

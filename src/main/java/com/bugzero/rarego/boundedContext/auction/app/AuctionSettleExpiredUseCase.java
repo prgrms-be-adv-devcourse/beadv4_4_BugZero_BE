@@ -40,8 +40,7 @@ public class AuctionSettleExpiredUseCase {
                     Bid winningBid = support.findWinningBid(auction.getId());
                     details.add(AuctionAutoResponseDto.SettlementDetail.success(
                             auction.getId(),
-                            winningBid.getBidderId()
-                    ));
+                            winningBid.getBidderId()));
                     success++;
                 } else {
                     handleFail(auction);
@@ -64,9 +63,7 @@ public class AuctionSettleExpiredUseCase {
         eventPublisher.publishEvent(
                 new AuctionFailedEvent(
                         auction.getId(),
-                        auction.getProductId()
-                )
-        );
+                        auction.getProductId()));
     }
 
     private void handleSuccess(Auction auction) {
@@ -78,6 +75,7 @@ public class AuctionSettleExpiredUseCase {
         auctionOrderRepository.save(
                 AuctionOrder.builder()
                         .auctionId(auction.getId())
+                        .sellerId(auction.getSellerId())
                         .bidderId(winningBid.getBidderId())
                         .finalPrice(winningBid.getBidAmount())
                         .build()
