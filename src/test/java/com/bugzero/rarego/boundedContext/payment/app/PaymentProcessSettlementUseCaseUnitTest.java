@@ -7,7 +7,6 @@ import static org.mockito.BDDMockito.*;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,7 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
-import org.springframework.test.util.ReflectionTestUtils;
+// ReflectionTestUtils 제거 (필요 없음)
 
 import com.bugzero.rarego.boundedContext.payment.domain.Settlement;
 import com.bugzero.rarego.boundedContext.payment.domain.SettlementStatus;
@@ -33,15 +32,8 @@ class PaymentProcessSettlementUseCaseUnitTest {
 	@Mock
 	private SettlementRepository settlementRepository;
 
-	private final Long SYSTEM_ID = 2L;
-
-	@BeforeEach
-	void setUp() {
-		ReflectionTestUtils.setField(useCase, "systemMemberId", SYSTEM_ID);
-	}
-
 	@Test
-	@DisplayName("정상 흐름: 2건 모두 성공 시 수수료 합산 후 Processor에게 시스템 입금 위임")
+	@DisplayName("정상 흐름: 2건 모두 성공 시 성공 카운트 반환 및 개별 처리 호출 검증")
 	void success_all() {
 		// given
 		Settlement s1 = createSettlement(1L);
@@ -51,7 +43,8 @@ class PaymentProcessSettlementUseCaseUnitTest {
 		given(settlementRepository.findAllByStatus(eq(SettlementStatus.READY), any(Pageable.class)))
 			.willReturn(list);
 
-		// Processor가 성공적으로 수수료(1000원)를 리턴한다고 가정
+		// Processor가 성공적으로 처리됨 (예외 없음)
+		// 반환값은 UseCase 로직상 중요하지 않지만 Stubbing은 해둠
 		given(paymentSettlementProcessor.process(anyLong())).willReturn(1000);
 
 		// when
@@ -60,14 +53,13 @@ class PaymentProcessSettlementUseCaseUnitTest {
 		// then
 		assertThat(count).isEqualTo(2); // 2건 성공
 
-		// Processor의 process가 2번 호출되었는지 검증
+		// Processor의 process가 각 정산 건마다 호출되었는지 검증
 		verify(paymentSettlementProcessor, times(2)).process(anyLong());
 
-		verify(paymentSettlementProcessor).depositSystemFee(eq(SYSTEM_ID), eq(2000));
 	}
 
 	@Test
-	@DisplayName("부분 성공: 1건 성공, 1건 실패 시에도 중단되지 않고 진행되며, 성공분만 입금 위임")
+	@DisplayName("부분 성공: 1건 성공, 1건 실패 시에도 중단되지 않고 성공 카운트 집계")
 	void partial_success() {
 		// given
 		Settlement successItem = createSettlement(1L);
@@ -76,7 +68,7 @@ class PaymentProcessSettlementUseCaseUnitTest {
 		given(settlementRepository.findAllByStatus(eq(SettlementStatus.READY), any(Pageable.class)))
 			.willReturn(List.of(successItem, failItem));
 
-		// 1번은 성공 (수수료 1000)
+		// 1번은 성공
 		given(paymentSettlementProcessor.process(1L)).willReturn(1000);
 
 		// 2번은 예외 발생
@@ -87,12 +79,10 @@ class PaymentProcessSettlementUseCaseUnitTest {
 		int count = useCase.processSettlements(10);
 
 		// then
-		assertThat(count).isEqualTo(1); // 1건만 성공 카운트
+		assertThat(count).isEqualTo(1); // 1건만 성공
 
 		// 실패한 2번 건에 대해 fail() 처리가 호출되었는지 확인
 		verify(paymentSettlementProcessor).fail(2L);
-		
-		verify(paymentSettlementProcessor).depositSystemFee(eq(SYSTEM_ID), eq(1000));
 	}
 
 	@Test
