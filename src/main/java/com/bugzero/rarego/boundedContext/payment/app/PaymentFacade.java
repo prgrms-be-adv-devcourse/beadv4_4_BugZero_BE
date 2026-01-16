@@ -2,6 +2,8 @@ package com.bugzero.rarego.boundedContext.payment.app;
 
 import org.springframework.stereotype.Service;
 
+import com.bugzero.rarego.boundedContext.payment.in.dto.AuctionFinalPaymentRequestDto;
+import com.bugzero.rarego.boundedContext.payment.in.dto.AuctionFinalPaymentResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestDto;
@@ -18,6 +20,7 @@ public class PaymentFacade {
 	private final PaymentReleaseDepositUseCase paymentReleaseDepositUseCase;
 	private final PaymentRequestPaymentUseCase paymentRequestPaymentUseCase;
 	private final PaymentConfirmPaymentUseCase paymentConfirmPaymentUseCase;
+	private final PaymentAuctionFinalUseCase paymentAuctionFinalUseCase;
 
 	/**
 	 * 보증금 홀딩
@@ -45,5 +48,13 @@ public class PaymentFacade {
 	 */
 	public PaymentConfirmResponseDto confirmPayment(Long memberId, PaymentConfirmRequestDto requestDto) {
 		return paymentConfirmPaymentUseCase.confirmPayment(memberId, requestDto);
+	}
+
+	/**
+	 * 낙찰 결제 (최종 결제)
+	 */
+	public AuctionFinalPaymentResponseDto auctionFinalPayment(Long memberId, Long auctionId,
+			AuctionFinalPaymentRequestDto requestDto) {
+		return paymentAuctionFinalUseCase.finalPayment(memberId, auctionId, requestDto);
 	}
 }

@@ -1,7 +1,11 @@
 package com.bugzero.rarego.boundedContext.auction.out;
 
 import com.bugzero.rarego.boundedContext.auction.domain.Auction;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
+
 import jakarta.persistence.LockModeType;
+
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -9,6 +13,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,5 +32,15 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
     List<Auction> findExpiredInProgressAuctionsWithLock(
             @Param("now") LocalDateTime now,
             Pageable pageable
+    );
+
+    // 필터링 없는 조건
+    Page<Auction> findAllByProductIdIn(Collection<Long> productIds, Pageable pageable);
+
+    // 상태 필터링이 있을 때
+    Page<Auction> findAllByProductIdInAndStatusIn(
+        Collection<Long> productIds,
+        Collection<AuctionStatus> statuses,
+        Pageable pageable
     );
 }

@@ -21,17 +21,6 @@ public abstract class BaseMember extends BaseEntity {
 	@Column(nullable = false, unique = true, length = 36)
 	private String publicId;
 
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
-	private MemberRole role;
-
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
-	private Provider provider;
-
-	@Column(nullable = false, length = 128)
-	private String providerId;
-
 	@Column(nullable = false, unique = true)
 	private String email;
 

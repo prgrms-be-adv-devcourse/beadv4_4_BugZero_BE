@@ -13,15 +13,13 @@ public enum ErrorType {
     // Member (1000 ~ 1499)
     MEMBER_NOT_FOUND(404, 1001, "존재하지 않는 회원입니다."),
 
-    // Member (1500 ~ 1999)
-    // Auth/JWT
-    AUTH_MEMBER_REQUIRED(400, 1501, "회원 정보가 필요합니다."),
-    AUTH_MEMBER_ID_INVALID(400, 1502, "회원 식별자가 올바르지 않습니다."),
-    AUTH_MEMBER_NICKNAME_REQUIRED(400, 1503, "닉네임이 필요합니다."),
-    JWT_EXPIRE_SECONDS_INVALID(500, 1504, "토큰 만료 설정이 올바르지 않습니다."),
-    JWT_ISSUE_FAILED(500, 1505, "토큰 발급에 실패했습니다."),
-    AUTH_UNAUTHORIZED(401, 1506, "인증이 필요합니다."),
-    AUTH_FORBIDDEN(403, 1507, "권한이 없습니다."),
+	// Member (1500 ~ 1999)
+	// Auth/JWT
+	AUTH_MEMBER_REQUIRED(400, 1501, "회원 정보가 필요합니다."),
+	JWT_EXPIRE_SECONDS_INVALID(500, 1504,"토큰 만료 설정이 올바르지 않습니다."),
+	JWT_ISSUE_FAILED(500, 1505, "토큰 발급에 실패했습니다."),
+	AUTH_UNAUTHORIZED(401, 1506, "인증이 필요합니다."),
+	AUTH_FORBIDDEN(403, 1507, "권한이 없습니다."),
 
     // Auction (2000 ~ 2999)
     AUCTION_NOT_FOUND(404, 2001, "경매를 찾을 수 없습니다."),
@@ -46,7 +44,13 @@ public enum ErrorType {
     PAYMENT_NOT_FOUND(404, 4102, "존재하지 않는 결제입니다."),
     INVALID_PAYMENT_AMOUNT(400, 4103, "결제 금액이 일치하지 않습니다."),
     ALREADY_PROCESSED_PAYMENT(409, 4104, "이미 처리된 결제입니다."),
-    PAYMENT_OWNER_MISMATCH(403, 4105, "해당 결제에 대한 접근 권한이 없습니다.");
+    PAYMENT_OWNER_MISMATCH(403, 4105, "해당 결제에 대한 접근 권한이 없습니다."),
+
+	AUCTION_ORDER_NOT_FOUND(404, 4201, "주문 정보를 찾을 수 없습니다."),
+	NOT_AUCTION_WINNER(403, 4202, "낙찰자만 결제할 수 있습니다."),
+	INVALID_ORDER_STATUS(409, 4203, "결제 가능한 주문 상태가 아닙니다."),
+	DEPOSIT_NOT_FOUND(404, 4204, "보증금 정보를 찾을 수 없습니다."),
+	ALREADY_USED_DEPOSIT(409, 4205, "이미 사용된 보증금입니다.");
 
     private final Integer httpStatus;
     private final int code;

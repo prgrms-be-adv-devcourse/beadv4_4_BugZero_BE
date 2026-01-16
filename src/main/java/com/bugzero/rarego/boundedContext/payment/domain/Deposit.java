@@ -1,6 +1,8 @@
 package com.bugzero.rarego.boundedContext.payment.domain;
 
+import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
+import com.bugzero.rarego.global.response.ErrorType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -23,18 +25,13 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(
-	name = "PAYMENT_DEPOSIT",
-	indexes = {
+@Table(name = "PAYMENT_DEPOSIT", indexes = {
 		@Index(name = "idx_deposit_auction_id", columnList = "auction_id")
-	},
-	uniqueConstraints = {
-		@UniqueConstraint(
-			name = "uk_deposit_member_auction",
-			columnNames = {"member_id", "auction_id"}
-		) // 한 회원은 한 경매에 중복 예치 불가
-	}
-)
+}, uniqueConstraints = {
+		@UniqueConstraint(name = "uk_deposit_member_auction", columnNames = { "member_id", "auction_id" }) // 한 회원은 한
+																											// 경매에 중복 예치
+																											// 불가
+})
 public class Deposit extends BaseIdAndTime {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(nullable = false)
@@ -64,6 +61,9 @@ public class Deposit extends BaseIdAndTime {
 	}
 
 	public void use() {
+		if (this.status != DepositStatus.HOLD) {
+			throw new CustomException(ErrorType.ALREADY_USED_DEPOSIT);
+		}
 		this.status = DepositStatus.USED;
 	}
 
