@@ -66,4 +66,7 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
 	Page<Bid> findMyBids(@Param("memberId") Long memberId,
 		@Param("status") AuctionStatus status,
 		Pageable pageable);
+
+	// 경매 ID별 입찰 횟수 카운트
+	int countByAuctionId(Long auctionId);
 }
