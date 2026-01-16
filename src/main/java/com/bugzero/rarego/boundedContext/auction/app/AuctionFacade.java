@@ -26,11 +26,9 @@ import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.PageDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
-import com.bugzero.rarego.shared.auction.dto.AuctionFilterType;
 import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
-import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -98,31 +96,6 @@ public class AuctionFacade {
 		return new PagedResponseDto<>(dtoPage.getContent(), PageDto.from(dtoPage));
 	}
 
-	public PagedResponseDto<MySaleResponseDto> getMySales(Long memberId, AuctionFilterType auctionFilterType, Pageable pageable) {
-		// 상품 Id 목록 조회
-		List<Long> myProductIds = productRepository.findAllIdsBySellerId(memberId);
-
-		// 경매 목록 조회
-		Page<Auction> auctionPage = fetchAuctionsByFilter(myProductIds, auctionFilterType, pageable);
-		List<Auction> auctions = auctionPage.getContent();
-
-		if (auctions.isEmpty()) {
-			return new PagedResponseDto<>(List.of(), PageDto.from(auctionPage));
-		}
-
-		// 연관 데이터 일괄적으로 조회
-		Set<Long> productIds = auctions.stream().map(Auction::getProductId).collect(Collectors.toSet());
-		Set<Long> auctionIds = auctions.stream().map(Auction::getId).collect(Collectors.toSet());
-
-		// 상품 정보
-		Map<Long, Product> productMap = productRepository.findAllByIdIn(productIds).stream()
-			.collect(Collectors.toMap(Product::getId, p -> p));
-
-		// 주문 정보(거래 상태)
-
-		// 입찰 횟수 정보
-	}
-
 
 	// =========================================================================
 	//  Helper Methods (Private) - 복잡한 조회/매핑 로직을 아래로 숨김
@@ -152,22 +125,4 @@ public class AuctionFacade {
 			.collect(Collectors.toMap(Auction::getId, Function.identity()));
 	}
 
-	private Page<Auction> fetchAuctionsByFilter(List<Long> productIds, AuctionFilterType filter, Pageable pageable) {
-		switch (filter) {
-			// 진행 중 & 진행 예정
-			case ONGOING:
-				return auctionRepository.findAllByProductIdInAndStatusIn(productIds,
-					List.of(AuctionStatus.SCHEDULED, AuctionStatus.IN_PROGRESS), pageable);
-			// 판매 완료 (정상 거래)
-			case COMPLETED:
-				return auctionRepository.findAllByProductIdInAndStatusIn(productIds,
-					List.of(AuctionStatus.ENDED), pageable);
-			// 유찰 등 조치 필요
-			case ACTION_REQUIRED:
-				return auctionRepository.findAllByProductIdInAndStatusIn(productIds,
-					List.of(AuctionStatus.ENDED), pageable);
-			default:
-				return auctionRepository.findAllByProductIdIn(productIds, pageable);
-		}
-	}
 }
