@@ -67,7 +67,7 @@ class ProductControllerTest {
 
 		// when & then
 		mockMvc.perform(post("/api/v1/products")
-				.param("memberId", String.valueOf(memberId))
+				.param("memberUUID", String.valueOf(memberId))
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(requestDto)))
 			.andExpect(status().isCreated())
