@@ -12,78 +12,52 @@ import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductCondition;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
-
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Configuration
 @Slf4j
+@Component
+@RequiredArgsConstructor
 @Profile("dev")
-public class AuctionDataInit {
+public class AuctionDataInit implements CommandLineRunner {
 
-    private final AuctionDataInit self;
     private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
     private final ProductRepository productRepository;
     private final AuctionMemberRepository auctionMemberRepository;
     private final ApplicationEventPublisher eventPublisher;
 
-    public AuctionDataInit(
-            @Lazy AuctionDataInit self,
-            AuctionRepository auctionRepository,
-            BidRepository bidRepository,
-            ProductRepository productRepository,
-            AuctionMemberRepository auctionMemberRepository,
-            ApplicationEventPublisher eventPublisher
-    ) {
-        this.self = self;
-        this.auctionRepository = auctionRepository;
-        this.bidRepository = bidRepository;
-        this.productRepository = productRepository;
-        this.auctionMemberRepository = auctionMemberRepository;
-        this.eventPublisher = eventPublisher;
-    }
-
-    @Bean
-    public ApplicationRunner auctionBaseInitDataRunner() {
-        return args -> {
-            self.makeBaseAuctionData();
-        };
-    }
-
+    @Override
     @Transactional
-    public void makeBaseAuctionData() {
+    public void run(String... args) {
         if (auctionRepository.count() > 0) {
-            log.info("이미 경매 데이터가 존재합니다. 초기화를 건너뜁니다.");
+            log.info("경매 데이터가 이미 존재합니다. 초기화를 건너뜁니다.");
             return;
         }
 
-        log.info("=== 경매 테스트 데이터 초기화 시작 ===");
+        log.info("경매 전체 테스트 데이터 초기화 시작...");
 
-        // ========== 1. 회원 데이터 생성 (다른 팀원 코드) ==========
-        AuctionMember seller = createOrGetMember(
-                1L,
-                "seller@auction.com",
-                "AuctionSeller"
-        );
+        // 0. 회원 생성 (MemberRole 제거)
+        AuctionMember seller = createOrGetMember(1L, "seller@test.com", "판매자_제로");
+        AuctionMember me = createOrGetMember(2L, "me@test.com", "입찰자_나");
+        AuctionMember competitor = createOrGetMember(3L, "comp@test.com", "경쟁자_A");
 
-        AuctionMember buyer = createOrGetMember(
-                2L,
-                "buyer@auction.com",
-                "AuctionBuyer"
-        );
+        // ==========================================
+        // [Part 1] API 조회 테스트용
+        // ==========================================
+        log.info("--- [Part 1] API 연동 테스트 데이터 ---");
 
-        log.info("회원 데이터 생성 완료 - Seller: {}, Buyer: {}", seller.getId(), buyer.getId());
-
+        Product product1 = createProduct(seller.getId(), "[1-1] 레고 밀레니엄 팔콘", 10_000);
+        Auction auction1 = createAuctionWithTime(product1.getId(), -60, 1440, 10_000, 1_000);
+      
         // ========== 2. 상품 + 정상 경매 생성 (다른 팀원 코드) ==========
         Product product1 = Product.builder()
                 .sellerId(seller.getId())
@@ -164,29 +138,29 @@ public class AuctionDataInit {
         log.info("- 진행 중 (5분 후 자동 정산): 1건 (auction5)");
     }
 
+    // --- Helper Methods ---
+
     private AuctionMember createOrGetMember(Long id, String email, String nickname) {
         return auctionMemberRepository.findById(id)
-                .orElseGet(() -> {
-                    AuctionMember member = AuctionMember.builder()
-                            .id(id)
-                            .publicId(UUID.randomUUID().toString())
-                            .email(email)
-                            .nickname(nickname)
-                            .build();
-                    return auctionMemberRepository.save(member);
-                });
+                .orElseGet(() -> auctionMemberRepository.save(
+                        AuctionMember.builder()
+                                .id(id)
+                                .publicId(UUID.randomUUID().toString())
+                                .email(email)
+                                .nickname(nickname)
+                                .build()
+                ));
     }
 
-    private Product createProduct(Long sellerId, String name, int basePrice) {
-        Product product = Product.builder()
+    private Product createProduct(Long sellerId, String name, int startPrice) {
+        return productRepository.save(Product.builder()
                 .sellerId(sellerId)
                 .name(name)
-                .description("테스트용 상품입니다.")
+                .description("테스트용 상품 설명")
                 .category(Category.스타워즈)
                 .productCondition(ProductCondition.MISB)
                 .inspectionStatus(InspectionStatus.PENDING)
-                .build();
-        return productRepository.save(product);
+                .build());
     }
 
     private Auction createAuction(
@@ -198,7 +172,8 @@ public class AuctionDataInit {
             int tickSize
     ) {
         LocalDateTime now = LocalDateTime.now();
-        return Auction.builder()
+
+        Auction auction = Auction.builder()
                 .productId(productId)
                 .sellerId(sellerId)
                 .startTime(now.plusHours(startHoursOffset))
@@ -207,14 +182,23 @@ public class AuctionDataInit {
                         : now.plusHours(startHoursOffset).minusMinutes(-endMinutesOffset))
                 .startPrice(startPrice)
                 .tickSize(tickSize)
+                .startTime(now.plusMinutes(startOffsetMinutes))
+                .endTime(now.plusMinutes(endOffsetMinutes))
                 .build();
+
+        auction.forceStartForTest();
+        return auctionRepository.save(auction);
     }
 
-    private Bid createBid(Long auctionId, Long bidderId, int bidAmount) {
-        return Bid.builder()
-                .auctionId(auctionId)
-                .bidderId(bidderId)
-                .bidAmount(bidAmount)
+    private void createBid(Auction auction, AuctionMember bidder, int amount) {
+        Bid bid = Bid.builder()
+                .auctionId(auction.getId())
+                .bidderId(bidder.getId())
+                .bidAmount(amount)
                 .build();
+
+        bidRepository.save(bid);
+        auction.updateCurrentPrice(amount);
+        auctionRepository.save(auction);
     }
 }
