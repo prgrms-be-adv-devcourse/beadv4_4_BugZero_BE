@@ -1,11 +1,19 @@
 package com.bugzero.rarego.boundedContext.auth.app;
 
-import org.springframework.beans.factory.annotation.Value;
+import static com.bugzero.rarego.global.response.ErrorType.*;
+
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 
-import com.bugzero.rarego.boundedContext.auth.domain.AuthMember;
-import com.bugzero.rarego.boundedContext.auth.out.AuthMemberRepository;
-import com.bugzero.rarego.shared.member.domain.MemberRole;
+import com.bugzero.rarego.boundedContext.auth.domain.Account;
+import com.bugzero.rarego.boundedContext.auth.domain.AuthRole;
+import com.bugzero.rarego.boundedContext.auth.domain.Provider;
+import com.bugzero.rarego.boundedContext.auth.domain.TokenIssueDto;
+import com.bugzero.rarego.boundedContext.auth.out.AccountRepository;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 
 import lombok.RequiredArgsConstructor;
 
@@ -13,28 +21,18 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthService {
 	private final AuthIssueTokenUseCase authIssueTokenUseCase;
-	private final AuthMemberRepository authMemberRepository;
+	private final AuthLoginAccountFacade authLoginAccountFacade;
+	private final AccountRepository accountRepository;
 
-
-	public String issueAccessToken(AuthMember member) {
-		return authIssueTokenUseCase.issueToken(member, true);
+	public String issueAccessToken(TokenIssueDto tokenIssueDto) {
+		return authIssueTokenUseCase.issueToken(tokenIssueDto, true);
 	}
 
-	public String issueRefreshToken(AuthMember member) {
-		return  authIssueTokenUseCase.issueToken(member, false);
+	public String issueRefreshToken(TokenIssueDto tokenIssueDto) {
+		return  authIssueTokenUseCase.issueToken(tokenIssueDto, false);
 	}
 
-	// 테스트용 메서드, 1~5까지 입력 가능 + 새로운 멤버 생성
-	public String testIssueAccessToken(Long memberId) {
-		AuthMember member = authMemberRepository.findById(memberId)
-			.orElseGet(() -> authMemberRepository.save(
-				AuthMember.builder()
-					.id(memberId)
-					.nickname("새로운테스트멤버" + memberId)
-					.role(MemberRole.USER)
-					.build()
-			));
-		return authIssueTokenUseCase.issueToken(member, true);
+	public String login(Provider provider, String providerId) {
+		return authLoginAccountFacade.loginOrSignup(provider, providerId);
 	}
 }
-

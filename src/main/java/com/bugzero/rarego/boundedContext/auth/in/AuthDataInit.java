@@ -1,7 +1,5 @@
 package com.bugzero.rarego.boundedContext.auth.in;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.boot.ApplicationRunner;
@@ -10,54 +8,61 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
-import com.bugzero.rarego.boundedContext.auth.domain.AuthMember;
-import com.bugzero.rarego.boundedContext.auth.out.AuthMemberRepository;
-import com.bugzero.rarego.shared.member.domain.MemberRole;
-import com.bugzero.rarego.shared.member.domain.Provider;
+import com.bugzero.rarego.boundedContext.auth.domain.Account;
+import com.bugzero.rarego.boundedContext.auth.domain.AuthRole;
+import com.bugzero.rarego.boundedContext.auth.domain.Provider;
+import com.bugzero.rarego.boundedContext.auth.out.AccountRepository;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Configuration
+@Slf4j
 @Profile("dev")
 public class AuthDataInit {
 	private final AuthDataInit self;
-	private final AuthMemberRepository authMemberRepository;
+	private final AccountRepository accountRepository;
 
-	public AuthDataInit(@Lazy AuthDataInit self, AuthMemberRepository authMemberRepository) {
+	public AuthDataInit(@Lazy AuthDataInit self, AccountRepository accountRepository) {
 		this.self = self;
-		this.authMemberRepository = authMemberRepository;
+		this.accountRepository = accountRepository;
 	}
 
 	@Bean
 	public ApplicationRunner authBaseInitDataRunner() {
-		return args -> self.makeBaseAuthMembers();
+		return args -> self.makeBaseAccounts();
 	}
 
-	public void makeBaseAuthMembers() {
-		if (authMemberRepository.count() > 0)
+	public void makeBaseAccounts() {
+		if (accountRepository.count() > 0) {
+			log.info("이미 Auth Account 데이터가 존재합니다. 초기화를 건너뜁니다.");
 			return;
+		}
 
-		LocalDateTime now = LocalDateTime.now();
-		List<AuthMember> members = List.of(
-			makeMember(1L, "auth1@bugzero.com", "auth1", MemberRole.USER, now),
-			makeMember(2L, "auth2@bugzero.com", "auth2", MemberRole.USER, now),
-			makeMember(3L, "auth3@bugzero.com", "auth3", MemberRole.SELLER, now),
-			makeMember(4L, "auth4@bugzero.com", "auth4", MemberRole.USER, now),
-			makeMember(5L, "auth5@bugzero.com", "auth5", MemberRole.ADMIN, now)
-		);
+		String newMemberPublicId1 = UUID.randomUUID().toString();
+		String newMemberPublicId2 = UUID.randomUUID().toString();
+		String newMemberPublicId3 = UUID.randomUUID().toString();
 
-		authMemberRepository.saveAll(members);
-	}
-
-	private static AuthMember makeMember(Long id, String email, String nickname, MemberRole role, LocalDateTime now) {
-		return AuthMember.builder()
-			.id(id)
-			.publicId(UUID.randomUUID().toString())
-			.email(email)
-			.nickname(nickname)
-			.role(role)
+		accountRepository.save(Account.builder()
+			.memberPublicId(newMemberPublicId1)
+			.role(AuthRole.USER)
 			.provider(Provider.GOOGLE)
-			.providerId("provider_" + id)
-			.createdAt(now)
-			.updatedAt(now)
-			.build();
+			.providerId("google-1")
+			.build());
+
+		accountRepository.save(Account.builder()
+			.memberPublicId(newMemberPublicId2)
+			.role(AuthRole.SELLER)
+			.provider(Provider.KAKAO)
+			.providerId("kakao-2")
+			.build());
+
+		accountRepository.save(Account.builder()
+			.memberPublicId(newMemberPublicId3)
+			.role(AuthRole.ADMIN)
+			.provider(Provider.NAVER)
+			.providerId("naver-3")
+			.build());
+
+		log.info("Auth Account 테스트 데이터 초기화 완료");
 	}
 }

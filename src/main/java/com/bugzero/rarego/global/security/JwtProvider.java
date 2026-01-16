@@ -4,6 +4,8 @@ import java.security.Key;
 import java.util.Date;
 import java.util.Map;
 
+import javax.crypto.SecretKey;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -14,10 +16,10 @@ import io.jsonwebtoken.security.Keys;
 
 @Component
 public class JwtProvider {
-	private final String jwtSecretKey;
+	private final SecretKey jwtSecretKey;
 
 	public JwtProvider(@Value("${jwt.secret}") String jwtSecretKey) {
-		this.jwtSecretKey = jwtSecretKey;
+		this.jwtSecretKey = Keys.hmacShaKeyFor(jwtSecretKey.getBytes());
 	}
 
 	public String issueToken(int expireSeconds, Map<String, Object> body) {
@@ -33,13 +35,11 @@ public class JwtProvider {
 		// 만료 시간 = 발급 시간 + 만료 기간(초)
 		Date expiration = new Date(issuedAt.getTime() + 1000L * expireSeconds);
 
-		Key secretKey = Keys.hmacShaKeyFor(jwtSecretKey.getBytes());
-
 		return Jwts.builder()
 			.claims(claims)
 			.issuedAt(issuedAt)
 			.expiration(expiration)
-			.signWith(secretKey)
+			.signWith(jwtSecretKey)
 			.compact();
 	}
 }

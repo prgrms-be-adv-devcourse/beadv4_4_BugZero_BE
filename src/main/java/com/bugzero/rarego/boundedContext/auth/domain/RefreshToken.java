@@ -14,9 +14,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "AUTH_REFRESH_TOKEN",
+	@Table(name = "AUTH_REFRESH_TOKEN",
 	indexes = {
-		@Index(name = "idx_auth_refresh_token_member_id", columnList = "member_id"),
+		@Index(name = "idx_auth_refresh_token_member_public_id", columnList = "member_public_id"),
 		@Index(name = "idx_auth_refresh_token_revoked_expires", columnList = "revoked, expires_at")
 	}
 )
@@ -25,8 +25,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RefreshToken extends BaseIdAndTime {
 
-	@Column(name = "member_id", nullable = false)
-	private Long memberId;
+	@Column(name = "member_public_id", nullable = false)
+	private Long memberPublicId;
 
 	@Column(name = "refresh_token_hash", nullable = false, length = 255)
 	private String refreshTokenHash;
