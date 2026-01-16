@@ -24,6 +24,9 @@ public class AuctionOrder extends BaseIdAndTime {
 	private Long auctionId;
 
 	@Column(nullable = false)
+	private Long sellerId;
+
+	@Column(nullable = false)
 	private Long bidderId;
 
 	@Column(nullable = false)
@@ -34,8 +37,9 @@ public class AuctionOrder extends BaseIdAndTime {
 	private AuctionOrderStatus status;
 
 	@Builder
-	public AuctionOrder(Long auctionId, Long bidderId, Integer finalPrice) {
+	public AuctionOrder(Long auctionId, Long sellerId, Long bidderId, Integer finalPrice) {
 		this.auctionId = auctionId;
+		this.sellerId = sellerId;
 		this.bidderId = bidderId;
 		this.finalPrice = finalPrice;
 		// 초기 상태는 결제 진행중

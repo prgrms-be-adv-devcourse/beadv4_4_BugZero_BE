@@ -35,6 +35,7 @@ public class AuctionOrderPortAdapter implements AuctionOrderPort {
         return new AuctionOrderDto(
                 order.getId(),
                 order.getAuctionId(),
+                order.getSellerId(),
                 order.getBidderId(),
                 order.getFinalPrice(),
                 order.getStatus().name());
