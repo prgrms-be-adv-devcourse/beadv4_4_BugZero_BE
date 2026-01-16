@@ -57,50 +57,85 @@ public class AuctionDataInit implements CommandLineRunner {
 
         Product product1 = createProduct(seller.getId(), "[1-1] 레고 밀레니엄 팔콘", 10_000);
         Auction auction1 = createAuctionWithTime(product1.getId(), -60, 1440, 10_000, 1_000);
+      
+        // ========== 2. 상품 + 정상 경매 생성 (다른 팀원 코드) ==========
+        Product product1 = Product.builder()
+                .sellerId(seller.getId())
+                .name("스타워즈 제다이 레고")
+                .description("미개봉 새상품입니다. 경매로 저렴하게 내놓습니다.")
+                .category(Category.스타워즈)
+                .productCondition(ProductCondition.MISB)
+                .inspectionStatus(InspectionStatus.PENDING)
+                .build();
+        productRepository.save(product1);
 
-        createBid(auction1, competitor, 15_000);
-        createBid(auction1, me, 20_000);
-        createBid(auction1, competitor, 25_000);
+        Auction normalAuction = Auction.builder()
+                .productId(product1.getId())
+                .sellerId(product1.getSellerId())
+                .startTime(LocalDateTime.now())
+                .endTime(LocalDateTime.now().plusDays(3))
+                .startPrice(1_000_000)
+                .tickSize(50_000)
+                .build();
+        normalAuction.startAuction();
+        auctionRepository.save(normalAuction);
 
-        Product product2 = createProduct(seller.getId(), "[1-2] 아이폰 15 Pro (낙찰)", 500_000);
-        Auction auction2 = createAuctionWithTime(product2.getId(), -120, -60, 500_000, 10_000);
+        log.info("정상 경매 생성 완료 - AuctionId: {}, ProductId: {}", normalAuction.getId(), product1.getId());
 
-        createBid(auction2, competitor, 550_000);
-        createBid(auction2, me, 600_000);
+        // ========== 3. 정산 테스트용 경매 생성 (내 코드) ==========
 
-        Product product3 = createProduct(seller.getId(), "[1-3] 맥북 프로 M3 (패찰)", 2_000_000);
-        Auction auction3 = createAuctionWithTime(product3.getId(), -180, -120, 2_000_000, 50_000);
+        // 3-1. 종료 + 입찰 있음 (낙찰 대상)
+        Product product2 = createProduct(seller.getId(), "테스트 상품 1", 10_000);
+        Auction auction1 = createAuction(product2.getId(), product2.getSellerId(), -2, -1, 10_000, 1_000);
+        auction1.forceStartForTest();
+        auctionRepository.save(auction1);
+        bidRepository.save(createBid(auction1.getId(), buyer.getId(), 15_000));
+        bidRepository.save(createBid(auction1.getId(), seller.getId(), 20_000));
+        bidRepository.save(createBid(auction1.getId(), buyer.getId(), 25_000));
 
-        createBid(auction3, me, 400_000);
-        createBid(auction3, competitor, 2_200_000);
+        // 3-2. 종료 + 입찰 없음 (유찰 대상)
+        Product product3 = createProduct(seller.getId(), "테스트 상품 2", 20_000);
+        Auction auction2 = createAuction(product3.getId(), product3.getSellerId(), -2, 0, 20_000, 2_000);
+        auction2.forceStartForTest();
+        auctionRepository.save(auction2);
 
-        // ==========================================
-        // [Part 2] 정산 로직 검증용
-        // ==========================================
-        log.info("--- [Part 2] 정산 로직 검증 데이터 ---");
+        // 3-3. 종료 + 입찰 1건 (낙찰 대상)
+        Product product4 = createProduct(seller.getId(), "테스트 상품 3", 30_000);
+        Auction auction3 = createAuction(product4.getId(), product4.getSellerId(), -3, 0, 30_000, 3_000);
+        auction3.forceStartForTest();
+        auctionRepository.save(auction3);
+        bidRepository.save(createBid(auction3.getId(), buyer.getId(), 35_000));
 
-        Product product4 = createProduct(seller.getId(), "[2-1] 정산테스트(낙찰)", 10_000);
-        Auction auction4 = createAuctionWithTime(product4.getId(), -120, -1, 10_000, 1_000);
-        createBid(auction4, me, 15_000);
-        createBid(auction4, competitor, 20_000);
-        createBid(auction4, me, 25_000);
+        // 3-4. 진행 중 + 1분 후 종료 (동적 스케줄링 테스트용)
+        Product product5 = createProduct(seller.getId(), "테스트 상품 4", 40_000);
+        Auction auction4 = createAuction(product5.getId(), product5.getSellerId(), -1, 1, 40_000, 4_000);
+        auction4.forceStartForTest();
+        auctionRepository.save(auction4);
+        bidRepository.save(createBid(auction4.getId(), buyer.getId(), 45_000));
 
-        Product product5 = createProduct(seller.getId(), "[2-2] 정산테스트(유찰)", 20_000);
-        Auction auction5 = createAuctionWithTime(product5.getId(), -120, -1, 20_000, 2_000);
+        eventPublisher.publishEvent(
+                new AuctionCreatedEvent(
+                        auction4.getId(),
+                                auction4.getEndTime()));
 
-        Product product6 = createProduct(seller.getId(), "[2-3] 정산테스트(단독낙찰)", 30_000);
-        Auction auction6 = createAuctionWithTime(product6.getId(), -180, -1, 30_000, 3_000);
-        createBid(auction6, me, 35_000);
+        // 3-5. 진행 중 + 5분 후 종료 (동적 스케줄링 테스트용)
+        Product product6 = createProduct(seller.getId(), "테스트 상품 5", 50_000);
+        Auction auction5 = createAuction(product6.getId(), product6.getSellerId(), -1, 5, 50_000, 5_000);
+        auction5.forceStartForTest();
+        auctionRepository.save(auction5);
+        bidRepository.save(createBid(auction5.getId(), buyer.getId(), 55_000));
 
-        Product product7 = createProduct(seller.getId(), "[2-4] 동적스케줄(1분)", 40_000);
-        Auction auction7 = createAuctionWithTime(product7.getId(), -60, 1, 40_000, 4_000);
-        createBid(auction7, me, 45_000);
-        eventPublisher.publishEvent(new AuctionCreatedEvent(auction7.getId(), auction7.getEndTime()));
+        eventPublisher.publishEvent(
+                new AuctionCreatedEvent(
+                        auction5.getId(),
+                                auction5.getEndTime()));
 
-        Product product8 = createProduct(seller.getId(), "[2-5] 동적스케줄(5분)", 50_000);
-        Auction auction8 = createAuctionWithTime(product8.getId(), -60, 5, 50_000, 5_000);
-        createBid(auction8, me, 55_000);
-        eventPublisher.publishEvent(new AuctionCreatedEvent(auction8.getId(), auction8.getEndTime()));
+        log.info("=== 경매 테스트 데이터 초기화 완료 ===");
+        log.info("- 정상 경매: 1건 (3일 후 종료)");
+        log.info("- 낙찰 대상 (종료됨): 2건 (auction1, auction3)");
+        log.info("- 유찰 대상 (종료됨): 1건 (auction2)");
+        log.info("- 진행 중 (1분 후 자동 정산): 1건 (auction4)");
+        log.info("- 진행 중 (5분 후 자동 정산): 1건 (auction5)");
     }
 
     // --- Helper Methods ---
@@ -128,12 +163,23 @@ public class AuctionDataInit implements CommandLineRunner {
                 .build());
     }
 
-    private Auction createAuctionWithTime(Long productId, int startOffsetMinutes, int endOffsetMinutes,
-                                          int startPrice, int tickSize) {
+    private Auction createAuction(
+            Long productId,
+            Long sellerId,
+            int startHoursOffset,
+            int endMinutesOffset,
+            int startPrice,
+            int tickSize
+    ) {
         LocalDateTime now = LocalDateTime.now();
 
         Auction auction = Auction.builder()
                 .productId(productId)
+                .sellerId(sellerId)
+                .startTime(now.plusHours(startHoursOffset))
+                .endTime(endMinutesOffset > 0
+                        ? now.plusMinutes(endMinutesOffset)
+                        : now.plusHours(startHoursOffset).minusMinutes(-endMinutesOffset))
                 .startPrice(startPrice)
                 .tickSize(tickSize)
                 .startTime(now.plusMinutes(startOffsetMinutes))

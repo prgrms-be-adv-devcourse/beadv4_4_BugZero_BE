@@ -45,6 +45,7 @@ class AuctionSettleOneUseCaseTest {
     private Auction createAuction(Long id, AuctionStatus status, LocalDateTime endTime) {
         Auction auction = Auction.builder()
                 .productId(100L)
+                .sellerId(1L)
                 .startTime(LocalDateTime.now().minusHours(1))
                 .endTime(endTime)
                 .startPrice(10_000)

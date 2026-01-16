@@ -74,8 +74,9 @@ class AuctionCreateBidUseCaseTest {
 
 		// 경매 설정 (ID 참조 방식)
 		Auction auction = Auction.builder()
-			.productId(PRODUCT_ID) // [변경] 객체 대신 ID 사용
-			.startPrice(startPrice)
+			.productId(PRODUCT_ID)
+			.sellerId(SELLER_ID)
+			.startPrice(5000)
 			.tickSize(1000)
 			.startTime(LocalDateTime.now().minusHours(1))
 			.endTime(LocalDateTime.now().plusHours(1))
@@ -117,8 +118,7 @@ class AuctionCreateBidUseCaseTest {
 
 		Auction auction = Auction.builder()
 			.productId(PRODUCT_ID)
-			.startPrice(10000)
-			.tickSize(1000)
+			.sellerId(SELLER_ID)
 			.startTime(LocalDateTime.now().minusHours(1))
 			.endTime(LocalDateTime.now().plusHours(1))
 			.build();
@@ -152,6 +152,7 @@ class AuctionCreateBidUseCaseTest {
 
 		Auction auction = Auction.builder()
 			.productId(PRODUCT_ID)
+			.sellerId(SELLER_ID)
 			.startPrice(5000)
 			.tickSize(1000)
 			.startTime(LocalDateTime.now().minusHours(1))

@@ -26,6 +26,9 @@ public class Auction extends BaseIdAndTime {
 	private Long productId;
 
     @Column(nullable = false)
+    private Long sellerId;
+
+    @Column(nullable = false)
     private LocalDateTime startTime;
 
     @Column(nullable = false)
@@ -43,15 +46,18 @@ public class Auction extends BaseIdAndTime {
     @Column(nullable = false)
     private int tickSize;
 
-	@Builder
-	public Auction(Long productId, LocalDateTime startTime, LocalDateTime endTime, int startPrice, int tickSize) {
-		this.productId = productId;
-		this.startTime = startTime;
-		this.endTime = endTime;
-		this.startPrice = startPrice;
-		this.tickSize = tickSize;
-		this.status = AuctionStatus.SCHEDULED;
-	}
+    // 입찰 가격 갱신
+    @Builder
+    public Auction(Long productId, Long sellerId, LocalDateTime startTime, LocalDateTime endTime, int startPrice,
+            int tickSize) {
+        this.productId = productId;
+        this.sellerId = sellerId;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.startPrice = startPrice;
+        this.tickSize = tickSize;
+        this.status = AuctionStatus.SCHEDULED;
+    }
 
     public void start() {
         if (this.status != AuctionStatus.SCHEDULED) {
