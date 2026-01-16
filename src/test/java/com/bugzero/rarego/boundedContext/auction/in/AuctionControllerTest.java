@@ -69,7 +69,7 @@ class AuctionControllerTest {
 				@Override
 				public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
 					NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
-					return User.withUsername("2")
+					return User.withUsername("user_public_2")
 						.password("password")
 						.roles("USER")
 						.build();
@@ -84,7 +84,7 @@ class AuctionControllerTest {
 	void createBid_success() throws Exception {
 		// given
 		Long auctionId = 1L;
-		Long memberId = 2L;
+		String memberPublicId = "user_public_2";
 		Long bidAmount = 10000L;
 
 		BidRequestDto requestDto = new BidRequestDto(bidAmount);
@@ -103,7 +103,7 @@ class AuctionControllerTest {
 			bidResponse
 		);
 
-		given(auctionFacade.createBid(eq(auctionId), eq(memberId), eq(bidAmount.intValue())))
+		given(auctionFacade.createBid(eq(auctionId), eq(memberPublicId), eq(bidAmount.intValue())))
 			.willReturn(successResponse);
 
 		// when & then
@@ -140,12 +140,12 @@ class AuctionControllerTest {
 	void createBid_fail_business_exception() throws Exception {
 		// given
 		Long auctionId = 999L;
-		Long memberId = 2L;
+		String memberPublicId = "user_public_2";
 		Long bidAmount = 10000L;
 		BidRequestDto requestDto = new BidRequestDto(bidAmount);
 
 		// Mocking: 예외 발생
-		given(auctionFacade.createBid(eq(auctionId), eq(memberId), eq(bidAmount.intValue())))
+		given(auctionFacade.createBid(eq(auctionId), eq(memberPublicId), eq(bidAmount.intValue())))
 			.willThrow(new CustomException(ErrorType.AUCTION_NOT_FOUND));
 
 		// when & then

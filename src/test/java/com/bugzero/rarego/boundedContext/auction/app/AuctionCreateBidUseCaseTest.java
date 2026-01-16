@@ -56,6 +56,8 @@ class AuctionCreateBidUseCaseTest {
 	private final Long PRODUCT_ID = 10L;
 	private final Long SELLER_ID = 100L;
 	private final Long BIDDER_ID = 200L;
+	private final String SELLER_PUBLIC_ID = "seller_123";
+	private final String BIDDER_PUBLIC_ID = "user_123";
 
 	@Test
 	@DisplayName("정상 입찰 성공: 보증금 10% Hold 요청 및 입찰 저장 확인")
@@ -65,7 +67,7 @@ class AuctionCreateBidUseCaseTest {
 		int bidAmount = 20000;
 
 		// 입찰자 설정
-		AuctionMember bidder = AuctionMember.builder().publicId("user_123").build();
+		AuctionMember bidder = AuctionMember.builder().publicId(BIDDER_PUBLIC_ID).build();
 		ReflectionTestUtils.setField(bidder, "id", BIDDER_ID);
 
 		// 상품 설정 (판매자 ID 포함)
@@ -85,7 +87,7 @@ class AuctionCreateBidUseCaseTest {
 		auction.startAuction(); // 상태: IN_PROGRESS
 
 		// Mocking
-		given(auctionMemberRepository.findById(BIDDER_ID)).willReturn(Optional.of(bidder));
+		given(auctionMemberRepository.findByPublicId(BIDDER_PUBLIC_ID)).willReturn(Optional.of(bidder));
 		given(auctionRepository.findByIdWithLock(AUCTION_ID)).willReturn(Optional.of(auction));
 
 		// [중요] ProductRepository Mocking 필수 (주석 해제)
@@ -97,7 +99,8 @@ class AuctionCreateBidUseCaseTest {
 			.willReturn(new DepositHoldResponseDto(1L, AUCTION_ID, 1000, "HOLD", LocalDateTime.now()));
 
 		// when
-		SuccessResponseDto<BidResponseDto> response = auctionCreateBidUseCase.createBid(AUCTION_ID, BIDDER_ID, bidAmount);
+		SuccessResponseDto<BidResponseDto> response =
+			auctionCreateBidUseCase.createBid(AUCTION_ID, BIDDER_PUBLIC_ID, bidAmount);
 
 		// then
 		verify(paymentApiClient).holdDeposit(eq(1000), eq(BIDDER_ID), eq(AUCTION_ID));
@@ -110,7 +113,7 @@ class AuctionCreateBidUseCaseTest {
 	void createBid_fail_seller_bid() {
 		// given
 		// 판매자가 곧 입찰자
-		AuctionMember seller = AuctionMember.builder().build();
+		AuctionMember seller = AuctionMember.builder().publicId(SELLER_PUBLIC_ID).build();
 		ReflectionTestUtils.setField(seller, "id", SELLER_ID);
 
 		Product product = Product.builder().sellerId(SELLER_ID).build();
@@ -125,7 +128,7 @@ class AuctionCreateBidUseCaseTest {
 		ReflectionTestUtils.setField(auction, "id", AUCTION_ID);
 		auction.startAuction();
 
-		given(auctionMemberRepository.findById(SELLER_ID)).willReturn(Optional.of(seller));
+		given(auctionMemberRepository.findByPublicId(SELLER_PUBLIC_ID)).willReturn(Optional.of(seller));
 		given(auctionRepository.findByIdWithLock(AUCTION_ID)).willReturn(Optional.of(auction));
 
 		// [중요] 여기서도 Mocking 필수! (Use Case 코드 흐름상 검증 전에 호출됨)
@@ -133,7 +136,7 @@ class AuctionCreateBidUseCaseTest {
 
 		// when & then
 		assertThatThrownBy(() ->
-			auctionCreateBidUseCase.createBid(AUCTION_ID, SELLER_ID, 20000)
+			auctionCreateBidUseCase.createBid(AUCTION_ID, SELLER_PUBLIC_ID, 20000)
 		)
 			.isInstanceOf(CustomException.class)
 			.extracting("errorType")
@@ -144,7 +147,7 @@ class AuctionCreateBidUseCaseTest {
 	@DisplayName("입찰 실패: 최소 입찰가보다 낮은 금액")
 	void createBid_fail_low_price() {
 		// given
-		AuctionMember bidder = AuctionMember.builder().build();
+		AuctionMember bidder = AuctionMember.builder().publicId(BIDDER_PUBLIC_ID).build();
 		ReflectionTestUtils.setField(bidder, "id", BIDDER_ID);
 
 		Product product = Product.builder().sellerId(SELLER_ID).build();
@@ -162,7 +165,7 @@ class AuctionCreateBidUseCaseTest {
 		auction.startAuction();
 		auction.updateCurrentPrice(10000); // 현재가 10,000 -> 최소입찰가 11,000
 
-		given(auctionMemberRepository.findById(BIDDER_ID)).willReturn(Optional.of(bidder));
+		given(auctionMemberRepository.findByPublicId(BIDDER_PUBLIC_ID)).willReturn(Optional.of(bidder));
 		given(auctionRepository.findByIdWithLock(AUCTION_ID)).willReturn(Optional.of(auction));
 
 		// [중요] Mocking 필수
@@ -170,7 +173,7 @@ class AuctionCreateBidUseCaseTest {
 
 		// when & then
 		assertThatThrownBy(() ->
-			auctionCreateBidUseCase.createBid(AUCTION_ID, BIDDER_ID, 10500)
+			auctionCreateBidUseCase.createBid(AUCTION_ID, BIDDER_PUBLIC_ID, 10500)
 		)
 			.isInstanceOf(CustomException.class)
 			.extracting("errorType")

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
+import com.bugzero.rarego.global.security.MemberPrincipal;
 import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidRequestDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
@@ -36,14 +37,16 @@ public class AuctionController {
 	public SuccessResponseDto<BidResponseDto> createBid(
 		@PathVariable Long auctionId,
 		@Valid @RequestBody BidRequestDto bidRequestDto,
-		@AuthenticationPrincipal UserDetails userDetails
+		@AuthenticationPrincipal MemberPrincipal memberPrincipal
 	) {
-		// JWT 토큰 생성 시 저장한 memberId를 사용
-		Long memberId = Long.valueOf(userDetails.getUsername());
+		// JWT 토큰 생성 시 저장한 memberPublicId를 이용해 조회
+		String memberPublicId = memberPrincipal.publicId();
+
+		// TODO: 임의
 
 		SuccessResponseDto<BidResponseDto> response = auctionFacade.createBid(
 			auctionId,
-			memberId,
+			memberPublicId,
 			bidRequestDto.bidAmount().intValue()
 		);
 

@@ -12,6 +12,8 @@ import java.util.Map;
 
 import com.bugzero.rarego.boundedContext.auth.app.AuthService;
 import com.bugzero.rarego.boundedContext.auth.domain.TokenIssueDto;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.global.security.MemberPrincipal;
@@ -39,8 +41,17 @@ public class AuthController {
 	// 테스트용 인증 확인 엔드포인트
 	@Operation(summary = "인증 확인", description = "현재 인증된 사용자 정보를 확인합니다")
 	@GetMapping("/test/check")
-	public SuccessResponseDto<String> login(@AuthenticationPrincipal MemberPrincipal memberPrincipal) {
-		return SuccessResponseDto.from(SuccessType.OK, memberPrincipal.toString());
+	public SuccessResponseDto<Map<String, String>> login(@AuthenticationPrincipal MemberPrincipal memberPrincipal) {
+		if (memberPrincipal == null) {
+			throw new CustomException(ErrorType.AUTH_UNAUTHORIZED);
+		}
+		return SuccessResponseDto.from(
+			SuccessType.OK,
+			Map.of(
+				"publicId", memberPrincipal.publicId(),
+				"role", memberPrincipal.role()
+			)
+		);
 	}
 
 	// 테스트용 인증 확인 엔드포인트
@@ -48,8 +59,17 @@ public class AuthController {
 	@Operation(summary = "관리자 확인", description = "관리자 권한을 확인합니다")
 	@PreAuthorize("hasRole('ADMIN')")
 	@GetMapping("/test/admin")
-	public SuccessResponseDto<String> justAdmin(@AuthenticationPrincipal MemberPrincipal memberPrincipal) {
-		return SuccessResponseDto.from(SuccessType.OK, memberPrincipal.toString());
+	public SuccessResponseDto<Map<String, String>> justAdmin(@AuthenticationPrincipal MemberPrincipal memberPrincipal) {
+		if (memberPrincipal == null) {
+			throw new CustomException(ErrorType.AUTH_UNAUTHORIZED);
+		}
+		return SuccessResponseDto.from(
+			SuccessType.OK,
+			Map.of(
+				"publicId", memberPrincipal.publicId(),
+				"role", memberPrincipal.role()
+			)
+		);
 	}
 
 }

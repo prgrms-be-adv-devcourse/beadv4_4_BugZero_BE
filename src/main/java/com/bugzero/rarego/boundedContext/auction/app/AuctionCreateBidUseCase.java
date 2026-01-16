@@ -35,10 +35,12 @@ public class AuctionCreateBidUseCase {
 	private final PaymentApiClient paymentApiClient;
 
 	@Transactional
-	public SuccessResponseDto<BidResponseDto> createBid(Long auctionId, Long memberId, int bidAmount) {
+	public SuccessResponseDto<BidResponseDto> createBid(Long auctionId, String memberPublicId, int bidAmount) {
 
-		AuctionMember bidder = auctionMemberRepository.findById(memberId)
+		AuctionMember bidder = auctionMemberRepository.findByPublicId(memberPublicId)
 			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
+
+		Long memberId = bidder.getId();
 
 		// 경매 조회
 		Auction auction = auctionRepository.findByIdWithLock(auctionId)

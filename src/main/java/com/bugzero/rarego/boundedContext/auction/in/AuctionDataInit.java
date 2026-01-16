@@ -21,13 +21,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 @Profile("dev")
 public class AuctionDataInit implements CommandLineRunner {
+
+    private static final String SELLER_PUBLIC_ID = "eea43e1c-eb7d-406a-8e5d-5ffbbddd488f";
+    private static final String BIDDER_PUBLIC_ID = "f8d99e06-fa28-4dad-9371-b7b8baa6ae6b";
+    private static final String COMPETITOR_PUBLIC_ID = "competitor_public_3";
 
     private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
@@ -46,9 +49,9 @@ public class AuctionDataInit implements CommandLineRunner {
         log.info("경매 전체 테스트 데이터 초기화 시작...");
 
         // 0. 회원 생성 (MemberRole 제거)
-        AuctionMember seller = createOrGetMember(1L, "seller@test.com", "판매자_제로");
-        AuctionMember me = createOrGetMember(2L, "me@test.com", "입찰자_나");
-        AuctionMember competitor = createOrGetMember(3L, "comp@test.com", "경쟁자_A");
+        AuctionMember seller = createOrGetMember(1L, SELLER_PUBLIC_ID, "seller@auction.com", "AuctionSeller");
+        AuctionMember me = createOrGetMember(2L, BIDDER_PUBLIC_ID, "buyer@auction.com", "AuctionBuyer");
+        AuctionMember competitor = createOrGetMember(3L, COMPETITOR_PUBLIC_ID, "comp@test.com", "경쟁자_A");
 
         // ==========================================
         // [Part 1] API 조회 테스트용
@@ -140,12 +143,12 @@ public class AuctionDataInit implements CommandLineRunner {
 
     // --- Helper Methods ---
 
-    private AuctionMember createOrGetMember(Long id, String email, String nickname) {
+    private AuctionMember createOrGetMember(Long id, String publicId, String email, String nickname) {
         return auctionMemberRepository.findById(id)
                 .orElseGet(() -> auctionMemberRepository.save(
                         AuctionMember.builder()
                                 .id(id)
-                                .publicId(UUID.randomUUID().toString())
+                                .publicId(publicId)
                                 .email(email)
                                 .nickname(nickname)
                                 .build()

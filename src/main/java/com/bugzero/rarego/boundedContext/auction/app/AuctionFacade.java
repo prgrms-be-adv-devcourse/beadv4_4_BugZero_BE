@@ -41,8 +41,8 @@ public class AuctionFacade {
 	private final ProductRepository productRepository;
 
 	@Transactional
-	public SuccessResponseDto<BidResponseDto> createBid(Long auctionId, Long memberId, int bidAmount) {
-		return auctionCreateBidUseCase.createBid(auctionId, memberId, bidAmount);
+	public SuccessResponseDto<BidResponseDto> createBid(Long auctionId, String memberPublicId, int bidAmount) {
+		return auctionCreateBidUseCase.createBid(auctionId, memberPublicId, bidAmount);
 	}
 
 	// 경매 입찰 기록 조회
