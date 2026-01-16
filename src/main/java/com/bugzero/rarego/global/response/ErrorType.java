@@ -22,6 +22,7 @@ public enum ErrorType {
 	AUTH_FORBIDDEN(403, 1507, "권한이 없습니다."),
 
     // Auction (2000 ~ 2999)
+    AUCTION_CREATE_FAILED(500, 2000, "경매 생성에 실패했습니다."),
     AUCTION_NOT_FOUND(404, 2001, "경매를 찾을 수 없습니다."),
     AUCTION_NOT_IN_PROGRESS(400, 2002, "경매가 진행 중인 상태가 아닙니다."),
     AUCTION_ALREADY_HIGHEST_BIDDER(409, 2003, "현재 최고 입찰자이므로 연속 입찰할 수 없습니다."),
