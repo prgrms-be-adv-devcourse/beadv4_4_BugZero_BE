@@ -56,9 +56,6 @@ public class PaymentDataInit {
 			.publicId(UUID.randomUUID().toString())
 			.email("system@bugzero.com")
 			.nickname("시스템")
-			.role(MemberRole.ADMIN)
-			.provider(Provider.GOOGLE)
-			.providerId("test_system_id")
 			.createdAt(LocalDateTime.now())
 			.updatedAt(LocalDateTime.now())
 			.build();

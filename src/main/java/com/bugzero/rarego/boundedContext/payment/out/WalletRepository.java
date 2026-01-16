@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.boundedContext.payment.domain.Wallet;
 import jakarta.persistence.LockModeType;
@@ -28,7 +27,4 @@ public interface WalletRepository extends JpaRepository<Wallet, Long> {
 	int increaseBalance(Long memberId, int amount);
 
 	Optional<Wallet> findByMemberId(Long memberId);
-
-	@Transactional
-	void deleteByMemberId(Long memberId);
 }
