@@ -22,6 +22,7 @@ import com.bugzero.rarego.boundedContext.payment.in.dto.AuctionFinalPaymentReque
 import com.bugzero.rarego.boundedContext.payment.in.dto.AuctionFinalPaymentResponseDto;
 import com.bugzero.rarego.boundedContext.payment.out.DepositRepository;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentTransactionRepository;
+import com.bugzero.rarego.boundedContext.payment.out.SettlementRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.shared.auction.dto.AuctionOrderDto;
@@ -43,6 +44,9 @@ class PaymentAuctionFinalUseCaseTest {
     private PaymentTransactionRepository transactionRepository;
 
     @Mock
+    private SettlementRepository settlementRepository;
+
+    @Mock
     private PaymentSupport paymentSupport;
 
     @Test
@@ -50,6 +54,7 @@ class PaymentAuctionFinalUseCaseTest {
     void finalPayment_Success() {
         // given
         Long memberId = 1L;
+        Long sellerId = 5L;
         Long auctionId = 100L;
         int finalPrice = 100000;
         int depositAmount = 10000;
@@ -58,18 +63,21 @@ class PaymentAuctionFinalUseCaseTest {
         AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
                 "홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
 
-        AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, memberId, finalPrice, "PROCESSING");
+        AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, sellerId, memberId, finalPrice, "PROCESSING");
 
-        PaymentMember member = mock(PaymentMember.class);
-        when(member.getPublicId()).thenReturn("uuid-member-1");
+        PaymentMember buyer = mock(PaymentMember.class);
+        when(buyer.getPublicId()).thenReturn("uuid-member-1");
 
-        Deposit deposit = Deposit.create(member, auctionId, depositAmount);
+        PaymentMember seller = mock(PaymentMember.class);
+
+        Deposit deposit = Deposit.create(buyer, auctionId, depositAmount);
         Wallet wallet = Wallet.builder().balance(200000).holdingAmount(depositAmount).build();
 
         when(auctionOrderPort.findByAuctionId(auctionId)).thenReturn(Optional.of(order));
         when(depositRepository.findByMemberIdAndAuctionId(memberId, auctionId)).thenReturn(Optional.of(deposit));
         when(paymentSupport.findWalletByMemberIdForUpdate(memberId)).thenReturn(wallet);
-        when(paymentSupport.findMemberById(memberId)).thenReturn(member);
+        when(paymentSupport.findMemberById(memberId)).thenReturn(buyer);
+        when(paymentSupport.findMemberById(sellerId)).thenReturn(seller);
 
         // when
         AuctionFinalPaymentResponseDto response = paymentAuctionFinalUseCase.finalPayment(memberId, auctionId, request);
@@ -122,7 +130,7 @@ class PaymentAuctionFinalUseCaseTest {
 
         AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
                 "홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
-        AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, winnerId, 100000, "PROCESSING");
+        AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, 5L, winnerId, 100000, "PROCESSING");
 
         when(auctionOrderPort.findByAuctionId(auctionId)).thenReturn(Optional.of(order));
 
@@ -142,7 +150,7 @@ class PaymentAuctionFinalUseCaseTest {
 
         AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
                 "홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
-        AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, memberId, 100000, "SUCCESS"); // 이미 완료
+        AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, 5L, memberId, 100000, "SUCCESS"); // 이미 완료
 
         when(auctionOrderPort.findByAuctionId(auctionId)).thenReturn(Optional.of(order));
 
@@ -162,7 +170,7 @@ class PaymentAuctionFinalUseCaseTest {
 
         AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
                 "홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
-        AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, memberId, 100000, "PROCESSING");
+        AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, 5L, memberId, 100000, "PROCESSING");
 
         when(auctionOrderPort.findByAuctionId(auctionId)).thenReturn(Optional.of(order));
         when(depositRepository.findByMemberIdAndAuctionId(memberId, auctionId)).thenReturn(Optional.empty());
@@ -185,7 +193,7 @@ class PaymentAuctionFinalUseCaseTest {
 
         AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
                 "홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
-        AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, memberId, finalPrice, "PROCESSING");
+        AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, 5L, memberId, finalPrice, "PROCESSING");
 
         PaymentMember member = mock(PaymentMember.class);
 
