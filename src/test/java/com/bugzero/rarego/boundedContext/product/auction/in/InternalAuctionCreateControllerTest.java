@@ -50,7 +50,7 @@ class InternalAuctionCreateControllerTest {
 			.willReturn(10L);
 
 		// when & then
-		mockMvc.perform(post("/api/v1/auctions/{productId}", productId)
+		mockMvc.perform(post("/api/v1/internal/auctions/{productId}/{sellerUUID}", productId,sellerUUID)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(requestDto)))
 			.andExpect(status().isCreated())
@@ -62,13 +62,15 @@ class InternalAuctionCreateControllerTest {
 	void createAuction_Fail_MinPrice() throws Exception {
 		// given
 		long productId = 1L;
+		String sellerUUID = "1L";
+
 		ProductAuctionRequestDto invalidDto = ProductAuctionRequestDto.builder()
 			.startPrice(50) // @Min(100) 위반
 			.durationDays(7)
 			.build();
 
 		// when & then
-		mockMvc.perform(post("/api/v1/auctions/{productId}", productId)
+		mockMvc.perform(post("/api/v1/internal/auctions/{productId}/{sellerUUID}", productId,sellerUUID)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(invalidDto)))
 			.andExpect(status().isBadRequest());
@@ -79,13 +81,15 @@ class InternalAuctionCreateControllerTest {
 	void createAuction_Fail_MinDuration() throws Exception {
 		// given
 		long productId = 1L;
+		String sellerUUID = "1L";
+
 		ProductAuctionRequestDto invalidDto = ProductAuctionRequestDto.builder()
 			.startPrice(10000) // @Min(100) 위반
 			.durationDays(100)
 			.build();
 
 		// when & then
-		mockMvc.perform(post("/api/v1/auctions/{productId}", productId)
+		mockMvc.perform(post("/api/v1/internal/auctions/{productId}/{sellerUUID}", productId,sellerUUID)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(invalidDto)))
 			.andExpect(status().isBadRequest());

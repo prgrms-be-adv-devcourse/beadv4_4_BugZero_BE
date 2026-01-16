@@ -19,13 +19,13 @@ public class AuctionApiClient {
 
 	public AuctionApiClient(@Value("${custom.global.internalBackUrl}") String internalBackUrl ) {
 		this.restClient = RestClient.builder()
-			.baseUrl(internalBackUrl + "/api/v1/products")
+			.baseUrl(internalBackUrl + "/api/v1/internal/auctions")
 			.build();
 	}
 
 	public Long createAuction(Long productId, String sellerUUID, ProductAuctionRequestDto productAuctionRequestDto) {
 		SuccessResponseDto<Long> response = restClient.post()
-			.uri("/{productId}/auctions/{sellerUUID}", productId, sellerUUID)
+			.uri("/{productId}/{sellerUUID}", productId, sellerUUID)
 			.body(productAuctionRequestDto)
 			.retrieve()
 			.onStatus(HttpStatusCode::isError, (httpRequest, httpResponse) -> {

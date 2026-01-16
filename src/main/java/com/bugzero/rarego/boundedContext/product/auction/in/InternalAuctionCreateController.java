@@ -15,13 +15,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/auctions")
+@RequestMapping("/api/v1/internal/auctions")
 @RequiredArgsConstructor
 public class InternalAuctionCreateController {
 
 	private final AuctionCreateAuctionUseCase auctionCreateAuctionUseCase;
 
-	@PostMapping("/{productId}/auctions/{sellerUUID}")
+	@PostMapping("/{productId}/{sellerUUID}")
 	public SuccessResponseDto<Long> createAuction (
 		@PathVariable Long productId,
 		@PathVariable String sellerUUID,
