@@ -115,32 +115,22 @@ public class JwtParser {
 		if (payload == null)
 			return null;
 
-		Long id = toLong(payload.get("id"));
+		String publicId = toStringValue(payload.get("publicId"));
+		if (publicId == null) {
+			publicId = toStringValue(payload.get("id"));
+		}
 		String role = toRoleString(payload.get("role"));
-		if (id == null || role == null || role.isBlank()) {
+		if (publicId == null || publicId.isBlank() || role == null || role.isBlank()) {
 			return null;
 		}
 
-		return new MemberPrincipal(id, role);
+		return new MemberPrincipal(publicId, role);
 	}
 
-	private static Long toLong(Object value) {
+	private static String toStringValue(Object value) {
 		if (value == null)
 			return null;
-		if (value instanceof Long longValue)
-			return longValue;
-		if (value instanceof Integer intValue)
-			return intValue.longValue();
-		if (value instanceof Number numberValue)
-			return numberValue.longValue();
-		if (value instanceof String stringValue) {
-			try {
-				return Long.parseLong(stringValue);
-			} catch (NumberFormatException ignored) {
-				return null;
-			}
-		}
-		return null;
+		return value.toString();
 	}
 
 	private static String toRoleString(Object value) {

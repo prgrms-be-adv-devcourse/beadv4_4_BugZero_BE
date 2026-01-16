@@ -40,7 +40,7 @@ public class AuthIssueTokenUseCase {
 			return jwtProvider.issueToken(
 				expireSeconds,
 				Map.of(
-					"id", tokenIssueDto.memberPublicId(),
+					"publicId", tokenIssueDto.memberPublicId(),
 					"role", tokenIssueDto.role()
 				)
 			);

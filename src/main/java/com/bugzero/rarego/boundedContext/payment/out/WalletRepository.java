@@ -14,7 +14,7 @@ import jakarta.persistence.LockModeType;
 public interface WalletRepository extends JpaRepository<Wallet, Long> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT w FROM Wallet w WHERE w.member.id = :memberId")
+    @Query("SELECT w FROM Wallet w JOIN FETCH w.member WHERE w.member.id = :memberId")
     Optional<Wallet> findByMemberIdForUpdate(@Param("memberId") Long memberId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

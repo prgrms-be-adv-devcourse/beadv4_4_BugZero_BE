@@ -66,7 +66,7 @@ public class Auction extends BaseIdAndTime {
         }
         this.status = AuctionStatus.ENDED;
     }
-  
+
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(this.endTime);
     }
