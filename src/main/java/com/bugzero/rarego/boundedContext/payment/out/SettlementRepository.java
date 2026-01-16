@@ -1,6 +1,7 @@
 package com.bugzero.rarego.boundedContext.payment.out;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,9 +14,8 @@ import com.bugzero.rarego.boundedContext.payment.domain.SettlementStatus;
 import jakarta.persistence.LockModeType;
 
 public interface SettlementRepository extends JpaRepository<Settlement, Long> {
-    List<Settlement> findAllByStatus(SettlementStatus status);
+	List<Settlement> findAllByStatus(SettlementStatus status);
 
-	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("""
 		    SELECT s
 		    FROM Settlement s
@@ -24,4 +24,13 @@ public interface SettlementRepository extends JpaRepository<Settlement, Long> {
 		    ORDER BY s.id ASC
 		""")
 	List<Settlement> findAllByStatus(SettlementStatus status, Pageable pageable);
+
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("""
+		    SELECT s
+		    FROM Settlement s
+		    JOIN FETCH s.seller
+		    WHERE s.id = :id
+		""")
+	Optional<Settlement> findByIdForUpdate(Long id);
 }
