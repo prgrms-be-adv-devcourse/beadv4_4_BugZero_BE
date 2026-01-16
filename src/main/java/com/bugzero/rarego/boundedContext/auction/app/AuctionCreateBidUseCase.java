@@ -13,6 +13,7 @@ import com.bugzero.rarego.boundedContext.auction.domain.Bid;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
+import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.global.exception.CustomException;
@@ -20,6 +21,7 @@ import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
+import com.bugzero.rarego.shared.payment.out.PaymentApiClient;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,18 +32,13 @@ public class AuctionCreateBidUseCase {
 	private final BidRepository bidRepository;
 	private final AuctionMemberRepository auctionMemberRepository;
 	private final ProductRepository productRepository;
+	private final PaymentApiClient paymentApiClient;
 
 	@Transactional
 	public SuccessResponseDto<BidResponseDto> createBid(Long auctionId, Long memberId, int bidAmount) {
 
 		AuctionMember bidder = auctionMemberRepository.findById(memberId)
 			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
-
-		/*
-		// 회원 조회
-		Member bidder = memberRepository.findById(memberId)
-			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
-		 */
 
 		// 경매 조회
 		Auction auction = auctionRepository.findByIdWithLock(auctionId)
@@ -52,10 +49,15 @@ public class AuctionCreateBidUseCase {
 		Product product = productRepository.findById(auction.getProductId())
 			.orElseThrow(() -> new CustomException(ErrorType.INTERNAL_SERVER_ERROR));
 
-		// 보증금 Hold 로직 -> 추후 PaymentService 참조해서 구현 예정
-
 		// 유효성 검증
 		validateBid(auction, product, memberId, bidAmount);
+
+		// TODO: 보증금 정책이 확정되면 변경 예정
+		// 현재는 경매 시작 금액의 10%만 보증금으로 책정
+		int depositAmount = (int) (auction.getStartPrice() * 0.1);
+
+		// 보증금 Hold (유효성 검증 통과 후 보증금 Hold)
+		DepositHoldResponseDto depositResponse = paymentApiClient.holdDeposit(depositAmount, memberId, auctionId);
 
 		// 가격 업데이트
 		if (auction.getCurrentPrice() == null || !auction.getCurrentPrice().equals(bidAmount)) {
