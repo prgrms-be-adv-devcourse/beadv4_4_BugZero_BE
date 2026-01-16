@@ -6,7 +6,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
@@ -26,12 +25,11 @@ import lombok.NoArgsConstructor;
 	}
 )
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
-public class Account extends BaseIdAndTime{
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Account extends BaseIdAndTime {
 
-	// TODO: member와 연관관계 publicId로 변경
 	@Column(name = "member_public_id", nullable = false, unique = true, length = 36)
 	private String memberPublicId;
 
@@ -45,4 +43,18 @@ public class Account extends BaseIdAndTime{
 
 	@Column(name = "provider_id", length = 128, nullable = false)
 	private String providerId;
+
+	public static Account toEntity(
+		String memberPublicId,
+		AuthRole role,
+		Provider provider,
+		String providerId
+	) {
+		return Account.builder()
+			.memberPublicId(memberPublicId)
+			.role(role)
+			.provider(provider)
+			.providerId(providerId)
+			.build();
+	}
 }

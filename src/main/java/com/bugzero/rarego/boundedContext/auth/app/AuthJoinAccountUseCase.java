@@ -24,27 +24,22 @@ public class AuthJoinAccountUseCase {
 
 	@Transactional
 	public Account join(Provider provider, String providerId, String email) {
-		// 1) Member 생성/조회(멱등하게) -> memberPublicId 받기
+		// 1. Member 생성/조회(멱등하게) -> memberPublicId 받기
 		MemberJoinResponseDto memberResponse = memberApiClient.join(email);
 		String memberPublicId = memberResponse.memberPublicId();
 
 		if (memberPublicId == null || memberPublicId.isBlank()) {
 			throw new CustomException(ErrorType.INTERNAL_SERVER_ERROR);
 		}
-		// 멱등성 처리: 이미 같은 memberPublicId가 있으면 Account 생성하지 않고 기존 Account 반환
+		// 멱등성 처리: 이미 같은 memberPublicId가 반환되면 Account 생성하지 않고 기존 Account ~ 본인인증 같은 경우
 		return accountRepository.findByMemberPublicId(memberPublicId)
 			.orElseGet(() -> createAccount(provider, providerId, memberPublicId));
 	}
 
 	private Account createAccount(Provider provider, String providerId, String memberPublicId) {
-		// 2) Account 생성 (provider+providerId 유니크)
+		// 2. Account 생성 (provider+providerId 유니크)
 		try {
-			Account account = Account.builder()
-				.provider(provider)
-				.providerId(providerId)
-				.memberPublicId(memberPublicId)
-				.role(AuthRole.USER)
-				.build();
+			Account account = Account.toEntity(memberPublicId, AuthRole.USER, provider, providerId);
 			return accountRepository.save(account);
 		} catch (DataIntegrityViolationException e) {
 			// 동시성 문제로 이미 만들어졌다면 다시 조회해서 반환
