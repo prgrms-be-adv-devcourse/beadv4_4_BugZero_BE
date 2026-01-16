@@ -17,15 +17,19 @@ import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestResponseDt
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/payments")
 @RequiredArgsConstructor
+@Tag(name = "Payment", description = "결제 관련 API")
 public class PaymentController {
 	private final PaymentFacade paymentFacade;
 
+	@Operation(summary = "결제 요청", description = "토스페이먼츠 결제를 요청합니다")
 	@PostMapping("/charges")
 	public SuccessResponseDto<PaymentRequestResponseDto> requestPayment(
 		// TODO: 추후 인증 구현시 @AuthenticationPrincipal로 변경 필요
@@ -36,6 +40,7 @@ public class PaymentController {
 		return SuccessResponseDto.from(SuccessType.CREATED, paymentFacade.requestPayment(memberId, requestDto));
 	}
 
+	@Operation(summary = "결제 승인", description = "토스페이먼츠 결제 승인 후 지갑에 충전합니다")
 	@PostMapping("/charges/confirm")
 	public SuccessResponseDto<PaymentConfirmResponseDto> confirmPayment(
 		// TODO: 추후 인증 구현시 @AuthenticationPrincipal로 변경 필요
@@ -46,6 +51,7 @@ public class PaymentController {
 		return SuccessResponseDto.from(SuccessType.OK, paymentFacade.confirmPayment(memberId, requestDto));
 	}
 
+	@Operation(summary = "낙찰 결제", description = "낙찰자가 최종 결제를 완료합니다 (보증금 + 잔금)")
 	@PostMapping("/auctions/{auctionId}")
 	public SuccessResponseDto<AuctionFinalPaymentResponseDto> auctionFinalPayment(
 		// TODO: 추후 인증 구현시 @AuthenticationPrincipal로 변경 필요
