@@ -1,20 +1,15 @@
 package com.bugzero.rarego.boundedContext.auction.domain;
 
-import java.time.LocalDateTime;
-
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
 import com.bugzero.rarego.global.response.ErrorType;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "AUCTION_AUCTION")
@@ -22,11 +17,11 @@ import lombok.NoArgsConstructor;
 @Getter
 public class Auction extends BaseIdAndTime {
 
-	@Column(nullable = false)
-	private Long productId;
+    @Column(nullable = false)
+    private Long productId;
 
-	@Column(nullable = false)
-	private Long SellerId;
+    @Column(nullable = false)
+    private Long sellerId;
 
     @Column(nullable = false)
     private LocalDateTime startTime;
@@ -46,16 +41,18 @@ public class Auction extends BaseIdAndTime {
     @Column(nullable = false)
     private int tickSize;
 
-	@Builder
-	public Auction(Long productId, Long sellerId, LocalDateTime startTime, LocalDateTime endTime, int startPrice, int tickSize) {
-		this.productId = productId;
-		this.SellerId = sellerId;
-		this.startTime = startTime;
-		this.endTime = endTime;
-		this.startPrice = startPrice;
-		this.tickSize = tickSize;
-		this.status = AuctionStatus.SCHEDULED;
-	}
+    // 입찰 가격 갱신
+    @Builder
+    public Auction(Long productId, Long sellerId, LocalDateTime startTime, LocalDateTime endTime, int startPrice,
+            int tickSize) {
+        this.productId = productId;
+        this.sellerId = sellerId;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.startPrice = startPrice;
+        this.tickSize = tickSize;
+        this.status = AuctionStatus.SCHEDULED;
+    }
 
     public void start() {
         if (this.status != AuctionStatus.SCHEDULED) {
@@ -90,8 +87,4 @@ public class Auction extends BaseIdAndTime {
       this.status = AuctionStatus.IN_PROGRESS;
     }
 
-	// 경매 종료 상태로 전이
-	public void endAuction() {
-		this.status = AuctionStatus.ENDED;
-	}
 }

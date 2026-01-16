@@ -72,10 +72,13 @@ class AuctionCreateBidUseCaseTest {
 		Product product = Product.builder().sellerId(SELLER_ID).build();
 		ReflectionTestUtils.setField(product, "id", PRODUCT_ID);
 
-		// 경매 설정 (ID 참조 방식)
+		// 경매 설정
+		// [충돌 해결] 테스트 검증값(보증금 1000원)에 맞추기 위해 startPrice는 10000원이어야 함.
+		// sellerId는 엔티티 정합성을 위해 포함하는 것이 좋습니다.
 		Auction auction = Auction.builder()
-			.productId(PRODUCT_ID) // [변경] 객체 대신 ID 사용
-			.startPrice(startPrice)
+			.productId(PRODUCT_ID)
+			.sellerId(SELLER_ID)
+			.startPrice(startPrice) // 10,000원
 			.tickSize(1000)
 			.startTime(LocalDateTime.now().minusHours(1))
 			.endTime(LocalDateTime.now().plusHours(1))
@@ -87,7 +90,7 @@ class AuctionCreateBidUseCaseTest {
 		given(auctionMemberRepository.findById(BIDDER_ID)).willReturn(Optional.of(bidder));
 		given(auctionRepository.findByIdWithLock(AUCTION_ID)).willReturn(Optional.of(auction));
 
-		// [중요] ProductRepository Mocking 필수 (주석 해제)
+		// ProductRepository Mocking
 		given(productRepository.findById(PRODUCT_ID)).willReturn(Optional.of(product));
 
 		given(bidRepository.findTopByAuctionIdOrderByBidTimeDesc(any())).willReturn(Optional.empty());
@@ -108,15 +111,16 @@ class AuctionCreateBidUseCaseTest {
 	@DisplayName("입찰 실패: 판매자가 본인 경매에 입찰 시도")
 	void createBid_fail_seller_bid() {
 		// given
-		// 판매자가 곧 입찰자
 		AuctionMember seller = AuctionMember.builder().build();
 		ReflectionTestUtils.setField(seller, "id", SELLER_ID);
 
 		Product product = Product.builder().sellerId(SELLER_ID).build();
 		ReflectionTestUtils.setField(product, "id", PRODUCT_ID);
 
+		// [충돌 해결] startPrice 등 테스트 목적에 맞게 병합
 		Auction auction = Auction.builder()
 			.productId(PRODUCT_ID)
+			.sellerId(SELLER_ID)
 			.startPrice(10000)
 			.tickSize(1000)
 			.startTime(LocalDateTime.now().minusHours(1))
@@ -128,7 +132,6 @@ class AuctionCreateBidUseCaseTest {
 		given(auctionMemberRepository.findById(SELLER_ID)).willReturn(Optional.of(seller));
 		given(auctionRepository.findByIdWithLock(AUCTION_ID)).willReturn(Optional.of(auction));
 
-		// [중요] 여기서도 Mocking 필수! (Use Case 코드 흐름상 검증 전에 호출됨)
 		given(productRepository.findById(PRODUCT_ID)).willReturn(Optional.of(product));
 
 		// when & then
@@ -152,6 +155,7 @@ class AuctionCreateBidUseCaseTest {
 
 		Auction auction = Auction.builder()
 			.productId(PRODUCT_ID)
+			.sellerId(SELLER_ID)
 			.startPrice(5000)
 			.tickSize(1000)
 			.startTime(LocalDateTime.now().minusHours(1))
@@ -164,7 +168,6 @@ class AuctionCreateBidUseCaseTest {
 		given(auctionMemberRepository.findById(BIDDER_ID)).willReturn(Optional.of(bidder));
 		given(auctionRepository.findByIdWithLock(AUCTION_ID)).willReturn(Optional.of(auction));
 
-		// [중요] Mocking 필수
 		given(productRepository.findById(PRODUCT_ID)).willReturn(Optional.of(product));
 
 		// when & then
