@@ -20,6 +20,7 @@ import com.bugzero.rarego.boundedContext.payment.domain.Settlement;
 import com.bugzero.rarego.boundedContext.payment.domain.SettlementStatus;
 import com.bugzero.rarego.boundedContext.payment.domain.Wallet;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentMemberRepository;
+import com.bugzero.rarego.boundedContext.payment.out.PaymentTransactionRepository;
 import com.bugzero.rarego.boundedContext.payment.out.SettlementRepository;
 import com.bugzero.rarego.boundedContext.payment.out.WalletRepository;
 
@@ -37,11 +38,15 @@ class PaymentProcessSettlementUseCaseIntegrationTest {
 	@Autowired
 	private SettlementRepository settlementRepository;
 
+	@Autowired
+	private PaymentTransactionRepository paymentTransactionRepository;
+
 	private final Long SYSTEM_ID = 2L;
 
 	@BeforeEach
 	void setUp() {
 		// 데이터 초기화
+		paymentTransactionRepository.deleteAll();
 		settlementRepository.deleteAll();
 		walletRepository.deleteAll();
 		memberRepository.deleteAll();
