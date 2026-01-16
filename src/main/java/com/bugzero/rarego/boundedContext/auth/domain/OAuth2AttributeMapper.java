@@ -62,7 +62,13 @@ public final class OAuth2AttributeMapper {
 	private static AccountDto fromNaver(String attributeKey, Map<String, Object> attributes) {
 		// 네이버는 response 안에 있음
 		Map<String, Object> response = (Map<String, Object>) attributes.get("response");
-		String providerId = safeAsString(response.get(attributeKey)); // 보통 "id"
+		if (response == null || response.isEmpty()) {
+			throw new CustomException(ErrorType.AUTH_OAUTH2_INVALID_RESPONSE);
+		}
+		String providerId = safeAsString(response.get("id"));
+		if (providerId == null || providerId.isBlank()) {
+			throw new CustomException(ErrorType.AUTH_OAUTH2_INVALID_RESPONSE);
+		}
 		String email = safeAsString(response.get("email"));
 		return new AccountDto(providerId, email, Provider.NAVER);
 	}
