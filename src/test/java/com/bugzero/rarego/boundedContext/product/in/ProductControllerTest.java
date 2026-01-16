@@ -48,7 +48,7 @@ class ProductControllerTest {
 	@DisplayName("성공 - 올바른 상품 정보와 memberId가 전달되면 201 응답을 반환한다")
 	void createProduct_success() throws Exception {
 		// given
-		long memberId = 1L;
+		String memberId = "1L";
 		ProductRequestDto requestDto = new ProductRequestDto(
 			"스타워즈 레고",
 			Category.스타워즈,
