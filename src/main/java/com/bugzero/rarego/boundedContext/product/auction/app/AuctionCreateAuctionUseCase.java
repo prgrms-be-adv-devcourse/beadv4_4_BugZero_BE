@@ -15,11 +15,12 @@ public class AuctionCreateAuctionUseCase {
 	// 신규상품 경매 정보 생성
 	public long createAuction(Long productId,String sellerUUID, ProductAuctionRequestDto productAuctionRequestDto) {
 		//TODO sellerUUID를 통해 memberId를 반환하는 메서드 추가 (support에 생성)
+		Long sellerId = 1L;
 
 		int tickSize = determineTickSize(productAuctionRequestDto.startPrice());
 
 		return auctionRepository
-			.save(productAuctionRequestDto.toEntity(productId, tickSize))
+			.save(productAuctionRequestDto.toEntity(productId,sellerId, tickSize))
 			.getId();
 	}
 
