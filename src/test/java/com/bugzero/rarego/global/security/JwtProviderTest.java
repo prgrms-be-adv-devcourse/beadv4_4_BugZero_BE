@@ -20,13 +20,13 @@ class JwtProviderTest {
 	private static final String SECRET = "abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890";
 
 	@Test
-	@DisplayName("issueToken은 id, role 클레임을 포함한 JWT를 발급한다.")
+	@DisplayName("issueToken은 publicId, role 클레임을 포함한 JWT를 발급한다.")
 	void issueTokenIncludesClaims() {
 		JwtProvider jwtProvider = new JwtProvider(SECRET);
 
 		String jwt = jwtProvider.issueToken(
 			60 * 60,
-			Map.of("id", 1L, "role", AuthRole.USER.name())
+			Map.of("publicId", "member-123", "role", AuthRole.USER.name())
 		);
 
 		assertThat(jwt).isNotBlank();
@@ -38,7 +38,7 @@ class JwtProviderTest {
 			.parseSignedClaims(jwt)
 			.getPayload();
 
-		assertThat(((Number) claims.get("id")).longValue()).isEqualTo(1L);
+		assertThat(claims.get("publicId")).isEqualTo("member-123");
 		assertThat(claims.get("role")).isEqualTo(AuthRole.USER.name());
 	}
 }

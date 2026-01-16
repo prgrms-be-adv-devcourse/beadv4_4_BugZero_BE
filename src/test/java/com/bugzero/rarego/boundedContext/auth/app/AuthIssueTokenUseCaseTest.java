@@ -36,12 +36,12 @@ class AuthIssueTokenUseCaseTest {
 	}
 
 	@Test
-	@DisplayName("access 토큰 발급 시 멤버 id/role과 access 만료시간을 전달한다.")
+	@DisplayName("access 토큰 발급 시 멤버 publicId/role과 access 만료시간을 전달한다.")
 	void issueAccessTokenPassesMemberClaimsAndExpireSeconds() {
 		TokenIssueDto tokenIssueDto = new TokenIssueDto("550e8400-e29b-41d4-a716-446655440000", AuthRole.USER.name());
 
 		when(jwtProvider.issueToken(eq(3600), argThat(body ->
-			"550e8400-e29b-41d4-a716-446655440000".equals(body.get("id"))
+			"550e8400-e29b-41d4-a716-446655440000".equals(body.get("publicId"))
 				&& AuthRole.USER.name().equals(body.get("role"))
 				&& body.size() == 2
 		))).thenReturn("token");
@@ -53,12 +53,12 @@ class AuthIssueTokenUseCaseTest {
 	}
 
 	@Test
-	@DisplayName("refresh 토큰 발급 시 멤버 id/role과 refresh 만료시간을 전달한다.")
+	@DisplayName("refresh 토큰 발급 시 멤버 publicId/role과 refresh 만료시간을 전달한다.")
 	void issueRefreshTokenPassesMemberClaimsAndExpireSeconds() {
 		TokenIssueDto tokenIssueDto = new TokenIssueDto("1e2c1e52-7e77-4f5d-8c4f-1a2a12b7f9aa", AuthRole.ADMIN.name());
 
 		when(jwtProvider.issueToken(eq(7200), argThat(body ->
-			"1e2c1e52-7e77-4f5d-8c4f-1a2a12b7f9aa".equals(body.get("id"))
+			"1e2c1e52-7e77-4f5d-8c4f-1a2a12b7f9aa".equals(body.get("publicId"))
 				&& AuthRole.ADMIN.name().equals(body.get("role"))
 				&& body.size() == 2
 		))).thenReturn("refresh-token");
@@ -133,8 +133,8 @@ class AuthIssueTokenUseCaseTest {
 	}
 
 	@Test
-	@DisplayName("member id가 없으면 AUTH_MEMBER_ID_INVALID 예외가 발생한다.")
-	void issueTokenFailsWhenMemberIdMissing() {
+	@DisplayName("member publicId가 없으면 INVALID_INPUT 예외가 발생한다.")
+	void issueTokenFailsWhenMemberPublicIdMissing() {
 		TokenIssueDto tokenIssueDto = new TokenIssueDto(null, AuthRole.USER.name());
 
 		assertThatThrownBy(() -> authIssueTokenUseCase.issueToken(tokenIssueDto, true))
