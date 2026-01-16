@@ -21,17 +21,18 @@ public enum ErrorType {
 	AUTH_UNAUTHORIZED(401, 1506, "인증이 필요합니다."),
 	AUTH_FORBIDDEN(403, 1507, "권한이 없습니다."),
 
-	// Auction (2000 ~ 2999)
-	AUCTION_NOT_FOUND(404, 2001, "경매를 찾을 수 없습니다."),
-	AUCTION_NOT_IN_PROGRESS(400, 2002, "경매가 진행 중인 상태가 아닙니다."),
-	AUCTION_ALREADY_HIGHEST_BIDDER(409, 2003, "현재 최고 입찰자이므로 연속 입찰할 수 없습니다."),
-	AUCTION_SELLER_CANNOT_BID(403, 2004, "본인의 경매에는 입찰할 수 없습니다."),
-	AUCTION_TIME_INVALID(400, 2005, "입찰 가능한 시간이 아닙니다."),
-	AUCTION_BID_AMOUNT_TOO_LOW(400, 2006, "입찰 금액이 현재가 또는 시작가보다 낮습니다."),
-	BID_NOT_FOUND(404, 2501, "입찰가를 찾을 수 없습니다."),
-	AUCTION_NOT_SCHEDULED(400, 2503, "예정된 경매가 아닙니다."),
-	AUCTION_SCHEDULE_FAILED(500, 2504, "경매 정산 예약에 실패했습니다."),
-	SCHEDULER_CAPACITY_EXCEEDED(503, 2505, "스케줄러 용량이 초과되었습니다."),
+    // Auction (2000 ~ 2999)
+    AUCTION_CREATE_FAILED(500, 2000, "경매 생성에 실패했습니다."),
+    AUCTION_NOT_FOUND(404, 2001, "경매를 찾을 수 없습니다."),
+    AUCTION_NOT_IN_PROGRESS(400, 2002, "경매가 진행 중인 상태가 아닙니다."),
+    AUCTION_ALREADY_HIGHEST_BIDDER(409, 2003, "현재 최고 입찰자이므로 연속 입찰할 수 없습니다."),
+    AUCTION_SELLER_CANNOT_BID(403, 2004, "본인의 경매에는 입찰할 수 없습니다."),
+    AUCTION_TIME_INVALID(400, 2005, "입찰 가능한 시간이 아닙니다."),
+    AUCTION_BID_AMOUNT_TOO_LOW(400, 2006, "입찰 금액이 현재가 또는 시작가보다 낮습니다."),
+    BID_NOT_FOUND(404, 2501, "입찰가를 찾을 수 없습니다."),
+    AUCTION_NOT_SCHEDULED(400, 2503, "예정된 경매가 아닙니다."),
+    AUCTION_SCHEDULE_FAILED(500, 2504, "경매 정산 예약에 실패했습니다."),
+    SCHEDULER_CAPACITY_EXCEEDED(503, 2505, "스케줄러 용량이 초과되었습니다."),
 
 	// Product (3000 ~ 3999)
 
