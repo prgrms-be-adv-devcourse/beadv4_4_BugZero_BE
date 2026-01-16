@@ -24,7 +24,7 @@ import com.bugzero.rarego.boundedContext.payment.out.SettlementRepository;
 import com.bugzero.rarego.boundedContext.payment.out.WalletRepository;
 
 @SpringBootTest
-public class PaymentProcessSettlementUseCaseIntegrationTest {
+class PaymentProcessSettlementUseCaseIntegrationTest {
 	@Autowired
 	private PaymentProcessSettlementUseCase paymentProcessSettlementUseCase;
 
