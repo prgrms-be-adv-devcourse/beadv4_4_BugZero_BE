@@ -18,6 +18,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.bugzero.rarego.boundedContext.payment.app.PaymentFacade;
+import com.bugzero.rarego.boundedContext.payment.in.dto.AuctionFinalPaymentRequestDto;
+import com.bugzero.rarego.boundedContext.payment.in.dto.AuctionFinalPaymentResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestDto;
@@ -238,5 +240,100 @@ class PaymentControllerTest {
 			.andDo(print())
 			.andExpect(status().isBadRequest()) // ★ 핵심: 400 Server Error 확인
 			.andExpect(jsonPath("$.status").value(400));
+	}
+
+	// ==================== 낙찰 결제 API 테스트 ====================
+
+	@Test
+	@DisplayName("성공: 낙찰 결제가 정상 처리되면 HTTP 200과 결과 데이터를 반환한다")
+	void auctionFinalPayment_success() throws Exception {
+		// given
+		Long memberId = 1L;
+		Long auctionId = 100L;
+		AuctionFinalPaymentRequestDto requestDto = new AuctionFinalPaymentRequestDto(
+				"홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
+
+		AuctionFinalPaymentResponseDto responseDto = AuctionFinalPaymentResponseDto.of(
+				1L, auctionId, "uuid-member-1", 100000, 10000, 100000, java.time.LocalDateTime.now());
+
+		given(paymentFacade.auctionFinalPayment(eq(memberId), eq(auctionId), any(AuctionFinalPaymentRequestDto.class)))
+				.willReturn(responseDto);
+
+		// when & then
+		mockMvc.perform(post("/api/v1/payments/auctions/{auctionId}", auctionId)
+				.param("memberId", String.valueOf(memberId))
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(requestDto)))
+				.andDo(print())
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value(SuccessType.OK.getHttpStatus()))
+				.andExpect(jsonPath("$.data.auctionId").value(auctionId))
+				.andExpect(jsonPath("$.data.status").value("PAID"));
+	}
+
+	@Test
+	@DisplayName("실패: 낙찰자가 아닌 경우(NOT_AUCTION_WINNER) HTTP 403을 반환한다")
+	void auctionFinalPayment_fail_not_winner() throws Exception {
+		// given
+		Long memberId = 1L;
+		Long auctionId = 100L;
+		AuctionFinalPaymentRequestDto requestDto = new AuctionFinalPaymentRequestDto(
+				"홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
+
+		given(paymentFacade.auctionFinalPayment(eq(memberId), eq(auctionId), any(AuctionFinalPaymentRequestDto.class)))
+				.willThrow(new CustomException(ErrorType.NOT_AUCTION_WINNER));
+
+		// when & then
+		mockMvc.perform(post("/api/v1/payments/auctions/{auctionId}", auctionId)
+				.param("memberId", String.valueOf(memberId))
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(requestDto)))
+				.andDo(print())
+				.andExpect(status().isForbidden())
+				.andExpect(jsonPath("$.message").value(ErrorType.NOT_AUCTION_WINNER.getMessage()));
+	}
+
+	@Test
+	@DisplayName("실패: 주문 상태가 올바르지 않은 경우(INVALID_ORDER_STATUS) HTTP 409를 반환한다")
+	void auctionFinalPayment_fail_invalid_order_status() throws Exception {
+		// given
+		Long memberId = 1L;
+		Long auctionId = 100L;
+		AuctionFinalPaymentRequestDto requestDto = new AuctionFinalPaymentRequestDto(
+				"홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
+
+		given(paymentFacade.auctionFinalPayment(eq(memberId), eq(auctionId), any(AuctionFinalPaymentRequestDto.class)))
+				.willThrow(new CustomException(ErrorType.INVALID_ORDER_STATUS));
+
+		// when & then
+		mockMvc.perform(post("/api/v1/payments/auctions/{auctionId}", auctionId)
+				.param("memberId", String.valueOf(memberId))
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(requestDto)))
+				.andDo(print())
+				.andExpect(status().isConflict())
+				.andExpect(jsonPath("$.message").value(ErrorType.INVALID_ORDER_STATUS.getMessage()));
+	}
+
+	@Test
+	@DisplayName("실패: 잔액이 부족한 경우(INSUFFICIENT_BALANCE) HTTP 400을 반환한다")
+	void auctionFinalPayment_fail_insufficient_balance() throws Exception {
+		// given
+		Long memberId = 1L;
+		Long auctionId = 100L;
+		AuctionFinalPaymentRequestDto requestDto = new AuctionFinalPaymentRequestDto(
+				"홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
+
+		given(paymentFacade.auctionFinalPayment(eq(memberId), eq(auctionId), any(AuctionFinalPaymentRequestDto.class)))
+				.willThrow(new CustomException(ErrorType.INSUFFICIENT_BALANCE));
+
+		// when & then
+		mockMvc.perform(post("/api/v1/payments/auctions/{auctionId}", auctionId)
+				.param("memberId", String.valueOf(memberId))
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(requestDto)))
+				.andDo(print())
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value(ErrorType.INSUFFICIENT_BALANCE.getMessage()));
 	}
 }
