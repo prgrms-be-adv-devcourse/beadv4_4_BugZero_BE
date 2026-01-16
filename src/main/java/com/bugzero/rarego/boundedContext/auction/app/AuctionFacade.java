@@ -14,9 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.Bid;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
@@ -47,6 +49,7 @@ public class AuctionFacade {
 	private final AuctionMemberRepository auctionMemberRepository;
 	private final AuctionRepository auctionRepository;
 	private final ProductRepository productRepository;
+	private final AuctionOrderRepository auctionOrderRepository;
 
 	@Transactional
 	public SuccessResponseDto<BidResponseDto> createBid(Long auctionId, Long memberId, int bidAmount) {
@@ -118,9 +121,25 @@ public class AuctionFacade {
 		Map<Long, Product> productMap = productRepository.findAllByIdIn(productIds).stream()
 			.collect(Collectors.toMap(Product::getId, p -> p));
 
-		// 주문 정보(거래 상태)
+		// 4-2. 주문 정보 (거래 상태)
+		Map<Long, AuctionOrder> orderMap = auctionOrderRepository.findAllByAuctionIdIn(auctionIds).stream()
+			.collect(Collectors.toMap(AuctionOrder::getAuctionId, Function.identity()));
 
-		// 입찰 횟수 정보
+		// 4-3. 입찰 횟수 정보
+		Map<Long, Integer> bidCountMap = bidRepository.countByAuctionIdIn(auctionIds).stream()
+			.collect(Collectors.toMap(row -> (Long) row[0], row -> ((Long) row[1]).intValue()));
+
+		// 5. DTO 변환
+		List<MySaleResponseDto> dtoList = auctions.stream()
+			.map(auction -> MySaleResponseDto.from(
+				auction,
+				productMap.get(auction.getProductId()),
+				orderMap.get(auction.getId()),
+				bidCountMap.getOrDefault(auction.getId(), 0)
+			))
+			.toList();
+
+		return new PagedResponseDto<>(dtoList, PageDto.from(auctionPage));
 	}
 
 

@@ -25,6 +25,9 @@ public class Auction extends BaseIdAndTime {
 	@Column(nullable = false)
 	private Long productId;
 
+	@Column(nullable = false)
+	private Long SellerId;
+
     @Column(nullable = false)
     private LocalDateTime startTime;
 
@@ -44,8 +47,9 @@ public class Auction extends BaseIdAndTime {
     private int tickSize;
 
 	@Builder
-	public Auction(Long productId, LocalDateTime startTime, LocalDateTime endTime, int startPrice, int tickSize) {
+	public Auction(Long productId, Long sellerId, LocalDateTime startTime, LocalDateTime endTime, int startPrice, int tickSize) {
 		this.productId = productId;
+		this.SellerId = sellerId;
 		this.startTime = startTime;
 		this.endTime = endTime;
 		this.startPrice = startPrice;

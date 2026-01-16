@@ -2,6 +2,7 @@ package com.bugzero.rarego.boundedContext.member.in;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.global.response.PagedResponseDto;
+import com.bugzero.rarego.global.security.MemberPrincipal;
 import com.bugzero.rarego.shared.auction.dto.AuctionFilterType;
 import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
@@ -39,17 +41,15 @@ public class MemberController {
 		return auctionFacade.getMyBids(memberId, auctionStatus, pageable);
 	}
 
-	/*
 	@GetMapping("/me/sales")
 	@PreAuthorize("hasRole('SELLER')") // SELLER 권한만 접근 가능
 	public PagedResponseDto<MySaleResponseDto> getMySales(
-		@AuthenticationPrincipal UserDetails userDetails,
+		@AuthenticationPrincipal MemberPrincipal principal,
 		@RequestParam(required = false, defaultValue = "ALL") AuctionFilterType filter,
 		@PageableDefault(size = 10) Pageable pageable
 	) {
-		Long memberId = Long.valueOf(userDetails.getUsername());
-		return auctionFacade.getMyAuctions(memberId, filter, pageable);
+		Long memberId = Long.valueOf(principal.publicId());
+		return auctionFacade.getMySales(memberId, filter, pageable);
 	}
-	 */
 
 }

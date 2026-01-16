@@ -7,95 +7,60 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.MethodParameter;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.bind.support.WebDataBinderFactory;
-import org.springframework.web.context.request.NativeWebRequest;
-import org.springframework.web.method.support.HandlerMethodArgumentResolver;
-import org.springframework.web.method.support.ModelAndViewContainer;
 
 import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
 import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.exception.GlobalExceptionHandler;
 import com.bugzero.rarego.global.response.ErrorType;
+import com.bugzero.rarego.global.response.PageDto;
+import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
+import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidRequestDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
-
 import tools.jackson.databind.ObjectMapper;
-
 
 @WebMvcTest(controllers = AuctionController.class)
 @Import(ResponseAspect.class)
 @EnableAspectJAutoProxy
 class AuctionControllerTest {
 
+	@Autowired
 	private MockMvc mockMvc;
 
 	@Autowired
 	private ObjectMapper objectMapper;
 
-	@Autowired
-	private AuctionController auctionController;
-
 	@MockitoBean
 	private AuctionFacade auctionFacade;
 
-	@BeforeEach
-	void setup() {
-		mockMvc = MockMvcBuilders.standaloneSetup(auctionController)
-			.setCustomArgumentResolvers(new HandlerMethodArgumentResolver() {
-				@Override
-				public boolean supportsParameter(MethodParameter parameter) {
-					return UserDetails.class.isAssignableFrom(parameter.getParameterType());
-				}
-
-				@Override
-				public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
-					NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
-					return User.withUsername("2")
-						.password("password")
-						.roles("USER")
-						.build();
-				}
-			})
-			.setControllerAdvice(new GlobalExceptionHandler())
-			.build();
-	}
-
 	@Test
-	@DisplayName("성공: 유효한 입찰 요청 시 HTTP 201과 입찰 정보를 반환한다")
+	@DisplayName("POST /auctions/{id}/bids - 입찰 생성 성공")
+	@WithMockUser(username = "2", roles = "USER")
 	void createBid_success() throws Exception {
 		// given
 		Long auctionId = 1L;
 		Long memberId = 2L;
 		Long bidAmount = 10000L;
-
 		BidRequestDto requestDto = new BidRequestDto(bidAmount);
 
 		BidResponseDto bidResponse = new BidResponseDto(
-			100L,
-			auctionId,
-			UUID.randomUUID().toString(),
-			LocalDateTime.now(),
-			bidAmount,
-			bidAmount
+			100L, auctionId, UUID.randomUUID().toString(), LocalDateTime.now(), bidAmount, bidAmount
 		);
 
 		SuccessResponseDto<BidResponseDto> successResponse = SuccessResponseDto.from(
@@ -109,16 +74,44 @@ class AuctionControllerTest {
 		// when & then
 		mockMvc.perform(post("/api/v1/auctions/{auctionId}/bids", auctionId)
 				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(requestDto)))
+				.content(objectMapper.writeValueAsString(requestDto))
+				.with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
 			.andDo(print())
-			.andExpect(status().isCreated()) // 성공 시에는 201 Created (유지)
+			.andExpect(status().isCreated())
 			.andExpect(jsonPath("$.status").value(SuccessType.CREATED.getHttpStatus()))
-			.andExpect(jsonPath("$.message").value(SuccessType.CREATED.getMessage()))
-			.andExpect(jsonPath("$.data.auctionId").value(auctionId));
+			.andExpect(jsonPath("$.data.bidAmount").value(bidAmount));
 	}
 
 	@Test
-	@DisplayName("실패: 입찰 금액이 음수이거나 0인 경우 HTTP 200(Body:400)을 반환한다")
+	@DisplayName("GET /auctions/{id}/bids - 경매 입찰 기록 조회 성공")
+	@WithMockUser
+	void getBids_success() throws Exception {
+		// given
+		Long auctionId = 1L;
+		BidLogResponseDto logDto = new BidLogResponseDto(
+			10L, "user_***", LocalDateTime.now(), 50000
+		);
+
+		PagedResponseDto<BidLogResponseDto> response = new PagedResponseDto<>(
+			List.of(logDto), new PageDto(1, 10, 1, 1, false, false)
+		);
+
+		given(auctionFacade.getBidLogs(eq(auctionId), any(Pageable.class)))
+			.willReturn(response);
+
+		// when & then
+		mockMvc.perform(get("/api/v1/auctions/{auctionId}/bids", auctionId)
+				.param("page", "0")
+				.param("size", "10"))
+			.andDo(print())
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data[0].publicId").value("user_***"))
+			.andExpect(jsonPath("$.data[0].bidAmount").value(50000));
+	}
+
+	@Test
+	@DisplayName("실패: 유효성 검사 실패 시 400 에러코드 반환")
+	@WithMockUser
 	void createBid_fail_validation() throws Exception {
 		// given
 		Long auctionId = 1L;
@@ -127,16 +120,16 @@ class AuctionControllerTest {
 		// when & then
 		mockMvc.perform(post("/api/v1/auctions/{auctionId}/bids", auctionId)
 				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(invalidRequest)))
+				.content(objectMapper.writeValueAsString(invalidRequest))
+				.with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
 			.andDo(print())
-			// [변경] GlobalExceptionHandler가 에러 발생 시에도 200 OK를 리턴하므로 isOk()로 검증
-			.andExpect(status().isOk())
-			// 대신 JSON Body 내부의 status 값이 400인지 확인
+			.andExpect(status().isBadRequest())
 			.andExpect(jsonPath("$.status").value(400));
 	}
 
 	@Test
-	@DisplayName("실패: 경매가 존재하지 않거나 종료된 경우 HTTP 200(Body:404)을 반환한다")
+	@DisplayName("실패: 비즈니스 예외 발생 시 404 에러코드 반환")
+	@WithMockUser(username = "2")
 	void createBid_fail_business_exception() throws Exception {
 		// given
 		Long auctionId = 999L;
@@ -144,19 +137,16 @@ class AuctionControllerTest {
 		Long bidAmount = 10000L;
 		BidRequestDto requestDto = new BidRequestDto(bidAmount);
 
-		// Mocking: 예외 발생
 		given(auctionFacade.createBid(eq(auctionId), eq(memberId), eq(bidAmount.intValue())))
 			.willThrow(new CustomException(ErrorType.AUCTION_NOT_FOUND));
 
 		// when & then
 		mockMvc.perform(post("/api/v1/auctions/{auctionId}/bids", auctionId)
 				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(requestDto)))
+				.content(objectMapper.writeValueAsString(requestDto))
+				.with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
 			.andDo(print())
-			// [변경] isNotFound() -> isOk()
-			.andExpect(status().isOk())
-			// JSON Body 내부의 status 코드로 404 검증
-			.andExpect(jsonPath("$.status").value(ErrorType.AUCTION_NOT_FOUND.getHttpStatus()))
-			.andExpect(jsonPath("$.message").value(ErrorType.AUCTION_NOT_FOUND.getMessage()));
+			.andExpect(status().isNotFound())
+			.andExpect(jsonPath("$.status").value(ErrorType.AUCTION_NOT_FOUND.getHttpStatus()));
 	}
 }

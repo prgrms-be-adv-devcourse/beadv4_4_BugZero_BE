@@ -25,7 +25,7 @@ public record MySaleResponseDto (
 	// 재등록 버튼 활성화 여부
 	boolean actionRequired
 ) {
-	public static MySaleResponseDto of(
+	public static MySaleResponseDto from(
 		Auction auction,
 		Product product,
 		AuctionOrder order,
