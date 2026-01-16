@@ -21,6 +21,31 @@ spring:
     init:
       mode: never
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT}
+            client-secret: ${GOOGLE_SECRET}
+            scope:
+              - profile
+              - email
+          kakao:
+            client-id: ${KAKAO_CLIENT}
+            authorization-grant-type: authorization_code
+            redirect-uri: "http://localhost:8080/login/oauth2/code/kakao"
+            scope:
+              - profile_nickname
+              - profile_image
+            client-name: Kakao
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
 logging:
   level:
     root: INFO
@@ -34,3 +59,5 @@ jwt:
   secret: ${JWT_SECRET:dev-secret-key-have-to-change-abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz}
   access-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:3600}
   refresh-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:86400}
+
+

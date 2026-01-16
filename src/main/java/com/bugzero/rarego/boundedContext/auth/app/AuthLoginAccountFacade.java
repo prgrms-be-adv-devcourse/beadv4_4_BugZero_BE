@@ -3,6 +3,7 @@ package com.bugzero.rarego.boundedContext.auth.app;
 import org.springframework.stereotype.Service;
 
 import com.bugzero.rarego.boundedContext.auth.domain.Account;
+import com.bugzero.rarego.boundedContext.auth.domain.AccountDto;
 import com.bugzero.rarego.boundedContext.auth.domain.Provider;
 import com.bugzero.rarego.boundedContext.auth.domain.TokenIssueDto;
 
@@ -15,7 +16,9 @@ public class AuthLoginAccountFacade {
 	private final AuthJoinAccountUseCase authJoinAccountUseCase;
 	private final AuthIssueTokenUseCase authIssueTokenUseCase;
 
-	public String loginOrSignup(Provider provider, String providerId) {
+	public String loginOrSignup(AccountDto accountDto) {
+		Provider provider = accountDto.provider();
+		String providerId = accountDto.providerId();
 		Account account = authFindAccountUseCase
 			.findByProviderAndProviderId(provider, providerId)
 			.orElseGet(() -> authJoinAccountUseCase.join(provider, providerId));

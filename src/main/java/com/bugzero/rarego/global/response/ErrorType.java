@@ -20,6 +20,8 @@ public enum ErrorType {
 	JWT_ISSUE_FAILED(500, 1505, "토큰 발급에 실패했습니다."),
 	AUTH_UNAUTHORIZED(401, 1506, "인증이 필요합니다."),
 	AUTH_FORBIDDEN(403, 1507, "권한이 없습니다."),
+    AUTH_OAUTH2_INVALID_RESPONSE(400, 1508, "유효하지 않은 소셜 로그인입니다."),
+    AUTH_OAUTH2_LOGIN_FAILED(400, 1509, "소셜 로그인에 실패했습니다."),
 
     // Auction (2000 ~ 2999)
     AUCTION_NOT_FOUND(404, 2001, "경매를 찾을 수 없습니다."),

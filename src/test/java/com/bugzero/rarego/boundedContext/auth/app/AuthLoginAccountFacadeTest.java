@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.bugzero.rarego.boundedContext.auth.domain.Account;
+import com.bugzero.rarego.boundedContext.auth.domain.AccountDto;
 import com.bugzero.rarego.boundedContext.auth.domain.AuthRole;
 import com.bugzero.rarego.boundedContext.auth.domain.Provider;
 import com.bugzero.rarego.boundedContext.auth.domain.TokenIssueDto;
@@ -48,7 +49,9 @@ class AuthLoginAccountFacadeTest {
 		when(authIssueTokenUseCase.issueToken(any(TokenIssueDto.class), eq(true)))
 			.thenReturn("token");
 
-		String token = authLoginAccountFacade.loginOrSignup(Provider.GOOGLE, "google-123");
+		String token = authLoginAccountFacade.loginOrSignup(
+			new AccountDto("google-123", "test@example.com", Provider.GOOGLE)
+		);
 
 		assertThat(token).isEqualTo("token");
 		verify(authJoinAccountUseCase, never()).join(any(), anyString());
@@ -76,7 +79,9 @@ class AuthLoginAccountFacadeTest {
 		when(authIssueTokenUseCase.issueToken(any(TokenIssueDto.class), eq(true)))
 			.thenReturn("token");
 
-		String token = authLoginAccountFacade.loginOrSignup(Provider.KAKAO, "kakao-456");
+		String token = authLoginAccountFacade.loginOrSignup(
+			new AccountDto("kakao-456", "kakao@example.com", Provider.KAKAO)
+		);
 
 		ArgumentCaptor<TokenIssueDto> captor = ArgumentCaptor.forClass(TokenIssueDto.class);
 
