@@ -18,8 +18,6 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -35,6 +33,7 @@ import com.bugzero.rarego.global.exception.GlobalExceptionHandler;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
+import com.bugzero.rarego.global.security.MemberPrincipal;
 import com.bugzero.rarego.shared.auction.dto.BidRequestDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
 
@@ -47,6 +46,7 @@ import tools.jackson.databind.ObjectMapper;
 class AuctionControllerTest {
 
 	private MockMvc mockMvc;
+	private static final String MEMBER_PUBLIC_ID = "user_public_2";
 
 	@Autowired
 	private ObjectMapper objectMapper;
@@ -63,16 +63,13 @@ class AuctionControllerTest {
 			.setCustomArgumentResolvers(new HandlerMethodArgumentResolver() {
 				@Override
 				public boolean supportsParameter(MethodParameter parameter) {
-					return UserDetails.class.isAssignableFrom(parameter.getParameterType());
+					return MemberPrincipal.class.isAssignableFrom(parameter.getParameterType());
 				}
 
 				@Override
 				public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
 					NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
-					return User.withUsername("user_public_2")
-						.password("password")
-						.roles("USER")
-						.build();
+					return new MemberPrincipal(MEMBER_PUBLIC_ID, "USER");
 				}
 			})
 			.setControllerAdvice(new GlobalExceptionHandler())
@@ -84,7 +81,7 @@ class AuctionControllerTest {
 	void createBid_success() throws Exception {
 		// given
 		Long auctionId = 1L;
-		String memberPublicId = "user_public_2";
+		String memberPublicId = MEMBER_PUBLIC_ID;
 		Long bidAmount = 10000L;
 
 		BidRequestDto requestDto = new BidRequestDto(bidAmount);
@@ -140,7 +137,7 @@ class AuctionControllerTest {
 	void createBid_fail_business_exception() throws Exception {
 		// given
 		Long auctionId = 999L;
-		String memberPublicId = "user_public_2";
+		String memberPublicId = MEMBER_PUBLIC_ID;
 		Long bidAmount = 10000L;
 		BidRequestDto requestDto = new BidRequestDto(bidAmount);
 
