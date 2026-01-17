@@ -29,7 +29,7 @@ public class AuthJoinAccountUseCase {
 		String memberPublicId = memberResponse.memberPublicId();
 
 		if (memberPublicId == null || memberPublicId.isBlank()) {
-			throw new CustomException(ErrorType.INTERNAL_SERVER_ERROR);
+			throw new CustomException(ErrorType.AUTH_LOGIN_FAILED);
 		}
 		// 멱등성 처리: 이미 같은 memberPublicId가 반환되면 Account 생성하지 않고 기존 Account ~ 본인인증 같은 경우
 		return accountRepository.findByMemberPublicId(memberPublicId)
@@ -39,14 +39,19 @@ public class AuthJoinAccountUseCase {
 	private Account createAccount(Provider provider, String providerId, String memberPublicId) {
 		// 2. Account 생성 (provider+providerId 유니크)
 		try {
-			Account account = Account.toEntity(memberPublicId, AuthRole.USER, provider, providerId);
+			Account account = Account.builder()
+				.memberPublicId(memberPublicId)
+				.role(AuthRole.USER)
+				.provider(provider)
+				.providerId(providerId)
+				.build();
 			return accountRepository.save(account);
 		} catch (DataIntegrityViolationException e) {
 			// 동시성 문제로 이미 만들어졌다면 다시 조회해서 반환
 			return accountRepository.findByProviderAndProviderId(provider, providerId)
 				.orElseThrow(() -> e);
 		} catch (Exception e) {
-			throw new CustomException(ErrorType.INTERNAL_SERVER_ERROR);
+			throw new CustomException(ErrorType.AUTH_LOGIN_FAILED);
 		}
 	}
 }

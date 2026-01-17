@@ -9,7 +9,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,8 +24,6 @@ import lombok.NoArgsConstructor;
 	}
 )
 @Getter
-@Builder
-@AllArgsConstructor(access = AccessLevel.PROTECTED)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Account extends BaseIdAndTime {
 
@@ -44,17 +41,16 @@ public class Account extends BaseIdAndTime {
 	@Column(name = "provider_id", length = 128, nullable = false)
 	private String providerId;
 
-	public static Account toEntity(
+	@Builder
+	public Account(
 		String memberPublicId,
 		AuthRole role,
 		Provider provider,
 		String providerId
 	) {
-		return Account.builder()
-			.memberPublicId(memberPublicId)
-			.role(role)
-			.provider(provider)
-			.providerId(providerId)
-			.build();
+		this.memberPublicId = memberPublicId;
+		this.role = role;
+		this.provider = provider;
+		this.providerId = providerId;
 	}
 }
