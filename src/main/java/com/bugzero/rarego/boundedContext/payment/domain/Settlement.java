@@ -48,16 +48,24 @@ public class Settlement extends BaseIdAndTime {
 	private SettlementStatus status = SettlementStatus.READY;
 
 	public static Settlement create(Long auctionId, PaymentMember seller, int salesAmount) {
-		int feeAmount = (int) (salesAmount * FEE_RATE);
+		int feeAmount = (int)(salesAmount * FEE_RATE);
 		int settlementAmount = salesAmount - feeAmount;
 
 		return Settlement.builder()
-				.auctionId(auctionId)
-				.seller(seller)
-				.salesAmount(salesAmount)
-				.feeAmount(feeAmount)
-				.settlementAmount(settlementAmount)
-				.status(SettlementStatus.READY)
-				.build();
+			.auctionId(auctionId)
+			.seller(seller)
+			.salesAmount(salesAmount)
+			.feeAmount(feeAmount)
+			.settlementAmount(settlementAmount)
+			.status(SettlementStatus.READY)
+			.build();
+	}
+
+	public void complete() {
+		this.status = SettlementStatus.DONE;
+	}
+
+	public void fail() {
+		this.status = SettlementStatus.FAILED;
 	}
 }
