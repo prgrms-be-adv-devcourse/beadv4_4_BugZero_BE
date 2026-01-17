@@ -84,7 +84,7 @@ class AuthJoinAccountUseCaseTest {
 	}
 
 	@Test
-	@DisplayName("예상치 못한 예외는 INTERNAL_SERVER_ERROR로 변환한다.")
+	@DisplayName("예상치 못한 예외 AUTH_JOIN_FAILED로 변환한다.")
 	void joinWrapsUnexpectedException() {
 		when(memberApiClient.join("kakao@example.com"))
 			.thenReturn(new MemberJoinResponseDto("kakao", "member-public-id"));
@@ -94,7 +94,7 @@ class AuthJoinAccountUseCaseTest {
 		assertThatThrownBy(() -> authJoinAccountUseCase.join(Provider.KAKAO, "kakao-789", "kakao@example.com"))
 			.isInstanceOf(CustomException.class)
 			.extracting("errorType")
-			.isEqualTo(ErrorType.INTERNAL_SERVER_ERROR);
+			.isEqualTo(ErrorType.AUTH_JOIN_FAILED);
 	}
 
 	@Test

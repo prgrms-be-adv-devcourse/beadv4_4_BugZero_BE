@@ -50,10 +50,14 @@ public class AuthIssueTokenUseCase {
 	}
 
 	private void validateDto(TokenIssueDto tokenIssueDto) {
+		if (tokenIssueDto == null) {
+			throw new CustomException(ErrorType.INVALID_INPUT);
+		}
 		if (tokenIssueDto.role() == null) {
 			throw new CustomException(ErrorType.INVALID_INPUT);
 		}
-		if (tokenIssueDto.memberPublicId().isBlank()) {
+		String memberPublicId = tokenIssueDto.memberPublicId();
+		if (memberPublicId == null || memberPublicId.isBlank()) {
 			throw new CustomException(ErrorType.INVALID_INPUT);
 		}
 	}

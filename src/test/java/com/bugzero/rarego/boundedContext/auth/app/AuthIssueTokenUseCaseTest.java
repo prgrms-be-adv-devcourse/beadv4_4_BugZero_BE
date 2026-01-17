@@ -133,7 +133,7 @@ class AuthIssueTokenUseCaseTest {
 	}
 
 	@Test
-	@DisplayName("member publicId가 없으면 INVALID_INPUT 예외가 발생한다.")
+	@DisplayName("member publicId가 없으면 서버 내부에서 INVALID_INPUT 예외가 발생한다.")
 	void issueTokenFailsWhenMemberPublicIdMissing() {
 		TokenIssueDto tokenIssueDto = new TokenIssueDto(null, AuthRole.USER.name());
 
