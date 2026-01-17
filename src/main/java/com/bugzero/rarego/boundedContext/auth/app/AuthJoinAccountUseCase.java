@@ -29,7 +29,7 @@ public class AuthJoinAccountUseCase {
 		String memberPublicId = memberResponse.memberPublicId();
 
 		if (memberPublicId == null || memberPublicId.isBlank()) {
-			throw new CustomException(ErrorType.AUTH_LOGIN_FAILED);
+			throw new CustomException(ErrorType.AUTH_JOIN_FAILED);
 		}
 		// 멱등성 처리: 이미 같은 memberPublicId가 반환되면 Account 생성하지 않고 기존 Account ~ 본인인증 같은 경우
 		return accountRepository.findByMemberPublicId(memberPublicId)
@@ -51,7 +51,7 @@ public class AuthJoinAccountUseCase {
 			return accountRepository.findByProviderAndProviderId(provider, providerId)
 				.orElseThrow(() -> e);
 		} catch (Exception e) {
-			throw new CustomException(ErrorType.AUTH_LOGIN_FAILED);
+			throw new CustomException(ErrorType.AUTH_JOIN_FAILED);
 		}
 	}
 }

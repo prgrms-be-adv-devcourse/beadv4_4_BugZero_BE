@@ -53,7 +53,7 @@ public class AuthIssueTokenUseCase {
 		if (tokenIssueDto.role() == null) {
 			throw new CustomException(ErrorType.INVALID_INPUT);
 		}
-		if (tokenIssueDto.memberPublicId() == null) {
+		if (tokenIssueDto.memberPublicId().isBlank()) {
 			throw new CustomException(ErrorType.INVALID_INPUT);
 		}
 	}

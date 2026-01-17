@@ -12,7 +12,6 @@ public enum ErrorType {
 
     // Member (1000 ~ 1499)
     MEMBER_NOT_FOUND(404, 1001, "존재하지 않는 회원입니다."),
-	MEMBER_EMAIL_ALREADY_EXISTS(409, 1002, "이미 사용 중인 이메일입니다."),
 	MEMBER_EMAIL_EMPTY(400, 1003, "이메일은 필수 입력값입니다."),
 	MEMBER_JOIN_FAILED(500, 1004, "회원 가입에 실패했습니다."),
 	// Auth/JWT (1500 ~ 1999)
@@ -22,7 +21,7 @@ public enum ErrorType {
 	AUTH_UNAUTHORIZED(401, 1506, "인증이 필요합니다."),
 	AUTH_FORBIDDEN(403, 1507, "권한이 없습니다."),
     AUTH_OAUTH2_INVALID_RESPONSE(400, 1508, "유효하지 않은 소셜 로그인입니다."),
-    AUTH_OAUTH2_LOGIN_FAILED(400, 1509, "소셜 로그인에 실패했습니다."),
+	AUTH_JOIN_FAILED(500, 1509, "회원 가입에 실패했습니다."),
 
     // Auction (2000 ~ 2999)
     AUCTION_NOT_FOUND(404, 2001, "경매를 찾을 수 없습니다."),
