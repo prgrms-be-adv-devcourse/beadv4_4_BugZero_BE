@@ -29,8 +29,11 @@ public abstract class BaseMember extends BaseEntity {
 
 	private String intro;
 
-	@Column(length = 500)
+	@Column(length = 255)
 	private String address;
+
+	@Column(length = 255)
+	private String address_detail;
 
 	@Column(columnDefinition = "CHAR(5)", length = 5)
 	private String zipCode;
