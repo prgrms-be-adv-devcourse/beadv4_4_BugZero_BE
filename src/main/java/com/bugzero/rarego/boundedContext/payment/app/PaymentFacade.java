@@ -20,6 +20,7 @@ public class PaymentFacade {
 	private final PaymentReleaseDepositUseCase paymentReleaseDepositUseCase;
 	private final PaymentRequestPaymentUseCase paymentRequestPaymentUseCase;
 	private final PaymentConfirmPaymentUseCase paymentConfirmPaymentUseCase;
+	private final PaymentProcessSettlementUseCase paymentProcessSettlementUseCase;
 	private final PaymentAuctionFinalUseCase paymentAuctionFinalUseCase;
 
 	/**
@@ -48,6 +49,13 @@ public class PaymentFacade {
 	 */
 	public PaymentConfirmResponseDto confirmPayment(Long memberId, PaymentConfirmRequestDto requestDto) {
 		return paymentConfirmPaymentUseCase.confirmPayment(memberId, requestDto);
+	}
+
+	/**
+	 * 정산 처리
+	 */
+	public int processSettlements(int chunkSize) {
+		return paymentProcessSettlementUseCase.processSettlements(chunkSize);
 	}
 
 	/**
