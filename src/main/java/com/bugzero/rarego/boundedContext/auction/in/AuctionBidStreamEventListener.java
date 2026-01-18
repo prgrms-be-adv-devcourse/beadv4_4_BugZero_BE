@@ -26,7 +26,6 @@ public class AuctionBidStreamEventListener {
 
     /**
      * 입찰 생성 이벤트 → SSE 브로드캐스트
-     * <p>
      * 트랜잭션 커밋 후 실행되어야 안전함
      */
     @Async
