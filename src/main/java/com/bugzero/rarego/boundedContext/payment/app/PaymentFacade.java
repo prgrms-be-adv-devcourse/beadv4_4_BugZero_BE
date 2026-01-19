@@ -9,6 +9,9 @@ import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmRequestDto
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestResponseDto;
+import com.bugzero.rarego.boundedContext.payment.in.dto.RefundResponse;
+import com.bugzero.rarego.boundedContext.payment.in.dto.WalletTransactionResponseDto;
+import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldRequestDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
 
@@ -81,7 +84,7 @@ public class PaymentFacade {
 	/**
 	 * 환불 처리
 	 */
-	public RefundResponse processRefund(Long auctionId, RefundRequest request) {
-		return paymentRefundUseCase.processRefund(auctionId, request);
+	public RefundResponse processRefund(Long auctionId) {
+		return paymentRefundUseCase.processRefund(auctionId);
 	}
 }
