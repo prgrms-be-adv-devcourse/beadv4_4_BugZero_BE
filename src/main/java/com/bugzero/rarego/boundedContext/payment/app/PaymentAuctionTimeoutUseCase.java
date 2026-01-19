@@ -1,8 +1,10 @@
 package com.bugzero.rarego.boundedContext.payment.app;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.bugzero.rarego.shared.payment.event.PaymentTimeoutEvent;
 import com.bugzero.rarego.boundedContext.payment.domain.Deposit;
 import com.bugzero.rarego.boundedContext.payment.domain.DepositStatus;
 import com.bugzero.rarego.boundedContext.payment.domain.PaymentMember;
@@ -32,6 +34,7 @@ public class PaymentAuctionTimeoutUseCase {
     private final PaymentTransactionRepository transactionRepository;
     private final SettlementRepository settlementRepository;
     private final PaymentSupport paymentSupport;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void processTimeout(Long auctionId) {
@@ -56,6 +59,13 @@ public class PaymentAuctionTimeoutUseCase {
         PaymentMember seller = paymentSupport.findMemberById(order.sellerId());
         Settlement settlement = Settlement.createFromForfeit(auctionId, seller, deposit.getAmount());
         settlementRepository.save(settlement);
+
+        // 6. 타임아웃 이벤트 발행 (SSE 브로드캐스트용)
+        eventPublisher.publishEvent(new PaymentTimeoutEvent(
+                auctionId,
+                order.bidderId(),
+                order.sellerId(),
+                deposit.getAmount()));
 
         log.info("타임아웃 처리 완료: auctionId={}, bidderId={}, depositAmount={}, settlementId={}",
                 auctionId, order.bidderId(), deposit.getAmount(), settlement.getId());
