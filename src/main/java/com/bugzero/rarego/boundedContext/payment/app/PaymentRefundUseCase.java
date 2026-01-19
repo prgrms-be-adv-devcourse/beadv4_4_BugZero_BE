@@ -9,6 +9,7 @@ import com.bugzero.rarego.boundedContext.payment.domain.PaymentMember;
 import com.bugzero.rarego.boundedContext.payment.domain.PaymentTransaction;
 import com.bugzero.rarego.boundedContext.payment.domain.ReferenceType;
 import com.bugzero.rarego.boundedContext.payment.domain.Settlement;
+import com.bugzero.rarego.boundedContext.payment.domain.SettlementStatus;
 import com.bugzero.rarego.boundedContext.payment.domain.Wallet;
 import com.bugzero.rarego.boundedContext.payment.domain.WalletTransactionType;
 import com.bugzero.rarego.boundedContext.payment.in.dto.RefundResponseDto;
@@ -37,7 +38,7 @@ public class PaymentRefundUseCase {
         // 1. 주문 조회 및 검증 (SUCCESS 상태만)
         AuctionOrderDto order = auctionOrderPort.refundOrderWithLock(auctionId);
 
-        // 2. 정산 상태 확인 및 락
+        // 2. 정산 상태 확인 및 락 (READY 상태만 환불 가능)
         Settlement settlement = findAndValidateSettlement(auctionId);
 
         // 3. 구매자 지갑 잔액 증가 (+finalPrice)
@@ -48,12 +49,19 @@ public class PaymentRefundUseCase {
         // 4. 환불 트랜잭션 생성
         PaymentTransaction transaction = recordRefundTransaction(buyer, buyerWallet, order);
 
-        // 5. Settlement 상태 변경 (() → FAILED)
+        // 5. Settlement 상태 변경 (READY -> FAILED)
         settlement.fail();
-        log.info("환불 처리 완료: auctionId={}, buyerId={}, refundAmount={}", auctionId, order.bidderId(),
-                order.finalPrice());
-        return new RefundResponseDto(transaction.getId(), auctionId, order.finalPrice(), buyer.getPublicId(),
-                buyerWallet.getBalance(), transaction.getCreatedAt());
+
+        log.info("환불 처리 완료: auctionId={}, buyerId={}, refundAmount={}", 
+                auctionId, order.bidderId(), order.finalPrice());
+
+        return new RefundResponseDto(
+                transaction.getId(), 
+                auctionId, 
+                order.finalPrice(), 
+                buyer.getPublicId(),
+                buyerWallet.getBalance(), 
+                transaction.getCreatedAt());
     }
 
     private Settlement findAndValidateSettlement(Long auctionId) {
@@ -61,7 +69,15 @@ public class PaymentRefundUseCase {
         if (settlementOpt.isEmpty()) {
             throw new CustomException(ErrorType.SETTLEMENT_NOT_FOUND);
         }
-        return settlementOpt.get();
+        
+        Settlement settlement = settlementOpt.get();
+        
+        // 정산 완료(DONE) 후에는 환불 불가
+        if (settlement.getStatus() != SettlementStatus.READY) {
+            throw new CustomException(ErrorType.SETTLEMENT_ALREADY_COMPLETED);
+        }
+        
+        return settlement;
     }
 
     private PaymentTransaction recordRefundTransaction(PaymentMember buyer, Wallet wallet, AuctionOrderDto order) {
