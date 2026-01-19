@@ -28,7 +28,7 @@ class PaymentSyncMemberUseCaseTest {
 	private PaymentSyncMemberUseCase paymentSyncMemberUseCase;
 
 	@Test
-	@DisplayName("존재하는것보다 늦은 변경은 무시")
+	@DisplayName("replica에서 이미 업데이트 된 날짜보다 늦은 변경은 무시")
 	void syncMember_SkipDelayedEvent() {
 		// given
 		LocalDateTime existedUpdatedAt = LocalDateTime.now();
@@ -64,7 +64,7 @@ class PaymentSyncMemberUseCaseTest {
 	}
 
 	@Test
-	@DisplayName("존재하는 것보다 새로운 업데이트는 반영")
+	@DisplayName("replica에서 이미 업데이트 된 날짜보다 새로운 업데이트는 반영")
 	void syncMember_UpdateWhenNewerEvent() {
 		// given
 		LocalDateTime existedUpdatedAt = LocalDateTime.now().minusHours(2);
