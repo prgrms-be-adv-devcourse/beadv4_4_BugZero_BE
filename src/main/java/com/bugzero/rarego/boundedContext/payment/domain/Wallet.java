@@ -65,4 +65,12 @@ public class Wallet extends BaseIdAndTime {
 		}
 		this.balance -= amount;
 	}
+
+	public void forfeitDeposit(int amount) {
+		if (holdingAmount < amount) {
+			throw new CustomException(ErrorType.INSUFFICIENT_HOLDING);
+		}
+		this.holdingAmount -= amount;
+		this.balance -= amount;
+	}
 }

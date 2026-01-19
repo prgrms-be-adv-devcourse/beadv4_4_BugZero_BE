@@ -91,3 +91,6 @@ springdoc:
     path: /swagger-ui.html
     tags-sorter: alpha
     operations-sorter: alpha
+
+auction:
+  payment-timeout-days: 3

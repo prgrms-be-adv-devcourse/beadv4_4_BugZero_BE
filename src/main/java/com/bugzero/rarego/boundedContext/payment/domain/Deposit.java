@@ -68,6 +68,9 @@ public class Deposit extends BaseIdAndTime {
 	}
 
 	public void forfeit() {
+		if (this.status != DepositStatus.HOLD) {
+			throw new CustomException(ErrorType.ALREADY_USED_DEPOSIT);
+		}
 		this.status = DepositStatus.FORFEITED;
 	}
 }
