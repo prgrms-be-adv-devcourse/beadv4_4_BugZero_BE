@@ -18,6 +18,7 @@ import com.bugzero.rarego.boundedContext.member.domain.MemberClearField;
 import com.bugzero.rarego.boundedContext.member.domain.MemberUpdateRequestDto;
 import com.bugzero.rarego.boundedContext.member.domain.MemberUpdateResponseDto;
 import com.bugzero.rarego.boundedContext.member.out.MemberRepository;
+import com.bugzero.rarego.global.event.EventPublisher;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 
@@ -29,6 +30,9 @@ class MemberUpdateMemberUseCaseTest {
 
 	@Mock
 	private MemberRepository memberRepository;
+
+	@Mock
+	private EventPublisher eventPublisher;
 
 	@InjectMocks
 	private MemberUpdateMemberUseCase memberUpdateMemberUseCase;
@@ -70,7 +74,7 @@ class MemberUpdateMemberUseCaseTest {
 		// given
 		Member member = baseMember();
 		MemberUpdateRequestDto requestDto = new MemberUpdateRequestDto(
-			null,
+			"check",
 			null,
 			null,
 			null,
