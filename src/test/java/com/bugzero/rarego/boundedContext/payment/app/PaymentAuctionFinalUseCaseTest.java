@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
@@ -63,7 +64,8 @@ class PaymentAuctionFinalUseCaseTest {
         AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
                 "홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
 
-        AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, sellerId, memberId, finalPrice, "PROCESSING");
+        AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, sellerId, memberId, finalPrice, "PROCESSING",
+                LocalDateTime.now());
 
         PaymentMember buyer = mock(PaymentMember.class);
         when(buyer.getPublicId()).thenReturn("uuid-member-1");
@@ -130,7 +132,8 @@ class PaymentAuctionFinalUseCaseTest {
 
         AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
                 "홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
-        AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, 5L, winnerId, 100000, "PROCESSING");
+        AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, 5L, winnerId, 100000, "PROCESSING",
+                LocalDateTime.now());
 
         when(auctionOrderPort.findByAuctionId(auctionId)).thenReturn(Optional.of(order));
 
@@ -150,7 +153,8 @@ class PaymentAuctionFinalUseCaseTest {
 
         AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
                 "홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
-        AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, 5L, memberId, 100000, "SUCCESS"); // 이미 완료
+        AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, 5L, memberId, 100000, "SUCCESS",
+                LocalDateTime.now()); // 이미 완료
 
         when(auctionOrderPort.findByAuctionId(auctionId)).thenReturn(Optional.of(order));
 
@@ -170,7 +174,8 @@ class PaymentAuctionFinalUseCaseTest {
 
         AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
                 "홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
-        AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, 5L, memberId, 100000, "PROCESSING");
+        AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, 5L, memberId, 100000, "PROCESSING",
+                LocalDateTime.now());
 
         when(auctionOrderPort.findByAuctionId(auctionId)).thenReturn(Optional.of(order));
         when(depositRepository.findByMemberIdAndAuctionId(memberId, auctionId)).thenReturn(Optional.empty());
@@ -193,7 +198,8 @@ class PaymentAuctionFinalUseCaseTest {
 
         AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
                 "홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
-        AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, 5L, memberId, finalPrice, "PROCESSING");
+        AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, 5L, memberId, finalPrice, "PROCESSING",
+                LocalDateTime.now());
 
         PaymentMember member = mock(PaymentMember.class);
 

@@ -1,10 +1,13 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Component;
 
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
@@ -31,6 +34,21 @@ public class AuctionOrderPortAdapter implements AuctionOrderPort {
         order.complete();
     }
 
+    @Override
+    public void failOrder(Long auctionId) {
+        AuctionOrder order = auctionOrderRepository.findByAuctionId(auctionId)
+                .orElseThrow(() -> new CustomException(ErrorType.AUCTION_ORDER_NOT_FOUND));
+        order.fail();
+    }
+
+    @Override
+    public List<AuctionOrderDto> findTimeoutOrders(LocalDateTime deadline) {
+        return auctionOrderRepository.findByStatusAndCreatedAtBefore(AuctionOrderStatus.PROCESSING, deadline)
+                .stream()
+                .map(this::from)
+                .toList();
+    }
+
     private AuctionOrderDto from(AuctionOrder order) {
         return new AuctionOrderDto(
                 order.getId(),
@@ -38,6 +56,7 @@ public class AuctionOrderPortAdapter implements AuctionOrderPort {
                 order.getSellerId(),
                 order.getBidderId(),
                 order.getFinalPrice(),
-                order.getStatus().name());
+                order.getStatus().name(),
+                order.getCreatedAt());
     }
 }
