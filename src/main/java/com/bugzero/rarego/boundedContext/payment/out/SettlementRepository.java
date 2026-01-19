@@ -1,5 +1,6 @@
 package com.bugzero.rarego.boundedContext.payment.out;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,15 +21,6 @@ public interface SettlementRepository extends JpaRepository<Settlement, Long> {
 
 	List<Settlement> findAllByStatus(SettlementStatus status);
 
-	@Query("""
-		    SELECT s
-		    FROM Settlement s
-		    JOIN FETCH s.seller
-		    WHERE s.status = :status
-		    ORDER BY s.id ASC
-		""")
-	List<Settlement> findAllByStatus(SettlementStatus status, Pageable pageable);
-
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("""
 		    SELECT s
@@ -37,4 +29,13 @@ public interface SettlementRepository extends JpaRepository<Settlement, Long> {
 		    WHERE s.id = :id
 		""")
 	Optional<Settlement> findByIdForUpdate(Long id);
+
+	@Query("""
+			    SELECT s
+			    FROM Settlement s
+			    JOIN FETCH s.seller
+			    WHERE s.status = :status AND s.createdAt < :cutoffDate
+			    ORDER BY s.id ASC
+			""")
+	List<Settlement> findSettlementsForBatch(SettlementStatus status, LocalDateTime cutoffDate, Pageable pageable);
 }
