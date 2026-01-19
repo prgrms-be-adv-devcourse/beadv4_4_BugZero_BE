@@ -4,9 +4,9 @@ import com.bugzero.rarego.boundedContext.auction.app.AuctionBidStreamSupport;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.event.AuctionBidCreatedEvent;
 import com.bugzero.rarego.boundedContext.auction.domain.event.AuctionFailedEvent;
-import com.bugzero.rarego.boundedContext.auction.domain.event.AuctionPaymentTimeoutEvent;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.shared.auction.event.AuctionEndedEvent;
+import com.bugzero.rarego.shared.payment.event.PaymentTimeoutEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -107,7 +107,7 @@ public class AuctionBidStreamEventListener {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void onPaymentTimeout(AuctionPaymentTimeoutEvent event) {
+    public void onPaymentTimeout(PaymentTimeoutEvent event) {
         try {
             log.info("결제 타임아웃 이벤트 수신 - auctionId: {}, buyerId: {}",
                     event.auctionId(), event.buyerId());
@@ -115,8 +115,8 @@ public class AuctionBidStreamEventListener {
             // SSE 브로드캐스트 (경매 실패로 처리)
             streamSupport.broadcastAuctionEnded(
                     event.auctionId(),
-                    0,    // 유찰과 동일하게 처리
-                    null  // 낙찰자 없음 (타임아웃)
+                    0, // 유찰과 동일하게 처리
+                    null // 낙찰자 없음 (타임아웃)
             );
 
         } catch (Exception e) {
