@@ -79,5 +79,4 @@ public class MemberController {
 		MemberMeResponseDto responseDto = memberFacade.getMe(memberPrincipal.publicId(), memberPrincipal.role());
 		return SuccessResponseDto.from(SuccessType.OK, responseDto);
 	}
-
 }
