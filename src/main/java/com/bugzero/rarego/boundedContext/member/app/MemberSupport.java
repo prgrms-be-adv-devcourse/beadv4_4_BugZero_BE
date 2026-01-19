@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
 
 import com.bugzero.rarego.boundedContext.member.domain.Member;
 import com.bugzero.rarego.boundedContext.member.out.MemberRepository;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,5 +26,10 @@ public class MemberSupport {
 
 	public Optional<Member> findById(Long id) {
 		return memberRepository.findById(id);
+	}
+
+	public Member findByPublicId(String publicId) {
+		return memberRepository.findByPublicId(publicId)
+			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
 	}
 }
