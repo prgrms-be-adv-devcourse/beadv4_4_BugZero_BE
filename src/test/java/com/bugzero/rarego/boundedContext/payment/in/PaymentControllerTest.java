@@ -8,6 +8,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.batch.core.job.Job;
+import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -44,6 +46,12 @@ class PaymentControllerTest {
 
 	@MockitoBean
 	private PaymentFacade paymentFacade;
+
+	@MockitoBean
+	private JobOperator jobOperator;
+
+	@MockitoBean
+	private Job settlementJob;
 
 	@Test
 	@DisplayName("성공: 결제 요청이 정상 처리되면 HTTP 201과 결과 데이터를 반환한다")
@@ -251,24 +259,24 @@ class PaymentControllerTest {
 		Long memberId = 1L;
 		Long auctionId = 100L;
 		AuctionFinalPaymentRequestDto requestDto = new AuctionFinalPaymentRequestDto(
-				"홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
+			"홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
 
 		AuctionFinalPaymentResponseDto responseDto = AuctionFinalPaymentResponseDto.of(
-				1L, auctionId, "uuid-member-1", 100000, 10000, 100000, java.time.LocalDateTime.now());
+			1L, auctionId, "uuid-member-1", 100000, 10000, 100000, java.time.LocalDateTime.now());
 
 		given(paymentFacade.auctionFinalPayment(eq(memberId), eq(auctionId), any(AuctionFinalPaymentRequestDto.class)))
-				.willReturn(responseDto);
+			.willReturn(responseDto);
 
 		// when & then
 		mockMvc.perform(post("/api/v1/payments/auctions/{auctionId}", auctionId)
 				.param("memberId", String.valueOf(memberId))
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(requestDto)))
-				.andDo(print())
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.status").value(SuccessType.OK.getHttpStatus()))
-				.andExpect(jsonPath("$.data.auctionId").value(auctionId))
-				.andExpect(jsonPath("$.data.status").value("PAID"));
+			.andDo(print())
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value(SuccessType.OK.getHttpStatus()))
+			.andExpect(jsonPath("$.data.auctionId").value(auctionId))
+			.andExpect(jsonPath("$.data.status").value("PAID"));
 	}
 
 	@Test
@@ -278,19 +286,19 @@ class PaymentControllerTest {
 		Long memberId = 1L;
 		Long auctionId = 100L;
 		AuctionFinalPaymentRequestDto requestDto = new AuctionFinalPaymentRequestDto(
-				"홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
+			"홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
 
 		given(paymentFacade.auctionFinalPayment(eq(memberId), eq(auctionId), any(AuctionFinalPaymentRequestDto.class)))
-				.willThrow(new CustomException(ErrorType.NOT_AUCTION_WINNER));
+			.willThrow(new CustomException(ErrorType.NOT_AUCTION_WINNER));
 
 		// when & then
 		mockMvc.perform(post("/api/v1/payments/auctions/{auctionId}", auctionId)
 				.param("memberId", String.valueOf(memberId))
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(requestDto)))
-				.andDo(print())
-				.andExpect(status().isForbidden())
-				.andExpect(jsonPath("$.message").value(ErrorType.NOT_AUCTION_WINNER.getMessage()));
+			.andDo(print())
+			.andExpect(status().isForbidden())
+			.andExpect(jsonPath("$.message").value(ErrorType.NOT_AUCTION_WINNER.getMessage()));
 	}
 
 	@Test
@@ -300,19 +308,19 @@ class PaymentControllerTest {
 		Long memberId = 1L;
 		Long auctionId = 100L;
 		AuctionFinalPaymentRequestDto requestDto = new AuctionFinalPaymentRequestDto(
-				"홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
+			"홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
 
 		given(paymentFacade.auctionFinalPayment(eq(memberId), eq(auctionId), any(AuctionFinalPaymentRequestDto.class)))
-				.willThrow(new CustomException(ErrorType.INVALID_ORDER_STATUS));
+			.willThrow(new CustomException(ErrorType.INVALID_ORDER_STATUS));
 
 		// when & then
 		mockMvc.perform(post("/api/v1/payments/auctions/{auctionId}", auctionId)
 				.param("memberId", String.valueOf(memberId))
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(requestDto)))
-				.andDo(print())
-				.andExpect(status().isConflict())
-				.andExpect(jsonPath("$.message").value(ErrorType.INVALID_ORDER_STATUS.getMessage()));
+			.andDo(print())
+			.andExpect(status().isConflict())
+			.andExpect(jsonPath("$.message").value(ErrorType.INVALID_ORDER_STATUS.getMessage()));
 	}
 
 	@Test
@@ -322,18 +330,18 @@ class PaymentControllerTest {
 		Long memberId = 1L;
 		Long auctionId = 100L;
 		AuctionFinalPaymentRequestDto requestDto = new AuctionFinalPaymentRequestDto(
-				"홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
+			"홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
 
 		given(paymentFacade.auctionFinalPayment(eq(memberId), eq(auctionId), any(AuctionFinalPaymentRequestDto.class)))
-				.willThrow(new CustomException(ErrorType.INSUFFICIENT_BALANCE));
+			.willThrow(new CustomException(ErrorType.INSUFFICIENT_BALANCE));
 
 		// when & then
 		mockMvc.perform(post("/api/v1/payments/auctions/{auctionId}", auctionId)
 				.param("memberId", String.valueOf(memberId))
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(requestDto)))
-				.andDo(print())
-				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.message").value(ErrorType.INSUFFICIENT_BALANCE.getMessage()));
+			.andDo(print())
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").value(ErrorType.INSUFFICIENT_BALANCE.getMessage()));
 	}
 }

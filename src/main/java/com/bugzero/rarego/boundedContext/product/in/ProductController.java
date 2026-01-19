@@ -28,9 +28,9 @@ public class ProductController {
 	@Operation(summary = "상품 등록", description = "새로운 상품을 등록합니다")
 	@PostMapping
 	public SuccessResponseDto<ProductResponseDto> createProduct(
-		@RequestParam long memberId,
+		@RequestParam String memberUUID,
 		@Valid @RequestBody ProductRequestDto productRequestDto) {
-		ProductResponseDto responseDto = productFacade.createProduct(memberId, productRequestDto);
+		ProductResponseDto responseDto = productFacade.createProduct(memberUUID, productRequestDto);
 		return SuccessResponseDto.from(SuccessType.CREATED, responseDto);
 	}
 }

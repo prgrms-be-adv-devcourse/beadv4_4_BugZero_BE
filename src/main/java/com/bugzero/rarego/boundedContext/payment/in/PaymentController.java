@@ -1,5 +1,11 @@
 package com.bugzero.rarego.boundedContext.payment.in;
 
+import java.time.LocalDateTime;
+
+import org.springframework.batch.core.job.Job;
+import org.springframework.batch.core.job.parameters.JobParameters;
+import org.springframework.batch.core.job.parameters.JobParametersBuilder;
+import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,6 +20,8 @@ import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmRequestDto
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestResponseDto;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 
@@ -28,6 +36,8 @@ import lombok.RequiredArgsConstructor;
 @Tag(name = "Payment", description = "결제 관련 API")
 public class PaymentController {
 	private final PaymentFacade paymentFacade;
+	private final JobOperator jobOperator;
+	private final Job settlementJob;
 
 	@Operation(summary = "결제 요청", description = "토스페이먼츠 결제를 요청합니다")
 	@PostMapping("/charges")
@@ -59,6 +69,24 @@ public class PaymentController {
 		@PathVariable Long auctionId,
 		@Valid @RequestBody AuctionFinalPaymentRequestDto requestDto
 	) {
-		return SuccessResponseDto.from(SuccessType.OK, paymentFacade.auctionFinalPayment(memberId, auctionId, requestDto));
+		return SuccessResponseDto.from(SuccessType.OK,
+			paymentFacade.auctionFinalPayment(memberId, auctionId, requestDto));
+	}
+
+	// 로컬 정산 배치 테스트용 api
+	@PostMapping("/settlement")
+	public SuccessResponseDto<Void> runSettlementJob() {
+		try {
+			// JobParameter에 실행 시간을 넣어 중복 실행 방지
+			JobParameters jobParameters = new JobParametersBuilder()
+				.addLocalDateTime("runAt", LocalDateTime.now())
+				.toJobParameters();
+
+			jobOperator.start(settlementJob, jobParameters);
+
+			return SuccessResponseDto.from(SuccessType.OK);
+		} catch (Exception e) {
+			throw new CustomException(ErrorType.SETTLEMENT_BATCH_FAILED);
+		}
 	}
 }

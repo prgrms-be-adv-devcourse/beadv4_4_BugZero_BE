@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class Product extends BaseIdAndTime {
 	//TODO 복제 멤버 엔티티 생성 후 변경
-	private long sellerId;
+	private Long sellerId;
 	@Enumerated(EnumType.STRING)
 	private Category category;
 	@Enumerated(EnumType.STRING)

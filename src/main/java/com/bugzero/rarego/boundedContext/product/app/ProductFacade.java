@@ -13,7 +13,7 @@ public class ProductFacade {
 
 	private final ProductCreateProductUseCase productCreateProductUseCase;
 
-	public ProductResponseDto createProduct(long memberId, ProductRequestDto productRequestDto) {
-		return productCreateProductUseCase.createProduct(memberId, productRequestDto);
+	public ProductResponseDto createProduct(String memberUUID, ProductRequestDto productRequestDto) {
+		return productCreateProductUseCase.createProduct(memberUUID, productRequestDto);
 	}
 }

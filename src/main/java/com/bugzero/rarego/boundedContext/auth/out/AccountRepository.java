@@ -9,4 +9,7 @@ import com.bugzero.rarego.boundedContext.auth.domain.Provider;
 
 public interface AccountRepository extends JpaRepository<Account, Long> {
 	Optional<Account> findByProviderAndProviderId(Provider provider, String providerId);
+	Optional<Account> findByMemberPublicId(String memberPublicId);
+
+	boolean existsByProviderAndProviderId(Provider provider, String providerId);
 }
