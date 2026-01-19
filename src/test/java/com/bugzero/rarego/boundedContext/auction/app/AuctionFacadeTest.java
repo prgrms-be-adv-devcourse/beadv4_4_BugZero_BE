@@ -4,11 +4,14 @@ import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.Bid;
+import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
@@ -30,6 +33,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -39,10 +43,8 @@ class AuctionFacadeTest {
 
     @InjectMocks
     private AuctionFacade auctionFacade;
-
     @Mock
     private AuctionCreateBidUseCase auctionCreateBidUseCase;
-
     @Mock
     private BidRepository bidRepository;
     @Mock
@@ -53,6 +55,8 @@ class AuctionFacadeTest {
     private ProductRepository productRepository;
     @Mock
     private AuctionOrderRepository auctionOrderRepository;
+    @Mock
+    private AuctionBookmarkUseCase auctionBookmarkUseCase;
 
     @Test
     @DisplayName("입찰 생성 요청 시 UseCase를 호출하고 결과를 반환한다")
@@ -158,6 +162,70 @@ class AuctionFacadeTest {
         assertThat(dto.bidAmount()).isEqualTo(15000);
         assertThat(dto.currentPrice()).isEqualTo(15000);
     }
+
+    @Test
+    @DisplayName("관심 경매 등록 - 성공")
+    void addBookmark_Success() {
+        // given
+        Long auctionId = 1L;
+        String memberUUID = "test-uuid";
+
+        WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(true, auctionId);
+
+        given(auctionBookmarkUseCase.addBookmark(memberUUID, auctionId))
+                .willReturn(responseDto);
+
+        // when
+        WishlistAddResponseDto result = auctionFacade.addBookmark(memberUUID, auctionId);
+
+        // then
+        assertThat(result.bookmarked()).isTrue();
+        assertThat(result.auctionId()).isEqualTo(auctionId);
+
+        verify(auctionBookmarkUseCase).addBookmark(memberUUID, auctionId);
+    }
+
+    // 다른 테스트 메서드들도 유사하게 수정
+    @Test
+    @DisplayName("관심 경매 등록 - 이미 북마크된 경우")
+    void addBookmark_AlreadyBookmarked() {
+        // given
+        Long auctionId = 1L;
+        String memberUUID = "test-uuid";
+
+        WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(false, auctionId);
+
+        given(auctionBookmarkUseCase.addBookmark(memberUUID, auctionId))
+                .willReturn(responseDto);
+
+        // when
+        WishlistAddResponseDto result = auctionFacade.addBookmark(memberUUID, auctionId);
+
+        // then
+        assertThat(result.bookmarked()).isFalse();
+        assertThat(result.auctionId()).isEqualTo(auctionId);
+
+        verify(auctionBookmarkUseCase).addBookmark(memberUUID, auctionId);
+    }
+
+    @Test
+    @DisplayName("관심 경매 등록 - 경매 미존재 시 에러 발생")
+    void addBookmark_AuctionNotFound() {
+        // given
+        Long auctionId = 999L;
+        String memberUUID = "test-uuid";
+
+        given(auctionBookmarkUseCase.addBookmark(memberUUID, auctionId))
+                .willThrow(new CustomException(ErrorType.AUCTION_NOT_FOUND));
+
+        // when & then
+        assertThatThrownBy(() -> auctionFacade.addBookmark(memberUUID, auctionId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorType", ErrorType.AUCTION_NOT_FOUND);
+
+        verify(auctionBookmarkUseCase).addBookmark(memberUUID, auctionId);
+    }
+
 
     /*
      * TODO: GitHub Actions 환경에서 실패하는 문제 해결 필요

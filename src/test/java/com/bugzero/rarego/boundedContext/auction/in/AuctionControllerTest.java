@@ -1,6 +1,7 @@
 package com.bugzero.rarego.boundedContext.auction.in;
 
 import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
+import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
 import com.bugzero.rarego.global.config.JacksonConfig;
 import com.bugzero.rarego.global.exception.CustomException;
@@ -27,6 +28,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -68,7 +70,7 @@ class AuctionControllerTest {
         mockMvc.perform(post("/api/v1/auctions/{auctionId}/bids", auctionId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto))
-                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
+                        .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value(201))
@@ -114,7 +116,7 @@ class AuctionControllerTest {
         mockMvc.perform(post("/api/v1/auctions/{auctionId}/bids", auctionId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest))
-                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
+                        .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400));
@@ -136,7 +138,7 @@ class AuctionControllerTest {
         mockMvc.perform(post("/api/v1/auctions/{auctionId}/bids", auctionId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto))
-                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
+                        .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409));
@@ -158,7 +160,63 @@ class AuctionControllerTest {
         mockMvc.perform(post("/api/v1/auctions/{auctionId}/bids", auctionId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto))
-                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    @DisplayName("성공: 관심 경매 등록 시 200 OK와 북마크 정보 반환")
+    @WithMockUser(username = "user-uuid")
+    void addBookmark_success() throws Exception {
+        // given
+        Long auctionId = 1L;
+        WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(true, auctionId);
+
+        given(auctionFacade.addBookmark(anyString(), eq(auctionId)))
+                .willReturn(responseDto);
+
+        // when & then
+        mockMvc.perform(post("/api/v1/auctions/{auctionId}/bookmarks", auctionId)
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.bookmarked").value(true))
+                .andExpect(jsonPath("$.data.auctionId").value(auctionId));
+    }
+
+    @Test
+    @DisplayName("실패: 경매를 찾을 수 없는 경우 404 반환")
+    @WithMockUser(username = "user-uuid")
+    void addBookmark_auctionNotFound() throws Exception {
+        // given
+        Long auctionId = 999L;
+
+        given(auctionFacade.addBookmark(anyString(), eq(auctionId)))
+                .willThrow(new CustomException(ErrorType.AUCTION_NOT_FOUND));
+
+        // when & then
+        mockMvc.perform(post("/api/v1/auctions/{auctionId}/bookmarks", auctionId)
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    @DisplayName("실패: 회원을 찾을 수 없는 경우 404 반환")
+    @WithMockUser(username = "user-uuid")
+    void addBookmark_memberNotFound() throws Exception {
+        // given
+        Long auctionId = 1L;
+
+        given(auctionFacade.addBookmark(anyString(), eq(auctionId)))
+                .willThrow(new CustomException(ErrorType.MEMBER_NOT_FOUND));
+
+        // when & then
+        mockMvc.perform(post("/api/v1/auctions/{auctionId}/bookmarks", auctionId)
+                        .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404));
