@@ -14,6 +14,24 @@ public enum ErrorType {
     MEMBER_NOT_FOUND(404, 1001, "존재하지 않는 회원입니다."),
 	MEMBER_EMAIL_EMPTY(400, 1003, "이메일은 필수 입력값입니다."),
 	MEMBER_JOIN_FAILED(500, 1004, "회원 가입에 실패했습니다."),
+	MEMBER_INVALID_NICKNAME(400, 1005, "닉네임이 공백이거나 50자 이상입니다."),
+	MEMBER_INVALID_INTRO(400, 1006, "자기소개 형식이 올바르지 않습니다."),
+	MEMBER_INVALID_ZIPCODE(400, 1007, "우편번호 형식이 올바르지 않습니다."),
+	MEMBER_INVALID_ADDRESS(400, 1008, "주소 형식이 올바르지 않습니다."),
+	MEMBER_INVALID_ADDRESS_DETAIL(400, 1009, "상세주소 형식이 올바르지 않습니다."),
+	MEMBER_INVALID_REALNAME(400, 1010, "이름은 한국어/영어로 이루어진 1~10자여야 합니다."),
+	MEMBER_INVALID_PHONE_NUMBER(400, 1011, "연락처 형식이 올바르지 않습니다."),
+	// Seller
+	MEMBER_NICKNAME_REQUIRED(400, 1012, "닉네임은 필수 입력값입니다."),
+	MEMBER_ZIPCODE_REQUIRED(400, 1013, "우편번호는 필수 입력값입니다."),
+	MEMBER_ADDRESS_REQUIRED(400, 1014, "주소는 필수 입력값입니다."),
+	MEMBER_ADDRESS_DETAIL_REQUIRED(400, 1015, "상세주소는 필수 입력값입니다."),
+	MEMBER_PHONE_REQUIRED(400, 1016, "연락처는 필수 입력값입니다."),
+	MEMBER_REALNAME_REQUIRED(400, 1017, "실명은 필수 입력값입니다."),
+	MEMBER_SELLER_REQUIRED_FIELD_CANNOT_BE_CLEARED(400, 1018, "판매자 정보의 필수 항목은 삭제할 수 없습니다."),
+	MEMBER_UPDATED_FAILED(400, 1019, "삭제 요청된 항목에 값이 함께 전달되었습니다."),
+
+
 	// Auth/JWT (1500 ~ 1999)
 	AUTH_MEMBER_REQUIRED(400, 1501, "회원 정보가 필요합니다."),
 	JWT_EXPIRE_SECONDS_INVALID(500, 1504, "토큰 만료 설정이 올바르지 않습니다."),

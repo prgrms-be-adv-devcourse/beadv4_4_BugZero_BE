@@ -1,19 +1,21 @@
 package com.bugzero.rarego.shared.member.domain;
 
+import static lombok.AccessLevel.*;
+
 import com.bugzero.rarego.global.jpa.entity.BaseEntity;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.MappedSuperclass;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 @MappedSuperclass
 @SuperBuilder
+@Setter(value = PROTECTED)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
@@ -43,6 +45,34 @@ public abstract class BaseMember extends BaseEntity {
 
 	@Column(name = "real_name", length = 10)
 	private String realName;
+
+	public void changeNickname(String nickname) {
+		this.nickname = nickname;
+	}
+
+	public void changeIntro(String intro) {
+		this.intro = intro;
+	}
+
+	public void changeZipCode(String zipCode) {
+		this.zipCode = zipCode;
+	}
+
+	public void changeAddress(String address) {
+		this.address = address;
+	}
+
+	public void changeAddressDetail(String addressDetail) {
+		this.addressDetail = addressDetail;
+	}
+
+	public void changeContactPhone(String contactPhone) {
+		this.contactPhone = contactPhone;
+	}
+
+	public void changeRealName(String realName) {
+		this.realName = realName;
+	}
 
 	protected void updateFrom(MemberDto member) {
 		this.publicId = member.publicId();
