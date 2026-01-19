@@ -17,6 +17,7 @@ import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionViewerRoleStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.Bid;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
@@ -74,9 +75,12 @@ public class AuctionReadUseCase {
 	}
 
 	// 나의 입찰 내역 조회
-	public PagedResponseDto<MyBidResponseDto> getMyBids(Long memberId, AuctionStatus status, Pageable pageable) {
+	public PagedResponseDto<MyBidResponseDto> getMyBids(String memberPublicId, AuctionStatus status, Pageable pageable) {
+		AuctionMember member = auctionMemberRepository.findByPublicId(memberPublicId)
+			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
+
 		// 1. Bid 목록 조회
-		Page<Bid> bidPage = bidRepository.findMyBids(memberId, status, pageable);
+		Page<Bid> bidPage = bidRepository.findAllByBidderIdAndAuctionStatus(member.getId(), status, pageable);
 		List<Bid> bids = bidPage.getContent();
 
 		// 2. Auction Map 생성 (Helper 메서드 재사용)
@@ -97,9 +101,13 @@ public class AuctionReadUseCase {
 	}
 
 	// 나의 판매 내역 조회
-	public PagedResponseDto<MySaleResponseDto> getMySales(Long memberId, AuctionFilterType auctionFilterType, Pageable pageable) {
+	public PagedResponseDto<MySaleResponseDto> getMySales(String memberPublicId, AuctionFilterType auctionFilterType, Pageable pageable) {
+		// 회원 ID 조회
+		AuctionMember member = auctionMemberRepository.findByPublicId(memberPublicId)
+			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
+
 		// 상품 Id 목록 조회
-		List<Long> myProductIds = productRepository.findAllIdsBySellerId(memberId);
+		List<Long> myProductIds = productRepository.findAllIdsBySellerId(member.getId());
 
 		// 경매 목록 조회
 		Page<Auction> auctionPage = fetchAuctionsByFilter(myProductIds, auctionFilterType, pageable);
@@ -139,20 +147,48 @@ public class AuctionReadUseCase {
 	}
 
 	// 경매 상세 조회
-	public AuctionDetailResponseDto getAuctionDetail(Long auctionId) {
+	public AuctionDetailResponseDto getAuctionDetail(Long auctionId, String memberPublicId) {
+		// 회원 ID 조회
+		AuctionMember member = auctionMemberRepository.findByPublicId(memberPublicId)
+			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
+
+		// 1. 경매 조회
 		Auction auction = auctionRepository.findById(auctionId)
 			.orElseThrow(() -> new CustomException(ErrorType.AUCTION_NOT_FOUND));
 
-		return AuctionDetailResponseDto.from(auction);
+		// 2. 전체 최고가 입찰 조회
+		Bid highestBid = bidRepository.findTopByAuctionIdOrderByBidAmountDesc(auctionId)
+			.orElse(null);
+
+		// 3. 나의 마지막 입찰 조회 (로그인 시에만)
+		Bid myLastBid = null;
+		if (member != null) {
+			myLastBid = bidRepository.findTopByAuctionIdAndBidderIdOrderByBidAmountDesc(auctionId, member.getId())
+				.orElse(null);
+		}
+
+		// 4. DTO 변환 (memberId가 null이면 DTO 내부에서 기본값 false/null 처리)
+		return AuctionDetailResponseDto.from(auction, highestBid, myLastBid, member.getId());
 	}
 
 	// 낙찰 기록 상세 조회
-	public AuctionOrderResponseDto getAuctionOrder(Long auctionId, Long memberId) {
+	public AuctionOrderResponseDto getAuctionOrder(Long auctionId, String memberPublicId) {
+		// 회원 ID 조회
+		AuctionMember member = auctionMemberRepository.findByPublicId(memberPublicId)
+			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
+		Long memberId = member.getId();
+
 		AuctionOrder order = auctionOrderRepository.findByAuctionId(auctionId)
 			.orElseThrow(() -> new CustomException(ErrorType.ORDER_NOT_FOUND));
 
 		Auction auction = auctionRepository.findById(auctionId)
 			.orElseThrow(() -> new CustomException(ErrorType.AUCTION_NOT_FOUND));
+
+		String viewerRole = determineViewerRole(order, memberId);
+
+		if (viewerRole.equals("GUEST")) {
+			throw new CustomException(ErrorType.AUCTION_ORDER_ACCESS_DENIED);
+		}
 
 		Product product = productRepository.findById(auction.getProductId())
 			.orElseThrow(() -> new CustomException(ErrorType.PRODUCT_NOT_FOUND));
@@ -165,20 +201,7 @@ public class AuctionReadUseCase {
 			.map(ProductImage::getImageUrl)
 			.orElse(null); // 이미지가 없을 경우 null 처리
 
-		String viewerRole;
-		Long traderId;
-
-		if (order.getBidderId().equals(memberId)) {
-			viewerRole = "BUYER";
-			traderId = product.getSellerId(); // 구매자가 볼 때 상대방은 판매자
-		// TODO: 현재 sellerId랑 memberId가 타입이 달라서 추후 equals()로 변경 예정
-		} else if (product.getSellerId() == memberId) {
-			viewerRole = "SELLER";
-			traderId = order.getBidderId(); // 판매자가 볼 때 상대방은 낙찰자(구매자)
-		} else {
-			throw new CustomException(ErrorType.AUCTION_ORDER_ACCESS_DENIED); // 403: 권한 없음
-		}
-
+		Long traderId = viewerRole.equals("BUYER") ? order.getSellerId() : order.getBidderId();
 		AuctionMember trader = auctionMemberRepository.findById(traderId)
 			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
 
@@ -191,7 +214,7 @@ public class AuctionReadUseCase {
 			product.getName(),
 			thumbnailUrl,
 			trader.getPublicId(),
-			"010-0000-0000"
+			trader.getContactPhone()
 		);
 	}
 
@@ -243,5 +266,11 @@ public class AuctionReadUseCase {
 			return "결제 완료";
 		}
 		return "-";
+	}
+
+	private String determineViewerRole(AuctionOrder order, Long memberId) {
+		if (memberId.equals(order.getBidderId())) return AuctionViewerRoleStatus.BUYER.toString();
+		if (memberId.equals(order.getSellerId())) return AuctionViewerRoleStatus.SELLER.toString();
+		return AuctionViewerRoleStatus.GUEST.toString();
 	}
 }

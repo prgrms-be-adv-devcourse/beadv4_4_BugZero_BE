@@ -28,33 +28,37 @@ public class AuctionFacade {
 	private final AuctionCreateBidUseCase auctionCreateBidUseCase;
 	private final AuctionReadUseCase auctionReadUseCase;
 
-	// 쓰기 작업
+	// 쓰기 작업 (입찰 생성)
 	@Transactional
-	public SuccessResponseDto<BidResponseDto> createBid(Long auctionId, Long memberId, int bidAmount) {
-		BidResponseDto result = auctionCreateBidUseCase.createBid(auctionId, memberId, bidAmount);
+	public SuccessResponseDto<BidResponseDto> createBid(Long auctionId, String memberPublicId, int bidAmount) {
+		BidResponseDto result = auctionCreateBidUseCase.createBid(auctionId, memberPublicId, bidAmount);
 		return SuccessResponseDto.from(SuccessType.CREATED, result);
 	}
 
-	// 읽기 작업
+	// 읽기 작업 (입찰 기록)
 	public PagedResponseDto<BidLogResponseDto> getBidLogs(Long auctionId, Pageable pageable) {
 		return auctionReadUseCase.getBidLogs(auctionId, pageable);
 	}
 
-	public PagedResponseDto<MyBidResponseDto> getMyBids(Long memberId, AuctionStatus status, Pageable pageable) {
-		return auctionReadUseCase.getMyBids(memberId, status, pageable);
+	// 내 입찰 내역
+	public PagedResponseDto<MyBidResponseDto> getMyBids(String memberPublicId, AuctionStatus status, Pageable pageable) {
+		return auctionReadUseCase.getMyBids(memberPublicId, status, pageable);
 	}
 
-	public PagedResponseDto<MySaleResponseDto> getMySales(Long memberId, AuctionFilterType auctionFilterType, Pageable pageable) {
-		return auctionReadUseCase.getMySales(memberId, auctionFilterType, pageable);
+	// 내 판매 내역
+	public PagedResponseDto<MySaleResponseDto> getMySales(String memberPublicId, AuctionFilterType auctionFilterType, Pageable pageable) {
+		return auctionReadUseCase.getMySales(memberPublicId, auctionFilterType, pageable);
 	}
 
-	public SuccessResponseDto<AuctionDetailResponseDto> getAuctionDetail(Long auctionId) {
-		AuctionDetailResponseDto detail = auctionReadUseCase.getAuctionDetail(auctionId);
+	// 경매 상세 조회
+	public SuccessResponseDto<AuctionDetailResponseDto> getAuctionDetail(Long auctionId, String memberPublicId) {
+		AuctionDetailResponseDto detail = auctionReadUseCase.getAuctionDetail(auctionId, memberPublicId);
 		return SuccessResponseDto.from(SuccessType.OK, detail);
 	}
 
-	public SuccessResponseDto<AuctionOrderResponseDto> getAuctionOrder(Long auctionId, Long memberId) {
-		AuctionOrderResponseDto response = auctionReadUseCase.getAuctionOrder(auctionId, memberId);
+	// 낙찰 기록 상세 조회
+	public SuccessResponseDto<AuctionOrderResponseDto> getAuctionOrder(Long auctionId, String memberPublicId) {
+		AuctionOrderResponseDto response = auctionReadUseCase.getAuctionOrder(auctionId, memberPublicId);
 		return SuccessResponseDto.from(SuccessType.OK, response);
 	}
 }

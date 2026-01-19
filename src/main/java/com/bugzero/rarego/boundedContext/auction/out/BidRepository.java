@@ -72,4 +72,20 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
 	// 경매 ID 목록에 대한 입찰 수 카운트
 	@Query("SELECT b.auctionId, COUNT(b) FROM Bid b WHERE b.auctionId IN :auctionIds GROUP BY b.auctionId")
 	List<Object[]> countByAuctionIdIn(@Param("auctionIds") Collection<Long> auctionIds);
+
+	// 해당 경매의 최고가 입찰 1건 조회
+	Optional<Bid> findTopByAuctionIdOrderByBidAmountDesc(Long auctionId);
+
+	// 해당 경매에서 특정 사용자의 가장 높은(마지막) 입찰 1건 조회
+	Optional<Bid> findTopByAuctionIdAndBidderIdOrderByBidAmountDesc(Long auctionId, Long bidderId);
+
+	@Query("SELECT b FROM Bid b " +
+		"JOIN Auction a ON b.auctionId = a.id " +
+		"WHERE b.bidderId = :bidderId " +
+		"AND (:status IS NULL OR a.status = :status)")
+	Page<Bid> findAllByBidderIdAndAuctionStatus(
+		@Param("bidderId") Long bidderId,
+		@Param("status") AuctionStatus status,
+		Pageable pageable
+	);
 }

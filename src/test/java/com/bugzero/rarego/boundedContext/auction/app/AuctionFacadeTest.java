@@ -48,24 +48,25 @@ class AuctionFacadeTest {
 		// given
 		Long auctionId = 1L;
 		Long memberId = 100L;
+		String memberPublicId = "user_uuid";
 		int bidAmount = 50000;
 
 		BidResponseDto bidResponse = new BidResponseDto(
 			1L, auctionId, "public-id", LocalDateTime.now(), (long) bidAmount, (long) bidAmount
 		);
 
-		given(auctionCreateBidUseCase.createBid(auctionId, memberId, bidAmount))
+		given(auctionCreateBidUseCase.createBid(auctionId, memberPublicId, bidAmount))
 			.willReturn(bidResponse);
 
 		// when
-		SuccessResponseDto<BidResponseDto> result = auctionFacade.createBid(auctionId, memberId, bidAmount);
+		SuccessResponseDto<BidResponseDto> result = auctionFacade.createBid(auctionId, memberPublicId, bidAmount);
 
 		// then
 		assertThat(result.status()).isEqualTo(SuccessType.CREATED.getHttpStatus());
 		assertThat(result.message()).isEqualTo(SuccessType.CREATED.getMessage());
 		assertThat(result.data()).isEqualTo(bidResponse);
 
-		verify(auctionCreateBidUseCase).createBid(auctionId, memberId, bidAmount);
+		verify(auctionCreateBidUseCase).createBid(auctionId, memberPublicId, bidAmount);
 	}
 
 	@Test
@@ -99,6 +100,7 @@ class AuctionFacadeTest {
 	void getMyBids_Success() {
 		// given
 		Long memberId = 100L;
+		String memberPublicId = "user_uuid";
 		Pageable pageable = PageRequest.of(0, 10);
 
 		MyBidResponseDto myBidDto = new MyBidResponseDto(
@@ -108,11 +110,11 @@ class AuctionFacadeTest {
 			List.of(myBidDto), new PageDto(1, 10, 1, 1, false, false)
 		);
 
-		given(auctionReadUseCase.getMyBids(eq(memberId), eq(null), any(Pageable.class)))
+		given(auctionReadUseCase.getMyBids(eq(memberPublicId), eq(null), any(Pageable.class)))
 			.willReturn(expectedResponse);
 
 		// when
-		PagedResponseDto<MyBidResponseDto> result = auctionFacade.getMyBids(memberId, null, pageable);
+		PagedResponseDto<MyBidResponseDto> result = auctionFacade.getMyBids(memberPublicId, null, pageable);
 
 		// then
 		assertThat(result.data()).hasSize(1);
@@ -121,7 +123,7 @@ class AuctionFacadeTest {
 		assertThat(dto.bidAmount()).isEqualTo(15000);
 		assertThat(dto.currentPrice()).isEqualTo(15000);
 
-		verify(auctionReadUseCase).getMyBids(eq(memberId), eq(null), any(Pageable.class));
+		verify(auctionReadUseCase).getMyBids(eq(memberPublicId), eq(null), any(Pageable.class));
 	}
 
 	@Test
@@ -129,6 +131,7 @@ class AuctionFacadeTest {
 	void getMySales_Success() {
 		// given
 		Long sellerId = 1L;
+		String sellerPublicId = "seller_uuid";
 		AuctionFilterType filter = AuctionFilterType.ALL;
 		Pageable pageable = PageRequest.of(0, 10);
 
@@ -152,11 +155,11 @@ class AuctionFacadeTest {
 			List.of(saleDto1, saleDto2), new PageDto(1, 10, 2, 1, false, false)
 		);
 
-		given(auctionReadUseCase.getMySales(eq(sellerId), eq(filter), any(Pageable.class)))
+		given(auctionReadUseCase.getMySales(eq(sellerPublicId), eq(filter), any(Pageable.class)))
 			.willReturn(expectedResponse);
 
 		// when
-		PagedResponseDto<MySaleResponseDto> result = auctionFacade.getMySales(sellerId, filter, pageable);
+		PagedResponseDto<MySaleResponseDto> result = auctionFacade.getMySales(sellerPublicId, filter, pageable);
 
 		// then
 		assertThat(result.data()).hasSize(2);
@@ -173,6 +176,6 @@ class AuctionFacadeTest {
 		assertThat(dto2.bidCount()).isEqualTo(0);
 		assertThat(dto2.tradeStatus()).isNull();
 
-		verify(auctionReadUseCase).getMySales(eq(sellerId), eq(filter), any(Pageable.class));
+		verify(auctionReadUseCase).getMySales(eq(sellerPublicId), eq(filter), any(Pageable.class));
 	}
 }

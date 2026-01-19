@@ -8,22 +8,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
-import org.springframework.context.annotation.Import;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.MethodParameter;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -34,7 +30,6 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
-import com.bugzero.rarego.global.aspect.ResponseAspect;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.exception.GlobalExceptionHandler;
 import com.bugzero.rarego.global.response.ErrorType;
@@ -50,43 +45,24 @@ import com.bugzero.rarego.shared.auction.dto.BidRequestDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@WebMvcTest(controllers = AuctionController.class)
-@Import(ResponseAspect.class)
-@EnableAspectJAutoProxy
+@ExtendWith(MockitoExtension.class)
 class AuctionControllerTest {
 
 	private MockMvc mockMvc;
 
-	@Autowired
+	@InjectMocks
 	private AuctionController auctionController;
 
-	private ObjectMapper objectMapper = new ObjectMapper();
-
-	@MockitoBean
+	@Mock
 	private AuctionFacade auctionFacade;
+
+	private ObjectMapper objectMapper = new ObjectMapper();
 
 	@BeforeEach
 	void setup() {
 		mockMvc = MockMvcBuilders.standaloneSetup(auctionController)
 			.setCustomArgumentResolvers(
 				new PageableHandlerMethodArgumentResolver(),
-				// UserDetails resolver
-				new HandlerMethodArgumentResolver() {
-					@Override
-					public boolean supportsParameter(MethodParameter parameter) {
-						return UserDetails.class.isAssignableFrom(parameter.getParameterType());
-					}
-
-					@Override
-					public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
-						NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
-						return User.withUsername("2")
-							.password("password")
-							.roles("USER")
-							.build();
-					}
-				},
-				// MemberPrincipal resolver
 				new HandlerMethodArgumentResolver() {
 					@Override
 					public boolean supportsParameter(MethodParameter parameter) {
@@ -96,6 +72,7 @@ class AuctionControllerTest {
 					@Override
 					public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
 						NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
+						// Principal의 publicId를 "1"로 설정 (String)
 						return new MemberPrincipal("1", "USER");
 					}
 				}
@@ -109,12 +86,12 @@ class AuctionControllerTest {
 	void createBid_success() throws Exception {
 		// given
 		Long auctionId = 1L;
-		Long memberId = 2L;
+		String memberPublicId = "1";
 		Long bidAmount = 10000L;
 		BidRequestDto requestDto = new BidRequestDto(bidAmount);
 
 		BidResponseDto bidResponse = new BidResponseDto(
-			100L, auctionId, UUID.randomUUID().toString(), LocalDateTime.now(), bidAmount, bidAmount
+			100L, auctionId, memberPublicId, LocalDateTime.now(), bidAmount, 11000L
 		);
 
 		SuccessResponseDto<BidResponseDto> successResponse = SuccessResponseDto.from(
@@ -122,7 +99,8 @@ class AuctionControllerTest {
 			bidResponse
 		);
 
-		given(auctionFacade.createBid(eq(auctionId), eq(memberId), eq(bidAmount.intValue())))
+		// [수정] memberId(Long) -> memberPublicId(String)
+		given(auctionFacade.createBid(eq(auctionId), eq(memberPublicId), eq(bidAmount.intValue())))
 			.willReturn(successResponse);
 
 		// when & then
@@ -173,6 +151,7 @@ class AuctionControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(invalidRequest)))
 			.andDo(print())
+			// GlobalExceptionHandler에서 ResponseEntity를 반환하므로 실제 상태코드 검증
 			.andExpect(status().isBadRequest())
 			.andExpect(jsonPath("$.status").value(400));
 	}
@@ -182,11 +161,12 @@ class AuctionControllerTest {
 	void createBid_fail_business_exception() throws Exception {
 		// given
 		Long auctionId = 999L;
-		Long memberId = 2L;
+		String memberPublicId = "1"; // [수정] String 타입
 		Long bidAmount = 10000L;
 		BidRequestDto requestDto = new BidRequestDto(bidAmount);
 
-		given(auctionFacade.createBid(eq(auctionId), eq(memberId), eq(bidAmount.intValue())))
+		// [수정] memberId(Long) -> memberPublicId(String)
+		given(auctionFacade.createBid(eq(auctionId), eq(memberPublicId), eq(bidAmount.intValue())))
 			.willThrow(new CustomException(ErrorType.AUCTION_NOT_FOUND));
 
 		// when & then
@@ -194,6 +174,7 @@ class AuctionControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(requestDto)))
 			.andDo(print())
+			// GlobalExceptionHandler에서 ResponseEntity를 반환하므로 실제 상태코드 검증
 			.andExpect(status().isNotFound())
 			.andExpect(jsonPath("$.status").value(ErrorType.AUCTION_NOT_FOUND.getHttpStatus()));
 	}
@@ -203,26 +184,31 @@ class AuctionControllerTest {
 	void getAuctionDetail_success() throws Exception {
 		// given
 		Long auctionId = 100L;
+		String memberPublicId = "1"; // [수정] String 타입
+
 		AuctionDetailResponseDto responseDto = new AuctionDetailResponseDto(
 			auctionId,
 			50L,
+			AuctionStatus.IN_PROGRESS,
 			LocalDateTime.now(),
 			LocalDateTime.now().plusDays(1),
-			AuctionStatus.IN_PROGRESS,
-			10000,
-			20000,
-			1000
+			3600L,
+			new AuctionDetailResponseDto.PriceInfo(10000, 20000, 1000),
+			new AuctionDetailResponseDto.BidInfo(true, 21000, null, false),
+			new AuctionDetailResponseDto.MyParticipationInfo(false, null)
 		);
 
-		given(auctionFacade.getAuctionDetail(auctionId))
+		// [수정] memberId(Long) -> memberPublicId(String)
+		given(auctionFacade.getAuctionDetail(eq(auctionId), eq(memberPublicId)))
 			.willReturn(SuccessResponseDto.from(SuccessType.OK, responseDto));
 
 		// when & then
 		mockMvc.perform(get("/api/v1/auctions/{auctionId}", auctionId))
 			.andDo(print())
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.data.id").value(auctionId))
-			.andExpect(jsonPath("$.data.currentPrice").value(20000));
+			.andExpect(jsonPath("$.data.auctionId").value(auctionId))
+			.andExpect(jsonPath("$.data.price.currentPrice").value(20000))
+			.andExpect(jsonPath("$.data.bid.canBid").value(true));
 	}
 
 	@Test
@@ -230,7 +216,7 @@ class AuctionControllerTest {
 	void getAuctionOrder_success() throws Exception {
 		// given
 		Long auctionId = 100L;
-		Long memberId = 1L;  // MemberPrincipal resolver에서 "1"을 반환
+		String memberPublicId = "1"; // [수정] String 타입
 
 		AuctionOrderResponseDto responseDto = new AuctionOrderResponseDto(
 			7001L, auctionId, "BUYER", AuctionOrderStatus.PROCESSING, "결제 대기중",
@@ -241,7 +227,8 @@ class AuctionControllerTest {
 			new AuctionOrderResponseDto.ShippingInfo(null, null, null)
 		);
 
-		given(auctionFacade.getAuctionOrder(eq(auctionId), eq(memberId)))
+		// [수정] memberId(Long) -> memberPublicId(String)
+		given(auctionFacade.getAuctionOrder(eq(auctionId), eq(memberPublicId)))
 			.willReturn(SuccessResponseDto.from(SuccessType.OK, responseDto));
 
 		// when & then
