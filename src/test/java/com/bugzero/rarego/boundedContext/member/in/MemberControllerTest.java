@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,7 +29,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.member.app.MemberFacade;
+import com.bugzero.rarego.boundedContext.member.domain.MemberClearField;
 import com.bugzero.rarego.boundedContext.member.domain.MemberMeResponseDto;
+import com.bugzero.rarego.boundedContext.member.domain.MemberUpdateRequestDto;
+import com.bugzero.rarego.boundedContext.member.domain.MemberUpdateResponseDto;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
@@ -158,6 +162,144 @@ class MemberControllerTest {
 				.andExpect(jsonPath("$.data.email").value("test@example.com"))
 				.andExpect(jsonPath("$.data.contactPhoneMasked").value("010****5678"))
 				.andExpect(jsonPath("$.data.realNameMasked").value("A***e"));
+		} finally {
+			SecurityContextHolder.clearContext();
+		}
+	}
+
+	@Test
+	@DisplayName("성공: 내 정보 수정 요청이 정상 처리되면 수정된 회원 정보를 반환한다")
+	void updateMe_success() throws Exception {
+		// given
+		MemberUpdateRequestDto requestDto = new MemberUpdateRequestDto(
+			"newbie",
+			"intro",
+			"12345",
+			"Seoul",
+			"Apt 1",
+			"Alice",
+			"01012345678",
+			null
+		);
+		MemberUpdateResponseDto responseDto = new MemberUpdateResponseDto(
+			"public-id",
+			"test@example.com",
+			"newbie",
+			"intro",
+			"Seoul",
+			"Apt 1",
+			"12345",
+			"01012345678",
+			"Alice",
+			LocalDateTime.of(2024, 1, 1, 0, 0),
+			LocalDateTime.of(2024, 1, 2, 0, 0)
+		);
+		given(memberFacade.updateMe("public-id", "USER", requestDto)).willReturn(responseDto);
+
+		MemberPrincipal principal = new MemberPrincipal("public-id", "USER");
+		Authentication authentication = new UsernamePasswordAuthenticationToken(
+			principal,
+			null,
+			List.of(new SimpleGrantedAuthority("ROLE_USER"))
+		);
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+		try {
+			// when
+			var result = mockMvc.perform(patch("/api/v1/members/me")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(requestDto)));
+
+			// then
+			result
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value(SuccessType.OK.getHttpStatus()))
+				.andExpect(jsonPath("$.message").value(SuccessType.OK.getMessage()))
+				.andExpect(jsonPath("$.data.publicId").value("public-id"))
+				.andExpect(jsonPath("$.data.nickname").value("newbie"))
+				.andExpect(jsonPath("$.data.contactPhone").value("01012345678"));
+		} finally {
+			SecurityContextHolder.clearContext();
+		}
+	}
+
+	@Test
+	@DisplayName("실패: 잘못된 연락처 형식이면 HTTP 400을 반환한다")
+	void updateMe_fail_invalid_phone() throws Exception {
+		// given
+		MemberUpdateRequestDto requestDto = new MemberUpdateRequestDto(
+			"newbie",
+			null,
+			null,
+			null,
+			null,
+			null,
+			"010-12",
+			null
+		);
+		given(memberFacade.updateMe("public-id", "USER", requestDto))
+			.willThrow(new CustomException(ErrorType.MEMBER_INVALID_PHONE_NUMBER));
+
+		MemberPrincipal principal = new MemberPrincipal("public-id", "USER");
+		Authentication authentication = new UsernamePasswordAuthenticationToken(
+			principal,
+			null,
+			List.of(new SimpleGrantedAuthority("ROLE_USER"))
+		);
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+		try {
+			// when
+			var result = mockMvc.perform(patch("/api/v1/members/me")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(requestDto)));
+
+			// then
+			result
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.status").value(ErrorType.MEMBER_INVALID_PHONE_NUMBER.getHttpStatus()))
+				.andExpect(jsonPath("$.message").value(ErrorType.MEMBER_INVALID_PHONE_NUMBER.getMessage()));
+		} finally {
+			SecurityContextHolder.clearContext();
+		}
+	}
+
+	@Test
+	@DisplayName("실패: clearFields와 patch가 동시에 오면 HTTP 400을 반환한다")
+	void updateMe_fail_clear_and_patch_conflict() throws Exception {
+		// given
+		MemberUpdateRequestDto requestDto = new MemberUpdateRequestDto(
+			"newbie",
+			"intro",
+			null,
+			null,
+			null,
+			null,
+			null,
+			Set.of(MemberClearField.INTRO)
+		);
+		given(memberFacade.updateMe("public-id", "USER", requestDto))
+			.willThrow(new CustomException(ErrorType.MEMBER_UPDATED_FAILED));
+
+		MemberPrincipal principal = new MemberPrincipal("public-id", "USER");
+		Authentication authentication = new UsernamePasswordAuthenticationToken(
+			principal,
+			null,
+			List.of(new SimpleGrantedAuthority("ROLE_USER"))
+		);
+
+		// when
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+		try {
+			var result = mockMvc.perform(patch("/api/v1/members/me")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(requestDto)));
+
+			// then
+			result
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.status").value(ErrorType.MEMBER_UPDATED_FAILED.getHttpStatus()))
+				.andExpect(jsonPath("$.message").value(ErrorType.MEMBER_UPDATED_FAILED.getMessage()));
 		} finally {
 			SecurityContextHolder.clearContext();
 		}
