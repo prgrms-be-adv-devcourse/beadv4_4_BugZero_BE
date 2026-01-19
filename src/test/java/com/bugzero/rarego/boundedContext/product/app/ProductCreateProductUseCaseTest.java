@@ -40,7 +40,7 @@ class ProductCreateProductUseCaseTest {
 	void createProduct_success() {
 		// given
 		String memberId = "1L";
-		long expectedAuctionId = 100L;
+		Long expectedAuctionId = 100L;
 
 		ProductRequestDto request = new ProductRequestDto(
 			"스타워즈 시리즈",
