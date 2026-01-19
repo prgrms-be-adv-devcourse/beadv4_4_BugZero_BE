@@ -123,29 +123,23 @@ class PaymentRefundUseCaseTest {
     }
 
     @Test
-    @DisplayName("성공: 정산이 DONE 상태일 때도 환불 성공")
-    void processRefund_Success_SettlementDone() {
+    @DisplayName("실패: 정산이 이미 완료됨 (DONE 상태)")
+    void processRefund_Fail_SettlementAlreadyCompleted() {
         // given
         AuctionOrderDto order = new AuctionOrderDto(
                 1L, AUCTION_ID, SELLER_ID, BIDDER_ID, FINAL_PRICE, "SUCCESS", LocalDateTime.now());
 
-        PaymentMember buyer = createMockMember(BIDDER_ID);
-        Wallet wallet = Wallet.builder().balance(50000).holdingAmount(0).build();
         Settlement settlement = Settlement.create(AUCTION_ID, createMockMember(SELLER_ID), FINAL_PRICE);
-        settlement.complete(); // DONE 상태
+        settlement.complete(); // DONE 상태 - 환불 불가
 
         given(auctionOrderPort.refundOrderWithLock(AUCTION_ID)).willReturn(order);
         given(settlementRepository.findByAuctionIdForUpdate(AUCTION_ID)).willReturn(Optional.of(settlement));
-        given(paymentSupport.findWalletByMemberIdForUpdate(BIDDER_ID)).willReturn(wallet);
-        given(paymentSupport.findMemberById(BIDDER_ID)).willReturn(buyer);
-        given(transactionRepository.save(any(PaymentTransaction.class))).willAnswer(i -> i.getArgument(0));
 
-        // when
-        RefundResponseDto response = paymentRefundUseCase.processRefund(AUCTION_ID);
-
-        // then
-        assertThat(wallet.getBalance()).isEqualTo(150000);
-        assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.FAILED);
+        // when & then
+        assertThatThrownBy(() -> paymentRefundUseCase.processRefund(AUCTION_ID))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorType")
+                .isEqualTo(ErrorType.SETTLEMENT_ALREADY_COMPLETED);
     }
 
     @Test

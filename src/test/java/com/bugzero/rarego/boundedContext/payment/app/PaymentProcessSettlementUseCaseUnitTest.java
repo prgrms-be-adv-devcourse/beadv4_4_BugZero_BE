@@ -7,6 +7,7 @@ import static org.mockito.BDDMockito.*;
 import java.util.Collections;
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,7 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
-// ReflectionTestUtils 제거 (필요 없음)
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.bugzero.rarego.boundedContext.payment.domain.Settlement;
 import com.bugzero.rarego.boundedContext.payment.domain.SettlementStatus;
@@ -32,6 +33,11 @@ class PaymentProcessSettlementUseCaseUnitTest {
 	@Mock
 	private SettlementRepository settlementRepository;
 
+	@BeforeEach
+	void setUp() {
+		ReflectionTestUtils.setField(useCase, "settlementHoldDays", 0);
+	}
+
 	@Test
 	@DisplayName("정상 흐름: 2건 모두 성공 시 성공 카운트 반환 및 개별 처리 호출 검증")
 	void success_all() {
@@ -40,11 +46,10 @@ class PaymentProcessSettlementUseCaseUnitTest {
 		Settlement s2 = createSettlement(2L);
 		List<Settlement> list = List.of(s1, s2);
 
-		given(settlementRepository.findAllByStatus(eq(SettlementStatus.READY), any(Pageable.class)))
-			.willReturn(list);
+		given(settlementRepository.findSettlementsForBatch(eq(SettlementStatus.READY), any(), any(Pageable.class)))
+				.willReturn(list);
 
 		// Processor가 성공적으로 처리됨 (예외 없음)
-		// 반환값은 UseCase 로직상 중요하지 않지만 Stubbing은 해둠
 		given(paymentSettlementProcessor.process(anyLong())).willReturn(1000);
 
 		// when
@@ -65,15 +70,15 @@ class PaymentProcessSettlementUseCaseUnitTest {
 		Settlement successItem = createSettlement(1L);
 		Settlement failItem = createSettlement(2L);
 
-		given(settlementRepository.findAllByStatus(eq(SettlementStatus.READY), any(Pageable.class)))
-			.willReturn(List.of(successItem, failItem));
+		given(settlementRepository.findSettlementsForBatch(eq(SettlementStatus.READY), any(), any(Pageable.class)))
+				.willReturn(List.of(successItem, failItem));
 
 		// 1번은 성공
 		given(paymentSettlementProcessor.process(1L)).willReturn(1000);
 
 		// 2번은 예외 발생
 		given(paymentSettlementProcessor.process(2L))
-			.willThrow(new RuntimeException("DB Lock Error"));
+				.willThrow(new RuntimeException("DB Lock Error"));
 
 		// when
 		int count = useCase.processSettlements(10);
@@ -89,8 +94,8 @@ class PaymentProcessSettlementUseCaseUnitTest {
 	@DisplayName("데이터 없음: 0 반환 및 로직 스킵")
 	void empty_data() {
 		// given
-		given(settlementRepository.findAllByStatus(any(), any()))
-			.willReturn(Collections.emptyList());
+		given(settlementRepository.findSettlementsForBatch(any(), any(), any()))
+				.willReturn(Collections.emptyList());
 
 		// when
 		int count = useCase.processSettlements(10);
