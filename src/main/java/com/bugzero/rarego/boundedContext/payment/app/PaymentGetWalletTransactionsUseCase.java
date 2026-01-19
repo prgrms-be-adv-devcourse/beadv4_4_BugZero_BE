@@ -18,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class PaymentGetWalletTransactionsUseCase {
-	private final PaymentSupport paymentSupport;
 	private final PaymentTransactionRepository paymentTransactionRepository;
 
 	@Transactional(readOnly = true)
