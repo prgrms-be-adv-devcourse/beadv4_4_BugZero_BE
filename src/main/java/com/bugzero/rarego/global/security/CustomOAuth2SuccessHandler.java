@@ -15,17 +15,14 @@ import com.bugzero.rarego.global.response.SuccessType;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import tools.jackson.databind.ObjectMapper;
 
 @Component
+@RequiredArgsConstructor
 public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler {
-	private final ObjectMapper objectMapper;
-
 	private static final String ACCESS_TOKEN_ATTRIBUTE = "accessToken";
-
-	public CustomOAuth2SuccessHandler(ObjectMapper objectMapper) {
-		this.objectMapper = objectMapper;
-	}
+	private final ObjectMapper objectMapper;
 
 	@Override
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
