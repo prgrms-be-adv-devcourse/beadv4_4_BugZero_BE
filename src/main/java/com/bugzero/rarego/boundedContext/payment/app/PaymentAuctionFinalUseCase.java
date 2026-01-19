@@ -100,7 +100,7 @@ public class PaymentAuctionFinalUseCase {
                         throw new CustomException(ErrorType.INVALID_ORDER_STATUS);
                 }
 
-                // 결제 기한 검증 (생성일 + 3일)
+                // 결제 기한 검증
                 LocalDateTime deadline = order.createdAt().plusDays(3);
                 if (LocalDateTime.now().isAfter(deadline)) {
                         throw new CustomException(ErrorType.PAYMENT_DEADLINE_EXCEEDED);
