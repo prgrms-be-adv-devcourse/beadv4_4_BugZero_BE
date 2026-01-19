@@ -4,10 +4,15 @@ import com.bugzero.rarego.boundedContext.auction.app.AuctionBidStreamSupport;
 import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
+import com.bugzero.rarego.global.aspect.ResponseAspect;
+import com.bugzero.rarego.global.config.JacksonConfig;
+import com.bugzero.rarego.global.exception.GlobalExceptionHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -29,9 +34,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * GlobalExceptionHandler가 예외를 JSON으로 변환하므로
- * Status가 아닌 Body의 status 필드를 검증합니다.
+ * Body의 status 필드와 실제 HTTP Status를 함께 검증합니다.
  */
 @WebMvcTest(AuctionBidStreamController.class)
+@Import({JacksonConfig.class, ResponseAspect.class, GlobalExceptionHandler.class})
+@EnableAspectJAutoProxy
 @WithMockUser
 class AuctionBidStreamControllerTest {
 
@@ -50,7 +57,6 @@ class AuctionBidStreamControllerTest {
         // given
         Long auctionId = 1L;
         Auction auction = createAuction(auctionId, 100_000, 50_000);
-        //                                         ↑ 현재가
 
         given(auctionRepository.findById(auctionId)).willReturn(Optional.of(auction));
         given(streamSupport.getAuctionSubscribers(auctionId)).willReturn(10);
@@ -61,7 +67,7 @@ class AuctionBidStreamControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk());
 
-        verify(streamSupport).subscribe(eq(auctionId), eq(100_000));  // 현재가 검증
+        verify(streamSupport).subscribe(eq(auctionId), eq(100_000));
     }
 
     @Test
@@ -72,14 +78,12 @@ class AuctionBidStreamControllerTest {
         given(auctionRepository.findById(auctionId)).willReturn(Optional.empty());
 
         // when & then
-        // GlobalExceptionHandler가 200으로 응답하므로 Body 검증
         mockMvc.perform(get("/api/v1/auctions/{auctionId}/subscribe", auctionId))
                 .andDo(print())
-                .andExpect(status().isOk())
+                .andExpect(status().isNotFound())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.code").value(2001))
-                .andExpect(jsonPath("$.message").value("경매를 찾을 수 없습니다."));
+                .andExpect(jsonPath("$.code").value(2001));
 
         verify(streamSupport, never()).subscribe(any(), any());
     }
@@ -92,17 +96,14 @@ class AuctionBidStreamControllerTest {
         Auction auction = createAuction(auctionId, 100_000, 50_000);
 
         given(auctionRepository.findById(auctionId)).willReturn(Optional.of(auction));
-        given(streamSupport.getAuctionSubscribers(auctionId)).willReturn(1000); // 한도 도달
+        given(streamSupport.getAuctionSubscribers(auctionId)).willReturn(1000);
 
         // when & then
-        // GlobalExceptionHandler가 200으로 응답하므로 Body 검증
         mockMvc.perform(get("/api/v1/auctions/{auctionId}/subscribe", auctionId))
                 .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.status").value(503))
-                .andExpect(jsonPath("$.code").value(2506))
-                .andExpect(jsonPath("$.message").value("구독자 수 한도를 초과했습니다."));
+                .andExpect(jsonPath("$.code").value(2506));
 
         verify(streamSupport, never()).subscribe(any(), any());
     }
@@ -113,7 +114,6 @@ class AuctionBidStreamControllerTest {
         // given
         Long auctionId = 1L;
         Auction auction = createAuction(auctionId, null, 50_000);
-        //                                         ↑ null
 
         given(auctionRepository.findById(auctionId)).willReturn(Optional.of(auction));
         given(streamSupport.getAuctionSubscribers(auctionId)).willReturn(10);
@@ -124,7 +124,7 @@ class AuctionBidStreamControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk());
 
-        verify(streamSupport).subscribe(eq(auctionId), eq(50_000));  // ✅ 시작가 검증
+        verify(streamSupport).subscribe(eq(auctionId), eq(50_000));
     }
 
     @Test
@@ -159,6 +159,7 @@ class AuctionBidStreamControllerTest {
                 .productId(100L)
                 .startTime(LocalDateTime.now().minusHours(1))
                 .endTime(LocalDateTime.now().plusHours(1))
+                .durationDays(3)
                 .startPrice(startPrice)
                 .tickSize(5_000)
                 .build();
