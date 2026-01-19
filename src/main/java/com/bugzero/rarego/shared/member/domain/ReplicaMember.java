@@ -20,4 +20,5 @@ public abstract class ReplicaMember extends BaseMember {
 	private LocalDateTime createdAt;
 
 	private LocalDateTime updatedAt;
+
 }
