@@ -16,6 +16,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.bugzero.rarego.boundedContext.product.domain.Inspection;
 import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
+import com.bugzero.rarego.boundedContext.product.domain.ProductCondition;
 import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
 import com.bugzero.rarego.boundedContext.product.out.InspectionRepository;
 import com.bugzero.rarego.global.exception.CustomException;
@@ -47,12 +48,14 @@ class ProductCreateInspectionUseCaseTest {
 		ProductInspectionRequestDto requestDto = new ProductInspectionRequestDto(
 			PRODUCT_ID,
 			InspectionStatus.APPROVED,
+			ProductCondition.MISB,
 			"검수 통과입니다."
 		);
 
 		Product product = Product.builder()
 			.sellerId(SELLER_ID)
 			.inspectionStatus(InspectionStatus.PENDING)
+			.productCondition(ProductCondition.INSPECTION)
 			.build();
 
 		Product spyProduct = spy(product);
@@ -81,11 +84,12 @@ class ProductCreateInspectionUseCaseTest {
 
 		assertThat(savedInspection.getProduct()).isEqualTo(spyProduct);
 		assertThat(savedInspection.getInspectorId()).isEqualTo(200L); // admin.getId()
-		assertThat(savedInspection.getStatus()).isEqualTo(InspectionStatus.APPROVED);
+		assertThat(savedInspection.getInspectionStatus()).isEqualTo(InspectionStatus.APPROVED);
 		assertThat(savedInspection.getReason()).isEqualTo("검수 통과입니다.");
 
 		// 2. 부가 로직 검증 (상품 상태 동기화)
 		verify(spyProduct).determineInspection(InspectionStatus.APPROVED);
+		verify(spyProduct).determineProductCondition(ProductCondition.MISB);
 	}
 
 	@Test
@@ -95,7 +99,8 @@ class ProductCreateInspectionUseCaseTest {
 		ProductInspectionRequestDto requestDto = new ProductInspectionRequestDto(
 			PRODUCT_ID,
 			InspectionStatus.REJECTED,
-			null // 사유 누락
+			ProductCondition.MISB,
+		null // 사유 누락
 		);
 
 		// when & then
@@ -112,7 +117,8 @@ class ProductCreateInspectionUseCaseTest {
 	void createInspection_fail_already_completed() {
 		// given
 		ProductInspectionRequestDto requestDto = new ProductInspectionRequestDto(
-			PRODUCT_ID, InspectionStatus.APPROVED, "사유"
+			PRODUCT_ID, InspectionStatus.APPROVED, ProductCondition.MISB
+			,"사유"
 		);
 
 		// 이미 APPROVED 상태인 상품 준비

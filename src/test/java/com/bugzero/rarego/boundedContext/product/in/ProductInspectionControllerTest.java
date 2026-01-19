@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.bugzero.rarego.boundedContext.product.app.ProductFacade;
 import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
+import com.bugzero.rarego.boundedContext.product.domain.ProductCondition;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
 import com.bugzero.rarego.shared.product.dto.ProductInspectionRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductInspectionResponseDto;
@@ -45,7 +46,8 @@ class ProductInspectionControllerTest {
 		// given
 		String inspectorId = "admin-1";
 		ProductInspectionRequestDto requestDto = new ProductInspectionRequestDto(
-			1L, InspectionStatus.APPROVED, "검수 승인 완료"
+			1L, InspectionStatus.APPROVED, ProductCondition.MISB,
+			"검수 승인 완료"
 		);
 
 		ProductInspectionResponseDto responseDto = ProductInspectionResponseDto.builder()
@@ -78,6 +80,7 @@ class ProductInspectionControllerTest {
 		ProductInspectionRequestDto invalidDto = new ProductInspectionRequestDto(
 			null,
 			InspectionStatus.APPROVED,
+			ProductCondition.MISB,
 			"검수 통과"
 		);
 
