@@ -131,6 +131,43 @@ public class AuctionBidStreamSupport {
         closeAllConnections(auctionId);
     }
 
+
+    /**
+     * 애플리케이션 종료 시 하트비트 스케줄러를 안전하게 종료
+     */
+    @PreDestroy
+    public void stopHeartbeat() {
+        log.info("SSE 하트비트 스케줄러 종료 시작...");
+        heartbeatScheduler.shutdown();
+        try {
+            if (!heartbeatScheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                heartbeatScheduler.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            heartbeatScheduler.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /**
+     * 현재 구독자 수 조회 (모니터링용)
+     */
+    public int getTotalSubscribers() {
+        return emitters.values().stream()
+                .mapToInt(CopyOnWriteArrayList::size)
+                .sum();
+    }
+
+    /**
+     * 특정 경매 구독자 수 조회
+     */
+    public int getAuctionSubscribers(Long auctionId) {
+        CopyOnWriteArrayList<SseEmitter> auctionEmitters = emitters.get(auctionId);
+        return auctionEmitters != null ? auctionEmitters.size() : 0;
+    }
+
+    // helper method
+
     /**
      * 브로드캐스트 공통 로직
      */
@@ -155,14 +192,18 @@ public class AuctionBidStreamSupport {
     }
 
     /**
-     * 개별 Emitter에 이벤트 전송
+     * 개별 Emitter에 이벤트 전송 (String 데이터 대응)
      */
     private void sendToEmitter(SseEmitter emitter, String eventName, String eventId, Object data)
             throws IOException {
+
+        // 데이터가 이미 String(JSON)이면 그대로 쓰고, 아니면 직렬화 수행
+        String jsonData = (data instanceof String) ? (String) data : objectMapper.writeValueAsString(data);
+
         emitter.send(SseEmitter.event()
                 .name(eventName)
                 .id(eventId)
-                .data(objectMapper.writeValueAsString(data))
+                .data(jsonData)
         );
     }
 
@@ -198,57 +239,32 @@ public class AuctionBidStreamSupport {
      */
     private void startHeartbeat() {
         heartbeatScheduler.scheduleAtFixedRate(() -> {
-            emitters.forEach((auctionId, auctionEmitters) -> {
-                auctionEmitters.forEach(emitter -> {
-                    try {
-                        sendToEmitter(
-                                emitter,
-                                "ping",
-                                System.currentTimeMillis() + "_ping",
-                                AuctionHeartbeatEventDto.create()
-                        );
-                    } catch (IOException e) {
-                        log.debug("하트비트 전송 실패 (연결 끊김)", e);
-                        removeEmitter(auctionId, emitter);
-                    }
+            try {
+                // 루프 밖에서 한 번만 JSON으로 직렬화
+                String heartbeatJson = objectMapper.writeValueAsString(AuctionHeartbeatEventDto.create());
+
+                emitters.forEach((auctionId, auctionEmitters) -> {
+                    auctionEmitters.forEach(emitter -> {
+                        try {
+                            // 미리 직렬화된 JSON 문자열 전달
+                            sendToEmitter(
+                                    emitter,
+                                    "ping",
+                                    System.currentTimeMillis() + "_ping",
+                                    heartbeatJson
+                            );
+                        } catch (IOException e) {
+                            log.debug("하트비트 전송 실패 (연결 끊김)", e);
+                            removeEmitter(auctionId, emitter);
+                        }
+                    });
                 });
-            });
+            } catch (Exception e) {
+                log.error("하트비트 직렬화 실패", e);
+            }
         }, HEARTBEAT_INTERVAL, HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
 
         log.info("SSE 하트비트 스케줄러 시작 - {}초 간격", HEARTBEAT_INTERVAL);
     }
 
-    /**
-     * 애플리케이션 종료 시 하트비트 스케줄러를 안전하게 종료
-     */
-    @PreDestroy
-    public void stopHeartbeat() {
-        log.info("SSE 하트비트 스케줄러 종료 시작...");
-        heartbeatScheduler.shutdown();
-        try {
-            if (!heartbeatScheduler.awaitTermination(5, TimeUnit.SECONDS)) {
-                heartbeatScheduler.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            heartbeatScheduler.shutdownNow();
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    /**
-     * 현재 구독자 수 조회 (모니터링용)
-     */
-    public int getTotalSubscribers() {
-        return emitters.values().stream()
-                .mapToInt(CopyOnWriteArrayList::size)
-                .sum();
-    }
-
-    /**
-     * 특정 경매 구독자 수 조회
-     */
-    public int getAuctionSubscribers(Long auctionId) {
-        CopyOnWriteArrayList<SseEmitter> auctionEmitters = emitters.get(auctionId);
-        return auctionEmitters != null ? auctionEmitters.size() : 0;
-    }
 }

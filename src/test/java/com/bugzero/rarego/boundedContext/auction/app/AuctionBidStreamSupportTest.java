@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -35,13 +34,11 @@ class AuctionBidStreamSupportTest {
         // given
         Long auctionId = 1L;
         Integer currentPrice = 100_000;
-        AtomicInteger eventCount = new AtomicInteger(0);
         CountDownLatch latch = new CountDownLatch(1);
 
         // when
         SseEmitter emitter = support.subscribe(auctionId, currentPrice);
-
-        emitter.onCompletion(() -> latch.countDown());
+        emitter.onCompletion(latch::countDown);
 
         // then
         assertThat(support.getAuctionSubscribers(auctionId)).isEqualTo(1);
@@ -75,8 +72,8 @@ class AuctionBidStreamSupportTest {
     void broadcastAuctionEnded_ClosesAllConnections() throws Exception {
         // given
         Long auctionId = 1L;
-        SseEmitter emitter1 = support.subscribe(auctionId, 100_000);
-        SseEmitter emitter2 = support.subscribe(auctionId, 100_000);
+        support.subscribe(auctionId, 100_000);
+        support.subscribe(auctionId, 100_000);
 
         assertThat(support.getAuctionSubscribers(auctionId)).isEqualTo(2);
 
@@ -89,31 +86,7 @@ class AuctionBidStreamSupportTest {
     }
 
     @Test
-    @DisplayName("스프링 컨테이너 종료 시(PreDestroy) 하트비트 스케줄러가 안전하게 정지되어야 한다")
-    void stopHeartbeat_ShouldShutdownScheduler() throws Exception {
-        // given
-        // AuctionBidStreamSupport 내부의 private 필드인 heartbeatScheduler에 접근
-        Field field = AuctionBidStreamSupport.class.getDeclaredField("heartbeatScheduler");
-        field.setAccessible(true);
-        ScheduledExecutorService scheduler = (ScheduledExecutorService) field.get(support);
-
-        // 스케줄러가 처음에는 실행 중인지 확인
-        assertThat(scheduler.isShutdown()).isFalse();
-
-        // when
-        // @PreDestroy 메서드를 명시적으로 호출 (스프링 종료 상황 시뮬레이션)
-        support.stopHeartbeat();
-
-        // then
-        // 1. 스케줄러가 종료 상태여야 함
-        assertTrue(scheduler.isShutdown(), "스케줄러가 shutdown 상태여야 합니다.");
-
-        // 2. 새로운 작업이 더 이상 수락되지 않아야 함 (이미 종료되었으므로)
-        assertTrue(scheduler.isTerminated() || scheduler.isShutdown());
-    }
-
-    @Test
-    @DisplayName("여러 경매 동시 구독")
+    @DisplayName("여러 경매 동시 구독 및 전체 구독자 수 확인")
     void multipleAuctions() {
         // given & when
         support.subscribe(1L, 100_000);
@@ -129,25 +102,27 @@ class AuctionBidStreamSupportTest {
     }
 
     @Test
-    @DisplayName("Emitter 타임아웃 콜백 검증")
-    void testEmitterTimeoutCallback() {
-        // given
-        Long auctionId = 1L;
+    @DisplayName("스프링 컨테이너 종료 시(PreDestroy) 하트비트 스케줄러가 안전하게 정지되어야 한다")
+    void stopHeartbeat_ShouldShutdownScheduler() throws Exception {
+        // given: Reflection을 사용하여 private 필드인 heartbeatScheduler에 접근
+        Field field = AuctionBidStreamSupport.class.getDeclaredField("heartbeatScheduler");
+        field.setAccessible(true);
+        ScheduledExecutorService scheduler = (ScheduledExecutorService) field.get(support);
 
-        // when
-        SseEmitter emitter = support.subscribe(auctionId, 100_000);
+        // 초기 상태 확인 (실행 중이어야 함)
+        assertThat(scheduler.isShutdown()).isFalse();
 
-        // emitter의 onTimeout 메서드가 제대로 호출되는지 검증
-        emitter.onTimeout(() -> {
-            // 타임아웃 시 수행되어야 할 로직 검증
-            assertThat(support.getAuctionSubscribers(auctionId)).isEqualTo(0);
-        });
+        // when: 종료 메서드 호출
+        support.stopHeartbeat();
+
+        // then: 스케줄러가 shutdown 상태인지 검증
+        assertTrue(scheduler.isShutdown(), "스케줄러가 shutdown 상태여야 합니다.");
     }
 
     @Test
     @DisplayName("이름 마스킹 테스트")
     void maskName() {
-        // AuctionBidEventDto의 getMaskedBidderName 메서드를 통해 테스트
+        // given
         AuctionBidEventDto event = AuctionBidEventDto.create(
                 1L,
                 100_000,
@@ -155,8 +130,10 @@ class AuctionBidStreamSupportTest {
                 LocalDateTime.now()
         );
 
+        // then
         assertThat(event.getMaskedBidderName()).isEqualTo("김*수");
 
+        // given
         AuctionBidEventDto event2 = AuctionBidEventDto.create(
                 1L,
                 100_000,
@@ -164,6 +141,7 @@ class AuctionBidStreamSupportTest {
                 LocalDateTime.now()
         );
 
+        // then
         assertThat(event2.getMaskedBidderName()).contains("*");
         assertThat(event2.getMaskedBidderName()).startsWith("le");
     }
