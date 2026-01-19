@@ -41,7 +41,7 @@ class InternalAuctionControllerTest {
     private AuctionSettleAuctionFacade facade;
 
     @MockitoBean
-    private AuctionFacade auctionFacade; // 타임아웃 처리를 위한 Facade 유지
+    private AuctionFacade auctionFacade;
 
     @Nested
     @DisplayName("경매 정산 API")
@@ -156,6 +156,33 @@ class InternalAuctionControllerTest {
                     .andExpect(jsonPath("$.status").value(SuccessType.OK.getHttpStatus()))
                     .andExpect(jsonPath("$.data.processedCount").value(0))
                     .andExpect(jsonPath("$.data.details").isEmpty());
+
+            verify(auctionFacade, times(1)).processPaymentTimeout();
+        }
+
+        @Test
+        @DisplayName("단일 주문 타임아웃 처리")
+        void processPaymentTimeout_SingleOrder() throws Exception {
+            // given
+            List<TimeoutDetail> details = List.of(
+                    new TimeoutDetail(8888L, 9999L, 200L, 0, AuctionOrderStatus.FAILED)
+            );
+
+            AuctionPaymentTimeoutResponse mockResponse = new AuctionPaymentTimeoutResponse(
+                    LocalDateTime.now(),
+                    1,
+                    details
+            );
+
+            given(auctionFacade.processPaymentTimeout()).willReturn(mockResponse);
+
+            // when & then
+            mockMvc.perform(post("/api/v1/internal/auctions/timeout"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.processedCount").value(1))
+                    .andExpect(jsonPath("$.data.details").isArray())
+                    .andExpect(jsonPath("$.data.details.length()").value(1));
 
             verify(auctionFacade, times(1)).processPaymentTimeout();
         }

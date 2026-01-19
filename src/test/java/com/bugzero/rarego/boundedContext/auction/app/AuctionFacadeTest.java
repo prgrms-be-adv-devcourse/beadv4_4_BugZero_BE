@@ -129,10 +129,8 @@ class AuctionFacadeTest {
         Auction auction = Auction.builder()
                 .productId(50L)
                 .startPrice(10000)
-                .tickSize(1000)
                 .startTime(LocalDateTime.now())
                 .endTime(LocalDateTime.now().plusDays(1))
-                .durationDays(1)
                 .build();
         ReflectionTestUtils.setField(auction, "id", auctionId);
         auction.startAuction();
@@ -145,7 +143,7 @@ class AuctionFacadeTest {
                 .build();
         ReflectionTestUtils.setField(bid, "id", 1L);
 
-        given(bidRepository.findMyBids(eq(memberId), isNull(), any(Pageable.class)))
+        given(bidRepository.findMyBids(eq(memberId), any(), any(Pageable.class)))
                 .willReturn(new PageImpl<>(List.of(bid)));
 
         given(auctionRepository.findAllById(anySet())).willReturn(List.of(auction));
@@ -188,6 +186,7 @@ class AuctionFacadeTest {
             // then
             assertThat(result).isEqualTo(expectedResponse);
             assertThat(result.processedCount()).isEqualTo(2);
+            assertThat(result.details()).hasSize(2);
             verify(auctionProcessTimeoutUseCase, times(1)).execute();
         }
 
@@ -208,12 +207,34 @@ class AuctionFacadeTest {
 
             // then
             assertThat(result.processedCount()).isZero();
+            assertThat(result.details()).isEmpty();
             verify(auctionProcessTimeoutUseCase, times(1)).execute();
+        }
+
+        @Test
+        @DisplayName("requestTime이 포함된 응답 반환")
+        void processPaymentTimeout_responseContainsRequestTime() {
+            // given
+            LocalDateTime requestTime = LocalDateTime.of(2026, 1, 18, 15, 30, 0);
+            AuctionPaymentTimeoutResponse expectedResponse = new AuctionPaymentTimeoutResponse(
+                    requestTime,
+                    0,
+                    List.of()
+            );
+
+            given(auctionProcessTimeoutUseCase.execute()).willReturn(expectedResponse);
+
+            // when
+            AuctionPaymentTimeoutResponse result = auctionFacade.processPaymentTimeout();
+
+            // then
+            assertThat(result.requestTime()).isEqualTo(requestTime);
         }
     }
 
     /*
      * TODO: GitHub Actions 환경에서 실패하는 문제 해결 필요
+     * - 로컬과 CI 환경 간의 데이터 로딩 혹은 Mocking 차이 분석 필요
      * @Test
     @DisplayName("나의 판매 목록 조회: 상품, 주문, 입찰수 정보를 종합하여 반환한다")
     void getMySales_Success() {
