@@ -9,9 +9,10 @@ public record MemberDto(
 	String nickname,
 	String intro,
 	String address,
+	String addressDetail,
 	String zipCode,
 	String contactPhone,
-	String realNameEnc,
+	String realName,
 	LocalDateTime createdAt,
 	LocalDateTime updatedAt,
 	boolean deleted
@@ -24,9 +25,10 @@ public record MemberDto(
 			member.getNickname(),
 			member.getIntro(),
 			member.getAddress(),
+			member.getAddressDetail(),
 			member.getZipCode(),
 			member.getContactPhone(),
-			member.getRealNameEnc(),
+			member.getRealName(),
 			member.getCreatedAt(),
 			member.getUpdatedAt(),
 			member.isDeleted()

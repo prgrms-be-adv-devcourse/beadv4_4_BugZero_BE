@@ -4,6 +4,7 @@ import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.Bid;
+import com.bugzero.rarego.boundedContext.auction.domain.event.AuctionBidCreatedEvent;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
@@ -13,6 +14,8 @@ import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
 import com.bugzero.rarego.shared.payment.out.PaymentApiClient;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +30,7 @@ public class AuctionCreateBidUseCase {
 	private final BidRepository bidRepository;
 	private final AuctionMemberRepository auctionMemberRepository;
 	private final PaymentApiClient paymentApiClient;
+	private final ApplicationEventPublisher eventPublisher;
 
 	@Transactional
 	public BidResponseDto createBid(Long auctionId, String memberPublicId, int bidAmount) {
@@ -61,6 +65,10 @@ public class AuctionCreateBidUseCase {
 			.build();
 
 		bidRepository.save(bid);
+
+		eventPublisher.publishEvent(
+			AuctionBidCreatedEvent.of(auctionId, bidder.getId(), bidAmount)
+		);
 
 		return BidResponseDto.from(
 			bid,

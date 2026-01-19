@@ -2,12 +2,15 @@ package com.bugzero.rarego.boundedContext.payment.app;
 
 import org.springframework.stereotype.Service;
 
+import com.bugzero.rarego.boundedContext.payment.domain.WalletTransactionType;
 import com.bugzero.rarego.boundedContext.payment.in.dto.AuctionFinalPaymentRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.AuctionFinalPaymentResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestResponseDto;
+import com.bugzero.rarego.boundedContext.payment.in.dto.WalletTransactionResponseDto;
+import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldRequestDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
 
@@ -22,6 +25,7 @@ public class PaymentFacade {
 	private final PaymentConfirmPaymentUseCase paymentConfirmPaymentUseCase;
 	private final PaymentProcessSettlementUseCase paymentProcessSettlementUseCase;
 	private final PaymentAuctionFinalUseCase paymentAuctionFinalUseCase;
+	private final PaymentGetWalletTransactionsUseCase paymentGetWalletTransactionsUseCase;
 
 	/**
 	 * 보증금 홀딩
@@ -62,7 +66,16 @@ public class PaymentFacade {
 	 * 낙찰 결제 (최종 결제)
 	 */
 	public AuctionFinalPaymentResponseDto auctionFinalPayment(Long memberId, Long auctionId,
-			AuctionFinalPaymentRequestDto requestDto) {
+		AuctionFinalPaymentRequestDto requestDto) {
 		return paymentAuctionFinalUseCase.finalPayment(memberId, auctionId, requestDto);
+	}
+
+	/**
+	 * 지갑 거래 내역 조회
+	 */
+	public PagedResponseDto<WalletTransactionResponseDto> getWalletTransactions(Long memberId, int page, int size,
+		WalletTransactionType transactionType) {
+		return paymentGetWalletTransactionsUseCase.getWalletTransactions(memberId, page, size, transactionType);
+
 	}
 }

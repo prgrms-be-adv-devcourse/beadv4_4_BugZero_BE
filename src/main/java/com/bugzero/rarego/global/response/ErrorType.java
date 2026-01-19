@@ -37,6 +37,7 @@ public enum ErrorType {
 	AUCTION_NOT_SCHEDULED(400, 2503, "예정된 경매가 아닙니다."),
 	AUCTION_SCHEDULE_FAILED(500, 2504, "경매 정산 예약에 실패했습니다."),
 	SCHEDULER_CAPACITY_EXCEEDED(503, 2505, "스케줄러 용량이 초과되었습니다."),
+	SERVICE_SUBSCRIBER_LIMIT_EXCEEDED(503, 2506, "구독자 수 한도를 초과했습니다."),
 
 	// Product (3000 ~ 3999)
 	PRODUCT_NOT_FOUND(404, 3000, "상품을 찾을 수 없습니다."),
@@ -59,7 +60,8 @@ public enum ErrorType {
 	NOT_AUCTION_WINNER(403, 4202, "낙찰자만 결제할 수 있습니다."),
 	INVALID_ORDER_STATUS(409, 4203, "결제 가능한 주문 상태가 아닙니다."),
 	DEPOSIT_NOT_FOUND(404, 4204, "보증금 정보를 찾을 수 없습니다."),
-	ALREADY_USED_DEPOSIT(409, 4205, "이미 사용된 보증금입니다.");
+	ALREADY_USED_DEPOSIT(409, 4205, "이미 사용된 보증금입니다."),
+	PAYMENT_DEADLINE_EXCEEDED(400, 4206, "결제 기한이 지났습니다.");
 
 	private final Integer httpStatus;
 	private final int code;

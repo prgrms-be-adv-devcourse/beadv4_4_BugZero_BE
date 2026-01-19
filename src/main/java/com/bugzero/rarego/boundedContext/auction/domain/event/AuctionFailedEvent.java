@@ -1,4 +1,4 @@
-package com.bugzero.rarego.boundedContext.auction.domain;
+package com.bugzero.rarego.boundedContext.auction.domain.event;
 
 /**
  * 경매 실패(유찰) 시 발행되는 이벤트
