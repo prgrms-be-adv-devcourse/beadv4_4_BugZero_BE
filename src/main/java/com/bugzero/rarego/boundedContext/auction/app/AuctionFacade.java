@@ -14,9 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.Bid;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
@@ -26,9 +28,11 @@ import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.PageDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
+import com.bugzero.rarego.shared.auction.dto.AuctionFilterType;
 import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
+import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -45,6 +49,7 @@ public class AuctionFacade {
 	private final AuctionMemberRepository auctionMemberRepository;
 	private final AuctionRepository auctionRepository;
 	private final ProductRepository productRepository;
+	private final AuctionOrderRepository auctionOrderRepository;
 
 	@Transactional
 	public SuccessResponseDto<BidResponseDto> createBid(Long auctionId, Long memberId, int bidAmount) {
@@ -96,6 +101,47 @@ public class AuctionFacade {
 		return new PagedResponseDto<>(dtoPage.getContent(), PageDto.from(dtoPage));
 	}
 
+	public PagedResponseDto<MySaleResponseDto> getMySales(Long memberId, AuctionFilterType auctionFilterType, Pageable pageable) {
+		// 상품 Id 목록 조회
+		List<Long> myProductIds = productRepository.findAllIdsBySellerId(memberId);
+
+		// 경매 목록 조회
+		Page<Auction> auctionPage = fetchAuctionsByFilter(myProductIds, auctionFilterType, pageable);
+		List<Auction> auctions = auctionPage.getContent();
+
+		if (auctions.isEmpty()) {
+			return new PagedResponseDto<>(List.of(), PageDto.from(auctionPage));
+		}
+
+		// 연관 데이터 일괄적으로 조회
+		Set<Long> productIds = auctions.stream().map(Auction::getProductId).collect(Collectors.toSet());
+		Set<Long> auctionIds = auctions.stream().map(Auction::getId).collect(Collectors.toSet());
+
+		// 상품 정보
+		Map<Long, Product> productMap = productRepository.findAllByIdIn(productIds).stream()
+			.collect(Collectors.toMap(Product::getId, p -> p));
+
+		// 주문 정보 (거래 상태)
+		Map<Long, AuctionOrder> orderMap = auctionOrderRepository.findAllByAuctionIdIn(auctionIds).stream()
+			.collect(Collectors.toMap(AuctionOrder::getAuctionId, Function.identity()));
+
+		// 입찰 횟수 정보
+		Map<Long, Integer> bidCountMap = bidRepository.countByAuctionIdIn(auctionIds).stream()
+			.collect(Collectors.toMap(row -> (Long) row[0], row -> ((Long) row[1]).intValue()));
+
+		// DTO 변환
+		List<MySaleResponseDto> dtoList = auctions.stream()
+			.map(auction -> MySaleResponseDto.from(
+				auction,
+				productMap.get(auction.getProductId()),
+				orderMap.get(auction.getId()),
+				bidCountMap.getOrDefault(auction.getId(), 0)
+			))
+			.toList();
+
+		return new PagedResponseDto<>(dtoList, PageDto.from(auctionPage));
+	}
+
 
 	// =========================================================================
 	//  Helper Methods (Private) - 복잡한 조회/매핑 로직을 아래로 숨김
@@ -125,4 +171,22 @@ public class AuctionFacade {
 			.collect(Collectors.toMap(Auction::getId, Function.identity()));
 	}
 
+	private Page<Auction> fetchAuctionsByFilter(List<Long> productIds, AuctionFilterType filter, Pageable pageable) {
+		switch (filter) {
+			// 진행 중 & 진행 예정
+			case ONGOING:
+				return auctionRepository.findAllByProductIdInAndStatusIn(productIds,
+					List.of(AuctionStatus.SCHEDULED, AuctionStatus.IN_PROGRESS), pageable);
+			// 판매 완료 (정상 거래)
+			case COMPLETED:
+				return auctionRepository.findAllByProductIdInAndStatusIn(productIds,
+					List.of(AuctionStatus.ENDED), pageable);
+			// 유찰 등 조치 필요
+			case ACTION_REQUIRED:
+				return auctionRepository.findAllByProductIdInAndStatusIn(productIds,
+					List.of(AuctionStatus.ENDED), pageable);
+			default:
+				return auctionRepository.findAllByProductIdIn(productIds, pageable);
+		}
+	}
 }

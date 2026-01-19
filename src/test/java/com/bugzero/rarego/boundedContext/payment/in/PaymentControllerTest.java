@@ -26,9 +26,11 @@ import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmRequestDto
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestResponseDto;
+import com.bugzero.rarego.boundedContext.payment.in.dto.WalletTransactionResponseDto;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
+import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 
 import tools.jackson.databind.ObjectMapper;
@@ -343,5 +345,75 @@ class PaymentControllerTest {
 			.andDo(print())
 			.andExpect(status().isBadRequest())
 			.andExpect(jsonPath("$.message").value(ErrorType.INSUFFICIENT_BALANCE.getMessage()));
+	}
+
+	@Test
+	@DisplayName("성공: 지갑 거래 내역 조회 시 기본 페이징 파라미터가 적용된다")
+	void getWalletTransactions_success_default() throws Exception {
+		// given
+		Long memberId = 1L;
+
+		// Mock 응답 데이터 생성 (빈 페이지)
+		PagedResponseDto<WalletTransactionResponseDto> emptyPageResponse =
+			new PagedResponseDto<>(java.util.Collections.emptyList(),
+				new com.bugzero.rarego.global.response.PageDto(1, 10, 0, 0, false, false));
+
+		// Facade 호출 스텁: page=0, size=10, type=null (기본값)
+		given(paymentFacade.getWalletTransactions(eq(memberId), eq(0), eq(10), isNull()))
+			.willReturn(emptyPageResponse);
+
+		// when & then
+		mockMvc.perform(get("/api/v1/payments/me/wallet-transactions")
+				.param("memberId", String.valueOf(memberId))
+				// page, size, transactionType 생략 -> 기본값 적용 확인
+				.contentType(MediaType.APPLICATION_JSON))
+			.andDo(print())
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value(SuccessType.OK.getHttpStatus()))
+			.andExpect(jsonPath("$.data.data").isArray());
+	}
+
+	@Test
+	@DisplayName("성공: 거래 유형(Type)과 페이징 조건을 지정하여 지갑 내역을 조회한다")
+	void getWalletTransactions_success_filtering() throws Exception {
+		// given
+		Long memberId = 1L;
+		int page = 1;
+		int size = 5;
+		com.bugzero.rarego.boundedContext.payment.domain.WalletTransactionType type =
+			com.bugzero.rarego.boundedContext.payment.domain.WalletTransactionType.TOPUP_DONE;
+
+		// Mock 응답 데이터 생성
+		PagedResponseDto<WalletTransactionResponseDto> mockResponse =
+			new PagedResponseDto<>(java.util.Collections.emptyList(),
+				new com.bugzero.rarego.global.response.PageDto(page + 1, size, 0, 0, false, false));
+
+		// Facade 호출 스텁: 파라미터가 정확히 전달되는지 검증
+		given(paymentFacade.getWalletTransactions(eq(memberId), eq(page), eq(size), eq(type)))
+			.willReturn(mockResponse);
+
+		// when & then
+		mockMvc.perform(get("/api/v1/payments/me/wallet-transactions")
+				.param("memberId", String.valueOf(memberId))
+				.param("page", String.valueOf(page))
+				.param("size", String.valueOf(size))
+				.param("transactionType", type.name()) // Enum -> String 변환 전달
+				.contentType(MediaType.APPLICATION_JSON))
+			.andDo(print())
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value(SuccessType.OK.getHttpStatus()));
+	}
+
+	@Test
+	@DisplayName("실패: 필수 파라미터(memberId)가 누락되면 HTTP 400을 반환한다")
+	void getWalletTransactions_fail_missing_param() throws Exception {
+		// given
+		// memberId 누락
+
+		// when & then
+		mockMvc.perform(get("/api/v1/payments/me/wallet-transactions")
+				.contentType(MediaType.APPLICATION_JSON))
+			.andDo(print())
+			.andExpect(status().isBadRequest()); // Spring Default: MissingServletRequestParameterException
 	}
 }

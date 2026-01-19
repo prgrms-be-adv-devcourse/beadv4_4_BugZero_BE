@@ -1,7 +1,7 @@
 package com.bugzero.rarego.boundedContext.auction.in;
 
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionCreatedEvent;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionUpdatedEvent;
+import com.bugzero.rarego.boundedContext.auction.domain.event.AuctionCreatedEvent;
+import com.bugzero.rarego.boundedContext.auction.domain.event.AuctionUpdatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
