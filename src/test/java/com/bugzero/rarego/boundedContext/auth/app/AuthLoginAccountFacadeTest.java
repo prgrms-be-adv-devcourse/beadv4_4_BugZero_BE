@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.bugzero.rarego.boundedContext.auth.domain.Account;
+import com.bugzero.rarego.boundedContext.auth.domain.AccountDto;
 import com.bugzero.rarego.boundedContext.auth.domain.AuthRole;
 import com.bugzero.rarego.boundedContext.auth.domain.Provider;
 import com.bugzero.rarego.boundedContext.auth.domain.TokenIssueDto;
@@ -48,10 +49,12 @@ class AuthLoginAccountFacadeTest {
 		when(authIssueTokenUseCase.issueToken(any(TokenIssueDto.class), eq(true)))
 			.thenReturn("token");
 
-		String token = authLoginAccountFacade.loginOrSignup(Provider.GOOGLE, "google-123");
+		String token = authLoginAccountFacade.loginOrSignup(
+			new AccountDto("google-123", "test@example.com", Provider.GOOGLE)
+		);
 
 		assertThat(token).isEqualTo("token");
-		verify(authJoinAccountUseCase, never()).join(any(), anyString());
+		verify(authJoinAccountUseCase, never()).join(any(), anyString(), anyString());
 		verify(authFindAccountUseCase).findByProviderAndProviderId(Provider.GOOGLE, "google-123");
 		verify(authIssueTokenUseCase).issueToken(argThat(dto ->
 			existing.getMemberPublicId().equals(dto.memberPublicId())
@@ -71,17 +74,19 @@ class AuthLoginAccountFacadeTest {
 
 		when(authFindAccountUseCase.findByProviderAndProviderId(Provider.KAKAO, "kakao-456"))
 			.thenReturn(Optional.empty());
-		when(authJoinAccountUseCase.join(Provider.KAKAO, "kakao-456"))
+		when(authJoinAccountUseCase.join(Provider.KAKAO, "kakao-456", "kakao@example.com"))
 			.thenReturn(created);
 		when(authIssueTokenUseCase.issueToken(any(TokenIssueDto.class), eq(true)))
 			.thenReturn("token");
 
-		String token = authLoginAccountFacade.loginOrSignup(Provider.KAKAO, "kakao-456");
+		String token = authLoginAccountFacade.loginOrSignup(
+			new AccountDto("kakao-456", "kakao@example.com", Provider.KAKAO)
+		);
 
 		ArgumentCaptor<TokenIssueDto> captor = ArgumentCaptor.forClass(TokenIssueDto.class);
 
 		assertThat(token).isEqualTo("token");
-		verify(authJoinAccountUseCase).join(Provider.KAKAO, "kakao-456");
+		verify(authJoinAccountUseCase).join(Provider.KAKAO, "kakao-456", "kakao@example.com");
 		verify(authIssueTokenUseCase).issueToken(captor.capture(), eq(true));
 		assertThat(captor.getValue().memberPublicId()).isEqualTo(created.getMemberPublicId());
 		assertThat(captor.getValue().role()).isEqualTo(created.getRole().name());

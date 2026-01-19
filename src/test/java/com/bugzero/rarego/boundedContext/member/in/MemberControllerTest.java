@@ -40,15 +40,46 @@ import com.bugzero.rarego.global.security.MemberPrincipal;
 import com.bugzero.rarego.shared.auction.dto.AuctionFilterType;
 import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
+import com.bugzero.rarego.boundedContext.member.app.MemberFacade;
+import com.bugzero.rarego.global.aspect.ResponseAspect;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
+import com.bugzero.rarego.global.response.PageDto;
+import com.bugzero.rarego.global.response.PagedResponseDto;
+import com.bugzero.rarego.global.response.SuccessType;
+import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
+import com.bugzero.rarego.shared.member.domain.MemberJoinRequestDto;
+import com.bugzero.rarego.shared.member.domain.MemberJoinResponseDto;
+
+import tools.jackson.databind.ObjectMapper;
 
 @WebMvcTest(controllers = MemberController.class)
 @Import(ResponseAspect.class)
 @EnableAspectJAutoProxy
+@AutoConfigureMockMvc(addFilters = false)
 class MemberControllerTest {
-
+	@Autowired
 	private MockMvc mockMvc;
 
 	@Autowired
+	private ObjectMapper objectMapper;
+  
+  @Autowired
 	private MemberController memberController;
 
 	@MockitoBean
@@ -149,5 +180,70 @@ class MemberControllerTest {
 			.andExpect(jsonPath("$.data[0].title").value("내 판매 상품"))
 			.andExpect(jsonPath("$.data[0].bidCount").value(5))
 			.andExpect(jsonPath("$.data[0].tradeStatus").value("PROCESSING"));
+	}
+}
+
+	@MockitoBean
+	private MemberFacade memberFacade;
+
+	@Test
+	@DisplayName("성공: 회원 가입 요청이 정상 처리되면 HTTP 201과 결과 데이터를 반환한다")
+	void join_success() throws Exception {
+		MemberJoinRequestDto requestDto = new MemberJoinRequestDto("new@example.com");
+		MemberJoinResponseDto responseDto = new MemberJoinResponseDto("newbie", "public-id");
+
+		given(memberFacade.join("new@example.com")).willReturn(responseDto);
+
+		mockMvc.perform(post("/api/v1/members/me")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(requestDto)))
+			.andExpect(status().isCreated())
+			.andExpect(jsonPath("$.status").value(SuccessType.CREATED.getHttpStatus()))
+			.andExpect(jsonPath("$.message").value(SuccessType.CREATED.getMessage()))
+			.andExpect(jsonPath("$.data.memberPublicId").value("public-id"));
+	}
+
+	@Test
+	@DisplayName("실패: 이메일이 비어있으면 HTTP 400을 반환한다")
+	void join_fail_empty_email() throws Exception {
+		MemberJoinRequestDto requestDto = new MemberJoinRequestDto("");
+
+		given(memberFacade.join("")).willThrow(new CustomException(ErrorType.MEMBER_EMAIL_EMPTY));
+
+		mockMvc.perform(post("/api/v1/members/me")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(requestDto)))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.status").value(ErrorType.MEMBER_EMAIL_EMPTY.getHttpStatus()))
+			.andExpect(jsonPath("$.message").value(ErrorType.MEMBER_EMAIL_EMPTY.getMessage()));
+	}
+
+	@Test
+	@DisplayName("성공: 내 입찰 목록을 조회하면 페이징 결과를 반환한다")
+	@WithMockUser(username = "2", roles = "USER")
+	void getMyBids_success() throws Exception {
+		MyBidResponseDto bid = new MyBidResponseDto(
+			10L,
+			20L,
+			30L,
+			4000L,
+			LocalDateTime.of(2024, 1, 1, 10, 0),
+			AuctionStatus.IN_PROGRESS,
+			5000L,
+			LocalDateTime.of(2024, 1, 2, 10, 0)
+		);
+		PagedResponseDto<MyBidResponseDto> response = new PagedResponseDto<>(
+			List.of(bid),
+			new PageDto(1, 20, 1, 1, false, false)
+		);
+
+		given(auctionFacade.getMyBids(eq(2L), eq(AuctionStatus.IN_PROGRESS), any(Pageable.class)))
+			.willReturn(response);
+
+		mockMvc.perform(get("/api/v1/members/me/bids")
+				.param("auctionStatus", "IN_PROGRESS"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data[0].auctionId").value(20L))
+			.andExpect(jsonPath("$.pageDto.totalItems").value(1));
 	}
 }
