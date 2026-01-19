@@ -32,6 +32,7 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
+import com.bugzero.rarego.global.exception.GlobalExceptionHandler;
 import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
