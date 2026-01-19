@@ -26,43 +26,31 @@ repositories {
 }
 
 dependencies {
-    // AWS S3
-    implementation(platform("software.amazon.awssdk:bom:2.20.0"))
+    implementation(platform("software.amazon.awssdk:bom:2.41.10"))
     implementation("software.amazon.awssdk:s3")
-
-    // Spring Boot Starters
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
-
-    // Spring Batch
     implementation("org.springframework.boot:spring-boot-starter-batch")
     testImplementation("org.springframework.batch:spring-batch-test")
-
-    // Jackson (날짜/시간 처리)
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
-
-    // Utils
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("com.mysql:mysql-connector-j")
     annotationProcessor("org.projectlombok:lombok")
-
-    // Testing
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
     testImplementation("org.springframework.boot:spring-boot-starter-security-test")
     testImplementation("org.springframework.boot:spring-boot-starter-validation-test")
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testRuntimeOnly("com.h2database:h2")
+	implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 
-    // JWT
-    implementation("io.jsonwebtoken:jjwt-api:0.12.6")
-    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
-    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
+    implementation("io.jsonwebtoken:jjwt-api:0.13.0")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.13.0")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
 
     // Swagger/OpenAPI
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.4")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
 }
 
 tasks.withType<Test> {
@@ -93,7 +81,7 @@ tasks.jacocoTestCoverageVerification {
     violationRules {
         rule {
             limit {
-                // 초기 개발 단계이므로 0.00 유지
+                // 초기 개발 단계
                 minimum = "0.00".toBigDecimal()
             }
         }

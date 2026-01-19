@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -28,7 +29,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-@ExtendWith(org.mockito.junit.jupiter.MockitoExtension.class)
+@ExtendWith(MockitoExtension.class)
 class AuctionSettleOneUseCaseTest {
 
     @Mock
@@ -54,6 +55,7 @@ class AuctionSettleOneUseCaseTest {
                 .endTime(endTime)
                 .startPrice(10_000)
                 .tickSize(1_000)
+                .durationDays(1) // [dev 변경사항] 필드 추가
                 .build();
 
         ReflectionTestUtils.setField(auction, "id", id);

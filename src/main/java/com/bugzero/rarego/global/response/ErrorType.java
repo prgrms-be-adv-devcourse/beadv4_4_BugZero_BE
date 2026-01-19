@@ -12,16 +12,19 @@ public enum ErrorType {
 
     // Member (1000 ~ 1499)
     MEMBER_NOT_FOUND(404, 1001, "존재하지 않는 회원입니다."),
-
-    // Member (1500 ~ 1999)
-    // Auth/JWT
+    MEMBER_EMAIL_EMPTY(400, 1003, "이메일은 필수 입력값입니다."),
+    MEMBER_JOIN_FAILED(500, 1004, "회원 가입에 실패했습니다."),
+    // Auth/JWT (1500 ~ 1999)
     AUTH_MEMBER_REQUIRED(400, 1501, "회원 정보가 필요합니다."),
     JWT_EXPIRE_SECONDS_INVALID(500, 1504, "토큰 만료 설정이 올바르지 않습니다."),
     JWT_ISSUE_FAILED(500, 1505, "토큰 발급에 실패했습니다."),
     AUTH_UNAUTHORIZED(401, 1506, "인증이 필요합니다."),
     AUTH_FORBIDDEN(403, 1507, "권한이 없습니다."),
+    AUTH_OAUTH2_INVALID_RESPONSE(400, 1508, "유효하지 않은 소셜 로그인입니다."),
+    AUTH_JOIN_FAILED(500, 1509, "회원 가입에 실패했습니다."),
 
     // Auction (2000 ~ 2999)
+    AUCTION_CREATE_FAILED(500, 2000, "경매 생성에 실패했습니다."),
     AUCTION_NOT_FOUND(404, 2001, "경매를 찾을 수 없습니다."),
     AUCTION_NOT_IN_PROGRESS(400, 2002, "경매가 진행 중인 상태가 아닙니다."),
     AUCTION_ALREADY_HIGHEST_BIDDER(409, 2003, "현재 최고 입찰자이므로 연속 입찰할 수 없습니다."),

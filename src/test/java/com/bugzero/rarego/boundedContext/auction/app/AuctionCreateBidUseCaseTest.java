@@ -50,7 +50,7 @@ class AuctionCreateBidUseCaseTest {
     @Mock
     private PaymentApiClient paymentApiClient;
     @Mock
-    private ApplicationEventPublisher eventPublisher; // [추가] 이벤트 발행자 Mock
+    private ApplicationEventPublisher eventPublisher; // 이벤트 발행자 Mock 유지
 
     private final Long AUCTION_ID = 1L;
     private final Long PRODUCT_ID = 10L;
@@ -77,6 +77,7 @@ class AuctionCreateBidUseCaseTest {
                 .tickSize(1000)
                 .startTime(LocalDateTime.now().minusHours(1))
                 .endTime(LocalDateTime.now().plusHours(1))
+                .durationDays(1) // dev 브랜치 변경사항 반영
                 .build();
         ReflectionTestUtils.setField(auction, "id", AUCTION_ID);
         auction.startAuction();
@@ -95,7 +96,7 @@ class AuctionCreateBidUseCaseTest {
         // then
         verify(paymentApiClient).holdDeposit(eq(1000), eq(BIDDER_ID), eq(AUCTION_ID));
         verify(bidRepository).save(any(Bid.class));
-        verify(eventPublisher).publishEvent(any(AuctionBidCreatedEvent.class)); // [추가] 이벤트 발행 검증
+        verify(eventPublisher).publishEvent(any(AuctionBidCreatedEvent.class)); // 이벤트 발행 검증 유지
         assertThat(auction.getCurrentPrice()).isEqualTo(bidAmount);
     }
 
@@ -116,6 +117,7 @@ class AuctionCreateBidUseCaseTest {
                 .tickSize(1000)
                 .startTime(LocalDateTime.now().minusHours(1))
                 .endTime(LocalDateTime.now().plusHours(1))
+                .durationDays(1) // dev 브랜치 변경사항 반영
                 .build();
         ReflectionTestUtils.setField(auction, "id", AUCTION_ID);
         auction.startAuction();
@@ -150,6 +152,7 @@ class AuctionCreateBidUseCaseTest {
                 .tickSize(1000)
                 .startTime(LocalDateTime.now().minusHours(1))
                 .endTime(LocalDateTime.now().plusHours(1))
+                .durationDays(1) // dev 브랜치 변경사항 반영
                 .build();
         ReflectionTestUtils.setField(auction, "id", AUCTION_ID);
         auction.startAuction();

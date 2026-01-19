@@ -29,7 +29,7 @@ import java.util.UUID;
 @Profile("dev")
 public class AuctionDataInit {
 
-    private final AuctionDataInit self; // 프록시 호출용 (트랜잭션 보장)
+    private final AuctionDataInit self;
     private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
     private final ProductRepository productRepository;
@@ -62,7 +62,7 @@ public class AuctionDataInit {
     @Transactional
     public void makeBaseAuctionData() {
         if (auctionRepository.count() > 0) {
-            log.info("이미 경매 데이터가 존재합니다. 초기화를 건너뜁니다.");
+            log.info("이미 경매 데이터가 존재합니다. 초기화를 건너뜜.");
             return;
         }
 
@@ -78,7 +78,7 @@ public class AuctionDataInit {
 
         // 진행중 경매 + 입찰 경쟁 시나리오
         Product p1 = createProduct(seller.getId(), "[1-1] 레고 밀레니엄 팔콘");
-        Auction a1 = createAuction(p1.getId(), seller.getId(), -60, 1440, 10_000, 1_000); // 1시간전~24시간후
+        Auction a1 = createAuction(p1.getId(), seller.getId(), -60, 1440, 10_000, 1_000);
         createBid(a1, competitor, 11_000);
         createBid(a1, me, 12_000);
         createBid(a1, competitor, 13_000);
@@ -89,6 +89,10 @@ public class AuctionDataInit {
         createBid(a2, competitor, 1_050_000);
         createBid(a2, me, 1_100_000);
 
+        // 종료된 패찰 경매 (dev 추가분 반영)
+        Product p_fail = createProduct(seller.getId(), "[1-3] 아이폰 15 (패찰)");
+        createAuction(p_fail.getId(), seller.getId(), -180, -120, 2_000_000, 50_000);
+
         // [Part 2] 상태별/스케줄링 테스트 데이터
         log.info("--- [Part 2] 상태별/SSE 스케줄링 데이터 생성 ---");
 
@@ -96,7 +100,7 @@ public class AuctionDataInit {
         Product p3 = createProduct(seller.getId(), "테스트 상품 1 (낙찰대상)");
         Auction a3 = createAuction(p3.getId(), p3.getSellerId(), -120, -60, 10_000, 1_000);
         createBid(a3, me, 15_000);
-        a3.end(); // 종료 상태로 변경
+        a3.end();
 
         // 2-2. 종료 + 유찰 대상 (입찰 없음)
         Product p4 = createProduct(seller.getId(), "테스트 상품 2 (유찰대상)");
@@ -117,8 +121,6 @@ public class AuctionDataInit {
 
         log.info("=== 경매 테스트 데이터 초기화 완료 ===");
     }
-
-    // --- Helper Methods ---
 
     private AuctionMember createOrGetMember(Long id, String email, String nickname) {
         return auctionMemberRepository.findById(id)
@@ -152,6 +154,7 @@ public class AuctionDataInit {
                 .endTime(now.plusMinutes(endMinOffset))
                 .startPrice(startPrice)
                 .tickSize(tickSize)
+                .durationDays(7) // dev 변경사항 반영
                 .build();
 
         auction.forceStartForTest();
@@ -166,7 +169,7 @@ public class AuctionDataInit {
                 .build();
         bidRepository.save(bid);
 
-        auction.updateCurrentPrice(amount); // 입찰 시 현재가 갱신 반영
+        auction.updateCurrentPrice(amount);
         auctionRepository.save(auction);
     }
 

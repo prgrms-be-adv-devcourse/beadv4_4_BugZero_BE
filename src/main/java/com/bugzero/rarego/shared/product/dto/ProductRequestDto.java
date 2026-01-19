@@ -26,7 +26,7 @@ public record ProductRequestDto(
 	@NotEmpty(message = "이미지는 최소 1장 이상 등록해야 합니다.")
 	List<@Valid ProductImageRequestDto> productImageRequestDto
 ) {
-	public Product toEntity(long memberId) {
+	public Product toEntity(Long memberId) {
 		return Product.builder()
 			.sellerId(memberId)
 			.category(category)

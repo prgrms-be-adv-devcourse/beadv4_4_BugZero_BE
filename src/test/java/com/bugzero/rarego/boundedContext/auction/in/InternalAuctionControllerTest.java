@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(controllers = InternalAuctionController.class)
 @Import(ResponseAspect.class)
 @AutoConfigureMockMvc(addFilters = false)
-class InternalAuctionControllerTest {
+class InternalAuctionControllerTest { // 테스트 클래스명은 컨트롤러와 맞춤
 
     @Autowired
     private MockMvc mockMvc;
@@ -38,7 +38,7 @@ class InternalAuctionControllerTest {
     @Test
     @DisplayName("경매 자동 낙찰 처리 API 호출 성공")
     void settle_Success() throws Exception {
-        // given - DTO 빌더 활용
+        // given - dev에서 변경된 AuctionAutoResponseDto 사용
         AuctionAutoSettleResponseDto mockResponse = AuctionAutoSettleResponseDto.builder()
                 .requestTime(LocalDateTime.now())
                 .processedCount(10)
