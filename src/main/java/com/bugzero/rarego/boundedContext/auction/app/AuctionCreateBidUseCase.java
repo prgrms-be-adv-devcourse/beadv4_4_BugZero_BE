@@ -32,8 +32,8 @@ public class AuctionCreateBidUseCase {
     private final BidRepository bidRepository;
     private final AuctionMemberRepository auctionMemberRepository;
     private final ProductRepository productRepository;
-    private final PaymentApiClient paymentApiClient; // dev에서 추가된 의존성
-    private final ApplicationEventPublisher eventPublisher; // 질문자님이 추가한 SSE 발행자
+    private final PaymentApiClient paymentApiClient;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public SuccessResponseDto<BidResponseDto> createBid(Long auctionId, Long memberId, int bidAmount) {
@@ -53,7 +53,7 @@ public class AuctionCreateBidUseCase {
         // 4. 유효성 검증 (경매 상태, 연속 입찰, 시간, 최소 금액 등)
         validateBid(auction, product, memberId, bidAmount);
 
-        // 5. 보증금 Hold 처리 (dev 반영 사항)
+        // 5. 보증금 Hold 처리
         // 정책: 경매 시작 금액의 10%를 보증금으로 책정
         int depositAmount = (int) (auction.getStartPrice() * 0.1);
         // 결제 모듈 호출 (실패 시 예외 발생으로 전체 트랜잭션 롤백됨)
@@ -73,7 +73,7 @@ public class AuctionCreateBidUseCase {
 
         bidRepository.save(bid);
 
-        // 8. 실시간 SSE 입찰 이벤트 발행 (질문자님 반영 사항 - 매우 중요!)
+        // 8. 실시간 SSE 입찰 이벤트 발행
         eventPublisher.publishEvent(
                 AuctionBidCreatedEvent.of(auctionId, memberId, bidAmount)
         );
