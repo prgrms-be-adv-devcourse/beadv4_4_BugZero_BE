@@ -124,7 +124,7 @@ public class MemberUpdateMemberUseCase {
 			member.changeAddress(null);
 		}
 		if (clearFields.contains(MemberClearField.ADDRESS_DETAIL)) {
-			member.changeAddress(null);
+			member.changeAddressDetail(null);
 		}
 		if (clearFields.contains(MemberClearField.CONTACT_PHONE)) {
 			member.changeContactPhone(null);
