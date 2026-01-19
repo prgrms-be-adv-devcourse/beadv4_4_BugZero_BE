@@ -9,7 +9,6 @@ import com.bugzero.rarego.boundedContext.payment.domain.PaymentMember;
 import com.bugzero.rarego.boundedContext.payment.domain.PaymentTransaction;
 import com.bugzero.rarego.boundedContext.payment.domain.ReferenceType;
 import com.bugzero.rarego.boundedContext.payment.domain.Settlement;
-import com.bugzero.rarego.boundedContext.payment.domain.SettlementStatus;
 import com.bugzero.rarego.boundedContext.payment.domain.Wallet;
 import com.bugzero.rarego.boundedContext.payment.domain.WalletTransactionType;
 import com.bugzero.rarego.boundedContext.payment.in.dto.RefundResponseDto;
@@ -36,9 +35,9 @@ public class PaymentRefundUseCase {
     @Transactional
     public RefundResponseDto processRefund(Long auctionId) {
         // 1. 주문 조회 및 검증 (SUCCESS 상태만)
-        AuctionOrderDto order = findAndValidateOrder(auctionId);
+        AuctionOrderDto order = auctionOrderPort.refundOrderWithLock(auctionId);
 
-        // 2. 정산 상태 확인 및 락 (DONE이면 환불 불가)
+        // 2. 정산 상태 확인 및 락
         Settlement settlement = findAndValidateSettlement(auctionId);
 
         // 3. 구매자 지갑 잔액 증가 (+finalPrice)
@@ -49,50 +48,20 @@ public class PaymentRefundUseCase {
         // 4. 환불 트랜잭션 생성
         PaymentTransaction transaction = recordRefundTransaction(buyer, buyerWallet, order);
 
-        // 5. 주문 상태 변경 (SUCCESS → FAILED)
-        auctionOrderPort.refundOrder(auctionId);
-
-        // 6. Settlement 상태 변경 (READY → FAILED)
-        if (settlement != null) {
-            settlement.fail();
-        }
-
-        log.info("환불 처리 완료: auctionId={}, buyerId={}, refundAmount={}",
-                auctionId, order.bidderId(), order.finalPrice());
-
-        return new RefundResponseDto(
-                transaction.getId(),
-                auctionId,
-                order.finalPrice(),
-                buyer.getPublicId(),
-                buyerWallet.getBalance(),
-                "FAILED",
-                transaction.getCreatedAt());
-    }
-
-    private AuctionOrderDto findAndValidateOrder(Long auctionId) {
-        AuctionOrderDto order = auctionOrderPort.findByAuctionIdForUpdate(auctionId)
-                .orElseThrow(() -> new CustomException(ErrorType.AUCTION_ORDER_NOT_FOUND));
-
-        if (!"SUCCESS".equals(order.status())) {
-            throw new CustomException(ErrorType.INVALID_ORDER_STATUS);
-        }
-
-        return order;
+        // 5. Settlement 상태 변경 (() → FAILED)
+        settlement.fail();
+        log.info("환불 처리 완료: auctionId={}, buyerId={}, refundAmount={}", auctionId, order.bidderId(),
+                order.finalPrice());
+        return new RefundResponseDto(transaction.getId(), auctionId, order.finalPrice(), buyer.getPublicId(),
+                buyerWallet.getBalance(), transaction.getCreatedAt());
     }
 
     private Settlement findAndValidateSettlement(Long auctionId) {
         Optional<Settlement> settlementOpt = settlementRepository.findByAuctionIdForUpdate(auctionId);
-
-        if (settlementOpt.isPresent()) {
-            Settlement settlement = settlementOpt.get();
-            if (settlement.getStatus() == SettlementStatus.DONE) {
-                throw new CustomException(ErrorType.SETTLEMENT_ALREADY_COMPLETED);
-            }
-            return settlement;
+        if (settlementOpt.isEmpty()) {
+            throw new CustomException(ErrorType.SETTLEMENT_NOT_FOUND);
         }
-
-        return null;
+        return settlementOpt.get();
     }
 
     private PaymentTransaction recordRefundTransaction(PaymentMember buyer, Wallet wallet, AuctionOrderDto order) {
