@@ -168,76 +168,78 @@ class AuctionFacadeTest {
 	@Test
 	@DisplayName("나의 판매 목록 조회: 상품, 주문, 입찰수 정보를 종합하여 반환한다")
 	void getMySales_Success() {
-		// given
-		Long sellerId = 1L;
-		AuctionFilterType filter = AuctionFilterType.ALL;
-		Pageable pageable = PageRequest.of(0, 10);
-
-		given(productRepository.findAllIdsBySellerId(sellerId)).willReturn(List.of(10L, 20L));
-
-		Auction auction1 = Auction.builder()
-			.productId(10L)
-			.startPrice(1000)
-			.tickSize(100)
-			.startTime(LocalDateTime.now().minusHours(1))
-			.endTime(LocalDateTime.now().plusDays(1))
-			.build();
-		auction1.updateCurrentPrice(0);
-		ReflectionTestUtils.setField(auction1, "id", 100L);
-		auction1.startAuction();
-
-		Auction auction2 = Auction.builder()
-			.productId(20L)
-			.startPrice(2000)
-			.tickSize(100)
-			.startTime(LocalDateTime.now().plusDays(1))
-			.endTime(LocalDateTime.now().plusDays(2))
-			.build();
-		auction2.updateCurrentPrice(0);
-		ReflectionTestUtils.setField(auction2, "id", 200L);
-
-		given(auctionRepository.findAllByProductIdIn(anyList(), any(Pageable.class)))
-			.willReturn(new PageImpl<>(List.of(auction1, auction2)));
-
-		Product product1 = Product.builder().name("Product 1").sellerId(sellerId).build();
-		ReflectionTestUtils.setField(product1, "id", 10L);
-		Product product2 = Product.builder().name("Product 2").sellerId(sellerId).build();
-		ReflectionTestUtils.setField(product2, "id", 20L);
-
-		given(productRepository.findAllByIdIn(anySet())).willReturn(List.of(product1, product2));
-
-		// [수정] AuctionOrder Builder 수정 (status 제거, finalPrice 추가)
-		AuctionOrder order = AuctionOrder.builder()
-			.auctionId(100L)
-			.sellerId(sellerId)
-			.bidderId(2L)
-			.finalPrice(50000) // 필수값 (NPE 방지)
-			.build();
-		// status는 생성자에서 기본값(PROCESSING)으로 설정됨. 필요시 Reflection으로 변경
-		// ReflectionTestUtils.setField(order, "status", AuctionOrderStatus.SUCCESS);
-
-		given(auctionOrderRepository.findAllByAuctionIdIn(anySet())).willReturn(List.of(order));
-
-		given(bidRepository.countByAuctionIdIn(anySet()))
-			.willReturn(List.of(new Object[]{100L, 5L}, new Object[]{200L, 0L}));
-
-		// when
-		PagedResponseDto<MySaleResponseDto> result = auctionFacade.getMySales(sellerId, filter, pageable);
-
-		// then
-		assertThat(result.data()).hasSize(2);
-
-		MySaleResponseDto dto1 = result.data().stream()
-			.filter(d -> d.auctionId().equals(100L)).findFirst().orElseThrow();
-		assertThat(dto1.title()).isEqualTo("Product 1");
-		assertThat(dto1.bidCount()).isEqualTo(5);
-		// [수정] Enum 값 PROCESSING 확인
-		assertThat(dto1.tradeStatus()).isEqualTo(AuctionOrderStatus.PROCESSING);
-
-		MySaleResponseDto dto2 = result.data().stream()
-			.filter(d -> d.auctionId().equals(200L)).findFirst().orElseThrow();
-		assertThat(dto2.title()).isEqualTo("Product 2");
-		assertThat(dto2.bidCount()).isEqualTo(0);
-		assertThat(dto2.tradeStatus()).isNull();
+	    // given
+	    Long sellerId = 1L;
+	    AuctionFilterType filter = AuctionFilterType.ALL;
+	    Pageable pageable = PageRequest.of(0, 10);
+	
+	    given(productRepository.findAllIdsBySellerId(sellerId)).willReturn(List.of(10L, 20L));
+	
+	    // [수정 1] sellerId 명시적 주입
+	    Auction auction1 = Auction.builder()
+	        .productId(10L)
+	        .sellerId(sellerId) // 필수 필드 추가
+	        .startPrice(1000)
+	        .tickSize(100)
+	        .startTime(LocalDateTime.now().minusHours(1))
+	        .endTime(LocalDateTime.now().plusDays(1))
+	        .build();
+	    auction1.updateCurrentPrice(0);
+	    ReflectionTestUtils.setField(auction1, "id", 100L);
+	    auction1.startAuction();
+	
+	    // [수정 2] sellerId 명시적 주입
+	    Auction auction2 = Auction.builder()
+	        .productId(20L)
+	        .sellerId(sellerId) // 필수 필드 추가
+	        .startPrice(2000)
+	        .tickSize(100)
+	        .startTime(LocalDateTime.now().plusDays(1))
+	        .endTime(LocalDateTime.now().plusDays(2))
+	        .build();
+	    auction2.updateCurrentPrice(0);
+	    ReflectionTestUtils.setField(auction2, "id", 200L);
+	
+	    given(auctionRepository.findAllByProductIdIn(anyList(), any(Pageable.class)))
+	        .willReturn(new PageImpl<>(List.of(auction1, auction2)));
+	
+	    Product product1 = Product.builder().name("Product 1").sellerId(sellerId).build();
+	    ReflectionTestUtils.setField(product1, "id", 10L);
+	    Product product2 = Product.builder().name("Product 2").sellerId(sellerId).build();
+	    ReflectionTestUtils.setField(product2, "id", 20L);
+	
+	    given(productRepository.findAllByIdIn(anySet())).willReturn(List.of(product1, product2));
+	
+	    AuctionOrder order = AuctionOrder.builder()
+	        .auctionId(100L)
+	        .sellerId(sellerId)
+	        .bidderId(2L)
+	        .finalPrice(50000)
+	        .build();
+	    // [수정 3] status가 null이면 DTO 매핑 시 문제될 수 있으므로 값 주입
+	    ReflectionTestUtils.setField(order, "status", AuctionOrderStatus.PROCESSING);
+	
+	    given(auctionOrderRepository.findAllByAuctionIdIn(anySet())).willReturn(List.of(order));
+	
+	    given(bidRepository.countByAuctionIdIn(anySet()))
+	        .willReturn(List.of(new Object[]{100L, 5L}, new Object[]{200L, 0L}));
+	
+	    // when
+	    PagedResponseDto<MySaleResponseDto> result = auctionFacade.getMySales(sellerId, filter, pageable);
+	
+	    // then
+	    assertThat(result.data()).hasSize(2);
+	
+	    MySaleResponseDto dto1 = result.data().stream()
+	        .filter(d -> d.auctionId().equals(100L)).findFirst().orElseThrow();
+	    assertThat(dto1.title()).isEqualTo("Product 1");
+	    assertThat(dto1.bidCount()).isEqualTo(5);
+	    assertThat(dto1.tradeStatus()).isEqualTo(AuctionOrderStatus.PROCESSING);
+	
+	    MySaleResponseDto dto2 = result.data().stream()
+	        .filter(d -> d.auctionId().equals(200L)).findFirst().orElseThrow();
+	    assertThat(dto2.title()).isEqualTo("Product 2");
+	    assertThat(dto2.bidCount()).isEqualTo(0);
+	    assertThat(dto2.tradeStatus()).isNull();
 	}
 }
