@@ -6,6 +6,7 @@ import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobOperator;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,17 +15,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bugzero.rarego.boundedContext.payment.app.PaymentFacade;
+import com.bugzero.rarego.boundedContext.payment.domain.WalletTransactionType;
 import com.bugzero.rarego.boundedContext.payment.in.dto.AuctionFinalPaymentRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.AuctionFinalPaymentResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestResponseDto;
+import com.bugzero.rarego.boundedContext.payment.in.dto.WalletTransactionResponseDto;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
+import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -73,7 +78,24 @@ public class PaymentController {
 			paymentFacade.auctionFinalPayment(memberId, auctionId, requestDto));
 	}
 
+	@Operation(summary = "지갑 거래 내역 조회", description = "지갑 거래 내역을 조회합니다.")
+	@GetMapping("/me/wallet-transactions")
+	public SuccessResponseDto<PagedResponseDto<WalletTransactionResponseDto>> getWalletTransactions(
+		// TODO: 추후 인증 구현시 @AuthenticationPrincipal로 변경 필요
+		@RequestParam Long memberId,
+		@RequestParam(defaultValue = "0") int page,
+		@RequestParam(defaultValue = "10") int size,
+		@RequestParam(required = false) WalletTransactionType transactionType
+	) {
+		PagedResponseDto<WalletTransactionResponseDto> response = paymentFacade.getWalletTransactions(memberId, page,
+			size,
+			transactionType);
+
+		return SuccessResponseDto.from(SuccessType.OK, response);
+	}
+
 	// 로컬 정산 배치 테스트용 api
+	@Hidden
 	@PostMapping("/settlement")
 	public SuccessResponseDto<Void> runSettlementJob() {
 		try {
