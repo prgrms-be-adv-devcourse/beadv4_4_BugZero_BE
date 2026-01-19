@@ -42,4 +42,8 @@ public class Product extends BaseIdAndTime {
 	public void addImage(ProductImage image) {
 		this.images.add(image);
 	}
+
+	public void determineInspection(InspectionStatus inspectionStatus) {
+		this.inspectionStatus = inspectionStatus;
+	}
 }
