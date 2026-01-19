@@ -26,8 +26,7 @@ repositories {
 }
 
 dependencies {
-    // AWS S3
-    implementation(platform("software.amazon.awssdk:bom:2.20.0"))
+    implementation(platform("software.amazon.awssdk:bom:2.41.10"))
     implementation("software.amazon.awssdk:s3")
 
     // Spring Boot Starters
@@ -56,13 +55,12 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testRuntimeOnly("com.h2database:h2")
 
-    // JWT
-    implementation("io.jsonwebtoken:jjwt-api:0.12.6")
-    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
-    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
+    implementation("io.jsonwebtoken:jjwt-api:0.13.0")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.13.0")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
 
     // Swagger/OpenAPI
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.4")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
 }
 
 tasks.withType<Test> {
