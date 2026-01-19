@@ -89,11 +89,14 @@ public class PaymentController {
 		@RequestParam Long memberId,
 		@RequestParam(defaultValue = "0") int page,
 		@RequestParam(defaultValue = "10") int size,
-		@RequestParam(required = false) WalletTransactionType transactionType
+		@RequestParam(required = false) WalletTransactionType transactionType,
+		@RequestParam(required = false)
+		@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+		@RequestParam(required = false)
+		@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
 	) {
 		PagedResponseDto<WalletTransactionResponseDto> response = paymentFacade.getWalletTransactions(memberId, page,
-			size,
-			transactionType);
+			size, transactionType, from, to);
 
 		return SuccessResponseDto.from(SuccessType.OK, response);
 	}

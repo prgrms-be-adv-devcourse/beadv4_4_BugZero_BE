@@ -79,8 +79,9 @@ public class PaymentFacade {
 	 * 지갑 거래 내역 조회
 	 */
 	public PagedResponseDto<WalletTransactionResponseDto> getWalletTransactions(Long memberId, int page, int size,
-		WalletTransactionType transactionType) {
-		return paymentGetWalletTransactionsUseCase.getWalletTransactions(memberId, page, size, transactionType);
+		WalletTransactionType transactionType, LocalDate from, LocalDate to) {
+		return paymentGetWalletTransactionsUseCase.getWalletTransactions(memberId, page, size, transactionType, from,
+			to);
 
 	}
 
