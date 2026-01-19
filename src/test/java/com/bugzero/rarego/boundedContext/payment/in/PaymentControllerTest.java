@@ -416,4 +416,100 @@ class PaymentControllerTest {
 			.andDo(print())
 			.andExpect(status().isBadRequest()); // Spring Default: MissingServletRequestParameterException
 	}
+
+	// ==================== 정산 내역 조회 API 테스트 ====================
+
+	@Test
+	@DisplayName("성공: 정산 내역 조회 시 필수 파라미터(memberId)만 있으면 기본값이 적용된다")
+	void getSettlements_success_default() throws Exception {
+		// given
+		Long memberId = 1L;
+
+		// Mock 응답 생성 (빈 페이지)
+		PagedResponseDto<com.bugzero.rarego.boundedContext.payment.in.dto.SettlementResponseDto> emptyResponse =
+			new PagedResponseDto<>(java.util.Collections.emptyList(),
+				new com.bugzero.rarego.global.response.PageDto(1, 10, 0, 0, false, false));
+
+		// Facade 호출 스텁 검증
+		// page=0, size=10 (기본값)
+		// status=null, from=null, to=null (선택값)
+		given(paymentFacade.getSettlements(eq(memberId), eq(0), eq(10), isNull(), isNull(), isNull()))
+			.willReturn(emptyResponse);
+
+		// when & then
+		mockMvc.perform(get("/api/v1/payments/me/settlements")
+				.param("memberId", String.valueOf(memberId))
+				.contentType(MediaType.APPLICATION_JSON))
+			.andDo(print())
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value(SuccessType.OK.getHttpStatus()))
+			.andExpect(jsonPath("$.data.data").isArray());
+	}
+
+	@Test
+	@DisplayName("성공: 날짜(ISO Date)와 상태 조건을 포함하여 정산 내역을 조회한다")
+	void getSettlements_success_filtering() throws Exception {
+		// given
+		Long memberId = 1L;
+		int page = 0;
+		int size = 20;
+		com.bugzero.rarego.boundedContext.payment.domain.SettlementStatus status =
+			com.bugzero.rarego.boundedContext.payment.domain.SettlementStatus.DONE;
+
+		// ✅ [핵심] LocalDate 사용 (Controller가 LocalDate를 받음)
+		java.time.LocalDate fromDate = java.time.LocalDate.of(2024, 1, 1);
+		java.time.LocalDate toDate = java.time.LocalDate.of(2024, 1, 31);
+
+		// 요청 파라미터용 String ("2024-01-01")
+		String fromStr = fromDate.toString();
+		String toStr = toDate.toString();
+
+		// Mock 응답 생성
+		PagedResponseDto<com.bugzero.rarego.boundedContext.payment.in.dto.SettlementResponseDto> mockResponse =
+			new PagedResponseDto<>(java.util.Collections.emptyList(),
+				new com.bugzero.rarego.global.response.PageDto(1, size, 0, 0, false, false));
+
+		// Facade 호출 스텁 검증
+		// Controller가 String("2024-01-01")을 받아서 -> LocalDate 객체로 변환하여 Facade에 넘김
+		given(paymentFacade.getSettlements(
+			eq(memberId),
+			eq(page),
+			eq(size),
+			eq(status),
+			eq(fromDate), // ★ LocalDate 객체로 매칭 확인
+			eq(toDate)    // ★ LocalDate 객체로 매칭 확인
+		)).willReturn(mockResponse);
+
+		// when & then
+		mockMvc.perform(get("/api/v1/payments/me/settlements")
+				.param("memberId", String.valueOf(memberId))
+				.param("page", String.valueOf(page))
+				.param("size", String.valueOf(size))
+				.param("status", status.name()) // "DONE"
+				.param("from", fromStr)         // "2024-01-01" (문자열 전송)
+				.param("to", toStr)             // "2024-01-31" (문자열 전송)
+				.contentType(MediaType.APPLICATION_JSON))
+			.andDo(print())
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value(SuccessType.OK.getHttpStatus()));
+	}
+
+	@Test
+	@DisplayName("실패: 날짜 포맷이 올바르지 않으면(yyyy-MM-dd 아님) HTTP 400을 반환한다")
+	void getSettlements_fail_invalid_date_format() throws Exception {
+		// given
+		Long memberId = 1L;
+
+		// ISO.DATE 형식이 아닌 잘못된 포맷
+		String invalidDate = "2024/01/01";
+
+		// when & then
+		// Facade까지 가지 않고 Spring MVC 레벨에서 바인딩 에러 발생
+		mockMvc.perform(get("/api/v1/payments/me/settlements")
+				.param("memberId", String.valueOf(memberId))
+				.param("from", invalidDate)
+				.contentType(MediaType.APPLICATION_JSON))
+			.andDo(print())
+			.andExpect(status().isBadRequest()); // 400 Bad Request
+	}
 }
