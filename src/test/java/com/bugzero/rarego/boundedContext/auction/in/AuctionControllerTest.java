@@ -1,19 +1,18 @@
 package com.bugzero.rarego.boundedContext.auction.in;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-
+import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
+import com.bugzero.rarego.global.aspect.ResponseAspect;
+import com.bugzero.rarego.global.config.JacksonConfig;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.*;
+import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
+import com.bugzero.rarego.shared.auction.dto.BidRequestDto;
+import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Pageable;
@@ -22,21 +21,20 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
-import com.bugzero.rarego.global.aspect.ResponseAspect;
-import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.response.ErrorType;
-import com.bugzero.rarego.global.response.PageDto;
-import com.bugzero.rarego.global.response.PagedResponseDto;
-import com.bugzero.rarego.global.response.SuccessResponseDto;
-import com.bugzero.rarego.global.response.SuccessType;
-import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
-import com.bugzero.rarego.shared.auction.dto.BidRequestDto;
-import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = AuctionController.class)
-@Import(ResponseAspect.class)
+@Import({ResponseAspect.class, JacksonConfig.class})
 @EnableAspectJAutoProxy
 class AuctionControllerTest {
 
@@ -60,21 +58,21 @@ class AuctionControllerTest {
         BidRequestDto requestDto = new BidRequestDto(bidAmount);
 
         BidResponseDto bidResponse = new BidResponseDto(
-            100L, auctionId, UUID.randomUUID().toString(), LocalDateTime.now(), bidAmount, bidAmount
+                100L, auctionId, UUID.randomUUID().toString(), LocalDateTime.now(), bidAmount, bidAmount
         );
 
         given(auctionFacade.createBid(eq(auctionId), eq(memberId), eq(bidAmount.intValue())))
-            .willReturn(SuccessResponseDto.from(SuccessType.CREATED, bidResponse));
+                .willReturn(SuccessResponseDto.from(SuccessType.CREATED, bidResponse));
 
         // when & then
         mockMvc.perform(post("/api/v1/auctions/{auctionId}/bids", auctionId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto))
-                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
-            .andDo(print())
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.status").value(201))
-            .andExpect(jsonPath("$.data.bidAmount").value(bidAmount));
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto))
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
+                .andDo(print())
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value(201))
+                .andExpect(jsonPath("$.data.bidAmount").value(bidAmount));
     }
 
     @Test
@@ -84,24 +82,24 @@ class AuctionControllerTest {
         // given
         Long auctionId = 1L;
         BidLogResponseDto logDto = new BidLogResponseDto(
-            10L, "user_***", LocalDateTime.now(), 50000
+                10L, "user_***", LocalDateTime.now(), 50000
         );
 
         PagedResponseDto<BidLogResponseDto> response = new PagedResponseDto<>(
-            List.of(logDto), new PageDto(1, 10, 1, 1, false, false)
+                List.of(logDto), new PageDto(1, 10, 1, 1, false, false)
         );
 
         given(auctionFacade.getBidLogs(eq(auctionId), any(Pageable.class)))
-            .willReturn(response);
+                .willReturn(response);
 
         // when & then
         mockMvc.perform(get("/api/v1/auctions/{auctionId}/bids", auctionId)
-                .param("page", "0")
-                .param("size", "10"))
-            .andDo(print())
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data[0].publicId").value("user_***"))
-            .andExpect(jsonPath("$.data[0].bidAmount").value(50000));
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].publicId").value("user_***"))
+                .andExpect(jsonPath("$.data[0].bidAmount").value(50000));
     }
 
     @Test
@@ -114,12 +112,12 @@ class AuctionControllerTest {
 
         // when & then
         mockMvc.perform(post("/api/v1/auctions/{auctionId}/bids", auctionId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(invalidRequest))
-                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
-            .andDo(print())
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.status").value(400));
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidRequest))
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
     }
 
     @Test
