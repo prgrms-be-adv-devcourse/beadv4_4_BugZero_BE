@@ -32,7 +32,7 @@ public class Auction extends BaseIdAndTime {
     private LocalDateTime startTime;
 
     @Column(nullable = false)
-    private Integer durationDays;
+    private int durationDays;
 
     @Column(nullable = true)
     private LocalDateTime endTime;
