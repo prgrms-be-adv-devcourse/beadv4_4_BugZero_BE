@@ -18,6 +18,7 @@ import com.bugzero.rarego.boundedContext.product.domain.Category;
 import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
+import com.bugzero.rarego.shared.product.auction.out.AuctionApiClient;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductImageRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductRequestDto;
@@ -31,11 +32,16 @@ class ProductCreateProductUseCaseTest {
 	@Mock
 	private ProductRepository productRepository;
 
+	@Mock
+	private AuctionApiClient auctionApiClient;
+
 	@Test
 	@DisplayName("상품 정보 등록 성공")
 	void createProduct_success() {
 		// given
-		long memberId = 1L;
+		String memberId = "1L";
+		Long expectedAuctionId = 100L;
+
 		ProductRequestDto request = new ProductRequestDto(
 			"스타워즈 시리즈",
 			Category.스타워즈,
@@ -51,11 +57,15 @@ class ProductCreateProductUseCaseTest {
 			return product;
 		});
 
+		given(auctionApiClient.createAuction(eq(1L),eq("1L"), any(ProductAuctionRequestDto.class)))
+			.willReturn(expectedAuctionId);
+
 		// when
 		ProductResponseDto response = useCase.createProduct(memberId, request);
 		ArgumentCaptor<Product> productCaptor = ArgumentCaptor.forClass(Product.class);
 
 		verify(productRepository, times(1)).save(productCaptor.capture());
+		verify(auctionApiClient, times(1)).createAuction(eq(1L),eq("1L"), any());
 
 		Product product = productCaptor.getValue();
 
@@ -69,6 +79,7 @@ class ProductCreateProductUseCaseTest {
 		// 반환값 검증
 		assertThat(response.productId()).isNotNull();
 		assertThat(response.auctionId()).isNotNull();
+		assertThat(response.auctionId()).isEqualTo(expectedAuctionId);
 		assertThat(response.inspectionStatus()).isEqualTo(InspectionStatus.PENDING);
 	}
 }

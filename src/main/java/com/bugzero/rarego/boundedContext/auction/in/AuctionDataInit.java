@@ -1,5 +1,14 @@
 package com.bugzero.rarego.boundedContext.auction.in;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionCreatedEvent;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
@@ -12,16 +21,9 @@ import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductCondition;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Slf4j
 @Component
@@ -173,6 +175,7 @@ public class AuctionDataInit implements CommandLineRunner {
             .endTime(endTime)
             .startPrice(startPrice)
             .tickSize(tickSize)
+            .durationDays(7)
             .build();
 
         auction.forceStartForTest();

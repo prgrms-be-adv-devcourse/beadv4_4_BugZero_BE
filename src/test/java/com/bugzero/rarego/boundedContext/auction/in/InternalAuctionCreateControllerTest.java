@@ -1,9 +1,14 @@
 package com.bugzero.rarego.boundedContext.auction.in;
 
-import com.bugzero.rarego.boundedContext.auction.app.AuctionSettleAuctionFacade;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionAutoResponseDto;
-import com.bugzero.rarego.global.aspect.ResponseAspect;
-import com.bugzero.rarego.global.response.SuccessType;
+import static org.mockito.BDDMockito.*;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,21 +18,15 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.bugzero.rarego.boundedContext.auction.app.AuctionSettleAuctionFacade;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionAutoResponseDto;
+import com.bugzero.rarego.global.aspect.ResponseAspect;
+import com.bugzero.rarego.global.response.SuccessType;
 
 @WebMvcTest(controllers = InternalAuctionController.class)
 @Import(ResponseAspect.class)
 @AutoConfigureMockMvc(addFilters = false)
-class InternalAuctionControllerTest {
+class InternalAuctionCreateControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
