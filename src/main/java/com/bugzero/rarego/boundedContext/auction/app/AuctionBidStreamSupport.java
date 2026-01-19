@@ -5,6 +5,7 @@ import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionCompleteEventDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionConnectEventDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionHeartbeatEventDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -215,6 +216,23 @@ public class AuctionBidStreamSupport {
         }, HEARTBEAT_INTERVAL, HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
 
         log.info("SSE 하트비트 스케줄러 시작 - {}초 간격", HEARTBEAT_INTERVAL);
+    }
+
+    /**
+     * 애플리케이션 종료 시 하트비트 스케줄러를 안전하게 종료
+     */
+    @PreDestroy
+    public void stopHeartbeat() {
+        log.info("SSE 하트비트 스케줄러 종료 시작...");
+        heartbeatScheduler.shutdown();
+        try {
+            if (!heartbeatScheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                heartbeatScheduler.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            heartbeatScheduler.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
 
     /**

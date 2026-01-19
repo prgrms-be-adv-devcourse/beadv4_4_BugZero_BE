@@ -7,12 +7,15 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AuctionBidStreamSupportTest {
 
@@ -83,6 +86,30 @@ class AuctionBidStreamSupportTest {
         // then - 모든 연결이 종료되어야 함
         Thread.sleep(100); // 비동기 처리 대기
         assertThat(support.getAuctionSubscribers(auctionId)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("스프링 컨테이너 종료 시(PreDestroy) 하트비트 스케줄러가 안전하게 정지되어야 한다")
+    void stopHeartbeat_ShouldShutdownScheduler() throws Exception {
+        // given
+        // AuctionBidStreamSupport 내부의 private 필드인 heartbeatScheduler에 접근
+        Field field = AuctionBidStreamSupport.class.getDeclaredField("heartbeatScheduler");
+        field.setAccessible(true);
+        ScheduledExecutorService scheduler = (ScheduledExecutorService) field.get(support);
+
+        // 스케줄러가 처음에는 실행 중인지 확인
+        assertThat(scheduler.isShutdown()).isFalse();
+
+        // when
+        // @PreDestroy 메서드를 명시적으로 호출 (스프링 종료 상황 시뮬레이션)
+        support.stopHeartbeat();
+
+        // then
+        // 1. 스케줄러가 종료 상태여야 함
+        assertTrue(scheduler.isShutdown(), "스케줄러가 shutdown 상태여야 합니다.");
+
+        // 2. 새로운 작업이 더 이상 수락되지 않아야 함 (이미 종료되었으므로)
+        assertTrue(scheduler.isTerminated() || scheduler.isShutdown());
     }
 
     @Test
