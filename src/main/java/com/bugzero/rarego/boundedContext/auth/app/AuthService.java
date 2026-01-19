@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com.bugzero.rarego.boundedContext.auth.domain.Account;
+import com.bugzero.rarego.boundedContext.auth.domain.AccountDto;
 import com.bugzero.rarego.boundedContext.auth.domain.AuthRole;
 import com.bugzero.rarego.boundedContext.auth.domain.Provider;
 import com.bugzero.rarego.boundedContext.auth.domain.TokenIssueDto;
@@ -22,7 +23,6 @@ import lombok.RequiredArgsConstructor;
 public class AuthService {
 	private final AuthIssueTokenUseCase authIssueTokenUseCase;
 	private final AuthLoginAccountFacade authLoginAccountFacade;
-	private final AccountRepository accountRepository;
 
 	public String issueAccessToken(TokenIssueDto tokenIssueDto) {
 		return authIssueTokenUseCase.issueToken(tokenIssueDto, true);
@@ -32,7 +32,7 @@ public class AuthService {
 		return  authIssueTokenUseCase.issueToken(tokenIssueDto, false);
 	}
 
-	public String login(Provider provider, String providerId) {
-		return authLoginAccountFacade.loginOrSignup(provider, providerId);
+	public String login(AccountDto accountDto) {
+		return authLoginAccountFacade.loginOrSignup(accountDto);
 	}
 }
