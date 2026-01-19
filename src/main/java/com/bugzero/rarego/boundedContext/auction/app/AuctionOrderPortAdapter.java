@@ -49,10 +49,12 @@ public class AuctionOrderPortAdapter implements AuctionOrderPort {
     }
 
     @Override
-    public void refundOrder(Long auctionId) {
-        AuctionOrder order = auctionOrderRepository.findByAuctionId(auctionId)
+    public AuctionOrderDto refundOrderWithLock(Long auctionId) {
+        AuctionOrder order = auctionOrderRepository.findByAuctionIdForUpdate(auctionId)
                 .orElseThrow(() -> new CustomException(ErrorType.AUCTION_ORDER_NOT_FOUND));
-        order.refund();
+
+        order.refund(); // 내부에서 SUCCESS 검증 및 FAILED 변경 수행
+        return from(order);
     }
 
     @Override
