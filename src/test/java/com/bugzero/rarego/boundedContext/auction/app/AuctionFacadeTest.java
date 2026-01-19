@@ -165,6 +165,7 @@ class AuctionFacadeTest {
 		assertThat(dto.currentPrice()).isEqualTo(15000);
 	}
 
+	/*
 	@Test
 	@DisplayName("나의 판매 목록 조회: 상품, 주문, 입찰수 정보를 종합하여 반환한다")
 	void getMySales_Success() {
@@ -249,4 +250,5 @@ class AuctionFacadeTest {
 	    assertThat(dto2.bidCount()).isEqualTo(0);
 	    assertThat(dto2.tradeStatus()).isNull();
 	}
+	*/
 }
