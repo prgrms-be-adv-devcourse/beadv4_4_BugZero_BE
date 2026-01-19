@@ -1,6 +1,9 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
-import com.bugzero.rarego.boundedContext.auction.domain.*;
+import com.bugzero.rarego.boundedContext.auction.domain.Auction;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
+import com.bugzero.rarego.boundedContext.auction.domain.Bid;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
@@ -34,128 +37,127 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class AuctionFacadeTest {
 
-	@InjectMocks
-	private AuctionFacade auctionFacade;
+    @InjectMocks
+    private AuctionFacade auctionFacade;
 
-	@Mock
-	private AuctionCreateBidUseCase auctionCreateBidUseCase;
+    @Mock
+    private AuctionCreateBidUseCase auctionCreateBidUseCase;
 
-	@Mock
-	private BidRepository bidRepository;
-	@Mock
-	private AuctionMemberRepository auctionMemberRepository;
-	@Mock
-	private AuctionRepository auctionRepository;
-	@Mock
-	private ProductRepository productRepository;
-	@Mock
-	private AuctionOrderRepository auctionOrderRepository;
+    @Mock
+    private BidRepository bidRepository;
+    @Mock
+    private AuctionMemberRepository auctionMemberRepository;
+    @Mock
+    private AuctionRepository auctionRepository;
+    @Mock
+    private ProductRepository productRepository;
+    @Mock
+    private AuctionOrderRepository auctionOrderRepository;
 
-	@Test
-	@DisplayName("입찰 생성 요청 시 UseCase를 호출하고 결과를 반환한다")
-	void createBid_Success() {
-		// given
-		Long auctionId = 1L;
-		Long memberId = 100L;
-		int bidAmount = 50000;
+    @Test
+    @DisplayName("입찰 생성 요청 시 UseCase를 호출하고 결과를 반환한다")
+    void createBid_Success() {
+        // given
+        Long auctionId = 1L;
+        Long memberId = 100L;
+        int bidAmount = 50000;
 
-		// [수정] Builder 대신 생성자 사용 (Record)
-		BidResponseDto bidResponse = new BidResponseDto(
-			1L, auctionId, "public-id", LocalDateTime.now(), (long) bidAmount, (long) bidAmount
-		);
+        BidResponseDto bidResponse = new BidResponseDto(
+                1L, auctionId, "public-id", LocalDateTime.now(), (long) bidAmount, (long) bidAmount
+        );
 
-		SuccessResponseDto<BidResponseDto> expectedResponse = SuccessResponseDto.from(
-			SuccessType.CREATED,
-			bidResponse
-		);
+        SuccessResponseDto<BidResponseDto> expectedResponse = SuccessResponseDto.from(
+                SuccessType.CREATED,
+                bidResponse
+        );
 
-		given(auctionCreateBidUseCase.createBid(auctionId, memberId, bidAmount))
-			.willReturn(expectedResponse);
+        given(auctionCreateBidUseCase.createBid(auctionId, memberId, bidAmount))
+                .willReturn(expectedResponse);
 
-		// when
-		SuccessResponseDto<BidResponseDto> result = auctionFacade.createBid(auctionId, memberId, bidAmount);
+        // when
+        SuccessResponseDto<BidResponseDto> result = auctionFacade.createBid(auctionId, memberId, bidAmount);
 
-		// then
-		assertThat(result).isEqualTo(expectedResponse);
-		verify(auctionCreateBidUseCase).createBid(auctionId, memberId, bidAmount);
-	}
+        // then
+        assertThat(result).isEqualTo(expectedResponse);
+        verify(auctionCreateBidUseCase).createBid(auctionId, memberId, bidAmount);
+    }
 
-	@Test
-	@DisplayName("경매 입찰 기록 조회: 입찰자와 매핑하여 반환한다")
-	void getBidLogs_Success() {
-		// given
-		Long auctionId = 1L;
-		Long bidderId = 100L;
-		Pageable pageable = PageRequest.of(0, 10);
+    @Test
+    @DisplayName("경매 입찰 기록 조회: 입찰자와 매핑하여 반환한다")
+    void getBidLogs_Success() {
+        // given
+        Long auctionId = 1L;
+        Long bidderId = 100L;
+        Pageable pageable = PageRequest.of(0, 10);
 
-		Bid bid = Bid.builder()
-			.auctionId(auctionId)
-			.bidderId(bidderId)
-			.bidAmount(50000)
-			.build();
-		ReflectionTestUtils.setField(bid, "id", 1L);
-		// BaseIdAndTime 필드 세팅 (필요 시)
-		// ReflectionTestUtils.setField(bid, "createdAt", LocalDateTime.now());
+        Bid bid = Bid.builder()
+                .auctionId(auctionId)
+                .bidderId(bidderId)
+                .bidAmount(50000)
+                .build();
+        ReflectionTestUtils.setField(bid, "id", 1L);
+        // BaseIdAndTime 필드 세팅 (필요 시)
+        // ReflectionTestUtils.setField(bid, "createdAt", LocalDateTime.now());
 
-		AuctionMember bidder = AuctionMember.builder().publicId("user_masked").build();
-		ReflectionTestUtils.setField(bidder, "id", bidderId);
+        AuctionMember bidder = AuctionMember.builder().publicId("user_masked").build();
+        ReflectionTestUtils.setField(bidder, "id", bidderId);
 
-		given(bidRepository.findAllByAuctionIdOrderByBidTimeDesc(eq(auctionId), any(Pageable.class)))
-			.willReturn(new PageImpl<>(List.of(bid)));
+        given(bidRepository.findAllByAuctionIdOrderByBidTimeDesc(eq(auctionId), any(Pageable.class)))
+                .willReturn(new PageImpl<>(List.of(bid)));
 
-		given(auctionMemberRepository.findAllById(anySet())).willReturn(List.of(bidder));
+        given(auctionMemberRepository.findAllById(anySet())).willReturn(List.of(bidder));
 
-		// when
-		PagedResponseDto<BidLogResponseDto> result = auctionFacade.getBidLogs(auctionId, pageable);
+        // when
+        PagedResponseDto<BidLogResponseDto> result = auctionFacade.getBidLogs(auctionId, pageable);
 
-		// then
-		assertThat(result.data()).hasSize(1);
-		assertThat(result.data().get(0).publicId()).isEqualTo("user_masked");
-		assertThat(result.data().get(0).bidAmount()).isEqualTo(50000);
-	}
+        // then
+        assertThat(result.data()).hasSize(1);
+        assertThat(result.data().get(0).publicId()).isEqualTo("user_masked");
+        assertThat(result.data().get(0).bidAmount()).isEqualTo(50000);
+    }
 
-	@Test
-	@DisplayName("나의 입찰 내역 조회: 경매 정보와 매핑하여 반환한다")
-	void getMyBids_Success() {
-		// given
-		Long memberId = 100L;
-		Long auctionId = 10L;
-		Pageable pageable = PageRequest.of(0, 10);
+    @Test
+    @DisplayName("나의 입찰 내역 조회: 경매 정보와 매핑하여 반환한다")
+    void getMyBids_Success() {
+        // given
+        Long memberId = 100L;
+        Long auctionId = 10L;
+        Pageable pageable = PageRequest.of(0, 10);
 
-		Auction auction = Auction.builder()
-			.productId(50L)
-			.startPrice(10000)
-			.tickSize(1000)
-			.startTime(LocalDateTime.now())
-			.endTime(LocalDateTime.now().plusDays(1))
-			.durationDays(1)
-			.build();
-		ReflectionTestUtils.setField(auction, "id", auctionId);
-		auction.startAuction();
-		auction.updateCurrentPrice(15000);
+        Auction auction = Auction.builder()
+                .productId(50L)
+                .startPrice(10000)
+                .tickSize(1000)
+                .startTime(LocalDateTime.now())
+                .endTime(LocalDateTime.now().plusDays(1))
+                .durationDays(1)
+                .build();
+        ReflectionTestUtils.setField(auction, "id", auctionId);
+        auction.startAuction();
+        auction.updateCurrentPrice(15000);
 
-		Bid bid = Bid.builder()
-			.auctionId(auctionId)
-			.bidderId(memberId)
-			.bidAmount(15000)
-			.build();
-		ReflectionTestUtils.setField(bid, "id", 1L);
+        Bid bid = Bid.builder()
+                .auctionId(auctionId)
+                .bidderId(memberId)
+                .bidAmount(15000)
+                .build();
+        ReflectionTestUtils.setField(bid, "id", 1L);
 
-		given(bidRepository.findMyBids(eq(memberId), eq(null), any(Pageable.class)))
-			.willReturn(new PageImpl<>(List.of(bid)));
+        given(bidRepository.findMyBids(eq(memberId), eq(null), any(Pageable.class)))
+                .willReturn(new PageImpl<>(List.of(bid)));
 
-		given(auctionRepository.findAllById(anySet())).willReturn(List.of(auction));
+        given(auctionRepository.findAllById(anySet())).willReturn(List.of(auction));
 
-		// when
-		PagedResponseDto<MyBidResponseDto> result = auctionFacade.getMyBids(memberId, null, pageable);
+        // when
+        PagedResponseDto<MyBidResponseDto> result = auctionFacade.getMyBids(memberId, null, pageable);
 
-		// then
-		assertThat(result.data()).hasSize(1);
-		MyBidResponseDto dto = result.data().get(0);
-		assertThat(dto.auctionStatus()).isEqualTo(AuctionStatus.IN_PROGRESS);
-		assertThat(dto.bidAmount()).isEqualTo(15000);
-		assertThat(dto.currentPrice()).isEqualTo(15000);
-	}
+        // then
+        assertThat(result.data()).hasSize(1);
+        MyBidResponseDto dto = result.data().get(0);
+        assertThat(dto.auctionStatus()).isEqualTo(AuctionStatus.IN_PROGRESS);
+        assertThat(dto.bidAmount()).isEqualTo(15000);
+        assertThat(dto.currentPrice()).isEqualTo(15000);
+    }
 
     /*
      * TODO: GitHub Actions 환경에서 실패하는 문제 해결 필요
