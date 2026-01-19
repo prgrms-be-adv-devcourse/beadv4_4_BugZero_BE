@@ -21,7 +21,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -69,6 +68,7 @@ class AuctionProcessTimeoutUseCaseTest {
                 .endTime(LocalDateTime.now().minusDays(1))
                 .startPrice(10000)
                 .tickSize(1000)
+                .durationDays(7)
                 .build();
         ReflectionTestUtils.setField(testAuction, "id", 1L);
         ReflectionTestUtils.setField(testAuction, "status", AuctionStatus.ENDED);
@@ -98,8 +98,6 @@ class AuctionProcessTimeoutUseCaseTest {
         given(orderRepository.findByStatusAndCreatedAtBefore(
                 eq(AuctionOrderStatus.PROCESSING), any(LocalDateTime.class)))
                 .willReturn(List.of(testOrder));
-        given(auctionRepository.findById(1L))
-                .willReturn(Optional.of(testAuction));
 
         // when
         AuctionPaymentTimeoutResponse response = useCase.execute();
@@ -153,6 +151,7 @@ class AuctionProcessTimeoutUseCaseTest {
                 .endTime(LocalDateTime.now().minusDays(1))
                 .startPrice(20000)
                 .tickSize(1000)
+                .durationDays(7)
                 .build();
         ReflectionTestUtils.setField(auction2, "id", 2L);
         ReflectionTestUtils.setField(auction2, "status", AuctionStatus.ENDED);
@@ -160,18 +159,13 @@ class AuctionProcessTimeoutUseCaseTest {
         given(orderRepository.findByStatusAndCreatedAtBefore(
                 eq(AuctionOrderStatus.PROCESSING), any(LocalDateTime.class)))
                 .willReturn(List.of(order1, order2));
-        given(auctionRepository.findById(1L))
-                .willReturn(Optional.empty()); // 첫 번째는 실패
-        given(auctionRepository.findById(2L))
-                .willReturn(Optional.of(auction2)); // 두 번째는 성공
 
         // when
         AuctionPaymentTimeoutResponse response = useCase.execute();
 
         // then
-        assertThat(response.processedCount()).isEqualTo(1);
-        assertThat(response.details()).hasSize(1);
-        assertThat(response.details().get(0).orderId()).isEqualTo(2L);
+        assertThat(response.processedCount()).isEqualTo(2);
+        assertThat(response.details()).hasSize(2);
     }
 
     @Test

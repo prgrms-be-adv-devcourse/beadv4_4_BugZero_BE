@@ -131,6 +131,7 @@ class AuctionFacadeTest {
                 .startPrice(10000)
                 .startTime(LocalDateTime.now())
                 .endTime(LocalDateTime.now().plusDays(1))
+                .durationDays(3)
                 .build();
         ReflectionTestUtils.setField(auction, "id", auctionId);
         auction.startAuction();
