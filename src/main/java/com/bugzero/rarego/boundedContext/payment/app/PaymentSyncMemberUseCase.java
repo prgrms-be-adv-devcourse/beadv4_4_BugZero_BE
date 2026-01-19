@@ -6,7 +6,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.boundedContext.payment.domain.PaymentMember;
+import com.bugzero.rarego.boundedContext.payment.domain.Wallet;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentMemberRepository;
+import com.bugzero.rarego.boundedContext.payment.out.WalletRepository;
 import com.bugzero.rarego.shared.member.domain.MemberDto;
 
 import lombok.RequiredArgsConstructor;
@@ -19,14 +21,13 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentSyncMemberUseCase {
 
 	private final PaymentMemberRepository paymentMemberRepository;
+	private final WalletRepository walletRepository;
 
 	public PaymentMember syncMember(MemberDto member) {
 
-		// 신규 가입인지 확인
-		boolean isNew = !paymentMemberRepository.existsById(member.id());
-
 		Optional<PaymentMember> existedOpt = paymentMemberRepository.findById(member.id());
 
+		// 1) 기존 객체에 업데이트
 		if (existedOpt.isPresent()) {
 			PaymentMember existed = existedOpt.get();
 
@@ -39,14 +40,17 @@ public class PaymentSyncMemberUseCase {
 					member.id(), existed.getUpdatedAt(), member.updatedAt());
 				return existed; // 스킵
 			}
+
+			existed.updateFrom(member);
+			return existed;
 		}
 
 		/**
-		 여기부터는 최신 이벤트일 때만 진행
-		 수정 시 내부적으로 merge로 동작
-		 신규 가입 시 새 객체 반환
+		 여기부터는 신규 가입일 때만 진행
 		 **/
 
+		// 2) 새로운 객체 생성
+		// 1. 객체 생성
 		PaymentMember saved =
 			PaymentMember.builder()
 				.id(member.id())
@@ -64,6 +68,13 @@ public class PaymentSyncMemberUseCase {
 				.deleted(member.deleted())
 				.build();
 		paymentMemberRepository.save(saved);
+
+		// 2. Wallet 생성
+		Wallet wallet = Wallet.builder()
+			.member(saved)
+			.build();
+		walletRepository.save(wallet);
+
 		return saved;
 	}
 }

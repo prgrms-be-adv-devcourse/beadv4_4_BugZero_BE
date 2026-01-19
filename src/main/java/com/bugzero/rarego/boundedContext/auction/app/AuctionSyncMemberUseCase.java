@@ -22,11 +22,11 @@ public class AuctionSyncMemberUseCase {
 
 	public AuctionMember syncMember(MemberDto member) {
 
-		// 신규 가입인지 확인
-		boolean isNew = !auctionMemberRepository.existsById(member.id());
-
 		Optional<AuctionMember> existedOpt = auctionMemberRepository.findById(member.id());
 
+		/**
+		 * 이미 존재하는 객체 업데이트
+		 */
 		if (existedOpt.isPresent()) {
 			AuctionMember existed = existedOpt.get();
 
@@ -39,12 +39,13 @@ public class AuctionSyncMemberUseCase {
 					member.id(), existed.getUpdatedAt(), member.updatedAt());
 				return existed; // 스킵
 			}
+
+			existed.updateFrom(member);
+			return existed;
 		}
 
 		/**
-		 여기부터는 최신 이벤트일 때만 진행
-		 수정 시 내부적으로 merge로 동작
-		 신규 가입 시 새 객체 반환
+		 여기부터는 신규 가입일 때만 진행
 		 **/
 
 		AuctionMember saved =
