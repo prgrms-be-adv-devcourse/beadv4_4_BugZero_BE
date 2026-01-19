@@ -1,9 +1,10 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
@@ -28,6 +29,12 @@ public class AuctionOrderPortAdapter implements AuctionOrderPort {
     }
 
     @Override
+    public Optional<AuctionOrderDto> findByAuctionIdForUpdate(Long auctionId) {
+        return auctionOrderRepository.findByAuctionIdForUpdate(auctionId)
+                .map(this::from);
+    }
+
+    @Override
     public void completeOrder(Long auctionId) {
         AuctionOrder order = auctionOrderRepository.findByAuctionId(auctionId)
                 .orElseThrow(() -> new CustomException(ErrorType.AUCTION_ORDER_NOT_FOUND));
@@ -42,11 +49,9 @@ public class AuctionOrderPortAdapter implements AuctionOrderPort {
     }
 
     @Override
-    public List<AuctionOrderDto> findTimeoutOrders(LocalDateTime deadline) {
-        return auctionOrderRepository.findByStatusAndCreatedAtBefore(AuctionOrderStatus.PROCESSING, deadline)
-                .stream()
-                .map(this::from)
-                .toList();
+    public Slice<AuctionOrderDto> findTimeoutOrders(LocalDateTime deadline, Pageable pageable) {
+        return auctionOrderRepository.findByStatusAndCreatedAtBefore(AuctionOrderStatus.PROCESSING, deadline, pageable)
+                .map(this::from);
     }
 
     private AuctionOrderDto from(AuctionOrder order) {

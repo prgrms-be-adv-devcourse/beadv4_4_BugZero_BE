@@ -62,7 +62,7 @@ public class PaymentAuctionTimeoutUseCase {
     }
 
     private AuctionOrderDto findAndValidateOrder(Long auctionId) {
-        AuctionOrderDto order = auctionOrderPort.findByAuctionId(auctionId)
+        AuctionOrderDto order = auctionOrderPort.findByAuctionIdForUpdate(auctionId)
                 .orElseThrow(() -> new CustomException(ErrorType.AUCTION_ORDER_NOT_FOUND));
 
         if (!"PROCESSING".equals(order.status())) {
