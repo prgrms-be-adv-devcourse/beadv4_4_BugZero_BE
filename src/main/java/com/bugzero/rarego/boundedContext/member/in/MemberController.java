@@ -58,6 +58,7 @@ public class MemberController {
 	) {
 		Long memberId = Long.valueOf(principal.publicId());
 		return auctionFacade.getMySales(memberId, filter, pageable);
+	}
 
 	@PostMapping("/me")
 	public SuccessResponseDto<MemberJoinResponseDto> join(@RequestBody MemberJoinRequestDto requestDto) {
