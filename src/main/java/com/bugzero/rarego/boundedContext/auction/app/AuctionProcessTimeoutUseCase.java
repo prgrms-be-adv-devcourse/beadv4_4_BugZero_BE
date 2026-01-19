@@ -1,6 +1,5 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
-import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.event.AuctionPaymentTimeoutEvent;
@@ -8,8 +7,6 @@ import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionPaymentTimeoutRes
 import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionPaymentTimeoutResponse.TimeoutDetail;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
-import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.response.ErrorType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -62,15 +59,12 @@ public class AuctionProcessTimeoutUseCase {
     private TimeoutDetail processTimeoutOrder(AuctionOrder order) {
         order.timeout();
 
-        Auction auction = auctionRepository.findById(order.getAuctionId())
-                .orElseThrow(() -> new CustomException(ErrorType.AUCTION_NOT_FOUND));
-
         int penaltyAmount = mockForfeitDeposit(order.getBidderId(), order.getAuctionId());
 
         eventPublisher.publishEvent(new AuctionPaymentTimeoutEvent(
                 order.getAuctionId(),
                 order.getBidderId(),
-                auction.getSellerId(),
+                order.getSellerId(),
                 penaltyAmount
         ));
 
