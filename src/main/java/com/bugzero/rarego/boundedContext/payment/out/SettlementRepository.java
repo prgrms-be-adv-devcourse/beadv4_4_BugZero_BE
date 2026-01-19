@@ -15,6 +15,7 @@ import jakarta.persistence.LockModeType;
 
 public interface SettlementRepository extends JpaRepository<Settlement, Long> {
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("SELECT s FROM Settlement s WHERE s.auctionId = :auctionId")
 	Optional<Settlement> findByAuctionIdForUpdate(Long auctionId);
 
 	List<Settlement> findAllByStatus(SettlementStatus status);
