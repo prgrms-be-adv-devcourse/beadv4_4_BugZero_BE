@@ -16,6 +16,15 @@ spring:
     job:
       enabled: false
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test
+            client-secret: test
+
+
 logging:
   level:
     org.hibernate.SQL: debug
