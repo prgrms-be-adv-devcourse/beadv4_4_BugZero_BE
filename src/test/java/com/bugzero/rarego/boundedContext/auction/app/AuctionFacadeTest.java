@@ -182,6 +182,7 @@ class AuctionFacadeTest {
 			.startTime(LocalDateTime.now().minusHours(1))
 			.endTime(LocalDateTime.now().plusDays(1))
 			.build();
+		auction1.updateCurrentPrice(0);
 		ReflectionTestUtils.setField(auction1, "id", 100L);
 		auction1.startAuction();
 
@@ -192,6 +193,7 @@ class AuctionFacadeTest {
 			.startTime(LocalDateTime.now().plusDays(1))
 			.endTime(LocalDateTime.now().plusDays(2))
 			.build();
+		auction2.updateCurrentPrice(0);
 		ReflectionTestUtils.setField(auction2, "id", 200L);
 
 		given(auctionRepository.findAllByProductIdIn(anyList(), any(Pageable.class)))
