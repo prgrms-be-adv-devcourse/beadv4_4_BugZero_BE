@@ -33,7 +33,7 @@ class AuctionCreateAuctionUseCaseTest {
 	@DisplayName("상품 ID와 기간을 입력받아 경매 정보를 정상적으로 생성한다")
 	void createAuction_Success() {
 		// given
-		long productId = 1L;
+		Long productId = 1L;
 		int durationDays = 24;
 		String sellerUUID = "1L";
 		ProductAuctionRequestDto requestDto = ProductAuctionRequestDto.builder()
@@ -47,7 +47,7 @@ class AuctionCreateAuctionUseCaseTest {
 		when(auctionRepository.save(any(Auction.class))).thenReturn(mockAuction);
 
 		// when
-		long savedAuctionId = auctionCreateAuctionUseCase.createAuction(productId, sellerUUID, requestDto);
+		Long savedAuctionId = auctionCreateAuctionUseCase.createAuction(productId, sellerUUID, requestDto);
 
 		verify(auctionRepository).save(auctionCaptor.capture());
 		Auction capturedAuction = auctionCaptor.getValue();

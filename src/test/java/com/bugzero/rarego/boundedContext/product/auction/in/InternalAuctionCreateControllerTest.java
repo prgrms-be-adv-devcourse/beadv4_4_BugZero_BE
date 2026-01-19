@@ -39,7 +39,7 @@ class InternalAuctionCreateControllerTest {
 	@DisplayName("정상적인 경매 생성 요청 시 200 OK와 생성된 ID를 반환한다")
 	void createAuction_Success() throws Exception {
 		// given
-		long productId = 1L;
+		Long productId = 1L;
 		String sellerUUID = "1L";
 		ProductAuctionRequestDto requestDto = ProductAuctionRequestDto.builder()
 			.startPrice(10000)
@@ -61,7 +61,7 @@ class InternalAuctionCreateControllerTest {
 	@DisplayName("입찰 시작가가 100원 미만이면 400 Bad Request를 반환한다")
 	void createAuction_Fail_MinPrice() throws Exception {
 		// given
-		long productId = 1L;
+		Long productId = 1L;
 		String sellerUUID = "1L";
 
 		ProductAuctionRequestDto invalidDto = ProductAuctionRequestDto.builder()
@@ -80,7 +80,7 @@ class InternalAuctionCreateControllerTest {
 	@DisplayName("경매기간 설정을 범위 내 하지 않으면 400 Bad Request를 반환한다")
 	void createAuction_Fail_MinDuration() throws Exception {
 		// given
-		long productId = 1L;
+		Long productId = 1L;
 		String sellerUUID = "1L";
 
 		ProductAuctionRequestDto invalidDto = ProductAuctionRequestDto.builder()
