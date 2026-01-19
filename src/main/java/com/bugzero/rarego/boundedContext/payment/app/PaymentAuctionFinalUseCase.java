@@ -2,6 +2,7 @@ package com.bugzero.rarego.boundedContext.payment.app;
 
 import java.time.LocalDateTime;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +37,9 @@ public class PaymentAuctionFinalUseCase {
         private final PaymentTransactionRepository transactionRepository;
         private final SettlementRepository settlementRepository;
         private final PaymentSupport paymentSupport;
+
+        @Value("${auction.payment-timeout-days:3}")
+        private int paymentTimeoutDays;
 
         @Transactional
         public AuctionFinalPaymentResponseDto finalPayment(Long memberId, Long auctionId,
@@ -101,7 +105,7 @@ public class PaymentAuctionFinalUseCase {
                 }
 
                 // 결제 기한 검증
-                LocalDateTime deadline = order.createdAt().plusDays(3);
+                LocalDateTime deadline = order.createdAt().plusDays(paymentTimeoutDays);
                 if (LocalDateTime.now().isAfter(deadline)) {
                         throw new CustomException(ErrorType.PAYMENT_DEADLINE_EXCEEDED);
                 }
