@@ -12,7 +12,7 @@ import com.bugzero.rarego.boundedContext.payment.domain.Settlement;
 import com.bugzero.rarego.boundedContext.payment.domain.SettlementStatus;
 import com.bugzero.rarego.boundedContext.payment.domain.Wallet;
 import com.bugzero.rarego.boundedContext.payment.domain.WalletTransactionType;
-import com.bugzero.rarego.boundedContext.payment.in.dto.RefundResponse;
+import com.bugzero.rarego.boundedContext.payment.in.dto.RefundResponseDto;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentTransactionRepository;
 import com.bugzero.rarego.boundedContext.payment.out.SettlementRepository;
 import com.bugzero.rarego.global.exception.CustomException;
@@ -34,7 +34,7 @@ public class PaymentRefundUseCase {
     private final PaymentSupport paymentSupport;
 
     @Transactional
-    public RefundResponse processRefund(Long auctionId) {
+    public RefundResponseDto processRefund(Long auctionId) {
         // 1. 주문 조회 및 검증 (SUCCESS 상태만)
         AuctionOrderDto order = findAndValidateOrder(auctionId);
 
@@ -60,7 +60,7 @@ public class PaymentRefundUseCase {
         log.info("환불 처리 완료: auctionId={}, buyerId={}, refundAmount={}",
                 auctionId, order.bidderId(), order.finalPrice());
 
-        return new RefundResponse(
+        return new RefundResponseDto(
                 transaction.getId(),
                 auctionId,
                 order.finalPrice(),

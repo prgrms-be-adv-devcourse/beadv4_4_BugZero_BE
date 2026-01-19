@@ -24,7 +24,7 @@ import com.bugzero.rarego.boundedContext.payment.domain.Settlement;
 import com.bugzero.rarego.boundedContext.payment.domain.SettlementStatus;
 import com.bugzero.rarego.boundedContext.payment.domain.Wallet;
 import com.bugzero.rarego.boundedContext.payment.domain.WalletTransactionType;
-import com.bugzero.rarego.boundedContext.payment.in.dto.RefundResponse;
+import com.bugzero.rarego.boundedContext.payment.in.dto.RefundResponseDto;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentTransactionRepository;
 import com.bugzero.rarego.boundedContext.payment.out.SettlementRepository;
 import com.bugzero.rarego.global.exception.CustomException;
@@ -76,7 +76,7 @@ class PaymentRefundUseCaseTest {
         });
 
         // when
-        RefundResponse response = paymentRefundUseCase.processRefund(AUCTION_ID);
+        RefundResponseDto response = paymentRefundUseCase.processRefund(AUCTION_ID);
 
         // then
         assertThat(wallet.getBalance()).isEqualTo(150000); // 50000 + 100000
@@ -111,7 +111,7 @@ class PaymentRefundUseCaseTest {
         given(transactionRepository.save(any(PaymentTransaction.class))).willAnswer(i -> i.getArgument(0));
 
         // when
-        RefundResponse response = paymentRefundUseCase.processRefund(AUCTION_ID);
+        RefundResponseDto response = paymentRefundUseCase.processRefund(AUCTION_ID);
 
         // then
         assertThat(wallet.getBalance()).isEqualTo(150000);

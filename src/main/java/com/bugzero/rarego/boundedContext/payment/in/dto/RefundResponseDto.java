@@ -2,7 +2,7 @@ package com.bugzero.rarego.boundedContext.payment.in.dto;
 
 import java.time.LocalDateTime;
 
-public record RefundResponse(
+public record RefundResponseDto(
         Long transactionId,
         Long auctionId,
         int refundAmount,

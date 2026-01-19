@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bugzero.rarego.boundedContext.payment.app.PaymentFacade;
-import com.bugzero.rarego.boundedContext.payment.in.dto.RefundResponse;
+import com.bugzero.rarego.boundedContext.payment.in.dto.RefundResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldRequestDto;
@@ -36,7 +36,7 @@ public class InternalPaymentController {
 
     @Operation(summary = "환불 처리", description = "운영자가 결제 완료된 건을 환불 처리합니다")
     @PostMapping("/refunds/{auctionId}")
-    public SuccessResponseDto<RefundResponse> processRefund(
+    public SuccessResponseDto<RefundResponseDto> processRefund(
             @PathVariable Long auctionId) {
         return SuccessResponseDto.from(SuccessType.OK, paymentFacade.processRefund(auctionId));
     }
