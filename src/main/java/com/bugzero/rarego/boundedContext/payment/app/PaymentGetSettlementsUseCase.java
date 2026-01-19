@@ -1,5 +1,6 @@
 package com.bugzero.rarego.boundedContext.payment.app;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.springframework.data.domain.Page;
@@ -22,11 +23,14 @@ public class PaymentGetSettlementsUseCase {
 	private final SettlementRepository settlementRepository;
 
 	public PagedResponseDto<SettlementResponseDto> getSettlements(Long memberId, int page, int size,
-		SettlementStatus status, LocalDateTime from, LocalDateTime to) {
+		SettlementStatus status, LocalDate from, LocalDate to) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
 
-		Page<Settlement> settlements = settlementRepository.findAllBySellerIdAndStatus(memberId, status, from, to,
-			pageable);
+		LocalDateTime fromDateTime = (from != null) ? from.atStartOfDay() : null;
+		LocalDateTime toDateTime = (to != null) ? to.atTime(java.time.LocalTime.MAX) : null;
+
+		Page<Settlement> settlements = settlementRepository.findAllBySellerIdAndStatus(memberId, status, fromDateTime,
+			toDateTime, pageable);
 
 		return PagedResponseDto.from(settlements, SettlementResponseDto::from);
 	}

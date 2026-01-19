@@ -1,6 +1,6 @@
 package com.bugzero.rarego.boundedContext.payment.app;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import org.springframework.stereotype.Service;
 
@@ -88,7 +88,7 @@ public class PaymentFacade {
 	 * 정산 내역 조회
 	 */
 	public PagedResponseDto<SettlementResponseDto> getSettlements(Long memberId, int page, int size,
-		SettlementStatus status, LocalDateTime from, LocalDateTime to) {
+		SettlementStatus status, LocalDate from, LocalDate to) {
 		return paymentGetSettlementsUseCase.getSettlements(memberId, page, size, status, from, to);
 	}
 }

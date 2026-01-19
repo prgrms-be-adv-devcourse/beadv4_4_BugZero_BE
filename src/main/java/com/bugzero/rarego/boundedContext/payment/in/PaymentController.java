@@ -1,5 +1,6 @@
 package com.bugzero.rarego.boundedContext.payment.in;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.springframework.batch.core.job.Job;
@@ -106,9 +107,9 @@ public class PaymentController {
 		@RequestParam(defaultValue = "10") int size,
 		@RequestParam(required = false) SettlementStatus status,
 		@RequestParam(required = false)
-		@DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+		@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
 		@RequestParam(required = false)
-		@DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to
+		@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
 	) {
 		return SuccessResponseDto.from(SuccessType.OK,
 			paymentFacade.getSettlements(memberId, page, size, status, from, to));
