@@ -75,6 +75,7 @@ class MemberControllerTest {
     @BeforeEach
     void setup() {
         mockMvc = MockMvcBuilders.standaloneSetup(memberController)
+            .setControllerAdvice(new GlobalExceptionHandler())
             .setCustomArgumentResolvers(
                 new PageableHandlerMethodArgumentResolver(),
                 new HandlerMethodArgumentResolver() {
