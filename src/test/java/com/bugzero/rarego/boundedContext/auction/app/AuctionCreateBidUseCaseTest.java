@@ -30,7 +30,6 @@ import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
-import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
 import com.bugzero.rarego.shared.payment.out.PaymentApiClient;
@@ -99,7 +98,7 @@ class AuctionCreateBidUseCaseTest {
 			.willReturn(new DepositHoldResponseDto(1L, AUCTION_ID, 1000, "HOLD", LocalDateTime.now()));
 
 		// when
-		SuccessResponseDto<BidResponseDto> response = auctionCreateBidUseCase.createBid(AUCTION_ID, BIDDER_ID, bidAmount);
+		BidResponseDto response = auctionCreateBidUseCase.createBid(AUCTION_ID, BIDDER_ID, bidAmount);
 
 		// then
 		verify(paymentApiClient).holdDeposit(eq(1000), eq(BIDDER_ID), eq(AUCTION_ID));

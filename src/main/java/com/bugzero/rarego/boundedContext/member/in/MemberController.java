@@ -4,7 +4,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -30,11 +29,11 @@ public class MemberController {
 	@GetMapping("/me/bids")
 	public PagedResponseDto<MyBidResponseDto> getMyBids(
 		@RequestParam(required = false) AuctionStatus auctionStatus,
-		@AuthenticationPrincipal UserDetails userDetails,
+		@AuthenticationPrincipal MemberPrincipal principal,
 		@PageableDefault(size = 20) Pageable pageable
 	) {
 
-		Long memberId = Long.valueOf(userDetails.getUsername());
+		Long memberId = Long.valueOf(principal.publicId());
 		// 혹시나하는 테스트 편의를 위해 토큰이 없으면 2번 유저로 간주하는 임시 코드
 		// Long memberId = (userDetails != null) ? Long.valueOf(userDetails.getUsername()) : 2L;
 

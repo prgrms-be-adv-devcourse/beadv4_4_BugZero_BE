@@ -3,8 +3,10 @@ package com.bugzero.rarego.boundedContext.auction.in;
 import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionCreatedEvent;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
 import com.bugzero.rarego.boundedContext.auction.domain.Bid;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
 import com.bugzero.rarego.boundedContext.product.domain.Category;
@@ -33,6 +35,7 @@ public class AuctionDataInit implements CommandLineRunner {
     private final BidRepository bidRepository;
     private final ProductRepository productRepository;
     private final AuctionMemberRepository auctionMemberRepository;
+    private final AuctionOrderRepository auctionOrderRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
@@ -125,6 +128,36 @@ public class AuctionDataInit implements CommandLineRunner {
                 auctionSoonEnd5.getEndTime()));
 
         log.info("=== 경매 테스트 데이터 초기화 완료 ===");
+
+        // ==========================================
+        // [Part 3] 낙찰(주문) 테스트 데이터 생성 (추가됨)
+        // ==========================================
+        log.info("--- [Part 3] 낙찰 및 주문 데이터 생성 ---");
+
+        // 1. 낙찰될 상품 생성
+        Product soldProduct = createProduct(seller.getId(), "[낙찰 완료] 레고 타이타닉", 500_000);
+
+        // 2. 종료된 경매 생성 (시작: 5시간 전, 종료: 1시간 전)
+        Auction endedAuction = createAuction(soldProduct.getId(), seller.getId(), -300, -60, 500_000, 50_000);
+
+        // 3. 입찰 생성 (buyer가 60만원에 입찰)
+        createBid(endedAuction, buyer, 600_000);
+
+        // 4. 경매 상태 강제 종료 (ENDED)
+        endedAuction.end();
+        auctionRepository.save(endedAuction);
+
+        // 5. 주문 정보(AuctionOrder) 생성 및 저장
+        AuctionOrder order = AuctionOrder.builder()
+            .auctionId(endedAuction.getId())
+            .sellerId(seller.getId())
+            .bidderId(buyer.getId())
+            .finalPrice(600_000)
+            .build(); // status 기본값 PROCESSING
+
+        auctionOrderRepository.save(order); // DB에 저장
+
+        log.info("낙찰 데이터 생성 완료! Auction ID: {}, Order ID 생성을 위해 DB 확인 필요", endedAuction.getId());
     }
 
     // --- Helper Methods ---

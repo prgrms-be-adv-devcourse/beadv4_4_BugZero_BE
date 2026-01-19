@@ -18,8 +18,7 @@ import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
-import com.bugzero.rarego.global.response.SuccessResponseDto;
-import com.bugzero.rarego.global.response.SuccessType;
+
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
 import com.bugzero.rarego.shared.payment.out.PaymentApiClient;
 
@@ -35,7 +34,7 @@ public class AuctionCreateBidUseCase {
 	private final PaymentApiClient paymentApiClient;
 
 	@Transactional
-	public SuccessResponseDto<BidResponseDto> createBid(Long auctionId, Long memberId, int bidAmount) {
+	public BidResponseDto createBid(Long auctionId, Long memberId, int bidAmount) {
 
 		AuctionMember bidder = auctionMemberRepository.findById(memberId)
 			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
@@ -72,13 +71,17 @@ public class AuctionCreateBidUseCase {
 
 		bidRepository.save(bid);
 
+		auction.updateCurrentPrice(bid.getBidAmount());
+
+		auctionRepository.save(auction);
+
 		BidResponseDto responseDto = BidResponseDto.from(
 			bid,
 			bidder.getPublicId(),
 			Long.valueOf(auction.getCurrentPrice())
 		);
 
-		return SuccessResponseDto.from(SuccessType.CREATED, responseDto);
+		return responseDto;
 	}
 
 	public void validateBid(Auction auction, Product product, Long memberId, int bidAmount) {
@@ -94,7 +97,7 @@ public class AuctionCreateBidUseCase {
 		}
 
 		// 판매자 본인 입찰 방지
-		if (product.getSellerId() == memberId) {
+		if (auction.getSellerId() == memberId) {
 			throw new CustomException(ErrorType.AUCTION_SELLER_CANNOT_BID, "본인 경매에는 입찰할 수 없습니다.");
 		}
 
