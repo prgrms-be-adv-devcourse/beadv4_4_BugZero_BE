@@ -29,6 +29,7 @@ import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -77,6 +78,7 @@ public class PaymentController {
 			paymentFacade.auctionFinalPayment(memberId, auctionId, requestDto));
 	}
 
+	@Operation(summary = "지갑 거래 내역 조회", description = "지갑 거래 내역을 조회합니다.")
 	@GetMapping("/me/wallet-transactions")
 	public SuccessResponseDto<PagedResponseDto<WalletTransactionResponseDto>> getWalletTransactions(
 		// TODO: 추후 인증 구현시 @AuthenticationPrincipal로 변경 필요
@@ -93,6 +95,7 @@ public class PaymentController {
 	}
 
 	// 로컬 정산 배치 테스트용 api
+	@Hidden
 	@PostMapping("/settlement")
 	public SuccessResponseDto<Void> runSettlementJob() {
 		try {
