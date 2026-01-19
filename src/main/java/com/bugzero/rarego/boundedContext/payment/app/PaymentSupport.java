@@ -8,9 +8,11 @@ import org.springframework.stereotype.Component;
 
 import com.bugzero.rarego.boundedContext.payment.domain.Payment;
 import com.bugzero.rarego.boundedContext.payment.domain.PaymentMember;
+import com.bugzero.rarego.boundedContext.payment.domain.Settlement;
 import com.bugzero.rarego.boundedContext.payment.domain.Wallet;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentMemberRepository;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentRepository;
+import com.bugzero.rarego.boundedContext.payment.out.SettlementRepository;
 import com.bugzero.rarego.boundedContext.payment.out.WalletRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
@@ -23,6 +25,7 @@ public class PaymentSupport {
 	private final WalletRepository walletRepository;
 	private final PaymentRepository paymentRepository;
 	private final PaymentMemberRepository paymentMemberRepository;
+	private final SettlementRepository settlementRepository;
 
 	public Payment findPaymentByOrderId(String orderId) {
 		return paymentRepository.findByOrderId(orderId)
@@ -45,5 +48,10 @@ public class PaymentSupport {
 		}
 		return walletRepository.findAllByMemberIdInForUpdate(memberIds).stream()
 			.collect(Collectors.toMap(w -> w.getMember().getId(), w -> w));
+	}
+
+	public Settlement findSettlementByIdForUpdate(Long settlementId) {
+		return settlementRepository.findByIdForUpdate(settlementId)
+			.orElseThrow(() -> new CustomException(ErrorType.SETTLEMENT_NOT_FOUND));
 	}
 }
