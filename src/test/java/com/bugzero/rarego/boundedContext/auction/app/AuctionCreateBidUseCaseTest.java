@@ -13,18 +13,21 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.Bid;
+import com.bugzero.rarego.boundedContext.auction.domain.event.AuctionBidCreatedEvent;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
+import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
 import com.bugzero.rarego.shared.payment.out.PaymentApiClient;
 
@@ -42,6 +45,8 @@ class AuctionCreateBidUseCaseTest {
 	private AuctionMemberRepository auctionMemberRepository;
 	@Mock
 	private PaymentApiClient paymentApiClient;
+	@Mock
+	private ApplicationEventPublisher eventPublisher;
 
 	private final Long AUCTION_ID = 1L;
 	private final Long BIDDER_ID = 100L;
@@ -74,6 +79,8 @@ class AuctionCreateBidUseCaseTest {
 		ReflectionTestUtils.setField(auction, "status", AuctionStatus.IN_PROGRESS);
 		ReflectionTestUtils.setField(auction, "currentPrice", 5000);
 
+		auction.startAuction();
+
 		// 3. Mocking (회원 조회, 경매 조회 필수!)
 		given(auctionMemberRepository.findByPublicId(BIDDER_PUBLICID)).willReturn(Optional.of(bidder));
 		given(auctionRepository.findById(AUCTION_ID)).willReturn(Optional.of(auction));
@@ -88,7 +95,8 @@ class AuctionCreateBidUseCaseTest {
 		assertThat(auction.getCurrentPrice()).isEqualTo(6000); // Dirty Checking 시뮬레이션
 
 		// Verify
-		verify(bidRepository, times(1)).save(any(Bid.class));
+		verify(bidRepository).save(any(Bid.class));
+		verify(eventPublisher).publishEvent(any(AuctionBidCreatedEvent.class)); // 이벤트 발행 검증 유지
 	}
 
 	@Test
