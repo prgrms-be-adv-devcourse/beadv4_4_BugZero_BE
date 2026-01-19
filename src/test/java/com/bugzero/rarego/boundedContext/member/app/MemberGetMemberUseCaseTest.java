@@ -27,7 +27,7 @@ class MemberGetMemberUseCaseTest {
 	private MemberGetMemberUseCase memberGetMemberUseCase;
 
 	@Test
-	@DisplayName("회원이 존재하면 마스킹 된 값을 리턴한다")
+	@DisplayName("회원이 존재하면 값을 리턴한다")
 	void getMe_success() {
 		LocalDateTime createdAt = LocalDateTime.of(2024, 1, 1, 0, 0);
 		LocalDateTime updatedAt = LocalDateTime.of(2024, 1, 2, 0, 0);
@@ -57,8 +57,8 @@ class MemberGetMemberUseCaseTest {
 		assertThat(result.address()).isEqualTo("Seoul");
 		assertThat(result.addressDetail()).isEqualTo("Apt 1");
 		assertThat(result.zipCode()).isEqualTo("12345");
-		assertThat(result.contactPhoneMasked()).isEqualTo("010****5678");
-		assertThat(result.realNameMasked()).isEqualTo("A***e");
+		assertThat(result.contactPhoneMasked()).isEqualTo("01012345678");
+		assertThat(result.realNameMasked()).isEqualTo("Alice");
 		assertThat(result.createdAt()).isEqualTo(createdAt);
 		assertThat(result.updatedAt()).isEqualTo(updatedAt);
 		verify(memberSupport).findByPublicId("public-id");
