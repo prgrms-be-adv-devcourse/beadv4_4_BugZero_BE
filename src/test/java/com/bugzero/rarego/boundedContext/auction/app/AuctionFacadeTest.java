@@ -1,12 +1,8 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anySet;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -140,6 +136,7 @@ class AuctionFacadeTest {
 			.tickSize(1000)
 			.startTime(LocalDateTime.now())
 			.endTime(LocalDateTime.now().plusDays(1))
+			.durationDays(1)
 			.build();
 		ReflectionTestUtils.setField(auction, "id", auctionId);
 		auction.startAuction();
