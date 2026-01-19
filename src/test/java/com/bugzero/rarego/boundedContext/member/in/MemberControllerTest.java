@@ -13,8 +13,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc; 
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.MethodParameter;
@@ -55,7 +55,7 @@ import tools.jackson.databind.ObjectMapper;
 @Import(ResponseAspect.class)
 @EnableAspectJAutoProxy
 @AutoConfigureMockMvc(addFilters = false)
-class MemberControllerTest { // 클래스 시작
+class MemberControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -69,7 +69,7 @@ class MemberControllerTest { // 클래스 시작
     @MockitoBean
     private AuctionFacade auctionFacade;
 
-    @MockitoBean // 클래스 안으로 이동됨
+    @MockitoBean
     private MemberFacade memberFacade;
 
     @BeforeEach
@@ -101,7 +101,9 @@ class MemberControllerTest { // 클래스 시작
                     @Override
                     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
                         NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
-                        return new MemberPrincipal(2L, "2", List.of()); // MemberPrincipal 생성자 확인 필요
+                        // [수정 2] MemberPrincipal 생성자 수정 (String publicId, String role)
+                        // 기존 코드: new MemberPrincipal(2L, "2", List.of()) -> 에러 발생
+                        return new MemberPrincipal("2", "ROLE_SELLER"); 
                     }
                 }
             )
@@ -109,9 +111,8 @@ class MemberControllerTest { // 클래스 시작
     }
 
     @Test
-    @DisplayName("GET /members/me/bids - 내 입찰 내역 조회 성공 (ArgumentResolver 사용)")
+    @DisplayName("GET /members/me/bids - 내 입찰 내역 조회 성공")
     void getMyBids_success() throws Exception {
-        // given
         Long memberId = 2L;
         MyBidResponseDto myBidDto = new MyBidResponseDto(
             1L, 1L, 10L, 10000L, LocalDateTime.now(), AuctionStatus.IN_PROGRESS, 10000L, LocalDateTime.now().plusDays(1)
@@ -124,7 +125,6 @@ class MemberControllerTest { // 클래스 시작
         given(auctionFacade.getMyBids(eq(memberId), eq(null), any(Pageable.class)))
             .willReturn(response);
 
-        // when & then
         mockMvc.perform(get("/api/v1/members/me/bids")
                 .contentType(MediaType.APPLICATION_JSON))
             .andDo(print())
@@ -136,7 +136,6 @@ class MemberControllerTest { // 클래스 시작
     @Test
     @DisplayName("GET /members/me/sales - 내 판매 목록 조회 성공")
     void getMySales_success() throws Exception {
-        // given
         Long memberId = 2L;
         MySaleResponseDto mySaleDto = MySaleResponseDto.builder()
             .auctionId(10L)
@@ -153,7 +152,6 @@ class MemberControllerTest { // 클래스 시작
         given(auctionFacade.getMySales(eq(memberId), eq(AuctionFilterType.ALL), any(Pageable.class)))
             .willReturn(response);
 
-        // when & then
         mockMvc.perform(get("/api/v1/members/me/sales")
                 .param("filter", "ALL")
                 .contentType(MediaType.APPLICATION_JSON))
@@ -199,7 +197,7 @@ class MemberControllerTest { // 클래스 시작
     @Test
     @DisplayName("성공: 내 입찰 목록 조회 (파라미터 포함) 성공")
     @WithMockUser(username = "2", roles = "USER")
-    void getMyBids_with_status_success() throws Exception { // 메서드 이름 변경하여 중복 회피
+    void getMyBids_with_status_success() throws Exception {
         MyBidResponseDto bid = new MyBidResponseDto(
             10L,
             20L,
@@ -224,5 +222,4 @@ class MemberControllerTest { // 클래스 시작
             .andExpect(jsonPath("$.data[0].auctionId").value(20L))
             .andExpect(jsonPath("$.pageDto.totalItems").value(1));
     }
-
 }
