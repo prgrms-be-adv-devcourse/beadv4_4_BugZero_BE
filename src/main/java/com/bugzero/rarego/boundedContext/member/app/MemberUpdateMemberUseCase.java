@@ -10,8 +10,11 @@ import com.bugzero.rarego.boundedContext.member.domain.MemberClearField;
 import com.bugzero.rarego.boundedContext.member.domain.MemberUpdateRequestDto;
 import com.bugzero.rarego.boundedContext.member.domain.MemberUpdateResponseDto;
 import com.bugzero.rarego.boundedContext.member.out.MemberRepository;
+import com.bugzero.rarego.global.event.EventPublisher;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
+import com.bugzero.rarego.shared.member.domain.MemberDto;
+import com.bugzero.rarego.shared.member.event.MemberUpdatedEvent;
 
 import lombok.RequiredArgsConstructor;
 @Service
@@ -21,24 +24,27 @@ public class MemberUpdateMemberUseCase {
 
 	private final MemberSupport memberSupport;
 	private final MemberRepository memberRepository;
+	private final EventPublisher eventPublisher;
 
-	public MemberUpdateResponseDto updateMe(String publicId, String role, MemberUpdateRequestDto dto) {
+	public MemberUpdateResponseDto updateMe(String publicId, String role, MemberUpdateRequestDto requestDto) {
 		Member member = memberSupport.findByPublicId(publicId);
 
 		// SELLER면 intro 제외 전부 "요청에 존재"해야 함
 		if (isSeller(role)) {
-			validateSellerRequired(dto);
+			validateSellerRequired(requestDto);
 		}
 
-		validateClearFieldsPolicy(role, dto);
+		validateClearFieldsPolicy(role, requestDto);
 
 		// 1) 삭제(clear) 먼저 적용 (SELLER면 일부 clear 금지)
-		applyClears(member, role, dto.clearFields());
+		applyClears(member, role, requestDto.clearFields());
 
 		// 2) 수정된 필드에 대해서만 정책 검증 후 적용
-		validateAfterPatch(dto, member);
+		validateAfterPatch(requestDto, member);
 
+		// 3) 저장 후 이벤트 발생
 		memberRepository.save(member);
+		eventPublisher.publish(new MemberUpdatedEvent(MemberDto.from(member)));
 		return MemberUpdateResponseDto.from(member);
 	}
 
