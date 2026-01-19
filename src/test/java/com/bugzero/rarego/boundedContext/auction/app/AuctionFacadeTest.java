@@ -175,23 +175,25 @@ class AuctionFacadeTest {
 	
 	    given(productRepository.findAllIdsBySellerId(sellerId)).willReturn(List.of(10L, 20L));
 	
-	    // [수정 1] sellerId 명시적 주입
+	    // --- Auction 1 세팅 ---
 	    Auction auction1 = Auction.builder()
 	        .productId(10L)
-	        .sellerId(sellerId) // 필수 필드 추가
+	        .sellerId(sellerId)
 	        .startPrice(1000)
 	        .tickSize(100)
 	        .startTime(LocalDateTime.now().minusHours(1))
 	        .endTime(LocalDateTime.now().plusDays(1))
 	        .build();
-	    auction1.updateCurrentPrice(0);
+	    // [중요] currentPrice 초기화 (int 변환 시 NPE 방지)
+	    auction1.updateCurrentPrice(0); 
+	    // [중요] ID 주입
 	    ReflectionTestUtils.setField(auction1, "id", 100L);
 	    auction1.startAuction();
 	
-	    // [수정 2] sellerId 명시적 주입
+	    // --- Auction 2 세팅 ---
 	    Auction auction2 = Auction.builder()
 	        .productId(20L)
-	        .sellerId(sellerId) // 필수 필드 추가
+	        .sellerId(sellerId)
 	        .startPrice(2000)
 	        .tickSize(100)
 	        .startTime(LocalDateTime.now().plusDays(1))
@@ -203,6 +205,7 @@ class AuctionFacadeTest {
 	    given(auctionRepository.findAllByProductIdIn(anyList(), any(Pageable.class)))
 	        .willReturn(new PageImpl<>(List.of(auction1, auction2)));
 	
+	    // --- Product 세팅 ---
 	    Product product1 = Product.builder().name("Product 1").sellerId(sellerId).build();
 	    ReflectionTestUtils.setField(product1, "id", 10L);
 	    Product product2 = Product.builder().name("Product 2").sellerId(sellerId).build();
@@ -210,17 +213,21 @@ class AuctionFacadeTest {
 	
 	    given(productRepository.findAllByIdIn(anySet())).willReturn(List.of(product1, product2));
 	
+	    // --- AuctionOrder 세팅 (여기가 핵심!) ---
 	    AuctionOrder order = AuctionOrder.builder()
 	        .auctionId(100L)
 	        .sellerId(sellerId)
 	        .bidderId(2L)
 	        .finalPrice(50000)
 	        .build();
-	    // [수정 3] status가 null이면 DTO 매핑 시 문제될 수 있으므로 값 주입
+	    
+	    // [★핵심 수정] Builder에 status가 없으므로 null 상태임 -> Reflection으로 값 주입 필수!
 	    ReflectionTestUtils.setField(order, "status", AuctionOrderStatus.PROCESSING);
 	
 	    given(auctionOrderRepository.findAllByAuctionIdIn(anySet())).willReturn(List.of(order));
 	
+	    // --- Bid Count 세팅 ---
+	    // Object[]의 타입이 (Long, Long)인지 확인
 	    given(bidRepository.countByAuctionIdIn(anySet()))
 	        .willReturn(List.of(new Object[]{100L, 5L}, new Object[]{200L, 0L}));
 	
