@@ -1,5 +1,7 @@
 package com.bugzero.rarego.boundedContext.auction.out;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
@@ -67,6 +69,7 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
 		@Param("status") AuctionStatus status,
 		Pageable pageable);
 
-	// 경매 ID별 입찰 횟수 카운트
-	int countByAuctionId(Long auctionId);
+	// 경매 ID 목록에 대한 입찰 수 카운트
+	@Query("SELECT b.auctionId, COUNT(b) FROM Bid b WHERE b.auctionId IN :auctionIds GROUP BY b.auctionId")
+	List<Object[]> countByAuctionIdIn(@Param("auctionIds") Collection<Long> auctionIds);
 }
