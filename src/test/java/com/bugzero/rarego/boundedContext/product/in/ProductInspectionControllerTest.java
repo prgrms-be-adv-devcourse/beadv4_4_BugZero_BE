@@ -54,6 +54,7 @@ class ProductInspectionControllerTest {
 			.inspectionId(500L)
 			.productId(1L)
 			.newStatus(InspectionStatus.APPROVED)
+			.productCondition(ProductCondition.MISB)
 			.reason("검수 승인 완료")
 			.build();
 
@@ -70,6 +71,7 @@ class ProductInspectionControllerTest {
 			.andExpect(jsonPath("$.status").value(201)) // SuccessResponseDto 내부의 status 값 검증
 			.andExpect(jsonPath("$.data.inspectionId").value(500L))
 			.andExpect(jsonPath("$.data.newStatus").value("APPROVED"))
+			.andExpect(jsonPath("$.data.productCondition").value("MISB"))
 			.andDo(print()); // 요청/응답 상세 내역 출력
 	}
 

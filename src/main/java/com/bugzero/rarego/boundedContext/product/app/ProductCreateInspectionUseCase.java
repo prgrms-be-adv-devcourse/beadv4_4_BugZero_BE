@@ -46,6 +46,7 @@ public class ProductCreateInspectionUseCase {
 			.inspectionId(inspection.getId())
 			.productId(inspection.getProduct().getId())
 			.newStatus(inspection.getInspectionStatus())
+			.productCondition(inspection.getProductCondition())
 			.reason(inspection.getReason())
 			.build();
 	}

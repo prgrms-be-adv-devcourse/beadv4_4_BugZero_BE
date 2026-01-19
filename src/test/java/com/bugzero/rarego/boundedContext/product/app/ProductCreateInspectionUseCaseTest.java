@@ -85,6 +85,7 @@ class ProductCreateInspectionUseCaseTest {
 		assertThat(savedInspection.getProduct()).isEqualTo(spyProduct);
 		assertThat(savedInspection.getInspectorId()).isEqualTo(200L); // admin.getId()
 		assertThat(savedInspection.getInspectionStatus()).isEqualTo(InspectionStatus.APPROVED);
+		assertThat(savedInspection.getProductCondition()).isEqualTo(ProductCondition.MISB);
 		assertThat(savedInspection.getReason()).isEqualTo("검수 통과입니다.");
 
 		// 2. 부가 로직 검증 (상품 상태 동기화)

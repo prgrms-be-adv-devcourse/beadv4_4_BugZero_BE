@@ -46,4 +46,5 @@ public class Product extends BaseIdAndTime {
 	public void determineInspection(InspectionStatus inspectionStatus) {
 		this.inspectionStatus = inspectionStatus;
 	}
+	public void determineProductCondition(ProductCondition productCondition) {this.productCondition = productCondition;}
 }

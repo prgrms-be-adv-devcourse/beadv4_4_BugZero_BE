@@ -29,6 +29,7 @@ public class Inspection extends BaseIdAndTime {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "seller_id", nullable = false)
 	private ProductMember seller;
+	@Column(nullable = false)
 	private Long inspectorId;
 	@Column(nullable = false)
 	@Enumerated(EnumType.STRING)
