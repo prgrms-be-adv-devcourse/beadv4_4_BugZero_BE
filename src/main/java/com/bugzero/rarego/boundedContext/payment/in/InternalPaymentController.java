@@ -1,11 +1,14 @@
 package com.bugzero.rarego.boundedContext.payment.in;
 
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bugzero.rarego.boundedContext.payment.app.PaymentFacade;
+import com.bugzero.rarego.boundedContext.payment.in.dto.RefundRequest;
+import com.bugzero.rarego.boundedContext.payment.in.dto.RefundResponse;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldRequestDto;
@@ -18,7 +21,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/internal/payments/deposits")
+@RequestMapping("/api/v1/internal/payments")
 @RequiredArgsConstructor
 @Tag(name = "Internal - Payment", description = "내부 결제 API (시스템 전용)")
 @Hidden
@@ -26,9 +29,17 @@ public class InternalPaymentController {
     private final PaymentFacade paymentFacade;
 
     @Operation(summary = "보증금 예치", description = "경매 입찰 시 보증금을 예치합니다")
-    @PostMapping("/hold")
+    @PostMapping("/deposits/hold")
     public SuccessResponseDto<DepositHoldResponseDto> holdDeposit(
             @Valid @RequestBody DepositHoldRequestDto request) {
         return SuccessResponseDto.from(SuccessType.CREATED, paymentFacade.holdDeposit(request));
+    }
+
+    @Operation(summary = "환불 처리", description = "운영자가 결제 완료된 건을 환불 처리합니다")
+    @PostMapping("/refunds/{auctionId}")
+    public SuccessResponseDto<RefundResponse> processRefund(
+            @PathVariable Long auctionId,
+            @Valid @RequestBody RefundRequest request) {
+        return SuccessResponseDto.from(SuccessType.OK, paymentFacade.processRefund(auctionId, request));
     }
 }

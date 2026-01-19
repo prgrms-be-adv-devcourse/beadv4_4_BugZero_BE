@@ -18,5 +18,7 @@ public interface AuctionOrderPort {
 
     void failOrder(Long auctionId);
 
+    void refundOrder(Long auctionId);
+
     Slice<AuctionOrderDto> findTimeoutOrders(LocalDateTime deadline, Pageable pageable);
 }

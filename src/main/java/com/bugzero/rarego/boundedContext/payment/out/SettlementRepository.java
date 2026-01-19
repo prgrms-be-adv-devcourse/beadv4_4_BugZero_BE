@@ -14,23 +14,28 @@ import com.bugzero.rarego.boundedContext.payment.domain.SettlementStatus;
 import jakarta.persistence.LockModeType;
 
 public interface SettlementRepository extends JpaRepository<Settlement, Long> {
+	Optional<Settlement> findByAuctionId(Long auctionId);
+
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	Optional<Settlement> findByAuctionIdForUpdate(Long auctionId);
+
 	List<Settlement> findAllByStatus(SettlementStatus status);
 
 	@Query("""
-		    SELECT s
-		    FROM Settlement s
-		    JOIN FETCH s.seller
-		    WHERE s.status = :status
-		    ORDER BY s.id ASC
-		""")
+			    SELECT s
+			    FROM Settlement s
+			    JOIN FETCH s.seller
+			    WHERE s.status = :status
+			    ORDER BY s.id ASC
+			""")
 	List<Settlement> findAllByStatus(SettlementStatus status, Pageable pageable);
 
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("""
-		    SELECT s
-		    FROM Settlement s
-		    JOIN FETCH s.seller
-		    WHERE s.id = :id
-		""")
+			    SELECT s
+			    FROM Settlement s
+			    JOIN FETCH s.seller
+			    WHERE s.id = :id
+			""")
 	Optional<Settlement> findByIdForUpdate(Long id);
 }

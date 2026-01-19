@@ -49,6 +49,13 @@ public class AuctionOrderPortAdapter implements AuctionOrderPort {
     }
 
     @Override
+    public void refundOrder(Long auctionId) {
+        AuctionOrder order = auctionOrderRepository.findByAuctionId(auctionId)
+                .orElseThrow(() -> new CustomException(ErrorType.AUCTION_ORDER_NOT_FOUND));
+        order.refund();
+    }
+
+    @Override
     public Slice<AuctionOrderDto> findTimeoutOrders(LocalDateTime deadline, Pageable pageable) {
         return auctionOrderRepository.findByStatusAndCreatedAtBefore(AuctionOrderStatus.PROCESSING, deadline, pageable)
                 .map(this::from);
