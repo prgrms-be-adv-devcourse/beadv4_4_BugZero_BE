@@ -65,8 +65,9 @@ class PaymentRefundUseCaseTest {
         PaymentMember buyer = createMockMember(BIDDER_ID);
         Wallet wallet = Wallet.builder().balance(50000).holdingAmount(0).build();
         Settlement settlement = Settlement.create(AUCTION_ID, createMockMember(SELLER_ID), FINAL_PRICE);
+        // Settlement 상태는 READY (환불 가능)
 
-        given(auctionOrderPort.findByAuctionIdForUpdate(AUCTION_ID)).willReturn(Optional.of(order));
+        given(auctionOrderPort.refundOrderWithLock(AUCTION_ID)).willReturn(order);
         given(settlementRepository.findByAuctionIdForUpdate(AUCTION_ID)).willReturn(Optional.of(settlement));
         given(paymentSupport.findWalletByMemberIdForUpdate(BIDDER_ID)).willReturn(wallet);
         given(paymentSupport.findMemberById(BIDDER_ID)).willReturn(buyer);
@@ -82,9 +83,6 @@ class PaymentRefundUseCaseTest {
         assertThat(wallet.getBalance()).isEqualTo(150000); // 50000 + 100000
         assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.FAILED);
         assertThat(response.refundAmount()).isEqualTo(FINAL_PRICE);
-        assertThat(response.status()).isEqualTo("FAILED");
-
-        verify(auctionOrderPort).refundOrder(AUCTION_ID);
 
         ArgumentCaptor<PaymentTransaction> transactionCaptor = ArgumentCaptor.forClass(PaymentTransaction.class);
         verify(transactionRepository).save(transactionCaptor.capture());
@@ -95,39 +93,27 @@ class PaymentRefundUseCaseTest {
     }
 
     @Test
-    @DisplayName("성공: 정산 정보가 없어도 환불 성공")
-    void processRefund_Success_NoSettlement() {
+    @DisplayName("실패: 정산 정보가 없으면 환불 실패")
+    void processRefund_Fail_SettlementNotFound() {
         // given
-        AuctionOrderDto order = new AuctionOrderDto(
-                1L, AUCTION_ID, SELLER_ID, BIDDER_ID, FINAL_PRICE, "SUCCESS", LocalDateTime.now());
-
-        PaymentMember buyer = createMockMember(BIDDER_ID);
-        Wallet wallet = Wallet.builder().balance(50000).holdingAmount(0).build();
-
-        given(auctionOrderPort.findByAuctionIdForUpdate(AUCTION_ID)).willReturn(Optional.of(order));
+        given(auctionOrderPort.refundOrderWithLock(AUCTION_ID))
+                .willReturn(new AuctionOrderDto(1L, AUCTION_ID, SELLER_ID, BIDDER_ID, FINAL_PRICE, "SUCCESS",
+                        LocalDateTime.now()));
         given(settlementRepository.findByAuctionIdForUpdate(AUCTION_ID)).willReturn(Optional.empty());
-        given(paymentSupport.findWalletByMemberIdForUpdate(BIDDER_ID)).willReturn(wallet);
-        given(paymentSupport.findMemberById(BIDDER_ID)).willReturn(buyer);
-        given(transactionRepository.save(any(PaymentTransaction.class))).willAnswer(i -> i.getArgument(0));
 
-        // when
-        RefundResponseDto response = paymentRefundUseCase.processRefund(AUCTION_ID);
-
-        // then
-        assertThat(wallet.getBalance()).isEqualTo(150000);
-        assertThat(response.refundAmount()).isEqualTo(FINAL_PRICE);
-        assertThat(response.status()).isEqualTo("FAILED");
-        verify(auctionOrderPort).refundOrder(AUCTION_ID);
+        // when & then
+        assertThatThrownBy(() -> paymentRefundUseCase.processRefund(AUCTION_ID))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorType")
+                .isEqualTo(ErrorType.SETTLEMENT_NOT_FOUND);
     }
 
     @Test
     @DisplayName("실패: 주문 상태가 SUCCESS가 아님")
     void processRefund_Fail_InvalidOrderStatus() {
         // given
-        AuctionOrderDto order = new AuctionOrderDto(
-                1L, AUCTION_ID, SELLER_ID, BIDDER_ID, FINAL_PRICE, "PROCESSING", LocalDateTime.now());
-
-        given(auctionOrderPort.findByAuctionIdForUpdate(AUCTION_ID)).willReturn(Optional.of(order));
+        given(auctionOrderPort.refundOrderWithLock(AUCTION_ID))
+                .willThrow(new CustomException(ErrorType.INVALID_ORDER_STATUS));
 
         // when & then
         assertThatThrownBy(() -> paymentRefundUseCase.processRefund(AUCTION_ID))
@@ -137,30 +123,37 @@ class PaymentRefundUseCaseTest {
     }
 
     @Test
-    @DisplayName("실패: 이미 정산이 완료됨")
-    void processRefund_Fail_SettlementCompleted() {
+    @DisplayName("성공: 정산이 DONE 상태일 때도 환불 성공")
+    void processRefund_Success_SettlementDone() {
         // given
         AuctionOrderDto order = new AuctionOrderDto(
                 1L, AUCTION_ID, SELLER_ID, BIDDER_ID, FINAL_PRICE, "SUCCESS", LocalDateTime.now());
 
+        PaymentMember buyer = createMockMember(BIDDER_ID);
+        Wallet wallet = Wallet.builder().balance(50000).holdingAmount(0).build();
         Settlement settlement = Settlement.create(AUCTION_ID, createMockMember(SELLER_ID), FINAL_PRICE);
-        settlement.complete(); // DONE 상태로 변경
+        settlement.complete(); // DONE 상태
 
-        given(auctionOrderPort.findByAuctionIdForUpdate(AUCTION_ID)).willReturn(Optional.of(order));
+        given(auctionOrderPort.refundOrderWithLock(AUCTION_ID)).willReturn(order);
         given(settlementRepository.findByAuctionIdForUpdate(AUCTION_ID)).willReturn(Optional.of(settlement));
+        given(paymentSupport.findWalletByMemberIdForUpdate(BIDDER_ID)).willReturn(wallet);
+        given(paymentSupport.findMemberById(BIDDER_ID)).willReturn(buyer);
+        given(transactionRepository.save(any(PaymentTransaction.class))).willAnswer(i -> i.getArgument(0));
 
-        // when & then
-        assertThatThrownBy(() -> paymentRefundUseCase.processRefund(AUCTION_ID))
-                .isInstanceOf(CustomException.class)
-                .extracting("errorType")
-                .isEqualTo(ErrorType.SETTLEMENT_ALREADY_COMPLETED);
+        // when
+        RefundResponseDto response = paymentRefundUseCase.processRefund(AUCTION_ID);
+
+        // then
+        assertThat(wallet.getBalance()).isEqualTo(150000);
+        assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.FAILED);
     }
 
     @Test
     @DisplayName("실패: 주문을 찾을 수 없음")
     void processRefund_Fail_OrderNotFound() {
         // given
-        given(auctionOrderPort.findByAuctionIdForUpdate(AUCTION_ID)).willReturn(Optional.empty());
+        given(auctionOrderPort.refundOrderWithLock(AUCTION_ID))
+                .willThrow(new CustomException(ErrorType.AUCTION_ORDER_NOT_FOUND));
 
         // when & then
         assertThatThrownBy(() -> paymentRefundUseCase.processRefund(AUCTION_ID))
