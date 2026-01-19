@@ -1,12 +1,16 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
-import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionBidStreamEventDto;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionBidEventDto;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionCompleteEventDto;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionConnectEventDto;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionHeartbeatEventDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.*;
 
@@ -67,7 +71,7 @@ public class AuctionBidStreamSupport {
                     emitter,
                     "connect",
                     System.currentTimeMillis() + "_init",
-                    AuctionBidStreamEventDto.connect(auctionId, currentPrice)
+                    AuctionConnectEventDto.create(auctionId, currentPrice)
             );
         } catch (IOException e) {
             log.error("연결 이벤트 전송 실패", e);
@@ -84,9 +88,9 @@ public class AuctionBidStreamSupport {
             Long auctionId,
             Integer bidAmount,
             String bidderName,
-            java.time.LocalDateTime bidTime
+            LocalDateTime bidTime
     ) {
-        AuctionBidStreamEventDto event = AuctionBidStreamEventDto.bid(
+        AuctionBidEventDto event = AuctionBidEventDto.create(
                 auctionId,
                 bidAmount,
                 bidderName,
@@ -109,7 +113,7 @@ public class AuctionBidStreamSupport {
             Integer finalPrice,
             String winnerName
     ) {
-        AuctionBidStreamEventDto event = AuctionBidStreamEventDto.auctionEnded(
+        AuctionCompleteEventDto event = AuctionCompleteEventDto.create(
                 auctionId,
                 finalPrice,
                 winnerName
@@ -129,7 +133,7 @@ public class AuctionBidStreamSupport {
     /**
      * 브로드캐스트 공통 로직
      */
-    private void broadcast(Long auctionId, String eventName, String eventId, AuctionBidStreamEventDto data) {
+    private void broadcast(Long auctionId, String eventName, String eventId, Object data) {
         CopyOnWriteArrayList<SseEmitter> auctionEmitters = emitters.get(auctionId);
 
         if (auctionEmitters == null || auctionEmitters.isEmpty()) {
@@ -200,7 +204,7 @@ public class AuctionBidStreamSupport {
                                 emitter,
                                 "ping",
                                 System.currentTimeMillis() + "_ping",
-                                AuctionBidStreamEventDto.ping()
+                                AuctionHeartbeatEventDto.create()
                         );
                     } catch (IOException e) {
                         log.debug("하트비트 전송 실패 (연결 끊김)", e);
