@@ -27,7 +27,9 @@ public class PaymentSyncMemberUseCase {
 
 		Optional<PaymentMember> existedOpt = paymentMemberRepository.findById(member.id());
 
-		// 1) 기존 객체에 업데이트
+		/**
+		 * 기존 객체에 업데이트 로직
+		 */
 		if (existedOpt.isPresent()) {
 			PaymentMember existed = existedOpt.get();
 
@@ -49,7 +51,6 @@ public class PaymentSyncMemberUseCase {
 		 여기부터는 신규 가입일 때만 진행
 		 **/
 
-		// 2) 새로운 객체 생성
 		// 1. 객체 생성
 		PaymentMember saved =
 			PaymentMember.builder()

@@ -64,8 +64,8 @@ class AuctionSyncMemberUseCaseTest {
 	}
 
 	@Test
-	@DisplayName("존재하는 것보다 새로운 업데이트는 추가")
-	void syncMember_SaveWhenNewerEvent() {
+	@DisplayName("존재하는 것보다 새로운 업데이트는 반영")
+	void syncMember_UpdateWhenNewerEvent() {
 		// given
 		LocalDateTime existedUpdatedAt = LocalDateTime.now().minusHours(2);
 		AuctionMember existed = AuctionMember.builder()
@@ -91,16 +91,13 @@ class AuctionSyncMemberUseCaseTest {
 		);
 
 		given(auctionMemberRepository.findById(1L)).willReturn(Optional.of(existed));
-		given(auctionMemberRepository.save(any(AuctionMember.class)))
-			.willAnswer(invocation -> invocation.getArgument(0));
-
 		// when
 		AuctionMember result = auctionSyncMemberUseCase.syncMember(member);
 
 		// then
-		assertThat(result.getId()).isEqualTo(1L);
+		assertThat(result).isSameAs(existed);
 		assertThat(result.getUpdatedAt()).isEqualTo(eventUpdatedAt);
 		assertThat(result.getEmail()).isEqualTo("user@example.com");
-		verify(auctionMemberRepository).save(any(AuctionMember.class));
+		verify(auctionMemberRepository, never()).save(any(AuctionMember.class));
 	}
 }

@@ -64,8 +64,8 @@ class PaymentSyncMemberUseCaseTest {
 	}
 
 	@Test
-	@DisplayName("존재하는 것보다 빠른 변경은 추가")
-	void syncMember_SaveWhenNewerEvent() {
+	@DisplayName("존재하는 것보다 새로운 업데이트는 반영")
+	void syncMember_UpdateWhenNewerEvent() {
 		// given
 		LocalDateTime existedUpdatedAt = LocalDateTime.now().minusHours(2);
 		PaymentMember existed = PaymentMember.builder()
@@ -91,16 +91,13 @@ class PaymentSyncMemberUseCaseTest {
 		);
 
 		given(paymentMemberRepository.findById(1L)).willReturn(Optional.of(existed));
-		given(paymentMemberRepository.save(any(PaymentMember.class)))
-			.willAnswer(invocation -> invocation.getArgument(0));
-
 		// when
 		PaymentMember result = paymentSyncMemberUseCase.syncMember(member);
 
 		// then
-		assertThat(result.getId()).isEqualTo(1L);
+		assertThat(result).isSameAs(existed);
 		assertThat(result.getUpdatedAt()).isEqualTo(eventUpdatedAt);
 		assertThat(result.getEmail()).isEqualTo("user@example.com");
-		verify(paymentMemberRepository).save(any(PaymentMember.class));
+		verify(paymentMemberRepository, never()).save(any(PaymentMember.class));
 	}
 }
