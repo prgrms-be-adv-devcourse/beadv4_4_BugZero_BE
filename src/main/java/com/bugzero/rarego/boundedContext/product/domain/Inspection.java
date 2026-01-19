@@ -4,6 +4,8 @@ import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -29,7 +31,11 @@ public class Inspection extends BaseIdAndTime {
 	private ProductMember seller;
 	private Long inspectorId;
 	@Column(nullable = false)
-	private InspectionStatus status;
+	@Enumerated(EnumType.STRING)
+	private InspectionStatus inspectionStatus;
+	@Column(nullable = false)
+	@Enumerated(EnumType.STRING)
+	private ProductCondition productCondition;
 	@Column(columnDefinition = "TEXT")
 	private String reason;
 

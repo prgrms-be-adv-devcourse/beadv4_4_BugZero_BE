@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.bugzero.rarego.boundedContext.product.domain.Inspection;
 import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
+import com.bugzero.rarego.boundedContext.product.domain.ProductCondition;
 import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
 import com.bugzero.rarego.boundedContext.product.out.InspectionRepository;
 import com.bugzero.rarego.global.exception.CustomException;
@@ -38,11 +39,13 @@ public class ProductCreateInspectionUseCase {
 
 		//상품데이터의 검수 상태도 동기화
 		product.determineInspection(dto.status());
+		//상품데이터의 상품상태도 동기화
+		product.determineProductCondition(dto.productCondition());
 
 		return ProductInspectionResponseDto.builder()
 			.inspectionId(inspection.getId())
 			.productId(inspection.getProduct().getId())
-			.newStatus(inspection.getStatus())
+			.newStatus(inspection.getInspectionStatus())
 			.reason(inspection.getReason())
 			.build();
 	}
@@ -54,7 +57,9 @@ public class ProductCreateInspectionUseCase {
 	}
 
 	private void checkedProductStatus(Product product) {
-		if (product.getInspectionStatus() != InspectionStatus.PENDING) {
+		// 검수 상태가 대기중이 아니거나 상품 상태가 검수 예정 중인 경우가 아니라면 검수가 이미 완료된 것이기 때문에 예외 발생
+		if (product.getInspectionStatus() != InspectionStatus.PENDING
+			|| product.getProductCondition() != ProductCondition.INSPECTION) {
 			throw new CustomException(ErrorType.INSPECTION_ALREADY_COMPLETED);
 		}
 	}
