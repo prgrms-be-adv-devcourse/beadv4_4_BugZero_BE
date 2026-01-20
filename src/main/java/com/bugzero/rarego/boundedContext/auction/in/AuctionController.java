@@ -5,6 +5,8 @@ import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.security.MemberPrincipal;
 import com.bugzero.rarego.shared.auction.dto.*;
+
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +21,16 @@ import org.springframework.web.bind.annotation.*;
 public class AuctionController {
 
 	private final AuctionFacade auctionFacade;
+
+	// 경매 상태/현재가 Bulk 조회
+	@Operation(summary = "경매 목록 조회", description = "검색 조건(키워드, 카테고리, 상태)과 정렬 조건에 따라 경매 목록을 조회합니다.")
+	@GetMapping
+	public PagedResponseDto<AuctionListResponseDto> getAuctions(
+		@ModelAttribute AuctionSearchCondition condition,
+		@PageableDefault(size = 10) Pageable pageable
+	) {
+		return auctionFacade.getAuctions(condition, pageable);
+	}
 
 	@GetMapping("/{auctionId}")
 	public SuccessResponseDto<AuctionDetailResponseDto> getAuctionDetail(

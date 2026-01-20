@@ -1,10 +1,12 @@
 package com.bugzero.rarego.boundedContext.auction.in;
 
 import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.security.MemberPrincipal;
 import com.bugzero.rarego.shared.auction.dto.AuctionFilterType;
+import com.bugzero.rarego.shared.auction.dto.MyAuctionOrderListResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
 import lombok.RequiredArgsConstructor;
@@ -42,4 +44,5 @@ public class AuctionMemberController {
 	) {
 		return auctionFacade.getMySales(principal.publicId(), filter, pageable);
 	}
+
 }

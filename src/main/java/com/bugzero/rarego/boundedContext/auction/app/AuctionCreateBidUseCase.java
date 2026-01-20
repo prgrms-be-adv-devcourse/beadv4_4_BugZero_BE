@@ -26,6 +26,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AuctionCreateBidUseCase {
 
+	private final AuctionSupport support;
 	private final AuctionRepository auctionRepository;
 	private final BidRepository bidRepository;
 	private final AuctionMemberRepository auctionMemberRepository;
@@ -34,15 +35,13 @@ public class AuctionCreateBidUseCase {
 
 	@Transactional
 	public BidResponseDto createBid(Long auctionId, String memberPublicId, int bidAmount) {
-		// 1. 회원 조회 (publicId -> Entity)
-		AuctionMember bidder = auctionMemberRepository.findByPublicId(memberPublicId)
-			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
+		// 1. 회원 조회
+		AuctionMember bidder = support.getMember(memberPublicId);
 
-		// 2. 경매 조회
-		Auction auction = auctionRepository.findById(auctionId)
-			.orElseThrow(() -> new CustomException(ErrorType.AUCTION_NOT_FOUND));
+		// 2. 경매 조회 (비관적 락)
+		Auction auction = support.getAuctionWithLock(auctionId);
 
-		// 3. 유효성 검증 (AuctionMember 객체 전달)
+		// 3. 유효성 검증
 		validateBid(auction, bidder, bidAmount);
 
 		// TODO: 보증금 정책이 확정되면 변경 예정

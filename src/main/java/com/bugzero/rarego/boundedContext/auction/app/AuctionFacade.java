@@ -4,15 +4,19 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.shared.auction.dto.AuctionDetailResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionFilterType;
+import com.bugzero.rarego.shared.auction.dto.AuctionListResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionOrderResponseDto;
+import com.bugzero.rarego.shared.auction.dto.AuctionSearchCondition;
 import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
+import com.bugzero.rarego.shared.auction.dto.MyAuctionOrderListResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
 
@@ -61,4 +65,10 @@ public class AuctionFacade {
 		AuctionOrderResponseDto response = auctionReadUseCase.getAuctionOrder(auctionId, memberPublicId);
 		return SuccessResponseDto.from(SuccessType.OK, response);
 	}
+
+	// 경매 상태/현재가 요약 조회
+	public PagedResponseDto<AuctionListResponseDto> getAuctions(AuctionSearchCondition condition, Pageable pageable) {
+		return auctionReadUseCase.getAuctions(condition, pageable);
+	}
+
 }
