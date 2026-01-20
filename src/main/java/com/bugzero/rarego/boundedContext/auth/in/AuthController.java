@@ -15,13 +15,11 @@ import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.global.security.MemberPrincipal;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -34,8 +32,8 @@ public class AuthController {
 	// 테스트용 로그인 엔드포인트
 	@Operation(summary = "테스트 로그인", description = "테스트용 JWT 토큰을 발급합니다")
 	@PostMapping("/test/login")
-	public SuccessResponseDto<String> login(@RequestBody TokenIssueDto tokenIssueDto) {
-		String accessToken = authFacade.issueAccessToken(tokenIssueDto);
+	public SuccessResponseDto<String> login(@RequestBody TokenIssueDto requestDto) {
+		String accessToken = authFacade.issueAccessToken(requestDto.memberPublicId(), requestDto.role());
 		return SuccessResponseDto.from(SuccessType.OK,accessToken);
 	}
 
