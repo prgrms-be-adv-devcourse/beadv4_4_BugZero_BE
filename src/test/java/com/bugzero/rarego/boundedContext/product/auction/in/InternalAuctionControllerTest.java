@@ -16,41 +16,46 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.bugzero.rarego.boundedContext.product.auction.app.AuctionCreateAuctionUseCase;
+import com.bugzero.rarego.boundedContext.product.auction.app.AuctionUpdateAuctionUseCase;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionRequestDto;
+import com.bugzero.rarego.shared.product.dto.ProductAuctionUpdateDto;
 
 import tools.jackson.databind.ObjectMapper;
 
-@WebMvcTest(InternalAuctionCreateController.class)
+@WebMvcTest(InternalAuctionController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @EnableAspectJAutoProxy
 @Import(ResponseAspect.class)
-class InternalAuctionCreateControllerTest {
+class InternalAuctionControllerTest {
 	@Autowired
 	private MockMvc mockMvc;
 
 	@MockitoBean
 	private AuctionCreateAuctionUseCase auctionCreateAuctionUseCase;
 
+	@MockitoBean
+	AuctionUpdateAuctionUseCase auctionUpdateAuctionUseCase;
+
 	@Autowired
 	private ObjectMapper objectMapper;
 
 	@Test
-	@DisplayName("정상적인 경매 생성 요청 시 200 OK와 생성된 ID를 반환한다")
+	@DisplayName("정상적인 경매 생성 요청 시 201 OK와 생성된 ID를 반환한다")
 	void createAuction_Success() throws Exception {
 		// given
 		Long productId = 1L;
-		String sellerUUID = "1L";
+		String publicId = "1L";
 		ProductAuctionRequestDto requestDto = ProductAuctionRequestDto.builder()
 			.startPrice(10000)
 			.durationDays(7)
 			.build();
 
-		given(auctionCreateAuctionUseCase.createAuction(eq(productId),eq(sellerUUID), any(ProductAuctionRequestDto.class)))
+		given(auctionCreateAuctionUseCase.createAuction(eq(productId),eq(publicId), any(ProductAuctionRequestDto.class)))
 			.willReturn(10L);
 
 		// when & then
-		mockMvc.perform(post("/api/v1/internal/auctions/{productId}/{sellerUUID}", productId,sellerUUID)
+		mockMvc.perform(post("/api/v1/internal/auctions/{productId}/{publicId}", productId,publicId)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(requestDto)))
 			.andExpect(status().isCreated())
@@ -70,7 +75,7 @@ class InternalAuctionCreateControllerTest {
 			.build();
 
 		// when & then
-		mockMvc.perform(post("/api/v1/internal/auctions/{productId}/{sellerUUID}", productId,sellerUUID)
+		mockMvc.perform(post("/api/v1/internal/auctions/{productId}/{publicId}", productId,sellerUUID)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(invalidDto)))
 			.andExpect(status().isBadRequest());
@@ -89,9 +94,31 @@ class InternalAuctionCreateControllerTest {
 			.build();
 
 		// when & then
-		mockMvc.perform(post("/api/v1/internal/auctions/{productId}/{sellerUUID}", productId,sellerUUID)
+		mockMvc.perform(post("/api/v1/internal/auctions/{productId}/{publicId}", productId,sellerUUID)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(invalidDto)))
 			.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@DisplayName("정상적인 경매 수정 요청 시 200 OK와 생성된 ID를 반환한다")
+	void updateAuction_Success() throws Exception {
+		// given
+		String publicId = "1L";
+		ProductAuctionUpdateDto updateDto = ProductAuctionUpdateDto.builder()
+			.auctionId(1L)
+			.startPrice(10000)
+			.durationDays(7)
+			.build();
+
+		given(auctionUpdateAuctionUseCase.updateAuction(eq(publicId), any(ProductAuctionUpdateDto.class)))
+			.willReturn(10L);
+
+		// when & then
+		mockMvc.perform(patch("/api/v1/internal/auctions/{publicId}",publicId)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(updateDto)))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data").value(10));
 	}
 }
