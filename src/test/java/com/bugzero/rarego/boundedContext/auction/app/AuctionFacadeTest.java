@@ -165,18 +165,18 @@ class AuctionFacadeTest {
         // given
         Long auctionId = 1L;
         Long memberId = 999L;
+        String publicId = "test-public-id";
 
-        // 회원 존재 검증 통과를 위한 Mocking
-        AuctionMember member = AuctionMember.builder().build();
+        AuctionMember member = AuctionMember.builder().publicId(publicId).build();
         ReflectionTestUtils.setField(member, "id", memberId);
-        given(auctionMemberRepository.findById(memberId)).willReturn(java.util.Optional.of(member));
+        given(auctionMemberRepository.findByPublicId(publicId)).willReturn(java.util.Optional.of(member));
 
         WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(true, auctionId);
         given(auctionBookmarkUseCase.addBookmark(memberId, auctionId))
                 .willReturn(responseDto);
 
         // when
-        WishlistAddResponseDto result = auctionFacade.addBookmark(memberId, auctionId);
+        WishlistAddResponseDto result = auctionFacade.addBookmark(publicId, auctionId);
 
         // then
         assertThat(result.bookmarked()).isTrue();
@@ -189,22 +189,37 @@ class AuctionFacadeTest {
         // given
         Long auctionId = 1L;
         Long memberId = 999L;
+        String publicId = "test-public-id";
 
-        // 회원 존재 검증 통과를 위한 Mocking
-        AuctionMember member = AuctionMember.builder().build();
+        AuctionMember member = AuctionMember.builder().publicId(publicId).build();
         ReflectionTestUtils.setField(member, "id", memberId);
-        given(auctionMemberRepository.findById(memberId)).willReturn(java.util.Optional.of(member));
+        given(auctionMemberRepository.findByPublicId(publicId)).willReturn(java.util.Optional.of(member));
 
         WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(false, auctionId);
         given(auctionBookmarkUseCase.addBookmark(memberId, auctionId))
                 .willReturn(responseDto);
 
         // when
-        WishlistAddResponseDto result = auctionFacade.addBookmark(memberId, auctionId);
+        WishlistAddResponseDto result = auctionFacade.addBookmark(publicId, auctionId);
 
         // then
         assertThat(result.bookmarked()).isFalse();
         verify(auctionBookmarkUseCase).addBookmark(memberId, auctionId);
+    }
+
+    @Test
+    @DisplayName("관심 경매 등록: 존재하지 않는 회원일 경우 예외가 발생한다")
+    void addBookmark_MemberNotFound() {
+        // given
+        Long auctionId = 1L;
+        String publicId = "non-existent-public-id";
+
+        given(auctionMemberRepository.findByPublicId(publicId)).willReturn(java.util.Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> auctionFacade.addBookmark(publicId, auctionId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorType", ErrorType.MEMBER_NOT_FOUND);
     }
 
     @Test
@@ -213,17 +228,17 @@ class AuctionFacadeTest {
         // given
         Long auctionId = 1L;
         Long memberId = 999L;
+        String publicId = "test-public-id";
 
-        // 추가: 회원 존재 검증은 통과해야 UseCase의 예외를 테스트할 수 있음
-        AuctionMember member = AuctionMember.builder().build();
+        AuctionMember member = AuctionMember.builder().publicId(publicId).build();
         ReflectionTestUtils.setField(member, "id", memberId);
-        given(auctionMemberRepository.findById(memberId)).willReturn(java.util.Optional.of(member));
+        given(auctionMemberRepository.findByPublicId(publicId)).willReturn(java.util.Optional.of(member));
 
         given(auctionBookmarkUseCase.addBookmark(memberId, auctionId))
                 .willThrow(new CustomException(ErrorType.AUCTION_NOT_FOUND));
 
         // when & then
-        assertThatThrownBy(() -> auctionFacade.addBookmark(memberId, auctionId))
+        assertThatThrownBy(() -> auctionFacade.addBookmark(publicId, auctionId))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorType", ErrorType.AUCTION_NOT_FOUND);
     }

@@ -9,6 +9,7 @@ import com.bugzero.rarego.global.response.*;
 import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidRequestDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
+import com.bugzero.rarego.support.WithMockMemberPrincipal;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -168,19 +169,18 @@ class AuctionControllerTest {
 
     @Test
     @DisplayName("성공: 관심 경매 등록 시 HTTP 200과 등록 정보를 반환한다")
-    @WithMockUser
+    @WithMockMemberPrincipal(publicId = "test-public-id")
     void addBookmark_success() throws Exception {
         // given
-        Long memberId = 1L;
+        String publicId = "test-public-id";
         Long auctionId = 1L;
         WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(true, auctionId);
 
-        given(auctionFacade.addBookmark(eq(memberId), eq(auctionId)))
+        given(auctionFacade.addBookmark(eq(publicId), eq(auctionId)))
                 .willReturn(responseDto);
 
         // when & then
         mockMvc.perform(post("/api/v1/auctions/{auctionId}/bookmarks", auctionId)
-                        .param("memberId", memberId.toString())
                         .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -191,19 +191,18 @@ class AuctionControllerTest {
 
     @Test
     @DisplayName("성공: 이미 관심 등록된 경매에 중복 등록 시 bookmarked=false를 반환한다")
-    @WithMockUser
+    @WithMockMemberPrincipal(publicId = "test-public-id")
     void addBookmark_already_exists() throws Exception {
         // given
-        Long memberId = 1L;
+        String publicId = "test-public-id";
         Long auctionId = 1L;
         WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(false, auctionId);
 
-        given(auctionFacade.addBookmark(eq(memberId), eq(auctionId)))
+        given(auctionFacade.addBookmark(eq(publicId), eq(auctionId)))
                 .willReturn(responseDto);
 
         // when & then
         mockMvc.perform(post("/api/v1/auctions/{auctionId}/bookmarks", auctionId)
-                        .param("memberId", memberId.toString())
                         .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -214,18 +213,17 @@ class AuctionControllerTest {
 
     @Test
     @DisplayName("실패: 존재하지 않는 경매에 관심 등록 시 404를 반환한다")
-    @WithMockUser
+    @WithMockMemberPrincipal(publicId = "test-public-id")
     void addBookmark_fail_auction_not_found() throws Exception {
         // given
-        Long memberId = 1L;
+        String publicId = "test-public-id";
         Long auctionId = 999L;
 
-        given(auctionFacade.addBookmark(eq(memberId), eq(auctionId)))
+        given(auctionFacade.addBookmark(eq(publicId), eq(auctionId)))
                 .willThrow(new CustomException(ErrorType.AUCTION_NOT_FOUND));
 
         // when & then
         mockMvc.perform(post("/api/v1/auctions/{auctionId}/bookmarks", auctionId)
-                        .param("memberId", memberId.toString())
                         .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isNotFound())

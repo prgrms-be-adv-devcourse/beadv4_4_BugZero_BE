@@ -120,8 +120,8 @@ public class AuctionFacade {
     }
 
     @Transactional
-    public WishlistAddResponseDto addBookmark(Long memberId, Long auctionId) {
-        AuctionMember member = auctionMemberRepository.findById(memberId)
+    public WishlistAddResponseDto addBookmark(String publicId, Long auctionId) {
+        AuctionMember member = auctionMemberRepository.findByPublicId(publicId)
                 .orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
 
         return auctionBookmarkUseCase.addBookmark(member.getId(), auctionId);

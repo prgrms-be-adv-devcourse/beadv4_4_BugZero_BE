@@ -5,10 +5,12 @@ import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
+import com.bugzero.rarego.global.security.MemberPrincipal;
 import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidRequestDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -52,14 +54,14 @@ public class AuctionController {
         return auctionFacade.getBidLogs(auctionId, pageable);
     }
 
+    @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "관심 경매 등록", description = "특정 경매를 관심 목록에 추가합니다")
     @PostMapping("/{auctionId}/bookmarks")
     public SuccessResponseDto<WishlistAddResponseDto> addBookmark(
-            @RequestParam Long memberId,
+            @AuthenticationPrincipal MemberPrincipal memberPrincipal,
             @PathVariable Long auctionId
     ) {
-        // TODO: MemberPrincipals로 변경 필요
-        WishlistAddResponseDto response = auctionFacade.addBookmark(memberId, auctionId);
+        WishlistAddResponseDto response = auctionFacade.addBookmark(memberPrincipal.publicId(), auctionId);
 
         return SuccessResponseDto.from(SuccessType.OK, response);
     }
