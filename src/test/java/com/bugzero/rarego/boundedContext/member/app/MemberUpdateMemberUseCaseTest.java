@@ -129,36 +129,6 @@ class MemberUpdateMemberUseCaseTest {
 	}
 
 	@Test
-	@DisplayName("SELLER가 필수 값을 clear 하면 MEMBER_SELLER_REQUIRED_FIELD_CANNOT_BE_CLEARED 예외를 발생시킨다")
-	void updateMe_sellerCannotClearRequiredFields() {
-		// given
-		Member member = baseMember();
-		MemberUpdateRequestDto requestDto = new MemberUpdateRequestDto(
-			"nickname",
-			null,
-			"12345",
-			"Seoul",
-			"Detail",
-			"Alice",
-			"01012345678",
-			Set.of(MemberClearField.ZIPCODE)
-		);
-		given(memberSupport.findByPublicId("public-id")).willReturn(member);
-
-		// when
-		Throwable thrown = catchThrowable(
-			() -> memberUpdateMemberUseCase.updateMe("public-id", "SELLER", requestDto)
-		);
-
-		// then
-		assertThat(thrown)
-			.isInstanceOf(CustomException.class)
-			.extracting("errorType")
-			.isEqualTo(ErrorType.MEMBER_SELLER_REQUIRED_FIELD_CANNOT_BE_CLEARED);
-		verify(memberRepository, never()).save(any(Member.class));
-	}
-
-	@Test
 	@DisplayName("연락처 형식이 올바르지 않으면 MEMBER_INVALID_PHONE_NUMBER 예외를 발생시킨다")
 	void updateMe_rejectsInvalidPhone() {
 		// given

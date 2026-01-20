@@ -29,11 +29,10 @@ public class MemberUpdateMemberUseCase {
 	public MemberUpdateResponseDto updateMe(String publicId, String role, MemberUpdateRequestDto requestDto) {
 		Member member = memberSupport.findByPublicId(publicId);
 
-		// Seller clear 전략 => seller라면 값을 비울 수 없음
-		validateClearFieldsPolicy(role, requestDto);
+		validateClearFieldsPolicy(requestDto);
 
-		// 1) 삭제(clear) 먼저 적용 (SELLER면 일부 clear 금지)
-		applyClears(member, role, requestDto.clearFields());
+		// 1) 삭제(clear) 먼저 적용
+		applyClears(member, requestDto.clearFields());
 
 		// 2) 수정된 필드에 대해서만 정책 검증 후 적용
 		validateAfterPatch(requestDto, member);
@@ -44,23 +43,11 @@ public class MemberUpdateMemberUseCase {
 		return MemberUpdateResponseDto.from(member);
 	}
 
-	private boolean isSeller(String role) {
-		return "SELLER".equals(role);
-	}
 
-	private void validateClearFieldsPolicy(String role, MemberUpdateRequestDto dto) {
+	// ClearField와 수정본 일치하는지 확인 (null ClearField에 존재하는데 dto에 수정 내용이 들어왔다면 오류처리합니다.)
+	private void validateClearFieldsPolicy(MemberUpdateRequestDto dto) {
 		Set<MemberClearField> clearFields = dto.clearFields();
 		if (clearFields == null || clearFields.isEmpty()) return;
-
-		if (isSeller(role)) {
-			if (clearFields.contains(MemberClearField.ZIPCODE)
-				|| clearFields.contains(MemberClearField.ADDRESS)
-				|| clearFields.contains(MemberClearField.ADDRESS_DETAIL)
-				|| clearFields.contains(MemberClearField.CONTACT_PHONE)
-				|| clearFields.contains(MemberClearField.REAL_NAME)) {
-				throw new CustomException(ErrorType.MEMBER_SELLER_REQUIRED_FIELD_CANNOT_BE_CLEARED);
-			}
-		}
 
 		if (clearFields.contains(MemberClearField.INTRO) && dto.intro() != null) {
 			throw new CustomException(ErrorType.MEMBER_UPDATED_FAILED);
@@ -83,19 +70,8 @@ public class MemberUpdateMemberUseCase {
 	}
 
 	// null 가능한 영역 적용 (삭제)
-	private void applyClears(Member member, String role, Set<MemberClearField> clearFields) {
+	private void applyClears(Member member, Set<MemberClearField> clearFields) {
 		if (clearFields == null || clearFields.isEmpty()) return;
-
-		// SELLER면 intro 제외 삭제를 막는다(= 필수값이니까)
-		if (isSeller(role)) {
-			if (clearFields.contains(MemberClearField.ZIPCODE)
-				|| clearFields.contains(MemberClearField.ADDRESS)
-				|| clearFields.contains(MemberClearField.ADDRESS_DETAIL)
-				|| clearFields.contains(MemberClearField.CONTACT_PHONE)
-				|| clearFields.contains(MemberClearField.REAL_NAME)) {
-				throw new CustomException(ErrorType.MEMBER_SELLER_REQUIRED_FIELD_CANNOT_BE_CLEARED);
-			}
-		}
 
 		if (clearFields.contains(MemberClearField.INTRO)) {
 			member.changeIntro(null);
