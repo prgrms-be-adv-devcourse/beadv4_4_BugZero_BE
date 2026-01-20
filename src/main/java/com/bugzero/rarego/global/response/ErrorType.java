@@ -35,6 +35,7 @@ public enum ErrorType {
 	AUCTION_ORDER_ACCESS_DENIED(403, 2008, "낙찰 기록 정보에 접근 권한이 없습니다."),
 	UNAUTHORIZED_AUCTION_SELLER(403, 2009, "해당 경매의 판매자가 아닙니다."),
 	AUCTION_ALREADY_IN_PROGRESS(400, 2010, "경매 시작 전에만 수정 가능합니다."),
+	AUCTION_UPDATE_FAILED(500, 2011, "경매 정보 수정에 실패했습니다.."),
 	BID_NOT_FOUND(404, 2501, "입찰가를 찾을 수 없습니다."),
 	AUCTION_NOT_SCHEDULED(400, 2503, "예정된 경매가 아닙니다."),
 	AUCTION_SCHEDULE_FAILED(500, 2504, "경매 정산 예약에 실패했습니다."),
