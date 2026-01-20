@@ -72,4 +72,10 @@ public class MemberController {
 		);
 	}
 
+	@SecurityRequirement(name = "bearerAuth")
+	@PostMapping("/me/seller")
+	public SuccessResponseDto<Void> promoteSeller(@AuthenticationPrincipal MemberPrincipal memberPrincipal) {
+		memberFacade.promoteSeller(memberPrincipal.publicId(), memberPrincipal.role());
+		return SuccessResponseDto.from(SuccessType.OK);
+	}
 }
