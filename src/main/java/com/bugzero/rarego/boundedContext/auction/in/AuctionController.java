@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Auction API", description = "경매 상품 조회 및 입찰 관련 API")
 @RestController
 @RequestMapping("/api/v1/auctions")
 @RequiredArgsConstructor
@@ -20,6 +21,7 @@ public class AuctionController {
 
 	private final AuctionFacade auctionFacade;
 
+	@Operation(summary = "경매 상세 조회", description = "경매의 상세 정보를 조회합니다. (로그인 시 내 입찰 내역 포함)")
 	@GetMapping("/{auctionId}")
 	public SuccessResponseDto<AuctionDetailResponseDto> getAuctionDetail(
 		@PathVariable Long auctionId,
@@ -29,6 +31,7 @@ public class AuctionController {
 		return auctionFacade.getAuctionDetail(auctionId, memberPublicId);
 	}
 
+	@Operation(summary = "입찰하기", description = "특정 경매에 입찰을 진행합니다. (판매자 본인 입찰 불가)")
 	@PostMapping("/{auctionId}/bids")
 	@ResponseStatus(HttpStatus.CREATED)
 	public SuccessResponseDto<BidResponseDto> createBid(
@@ -44,6 +47,7 @@ public class AuctionController {
 		return response;
 	}
 
+	@Operation(summary = "입찰 기록 조회", description = "해당 경매의 실시간 입찰 내역(로그)을 조회합니다.")
 	@GetMapping("/{auctionId}/bids")
 	public PagedResponseDto<BidLogResponseDto> getBids(
 		@PathVariable Long auctionId,
@@ -52,6 +56,7 @@ public class AuctionController {
 		return auctionFacade.getBidLogs(auctionId, pageable);
 	}
 
+	@Operation(summary = "낙찰 상세 정보 조회", description = "경매 종료 후 낙찰 정보를 조회합니다. (구매자/판매자만 조회 가능)")
 	@GetMapping("/{auctionId}/order")
 	public SuccessResponseDto<AuctionOrderResponseDto> getAuctionOrder(
 		@PathVariable Long auctionId,
