@@ -5,7 +5,6 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.bugzero.rarego.boundedContext.auth.domain.TokenIssueDto;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.security.JwtProvider;
@@ -28,8 +27,8 @@ public class AuthIssueTokenUseCase {
 	}
 
 
-	public String issueToken(TokenIssueDto tokenIssueDto, boolean isAccessToken) {
-		validateDto(tokenIssueDto);
+	public String issueToken(String memberPublicId, String role, boolean isAccessToken) {
+		validateDto(memberPublicId, role);
 
 		int expireSeconds = getTokenExpireSeconds(isAccessToken);
 		if (expireSeconds <= 0) {
@@ -40,8 +39,8 @@ public class AuthIssueTokenUseCase {
 			return jwtProvider.issueToken(
 				expireSeconds,
 				Map.of(
-					"publicId", tokenIssueDto.memberPublicId(),
-					"role", tokenIssueDto.role()
+					"publicId", memberPublicId,
+					"role", role
 				)
 			);
 		} catch (Exception e) {
@@ -49,14 +48,10 @@ public class AuthIssueTokenUseCase {
 		}
 	}
 
-	private void validateDto(TokenIssueDto tokenIssueDto) {
-		if (tokenIssueDto == null) {
+	private void validateDto(String memberPublicId, String role) {
+		if (role == null) {
 			throw new CustomException(ErrorType.INVALID_INPUT);
 		}
-		if (tokenIssueDto.role() == null) {
-			throw new CustomException(ErrorType.INVALID_INPUT);
-		}
-		String memberPublicId = tokenIssueDto.memberPublicId();
 		if (memberPublicId == null || memberPublicId.isBlank()) {
 			throw new CustomException(ErrorType.INVALID_INPUT);
 		}

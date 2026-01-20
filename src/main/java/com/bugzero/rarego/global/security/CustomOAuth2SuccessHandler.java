@@ -22,6 +22,7 @@ import tools.jackson.databind.ObjectMapper;
 @RequiredArgsConstructor
 public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler {
 	private static final String ACCESS_TOKEN_ATTRIBUTE = "accessToken";
+	private static final String REFRESH_TOKEN_ATTRIBUTE = "refreshToken";
 	private final ObjectMapper objectMapper;
 
 	@Override
@@ -35,13 +36,21 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
 		OAuth2User oauth2User = oauthToken.getPrincipal();
 
 		Object accessTokenValue = oauth2User.getAttributes().get(ACCESS_TOKEN_ATTRIBUTE);
-		if (!(accessTokenValue instanceof String accessToken)) {
+		Object refreshTokenValue = oauth2User.getAttributes().get(REFRESH_TOKEN_ATTRIBUTE);
+		if (!(accessTokenValue instanceof String accessToken)
+			|| !(refreshTokenValue instanceof String refreshToken)) {
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
 
 		// 토큰을 SuccessResponseDto에 JSON 형태로 담아 응답해줌
-		SuccessResponseDto<Map<String, String>> body = SuccessResponseDto.from(SuccessType.OK, Map.of("accessToken", accessToken));
+		SuccessResponseDto<Map<String, String>> body = SuccessResponseDto.from(
+			SuccessType.OK,
+			Map.of(
+				"accessToken", accessToken,
+				"refreshToken", refreshToken
+			)
+		);
 		response.setStatus(body.status());
 		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 		objectMapper.writeValue(response.getOutputStream(), body);
