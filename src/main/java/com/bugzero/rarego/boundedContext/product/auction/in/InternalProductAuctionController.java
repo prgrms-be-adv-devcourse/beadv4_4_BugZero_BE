@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/internal/auctions")
 @RequiredArgsConstructor
-public class InternalAuctionController {
+public class InternalProductAuctionController {
 
 	private final AuctionCreateAuctionUseCase auctionCreateAuctionUseCase;
 	private final AuctionUpdateAuctionUseCase auctionUpdateAuctionUseCase;
