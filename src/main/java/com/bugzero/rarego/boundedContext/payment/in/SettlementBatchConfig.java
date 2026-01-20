@@ -6,6 +6,7 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.infrastructure.repeat.RepeatStatus;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -16,7 +17,8 @@ import lombok.RequiredArgsConstructor;
 @Configuration
 @RequiredArgsConstructor
 public class SettlementBatchConfig {
-	private static final int CHUNK_SIZE = 10;
+	@Value("${custom.payment.settlement.chunkSize:10}")
+	private int chunkSize;
 
 	private final PaymentFacade paymentFacade;
 	private final JobRepository jobRepository;
@@ -32,7 +34,7 @@ public class SettlementBatchConfig {
 	public Step settlementProcessStep() {
 		return new StepBuilder("settlementProcessStep", jobRepository)
 			.tasklet((contribution, chunkContext) -> {
-				int processedCount = paymentFacade.processSettlements(CHUNK_SIZE);
+				int processedCount = paymentFacade.processSettlements(chunkSize);
 
 				if (processedCount == 0) {
 					return RepeatStatus.FINISHED;

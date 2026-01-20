@@ -8,6 +8,7 @@ import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,6 +33,7 @@ import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
+import com.bugzero.rarego.global.security.MemberPrincipal;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,42 +53,38 @@ public class PaymentController {
 	@Operation(summary = "결제 요청", description = "토스페이먼츠 결제를 요청합니다")
 	@PostMapping("/charges")
 	public SuccessResponseDto<PaymentRequestResponseDto> requestPayment(
-		// TODO: 추후 인증 구현시 @AuthenticationPrincipal로 변경 필요
-		// 현재는 테스트를 위해 Query Parameter로 받음
-		@RequestParam Long memberId,
+		@AuthenticationPrincipal MemberPrincipal principal,
 		@Valid @RequestBody PaymentRequestDto requestDto
 	) {
-		return SuccessResponseDto.from(SuccessType.CREATED, paymentFacade.requestPayment(memberId, requestDto));
+
+		return SuccessResponseDto.from(SuccessType.CREATED,
+			paymentFacade.requestPayment(principal.publicId(), requestDto));
 	}
 
 	@Operation(summary = "결제 승인", description = "토스페이먼츠 결제 승인 후 지갑에 충전합니다")
 	@PostMapping("/charges/confirm")
 	public SuccessResponseDto<PaymentConfirmResponseDto> confirmPayment(
-		// TODO: 추후 인증 구현시 @AuthenticationPrincipal로 변경 필요
-		// 현재는 테스트를 위해 Query Parameter로 받음
-		@RequestParam Long memberId,
+		@AuthenticationPrincipal MemberPrincipal principal,
 		@Valid @RequestBody PaymentConfirmRequestDto requestDto
 	) {
-		return SuccessResponseDto.from(SuccessType.OK, paymentFacade.confirmPayment(memberId, requestDto));
+		return SuccessResponseDto.from(SuccessType.OK, paymentFacade.confirmPayment(principal.publicId(), requestDto));
 	}
 
 	@Operation(summary = "낙찰 결제", description = "낙찰자가 최종 결제를 완료합니다 (보증금 + 잔금)")
 	@PostMapping("/auctions/{auctionId}")
 	public SuccessResponseDto<AuctionFinalPaymentResponseDto> auctionFinalPayment(
-		// TODO: 추후 인증 구현시 @AuthenticationPrincipal로 변경 필요
-		@RequestParam Long memberId,
+		@AuthenticationPrincipal MemberPrincipal principal,
 		@PathVariable Long auctionId,
 		@Valid @RequestBody AuctionFinalPaymentRequestDto requestDto
 	) {
 		return SuccessResponseDto.from(SuccessType.OK,
-			paymentFacade.auctionFinalPayment(memberId, auctionId, requestDto));
+			paymentFacade.auctionFinalPayment(principal.publicId(), auctionId, requestDto));
 	}
 
 	@Operation(summary = "지갑 거래 내역 조회", description = "지갑 거래 내역을 조회합니다.")
 	@GetMapping("/me/wallet-transactions")
 	public SuccessResponseDto<PagedResponseDto<WalletTransactionResponseDto>> getWalletTransactions(
-		// TODO: 추후 인증 구현시 @AuthenticationPrincipal로 변경 필요
-		@RequestParam Long memberId,
+		@AuthenticationPrincipal MemberPrincipal principal,
 		@RequestParam(defaultValue = "0") int page,
 		@RequestParam(defaultValue = "10") int size,
 		@RequestParam(required = false) WalletTransactionType transactionType,
@@ -95,7 +93,8 @@ public class PaymentController {
 		@RequestParam(required = false)
 		@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
 	) {
-		PagedResponseDto<WalletTransactionResponseDto> response = paymentFacade.getWalletTransactions(memberId, page,
+		PagedResponseDto<WalletTransactionResponseDto> response = paymentFacade.getWalletTransactions(
+			principal.publicId(), page,
 			size, transactionType, from, to);
 
 		return SuccessResponseDto.from(SuccessType.OK, response);
@@ -104,8 +103,7 @@ public class PaymentController {
 	@Operation(summary = "정산 내역 조회", description = "정산 내역을 조회합니다.")
 	@GetMapping("me/settlements")
 	public SuccessResponseDto<PagedResponseDto<SettlementResponseDto>> getSettlements(
-		// TODO: 추후 인증 구현시 @AuthenticationPrincipal로 변경 필요 (seller 검증 로직도 이후 추가)
-		@RequestParam Long memberId,
+		@AuthenticationPrincipal MemberPrincipal principal,
 		@RequestParam(defaultValue = "0") int page,
 		@RequestParam(defaultValue = "10") int size,
 		@RequestParam(required = false) SettlementStatus status,
@@ -114,8 +112,12 @@ public class PaymentController {
 		@RequestParam(required = false)
 		@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
 	) {
+		if (!"SELLER".equals(principal.role())) {
+			throw new CustomException(ErrorType.AUTH_FORBIDDEN);
+		}
+
 		return SuccessResponseDto.from(SuccessType.OK,
-			paymentFacade.getSettlements(memberId, page, size, status, from, to));
+			paymentFacade.getSettlements(principal.publicId(), page, size, status, from, to));
 	}
 
 	// 로컬 정산 배치 테스트용 api
