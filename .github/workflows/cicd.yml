@@ -70,6 +70,16 @@ jobs:
     needs: build-test
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
     steps:
+      - name: Copy docker-compose.yml to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          source: "docker-compose.yml"
+          target: "~/app"
+
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -78,12 +88,31 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
           script: |
+            mkdir -p ~/app
             cd ~/app
-            echo "DOCKER_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}" > .env.deploy
-            # 기존 .env 파일이 있다면 병합하거나 유지 (Secrets 이전 후에는 여기서 생성 가능)
-            cat .env >> .env.deploy || true
             
+            # .env.deploy 파일 초기화 및 환경 변수 주입
+            echo "DOCKER_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}" > .env.deploy
+            echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env.deploy
+            echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env.deploy
+            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.deploy
+            echo "DB_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}" >> .env.deploy
+            echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env.deploy
+            echo "TZ=${{ secrets.TZ }}" >> .env.deploy
+            echo "TOSS_PAYMENTS_SECRET_KEY=${{ secrets.TOSS_PAYMENTS_SECRET_KEY }}" >> .env.deploy
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env.deploy
+            echo "AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}" >> .env.deploy
+            echo "AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}" >> .env.deploy
+            echo "INTERNAL_BACK_URL=${{ secrets.INTERNAL_BACK_URL }}" >> .env.deploy
+            
+            # 소셜 로그인 키 추가
+            echo "GOOGLE_CLIENT=${{ secrets.GOOGLE_CLIENT }}" >> .env.deploy
+            echo "GOOGLE_SECRET=${{ secrets.GOOGLE_SECRET }}" >> .env.deploy
+            echo "KAKAO_CLIENT=${{ secrets.KAKAO_CLIENT }}" >> .env.deploy
+            echo "NAVER_CLIENT=${{ secrets.NAVER_CLIENT }}" >> .env.deploy
+            echo "NAVER_SECRET=${{ secrets.NAVER_SECRET }}" >> .env.deploy
+
             docker login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-            docker-compose --env-file .env.deploy pull
-            docker-compose --env-file .env.deploy up -d
+            docker compose --env-file .env.deploy pull
+            docker compose --env-file .env.deploy up -d
             docker image prune -f
