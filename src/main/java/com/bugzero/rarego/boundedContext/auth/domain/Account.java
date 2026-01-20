@@ -53,4 +53,8 @@ public class Account extends BaseIdAndTime {
 		this.provider = provider;
 		this.providerId = providerId;
 	}
+
+	public void changeRole(AuthRole role) {
+		this.role = role;
+	}
 }

@@ -33,6 +33,7 @@ public enum ErrorType {
 	MEMBER_UPDATED_FAILED(400, 1020, "삭제 요청된 항목에 값이 함께 전달되었습니다."),
 	MEMBER_IDENTITY_ALREADY_VERIFIED(409, 1021, "이미 본인인증이 완료되었습니다."),
 	MEMBER_NICKNAME_ALREADY_EXISTS(409, 1022, "이미 존재하는 닉네임입니다."),
+	MEMBER_NOT_ELIGIBLE_SELLER(400, 1020, "판매자 정보의 필수 항목이 작성되지 않았습니다."),
 
 	// Auth/JWT (1500 ~ 1999)
 	AUTH_MEMBER_REQUIRED(400, 1501, "회원 정보가 필요합니다."),
@@ -42,6 +43,7 @@ public enum ErrorType {
 	AUTH_FORBIDDEN(403, 1507, "권한이 없습니다."),
 	AUTH_OAUTH2_INVALID_RESPONSE(400, 1508, "유효하지 않은 소셜 로그인입니다."),
 	AUTH_JOIN_FAILED(500, 1509, "회원 가입에 실패했습니다."),
+	AUTH_ACCOUNT_NOT_FOUND(404, 1510, "회원 정보를 찾을 수 없습니다."),
 
     // Auction (2000 ~ 2999)
     AUCTION_CREATE_FAILED(500, 2000, "경매 생성에 실패했습니다."),
