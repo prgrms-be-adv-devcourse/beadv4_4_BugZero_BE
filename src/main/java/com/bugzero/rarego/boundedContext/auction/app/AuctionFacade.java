@@ -119,12 +119,10 @@ public class AuctionFacade {
         return new PagedResponseDto<>(dtoList, PageDto.from(auctionPage));
     }
 
-    // 님 추가 메서드
     public WishlistAddResponseDto addBookmark(String memberUUID, Long auctionId) {
         return auctionBookmarkUseCase.addBookmark(memberUUID, auctionId);
     }
 
-    // dev 추가 메서드
     @Transactional
     public AuctionMember syncMember(MemberDto member) {
         return auctionSyncMemberUseCase.syncMember(member);
