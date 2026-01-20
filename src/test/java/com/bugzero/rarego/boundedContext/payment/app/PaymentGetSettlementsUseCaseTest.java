@@ -1,15 +1,11 @@
 package com.bugzero.rarego.boundedContext.payment.app;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
@@ -57,7 +53,7 @@ class PaymentGetSettlementsUseCaseTest {
 		LocalDate toDate = LocalDate.now();
 
 		LocalDateTime expectedFrom = fromDate.atStartOfDay();
-		LocalDateTime expectedTo = toDate.atTime(LocalTime.MAX);
+		LocalDateTime expectedTo = toDate.plusDays(1).atStartOfDay();
 
 		// [추가] Member 조회 Mocking
 		PaymentMember mockSeller = mock(PaymentMember.class);
