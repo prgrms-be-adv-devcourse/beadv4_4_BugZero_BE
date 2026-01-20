@@ -68,4 +68,15 @@ public class Settlement extends BaseIdAndTime {
 	public void fail() {
 		this.status = SettlementStatus.FAILED;
 	}
+
+	public static Settlement createFromForfeit(Long auctionId, PaymentMember seller, int forfeitAmount) {
+		return Settlement.builder()
+				.auctionId(auctionId)
+				.seller(seller)
+				.salesAmount(forfeitAmount)
+				.feeAmount(0)
+				.settlementAmount(forfeitAmount)
+				.status(SettlementStatus.READY)
+				.build();
+	}
 }

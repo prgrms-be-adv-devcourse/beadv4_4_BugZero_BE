@@ -29,8 +29,11 @@ public abstract class BaseMember extends BaseEntity {
 
 	private String intro;
 
-	@Column(length = 500)
+	@Column(length = 255)
 	private String address;
+
+	@Column(name = "address_detail", length = 255)
+	private String addressDetail;
 
 	@Column(columnDefinition = "CHAR(5)", length = 5)
 	private String zipCode;
@@ -38,6 +41,6 @@ public abstract class BaseMember extends BaseEntity {
 	@Column(length = 11)
 	private String contactPhone;
 
-	@Column(columnDefinition = "TEXT")
-	private String realNameEnc;
+	@Column(name = "real_name", length = 10)
+	private String realName;
 }

@@ -1,5 +1,6 @@
-package com.bugzero.rarego.boundedContext.auction.domain;
+package com.bugzero.rarego.boundedContext.auction.in.dto;
 
+import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import lombok.Getter;
@@ -9,7 +10,7 @@ import java.util.List;
 
 @Getter
 @Builder
-public class AuctionAutoResponseDto {
+public class AuctionAutoSettleResponseDto {
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime requestTime;
@@ -44,14 +45,14 @@ public class AuctionAutoResponseDto {
     }
 
     // 정적 팩토리 메서드
-    public static AuctionAutoResponseDto from(
+    public static AuctionAutoSettleResponseDto from(
             LocalDateTime requestTime,
             List<Auction> auctions,
             int successCount,
             int failCount,
             List<SettlementDetail> details
     ) {
-        return AuctionAutoResponseDto.builder()
+        return AuctionAutoSettleResponseDto.builder()
                 .requestTime(requestTime)
                 .processedCount(auctions.size())
                 .successCount(successCount)
