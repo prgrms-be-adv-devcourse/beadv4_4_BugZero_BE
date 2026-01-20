@@ -5,7 +5,6 @@ import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
-import com.bugzero.rarego.global.security.MemberPrincipal;
 import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidRequestDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
@@ -56,12 +55,14 @@ public class AuctionController {
     @Operation(summary = "관심 경매 등록", description = "특정 경매를 관심 목록에 추가합니다")
     @PostMapping("/{auctionId}/bookmarks")
     public SuccessResponseDto<WishlistAddResponseDto> addBookmark(
-            @AuthenticationPrincipal MemberPrincipal memberPrincipal,
+            @RequestParam Long memberId,
             @PathVariable Long auctionId
     ) {
-        String memberUUID = memberPrincipal.publicId();
+        // TODO: MemberPrincipals로 변경 필요
+        String memberUUID = String.valueOf(memberId);
 
         WishlistAddResponseDto response = auctionFacade.addBookmark(memberUUID, auctionId);
+
         return SuccessResponseDto.from(SuccessType.OK, response);
     }
 }
