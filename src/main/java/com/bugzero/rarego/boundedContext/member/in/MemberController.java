@@ -20,14 +20,12 @@ import com.bugzero.rarego.boundedContext.member.domain.MemberMeResponseDto;
 import com.bugzero.rarego.boundedContext.member.domain.MemberUpdateRequestDto;
 import com.bugzero.rarego.boundedContext.member.domain.MemberUpdateResponseDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
+import com.bugzero.rarego.global.response.SuccessResponseDto;
+import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.global.security.MemberPrincipal;
 import com.bugzero.rarego.shared.auction.dto.AuctionFilterType;
 import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
-import com.bugzero.rarego.global.response.SuccessResponseDto;
-import com.bugzero.rarego.global.response.SuccessType;
-import com.bugzero.rarego.global.security.MemberPrincipal;
-import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
 import com.bugzero.rarego.shared.member.domain.MemberJoinRequestDto;
 import com.bugzero.rarego.shared.member.domain.MemberJoinResponseDto;
 
@@ -46,6 +44,7 @@ public class MemberController {
 	private final MemberFacade memberFacade;
 
 	@GetMapping("/me/bids")
+	@Operation(summary = "본인 입찰목록 조회", description = "본인의 입찰목록을 조회합니다. (이후 이동 예정)")
 	public PagedResponseDto<MyBidResponseDto> getMyBids(
 		@RequestParam(required = false) AuctionStatus auctionStatus,
 		@AuthenticationPrincipal UserDetails userDetails,
@@ -61,6 +60,7 @@ public class MemberController {
 
 	@GetMapping("/me/sales")
 	@PreAuthorize("hasRole('SELLER')") // SELLER 권한만 접근 가능
+	@Operation(summary = "본인 판매목록 조회", description = "본인의 판매목록을 조회합니다. 판매자 권한만 가능합니다. (이후 이동 예정)")
 	public PagedResponseDto<MySaleResponseDto> getMySales(
 		@AuthenticationPrincipal MemberPrincipal principal,
 		@RequestParam(required = false, defaultValue = "ALL") AuctionFilterType filter,
@@ -71,6 +71,7 @@ public class MemberController {
 	}
 
 	@SecurityRequirement(name = "bearerAuth")
+	@Operation(summary = "소셜 로그인 이후 Member 생성(회원 가입)", description = "소셜 로그인 결과(email/provider)를 받아 회원가입 처리합니다.")
 	@PostMapping("/me")
 	public SuccessResponseDto<MemberJoinResponseDto> join(@RequestBody MemberJoinRequestDto requestDto) {
 		MemberJoinResponseDto responseDto = memberFacade.join(requestDto.email());
