@@ -32,17 +32,16 @@ public class MemberPromoteSellerUseCase {
 
 	private void validateSellerField(Member member) {
 		// intro 제외 필수: address, addressDetail, zipCode, contactPhone, realName
-		requireText(member.getAddress(), "address");
-		requireText(member.getAddressDetail(), "addressDetail");
-		requireText(member.getZipCode(), "zipCode");
-		requireText(member.getContactPhone(), "contactPhone");
-		requireText(member.getRealName(), "realName");
+		requireText(member.getZipCode(), ErrorType.MEMBER_ZIPCODE_REQUIRED);
+		requireText(member.getAddress(), ErrorType.MEMBER_ADDRESS_REQUIRED);
+		requireText(member.getAddressDetail(), ErrorType.MEMBER_ADDRESS_DETAIL_REQUIRED);
+		requireText(member.getContactPhone(), ErrorType.MEMBER_PHONE_REQUIRED);
+		requireText(member.getRealName(), ErrorType.MEMBER_REALNAME_REQUIRED);
 	}
 
-	private void requireText(String value, String field) {
+	private void requireText(String value, ErrorType errorType) {
 		if (value == null || value.isBlank()) {
-			String message = String.format("%s은(는) 판매자 필수 값입니다.", field);
-			throw new CustomException(ErrorType.MEMBER_NOT_ELIGIBLE_SELLER, message);
+			throw new CustomException(errorType);
 		}
 	}
 }

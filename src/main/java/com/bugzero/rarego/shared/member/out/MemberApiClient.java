@@ -20,7 +20,6 @@ public class MemberApiClient {
                 .build();
     }
 
-<<<<<<< HEAD
     public MemberJoinResponseDto join(String email) {
         MemberJoinRequestDto request = new MemberJoinRequestDto(email);
         SuccessResponseDto<MemberJoinResponseDto> response = restClient.post()
@@ -53,20 +52,4 @@ public class MemberApiClient {
             throw new CustomException(ErrorType.MEMBER_NOT_FOUND);
         }
     }
-=======
-	public MemberJoinResponseDto join(String email) {
-		MemberJoinRequestDto request = new MemberJoinRequestDto(email);
-		SuccessResponseDto<MemberJoinResponseDto> response = restClient.post()
-			.uri("/me")
-			.body(request)
-			.retrieve()
-			.body(new ParameterizedTypeReference<>() {
-			});
-		if (response == null || response.data() == null) {
-			throw new CustomException(ErrorType.INTERNAL_SERVER_ERROR);
-		}
-		return response.data();
-	}
-
->>>>>>> a0021c68 (feat(member, auth): 판매자 등록 API 구현)
 }

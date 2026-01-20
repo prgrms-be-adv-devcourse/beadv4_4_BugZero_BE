@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthEventListener {
 	private final AuthPromoteSellerUseCase authPromoteSellerUseCase;
 
-	@TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
+	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	public void handle(MemberBecameSellerEvent event) {
 		if (event == null || event.getPublicId() == null || event.getPublicId().isBlank()) {
 			throw new CustomException(ErrorType.INVALID_INPUT);

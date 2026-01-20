@@ -31,7 +31,5 @@ public class AuthPromoteSellerUseCase {
 		}
 
 		account.changeRole(AuthRole.SELLER);
-		// 즉시 적용, flush 실패하면 오류 (저장 확인용)
-		accountRepository.flush();
 	}
 }
