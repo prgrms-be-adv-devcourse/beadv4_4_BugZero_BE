@@ -31,4 +31,16 @@ public class ProductSupport {
 		return productRepository.findByIdAndDeletedIsFalse(productId)
 			.orElseThrow(() -> new CustomException(ErrorType.PRODUCT_NOT_FOUND));
 	}
+
+	//TODO 리팩토링 시 sellerId -> ProductMember seller로 변경
+	public void isAbleToChange(ProductMember seller, Product product) {
+		//해당 멤버의 상품인지 확인
+		if (!product.isSeller(seller.getId())) {
+			throw new CustomException(ErrorType.UNAUTHORIZED_SELLER);
+		}
+		//검수 완료 전의 상품인지 확인
+		if(!product.isPending()) {
+			throw new CustomException(ErrorType.INSPECTION_ALREADY_COMPLETED);
+		}
+	}
 }
