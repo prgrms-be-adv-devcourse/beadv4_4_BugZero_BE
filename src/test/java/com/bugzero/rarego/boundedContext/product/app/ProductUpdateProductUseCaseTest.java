@@ -19,9 +19,11 @@ import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
+import com.bugzero.rarego.shared.product.auction.out.AuctionApiClient;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionUpdateDto;
 import com.bugzero.rarego.shared.product.dto.ProductImageUpdateDto;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateDto;
+import com.bugzero.rarego.shared.product.dto.ProductUpdateResponseDto;
 
 @ExtendWith(MockitoExtension.class)
 class ProductUpdateProductUseCaseTest {
@@ -29,12 +31,16 @@ class ProductUpdateProductUseCaseTest {
 	@Mock
 	private ProductSupport productSupport;
 
+	@Mock
+	private AuctionApiClient  auctionApiClient;
+
 	@InjectMocks
 	private ProductUpdateProductUseCase useCase;
 
 	private final String PUBLIC_ID = "seller-uuid";
 	private final Long PRODUCT_ID = 1L;
 	private final Long SELLER_ID = 100L;
+	private final Long AUCTION_ID = 100L;
 
 	private ProductMember commonSeller;
 	private Product spyProduct;
@@ -65,12 +71,15 @@ class ProductUpdateProductUseCaseTest {
 
 		given(productSupport.verifyValidateMember(PUBLIC_ID)).willReturn(commonSeller);
 		given(productSupport.verifyValidateProduct(PRODUCT_ID)).willReturn(spyProduct);
+		given(auctionApiClient.updateAuction(eq(PUBLIC_ID), any(ProductAuctionUpdateDto.class)))
+			.willReturn(AUCTION_ID);
 
 		// when
-		Long updatedId = useCase.updateProduct(PUBLIC_ID, PRODUCT_ID, updateDto);
+		ProductUpdateResponseDto dto = useCase.updateProduct(PUBLIC_ID, PRODUCT_ID, updateDto);
 
 		// then
-		assertThat(updatedId).isEqualTo(PRODUCT_ID);
+		assertThat(dto.productId()).isEqualTo(PRODUCT_ID);
+		assertThat(dto.auctionId()).isEqualTo(AUCTION_ID);
 		verify(spyProduct).update(eq("수정된 스타워즈"), eq(Category.스타워즈), anyString(), anyList());
 		verify(productSupport).isAbleToChange(commonSeller, spyProduct);
 	}
