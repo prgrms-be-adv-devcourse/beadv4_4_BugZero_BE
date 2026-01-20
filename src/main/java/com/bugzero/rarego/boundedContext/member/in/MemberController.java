@@ -23,8 +23,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/members")
@@ -33,33 +31,6 @@ import org.springframework.web.bind.annotation.*;
 public class MemberController {
 
     private final MemberFacade memberFacade;
-
-	@GetMapping("/me/bids")
-	@Operation(summary = "본인 입찰목록 조회", description = "본인의 입찰목록을 조회합니다. (이후 이동 예정)")
-	public PagedResponseDto<MyBidResponseDto> getMyBids(
-		@RequestParam(required = false) AuctionStatus auctionStatus,
-		@AuthenticationPrincipal UserDetails userDetails,
-		@PageableDefault(size = 20) Pageable pageable
-	) {
-
-		Long memberId = Long.valueOf(userDetails.getUsername());
-		// 혹시나하는 테스트 편의를 위해 토큰이 없으면 2번 유저로 간주하는 임시 코드
-		// Long memberId = (userDetails != null) ? Long.valueOf(userDetails.getUsername()) : 2L;
-
-		return auctionFacade.getMyBids(memberId, auctionStatus, pageable);
-	}
-
-	@GetMapping("/me/sales")
-	@PreAuthorize("hasRole('SELLER')") // SELLER 권한만 접근 가능
-	@Operation(summary = "본인 판매목록 조회", description = "본인의 판매목록을 조회합니다. 판매자 권한만 가능합니다. (이후 이동 예정)")
-	public PagedResponseDto<MySaleResponseDto> getMySales(
-		@AuthenticationPrincipal MemberPrincipal principal,
-		@RequestParam(required = false, defaultValue = "ALL") AuctionFilterType filter,
-		@PageableDefault(size = 10) Pageable pageable
-	) {
-		Long memberId = Long.valueOf(principal.publicId());
-		return auctionFacade.getMySales(memberId, filter, pageable);
-	}
 
 	@SecurityRequirement(name = "bearerAuth")
 	@Operation(summary = "소셜 로그인 이후 Member 생성(회원 가입)", description = "소셜 로그인 결과(email/provider)를 받아 회원가입 처리합니다.")
