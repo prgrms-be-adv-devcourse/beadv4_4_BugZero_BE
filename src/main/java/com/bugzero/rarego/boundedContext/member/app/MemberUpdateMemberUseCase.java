@@ -61,12 +61,6 @@ public class MemberUpdateMemberUseCase {
 		if (clearFields.contains(MemberClearField.ADDRESS_DETAIL) && dto.addressDetail() != null) {
 			throw new CustomException(ErrorType.MEMBER_UPDATED_FAILED);
 		}
-		if (clearFields.contains(MemberClearField.CONTACT_PHONE) && dto.contactPhone() != null) {
-			throw new CustomException(ErrorType.MEMBER_UPDATED_FAILED);
-		}
-		if (clearFields.contains(MemberClearField.REAL_NAME) && dto.realName() != null) {
-			throw new CustomException(ErrorType.MEMBER_UPDATED_FAILED);
-		}
 	}
 
 	// null 가능한 영역 적용 (삭제)
@@ -85,12 +79,6 @@ public class MemberUpdateMemberUseCase {
 		if (clearFields.contains(MemberClearField.ADDRESS_DETAIL)) {
 			member.changeAddressDetail(null);
 		}
-		if (clearFields.contains(MemberClearField.CONTACT_PHONE)) {
-			member.changeContactPhone(null);
-		}
-		if (clearFields.contains(MemberClearField.REAL_NAME)) {
-			member.changeRealName(null);
-		}
 	}
 
 	private void validateAfterPatch(MemberUpdateRequestDto dto, Member member) {
@@ -99,8 +87,6 @@ public class MemberUpdateMemberUseCase {
 		applyZipCode(dto, member);
 		applyAddress(dto, member);
 		applyAddressDetail(dto, member);
-		applyContactPhone(dto, member);
-		applyRealName(dto, member);
 	}
 
 	private void applyNickname(MemberUpdateRequestDto dto, Member member) {
@@ -152,34 +138,5 @@ public class MemberUpdateMemberUseCase {
 			throw new CustomException(ErrorType.MEMBER_INVALID_ADDRESS_DETAIL);
 		}
 		member.changeAddressDetail(detail);
-	}
-
-	private void applyContactPhone(MemberUpdateRequestDto dto, Member member) {
-		if (dto.contactPhone() == null) return;
-
-		String phone = dto.contactPhone().trim();
-		if (phone.isBlank()) throw new CustomException(ErrorType.MEMBER_INVALID_PHONE_NUMBER);
-
-		// 하이픈 제거해서 저장
-		String normalized = phone.replaceAll("-", "");
-		if (!normalized.matches("\\d{10,11}")) {
-			throw new CustomException(ErrorType.MEMBER_INVALID_PHONE_NUMBER);
-		}
-
-		member.changeContactPhone(normalized);
-	}
-
-	private void applyRealName(MemberUpdateRequestDto dto, Member member) {
-		if (dto.realName() == null) return;
-
-		String realName = dto.realName().trim();
-		if (realName.isBlank() || realName.length() > 10) {
-			throw new CustomException(ErrorType.MEMBER_INVALID_REALNAME);
-		}
-		// 한글 혹은 영어만
-		if(!realName.matches("^[가-힣a-zA-Z]+$")){
-			throw new CustomException(ErrorType.MEMBER_INVALID_REALNAME);
-		}
-		member.changeRealName(realName);
 	}
 }

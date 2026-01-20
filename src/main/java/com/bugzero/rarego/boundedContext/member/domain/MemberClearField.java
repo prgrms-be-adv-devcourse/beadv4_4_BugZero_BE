@@ -4,8 +4,5 @@ public enum MemberClearField {
 	INTRO,
 	ZIPCODE,
 	ADDRESS,
-	ADDRESS_DETAIL,
-	REAL_NAME,
-	CONTACT_PHONE
-
+	ADDRESS_DETAIL
 }

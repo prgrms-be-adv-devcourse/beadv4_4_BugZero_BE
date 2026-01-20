@@ -48,8 +48,8 @@ class MemberUpdateMemberUseCaseTest {
 			"12345",
 			" new address ",
 			" detail ",
-			"Alice",
-			"010-1234-5678",
+			null,
+			null,
 			null
 		);
 		given(memberSupport.findByPublicId("public-id")).willReturn(member);
@@ -63,8 +63,6 @@ class MemberUpdateMemberUseCaseTest {
 		assertThat(response.zipCode()).isEqualTo("12345");
 		assertThat(response.address()).isEqualTo("new address");
 		assertThat(response.addressDetail()).isEqualTo("detail");
-		assertThat(response.contactPhone()).isEqualTo("01012345678");
-		assertThat(response.realName()).isEqualTo("Alice");
 		verify(memberRepository).save(member);
 	}
 
@@ -81,7 +79,7 @@ class MemberUpdateMemberUseCaseTest {
 			null,
 			null,
 			null,
-			Set.of(MemberClearField.INTRO, MemberClearField.CONTACT_PHONE)
+			Set.of(MemberClearField.INTRO)
 		);
 		given(memberSupport.findByPublicId("public-id")).willReturn(member);
 
@@ -90,7 +88,6 @@ class MemberUpdateMemberUseCaseTest {
 
 		// then
 		assertThat(response.intro()).isNull();
-		assertThat(response.contactPhone()).isNull();
 		verify(memberRepository).save(member);
 	}
 
@@ -105,11 +102,10 @@ class MemberUpdateMemberUseCaseTest {
 			"54321",
 			" new address ",
 			" new detail ",
-			"Alice",
-			"010-9999-8888",
+			null,
+			null,
 			Set.of(
 				MemberClearField.INTRO,
-				MemberClearField.CONTACT_PHONE,
 				MemberClearField.ADDRESS_DETAIL
 			)
 		);
@@ -125,66 +121,6 @@ class MemberUpdateMemberUseCaseTest {
 			.isInstanceOf(CustomException.class)
 			.extracting("errorType")
 			.isEqualTo(ErrorType.MEMBER_UPDATED_FAILED);
-		verify(memberRepository, never()).save(any(Member.class));
-	}
-
-	@Test
-	@DisplayName("연락처 형식이 올바르지 않으면 MEMBER_INVALID_PHONE_NUMBER 예외를 발생시킨다")
-	void updateMe_rejectsInvalidPhone() {
-		// given
-		Member member = baseMember();
-		MemberUpdateRequestDto requestDto = new MemberUpdateRequestDto(
-			null,
-			null,
-			null,
-			null,
-			null,
-			null,
-			"010-12",
-			null
-		);
-		given(memberSupport.findByPublicId("public-id")).willReturn(member);
-
-		// when
-		Throwable thrown = catchThrowable(
-			() -> memberUpdateMemberUseCase.updateMe("public-id", "USER", requestDto)
-		);
-
-		// then
-		assertThat(thrown)
-			.isInstanceOf(CustomException.class)
-			.extracting("errorType")
-			.isEqualTo(ErrorType.MEMBER_INVALID_PHONE_NUMBER);
-		verify(memberRepository, never()).save(any(Member.class));
-	}
-
-	@Test
-	@DisplayName("실명에 숫자가 포함되면 MEMBER_INVALID_REALNAME 예외를 발생시킨다")
-	void updateMe_rejectsInvalidRealName() {
-		// given
-		Member member = baseMember();
-		MemberUpdateRequestDto requestDto = new MemberUpdateRequestDto(
-			null,
-			null,
-			null,
-			null,
-			null,
-			"홍길동1",
-			null,
-			null
-		);
-		given(memberSupport.findByPublicId("public-id")).willReturn(member);
-
-		// when
-		Throwable thrown = catchThrowable(
-			() -> memberUpdateMemberUseCase.updateMe("public-id", "USER", requestDto)
-		);
-
-		// then
-		assertThat(thrown)
-			.isInstanceOf(CustomException.class)
-			.extracting("errorType")
-			.isEqualTo(ErrorType.MEMBER_INVALID_REALNAME);
 		verify(memberRepository, never()).save(any(Member.class));
 	}
 

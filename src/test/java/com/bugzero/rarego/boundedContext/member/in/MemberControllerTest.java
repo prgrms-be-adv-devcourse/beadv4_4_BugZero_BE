@@ -177,8 +177,8 @@ class MemberControllerTest {
 			"12345",
 			"Seoul",
 			"Apt 1",
-			"Alice",
-			"01012345678",
+			null,
+			null,
 			null
 		);
 		MemberUpdateResponseDto responseDto = new MemberUpdateResponseDto(
@@ -216,49 +216,7 @@ class MemberControllerTest {
 				.andExpect(jsonPath("$.status").value(SuccessType.OK.getHttpStatus()))
 				.andExpect(jsonPath("$.message").value(SuccessType.OK.getMessage()))
 				.andExpect(jsonPath("$.data.publicId").value("public-id"))
-				.andExpect(jsonPath("$.data.nickname").value("newbie"))
-				.andExpect(jsonPath("$.data.contactPhone").value("01012345678"));
-		} finally {
-			SecurityContextHolder.clearContext();
-		}
-	}
-
-	@Test
-	@DisplayName("실패: 잘못된 연락처 형식이면 HTTP 400을 반환한다")
-	void updateMe_fail_invalid_phone() throws Exception {
-		// given
-		MemberUpdateRequestDto requestDto = new MemberUpdateRequestDto(
-			"newbie",
-			null,
-			null,
-			null,
-			null,
-			null,
-			"010-12",
-			null
-		);
-		given(memberFacade.updateMe("public-id", "USER", requestDto))
-			.willThrow(new CustomException(ErrorType.MEMBER_INVALID_PHONE_NUMBER));
-
-		MemberPrincipal principal = new MemberPrincipal("public-id", "USER");
-		Authentication authentication = new UsernamePasswordAuthenticationToken(
-			principal,
-			null,
-			List.of(new SimpleGrantedAuthority("ROLE_USER"))
-		);
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
-		try {
-			// when
-			var result = mockMvc.perform(patch("/api/v1/members/me")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(requestDto)));
-
-			// then
-			result
-				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.status").value(ErrorType.MEMBER_INVALID_PHONE_NUMBER.getHttpStatus()))
-				.andExpect(jsonPath("$.message").value(ErrorType.MEMBER_INVALID_PHONE_NUMBER.getMessage()));
+				.andExpect(jsonPath("$.data.nickname").value("newbie"));
 		} finally {
 			SecurityContextHolder.clearContext();
 		}
