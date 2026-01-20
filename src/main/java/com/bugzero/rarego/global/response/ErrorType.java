@@ -21,7 +21,8 @@ public enum ErrorType {
 	MEMBER_INVALID_ADDRESS_DETAIL(400, 1009, "상세주소 형식이 올바르지 않습니다."),
 	MEMBER_INVALID_REALNAME(400, 1010, "이름은 한국어/영어로 이루어진 1~10자여야 합니다."),
 	MEMBER_INVALID_PHONE_NUMBER(400, 1011, "연락처 형식이 올바르지 않습니다."),
-	// Seller
+	MEMBER_IDENTITY_REQUIRED(400, 1012, "이름과 연락처를 입력해주세요"),
+		// Member - checking
 	MEMBER_NICKNAME_REQUIRED(400, 1012, "닉네임은 필수 입력값입니다."),
 	MEMBER_ZIPCODE_REQUIRED(400, 1013, "우편번호는 필수 입력값입니다."),
 	MEMBER_ADDRESS_REQUIRED(400, 1014, "주소는 필수 입력값입니다."),
@@ -30,6 +31,7 @@ public enum ErrorType {
 	MEMBER_REALNAME_REQUIRED(400, 1017, "실명은 필수 입력값입니다."),
 	MEMBER_SELLER_REQUIRED_FIELD_CANNOT_BE_CLEARED(400, 1018, "판매자 정보의 필수 항목은 삭제할 수 없습니다."),
 	MEMBER_UPDATED_FAILED(400, 1019, "삭제 요청된 항목에 값이 함께 전달되었습니다."),
+	MEMBER_IDENTITY_ALREADY_VERIFIED(409, 1021, "이미 본인인증이 완료되었습니다."),
 
 
 	// Auth/JWT (1500 ~ 1999)

@@ -22,12 +22,6 @@ public record MemberUpdateRequestDto(
 	@Size(max = 255)
 	String addressDetail,
 
-	@Size(max = 10)
-	String realName,
-
-	@Size(max = 11)
-	String contactPhone,
-
 	Set<MemberClearField> clearFields
 ) {
 }

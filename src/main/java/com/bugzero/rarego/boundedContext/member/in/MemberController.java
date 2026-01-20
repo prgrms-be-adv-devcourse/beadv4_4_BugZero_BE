@@ -10,15 +10,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.bugzero.rarego.boundedContext.member.app.MemberFacade;
 import com.bugzero.rarego.boundedContext.member.domain.MemberMeResponseDto;
+import com.bugzero.rarego.boundedContext.member.domain.MemberUpdateIdentityRequestDto;
 import com.bugzero.rarego.boundedContext.member.domain.MemberUpdateRequestDto;
 import com.bugzero.rarego.boundedContext.member.domain.MemberUpdateResponseDto;
-import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.global.security.MemberPrincipal;
-import com.bugzero.rarego.shared.auction.dto.AuctionFilterType;
-import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
-import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
 import com.bugzero.rarego.shared.member.domain.MemberJoinRequestDto;
 import com.bugzero.rarego.shared.member.domain.MemberJoinResponseDto;
 
@@ -80,7 +77,6 @@ public class MemberController {
 		return SuccessResponseDto.from(SuccessType.OK, responseDto);
 	}
 
-
 	@SecurityRequirement(name = "bearerAuth")
 	@Operation(summary = "회원 본인 수정", description = "본인의 정보를 수정합니다.")
 	@PatchMapping("/me")
@@ -90,6 +86,18 @@ public class MemberController {
 	) {
 		return SuccessResponseDto.from(SuccessType.OK,
 			memberFacade.updateMe(memberPrincipal.publicId(), memberPrincipal.role(), requestDto)
+		);
+	}
+
+	@SecurityRequirement(name = "bearerAuth")
+	@Operation(summary = "회원 본인인증 정보 수정", description = "본인의 연락처/실명 정보를 수정합니다.")
+	@PatchMapping("/me/identity")
+	public SuccessResponseDto<MemberUpdateResponseDto> updateIdentity(
+		@AuthenticationPrincipal MemberPrincipal memberPrincipal,
+		@RequestBody MemberUpdateIdentityRequestDto requestDto
+	) {
+		return SuccessResponseDto.from(SuccessType.OK,
+			memberFacade.updateIdentity(memberPrincipal.publicId(), requestDto)
 		);
 	}
 

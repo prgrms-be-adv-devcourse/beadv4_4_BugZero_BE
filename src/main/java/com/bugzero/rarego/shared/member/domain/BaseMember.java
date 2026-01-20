@@ -26,7 +26,7 @@ public abstract class BaseMember extends BaseEntity {
 	@Column(nullable = false, unique = true)
 	private String email;
 
-	@Column(nullable = false, length = 50)
+	@Column(nullable = false, unique = true, length = 50)
 	private String nickname;
 
 	private String intro;
@@ -66,14 +66,10 @@ public abstract class BaseMember extends BaseEntity {
 		this.addressDetail = addressDetail;
 	}
 
-	public void changeContactPhone(String contactPhone) {
+	public void changeIdentity(String contactPhone, String realName) {
 		this.contactPhone = contactPhone;
-	}
-
-	public void changeRealName(String realName) {
 		this.realName = realName;
 	}
-
 	protected void updateFrom(MemberDto member) {
 		this.publicId = member.publicId();
 		this.email = member.email();

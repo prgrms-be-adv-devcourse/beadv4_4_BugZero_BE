@@ -32,4 +32,10 @@ public class MemberSupport {
 		return memberRepository.findByPublicId(publicId)
 			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
 	}
+
+	public void findByContactPhone(String contactPhone) {
+		if (memberRepository.findByContactPhone(contactPhone).isPresent()) {
+			throw new CustomException(ErrorType.MEMBER_IDENTITY_ALREADY_VERIFIED);
+		}
+	}
 }
