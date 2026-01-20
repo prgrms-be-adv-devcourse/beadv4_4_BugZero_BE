@@ -17,6 +17,7 @@ import com.bugzero.rarego.shared.member.domain.MemberDto;
 import com.bugzero.rarego.shared.member.event.MemberUpdatedEvent;
 
 import lombok.RequiredArgsConstructor;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -29,6 +30,7 @@ public class MemberUpdateMemberUseCase {
 	public MemberUpdateResponseDto updateMe(String publicId, String role, MemberUpdateRequestDto requestDto) {
 		Member member = memberSupport.findByPublicId(publicId);
 
+		// clearField와 본문 일치하는지 확인
 		validateClearFieldsPolicy(requestDto);
 
 		// 1) 삭제(clear) 먼저 적용
@@ -43,11 +45,11 @@ public class MemberUpdateMemberUseCase {
 		return MemberUpdateResponseDto.from(member);
 	}
 
-
 	// ClearField와 수정본 일치하는지 확인 (null ClearField에 존재하는데 dto에 수정 내용이 들어왔다면 오류처리합니다.)
 	private void validateClearFieldsPolicy(MemberUpdateRequestDto dto) {
 		Set<MemberClearField> clearFields = dto.clearFields();
-		if (clearFields == null || clearFields.isEmpty()) return;
+		if (clearFields == null || clearFields.isEmpty())
+			return;
 
 		if (clearFields.contains(MemberClearField.INTRO) && dto.intro() != null) {
 			throw new CustomException(ErrorType.MEMBER_UPDATED_FAILED);
@@ -65,7 +67,8 @@ public class MemberUpdateMemberUseCase {
 
 	// null 가능한 영역 적용 (삭제)
 	private void applyClears(Member member, Set<MemberClearField> clearFields) {
-		if (clearFields == null || clearFields.isEmpty()) return;
+		if (clearFields == null || clearFields.isEmpty())
+			return;
 
 		if (clearFields.contains(MemberClearField.INTRO)) {
 			member.changeIntro(null);
@@ -90,18 +93,25 @@ public class MemberUpdateMemberUseCase {
 	}
 
 	private void applyNickname(MemberUpdateRequestDto dto, Member member) {
-		if (dto.nickname() == null) return;
+		if (dto.nickname() == null)
+			return;
 
 		String nickname = dto.nickname().trim();
 		if (nickname.isBlank() || nickname.length() > 50) {
 			throw new CustomException(ErrorType.MEMBER_INVALID_NICKNAME);
 		}
+		// 닉네임 존재하면 오류
+		if (memberRepository.existsByNickname(nickname)) {
+			throw new CustomException(ErrorType.MEMBER_NICKNAME_ALREADY_EXISTS);
+		}
 		member.changeNickname(nickname);
+
 	}
 
 	// intro: trim 후 "" 저장 허용
 	private void applyIntro(MemberUpdateRequestDto dto, Member member) {
-		if (dto.intro() == null) return;
+		if (dto.intro() == null)
+			return;
 
 		String intro = dto.intro().trim();
 		if (intro.length() > 255) {
@@ -111,7 +121,8 @@ public class MemberUpdateMemberUseCase {
 	}
 
 	private void applyZipCode(MemberUpdateRequestDto dto, Member member) {
-		if (dto.zipCode() == null) return;
+		if (dto.zipCode() == null)
+			return;
 
 		String zip = dto.zipCode().trim();
 		if (zip.isBlank() || !zip.matches("\\d{5}")) {
@@ -121,7 +132,8 @@ public class MemberUpdateMemberUseCase {
 	}
 
 	private void applyAddress(MemberUpdateRequestDto dto, Member member) {
-		if (dto.address() == null) return;
+		if (dto.address() == null)
+			return;
 
 		String addr = dto.address().trim();
 		if (addr.isBlank() || addr.length() > 255) {
@@ -131,7 +143,8 @@ public class MemberUpdateMemberUseCase {
 	}
 
 	private void applyAddressDetail(MemberUpdateRequestDto dto, Member member) {
-		if (dto.addressDetail() == null) return;
+		if (dto.addressDetail() == null)
+			return;
 
 		String detail = dto.addressDetail().trim();
 		if (detail.isBlank() || detail.length() > 255) {
