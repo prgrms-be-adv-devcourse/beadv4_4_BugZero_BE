@@ -12,6 +12,7 @@ import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionRequestDto;
+import com.bugzero.rarego.shared.product.dto.ProductAuctionUpdateDto;
 
 @Service
 public class AuctionApiClient {
@@ -38,5 +39,21 @@ public class AuctionApiClient {
 		//result값이 null 인경우 경매정보 생성 실패 인식
 		return Optional.ofNullable(result)
 			.orElseThrow(() -> new CustomException(ErrorType.AUCTION_CREATE_FAILED));
+	}
+
+	public Long updateAuction(String publicId, ProductAuctionUpdateDto productAuctionUpdateDto) {
+		SuccessResponseDto<Long> response = restClient.patch()
+			.uri("/{publicId}", publicId)
+			.body(productAuctionUpdateDto)
+			.retrieve()
+			.onStatus(HttpStatusCode::isError, (httpRequest, httpResponse) -> {
+			throw new CustomException(ErrorType.AUCTION_UPDATE_FAILED);
+		})
+			.body(new ParameterizedTypeReference<>() {});
+
+		Long result = (response != null) ? response.data() : null;
+
+		return Optional.ofNullable(result)
+			.orElseThrow(() -> new CustomException(ErrorType.AUCTION_UPDATE_FAILED));
 	}
 }

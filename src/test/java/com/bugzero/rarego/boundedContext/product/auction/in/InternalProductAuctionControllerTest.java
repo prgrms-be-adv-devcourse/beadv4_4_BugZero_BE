@@ -23,11 +23,11 @@ import com.bugzero.rarego.shared.product.dto.ProductAuctionUpdateDto;
 
 import tools.jackson.databind.ObjectMapper;
 
-@WebMvcTest(InternalAuctionController.class)
+@WebMvcTest(InternalProductAuctionController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @EnableAspectJAutoProxy
 @Import(ResponseAspect.class)
-class InternalAuctionControllerTest {
+class InternalProductAuctionControllerTest {
 	@Autowired
 	private MockMvc mockMvc;
 
