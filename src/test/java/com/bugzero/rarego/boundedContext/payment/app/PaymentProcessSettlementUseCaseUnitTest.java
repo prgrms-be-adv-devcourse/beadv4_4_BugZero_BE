@@ -47,46 +47,70 @@ class PaymentProcessSettlementUseCaseUnitTest {
 		List<Settlement> list = List.of(s1, s2);
 
 		given(settlementRepository.findSettlementsForBatch(eq(SettlementStatus.READY), any(), any(Pageable.class)))
-				.willReturn(list);
+			.willReturn(list);
 
-		// Processor가 성공적으로 처리됨 (예외 없음)
-		given(paymentSettlementProcessor.process(anyLong())).willReturn(1000);
+		// [수정] process 메서드가 void를 반환하므로 doNothing() 혹은 기본 설정 사용
+		doNothing().when(paymentSettlementProcessor).process(anyLong());
 
 		// when
 		int count = useCase.processSettlements(10);
 
 		// then
-		assertThat(count).isEqualTo(2); // 2건 성공
-
-		// Processor의 process가 각 정산 건마다 호출되었는지 검증
+		assertThat(count).isEqualTo(2);
 		verify(paymentSettlementProcessor, times(2)).process(anyLong());
-
+		verify(paymentSettlementProcessor, never()).fail(anyLong()); // 성공 시 fail 호출 안됨
 	}
 
 	@Test
-	@DisplayName("부분 성공: 1건 성공, 1건 실패 시에도 중단되지 않고 성공 카운트 집계")
+	@DisplayName("부분 성공: 1건 성공, 1건 실패 시에도 중단되지 않고 성공 카운트 집계 및 fail() 호출")
 	void partial_success() {
 		// given
 		Settlement successItem = createSettlement(1L);
 		Settlement failItem = createSettlement(2L);
 
 		given(settlementRepository.findSettlementsForBatch(eq(SettlementStatus.READY), any(), any(Pageable.class)))
-				.willReturn(List.of(successItem, failItem));
+			.willReturn(List.of(successItem, failItem));
 
-		// 1번은 성공
-		given(paymentSettlementProcessor.process(1L)).willReturn(1000);
+		doNothing().when(paymentSettlementProcessor).process(1L);
 
 		// 2번은 예외 발생
-		given(paymentSettlementProcessor.process(2L))
-				.willThrow(new RuntimeException("DB Lock Error"));
+		doThrow(new RuntimeException("DB Lock Error"))
+			.when(paymentSettlementProcessor).process(2L);
 
 		// when
 		int count = useCase.processSettlements(10);
 
 		// then
-		assertThat(count).isEqualTo(1); // 1건만 성공
+		assertThat(count).isEqualTo(1);
+		
+		verify(paymentSettlementProcessor).process(1L);
+		verify(paymentSettlementProcessor).process(2L);
+		verify(paymentSettlementProcessor).fail(2L);
+	}
 
-		// 실패한 2번 건에 대해 fail() 처리가 호출되었는지 확인
+	@Test
+	@DisplayName("치명적 실패: fail() 처리 도중 예외가 발생해도 전체 루프가 중단되지 않아야 함")
+	void critical_failure_in_fail_marking() {
+		// given
+		Settlement failItem1 = createSettlement(1L);
+		Settlement failItem2 = createSettlement(2L);
+
+		given(settlementRepository.findSettlementsForBatch(any(), any(), any()))
+			.willReturn(List.of(failItem1, failItem2));
+
+		// 두 건 모두 process 실패
+		doThrow(new RuntimeException("Process Error")).when(paymentSettlementProcessor).process(anyLong());
+
+		// 첫 번째 건의 fail() 마킹마저 예외 발생 (가장 위험한 상황 가정)
+		doThrow(new RuntimeException("Critical Marking Error")).when(paymentSettlementProcessor).fail(1L);
+
+		// when
+		int count = useCase.processSettlements(10);
+
+		// then
+		assertThat(count).isEqualTo(0);
+		// fail(1L)에서 예외가 났지만, 루프가 돌아 fail(2L)까지 시도는 했어야 함
+		verify(paymentSettlementProcessor).fail(1L);
 		verify(paymentSettlementProcessor).fail(2L);
 	}
 
@@ -95,15 +119,13 @@ class PaymentProcessSettlementUseCaseUnitTest {
 	void empty_data() {
 		// given
 		given(settlementRepository.findSettlementsForBatch(any(), any(), any()))
-				.willReturn(Collections.emptyList());
+			.willReturn(Collections.emptyList());
 
 		// when
 		int count = useCase.processSettlements(10);
 
 		// then
 		assertThat(count).isEqualTo(0);
-
-		// 프로세서와 아무런 상호작용이 없어야 함
 		verifyNoInteractions(paymentSettlementProcessor);
 	}
 

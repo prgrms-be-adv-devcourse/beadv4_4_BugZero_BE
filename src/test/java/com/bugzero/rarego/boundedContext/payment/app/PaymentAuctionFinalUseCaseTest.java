@@ -34,197 +34,231 @@ import com.bugzero.rarego.shared.auction.port.AuctionOrderPort;
 @ExtendWith(MockitoExtension.class)
 class PaymentAuctionFinalUseCaseTest {
 
-        @InjectMocks
-        private PaymentAuctionFinalUseCase paymentAuctionFinalUseCase;
+	@InjectMocks
+	private PaymentAuctionFinalUseCase paymentAuctionFinalUseCase;
 
-        @Mock
-        private AuctionOrderPort auctionOrderPort;
+	@Mock
+	private AuctionOrderPort auctionOrderPort;
 
-        @Mock
-        private DepositRepository depositRepository;
+	@Mock
+	private DepositRepository depositRepository;
 
-        @Mock
-        private PaymentTransactionRepository transactionRepository;
+	@Mock
+	private PaymentTransactionRepository transactionRepository;
 
-        @Mock
-        private SettlementRepository settlementRepository;
+	@Mock
+	private SettlementRepository settlementRepository;
 
-        @Mock
-        private PaymentSupport paymentSupport;
+	@Mock
+	private PaymentSupport paymentSupport;
 
-        @BeforeEach
-        void setUp() {
-                ReflectionTestUtils.setField(paymentAuctionFinalUseCase, "paymentTimeoutDays", 3);
-        }
+	@BeforeEach
+	void setUp() {
+		ReflectionTestUtils.setField(paymentAuctionFinalUseCase, "paymentTimeoutDays", 3);
+	}
 
-        @Test
-        @DisplayName("성공: 낙찰 결제 완료")
-        void finalPayment_Success() {
-                // given
-                Long memberId = 1L;
-                Long sellerId = 5L;
-                Long auctionId = 100L;
-                int finalPrice = 100000;
-                int depositAmount = 10000;
-                int expectedPaymentAmount = finalPrice - depositAmount;
+	@Test
+	@DisplayName("성공: 낙찰 결제 완료")
+	void finalPayment_Success() {
+		// given
+		String memberPublicId = "uuid-member-1"; // String ID
+		Long memberId = 1L; // Internal ID
+		Long sellerId = 5L;
+		Long auctionId = 100L;
+		int finalPrice = 100000;
+		int depositAmount = 10000;
+		int expectedPaymentAmount = finalPrice - depositAmount;
 
-                AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
-                                "홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
+		AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
+			"홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
 
-                AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, sellerId, memberId, finalPrice, "PROCESSING",
-                                LocalDateTime.now());
+		AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, sellerId, memberId, finalPrice, "PROCESSING",
+			LocalDateTime.now());
 
-                PaymentMember buyer = mock(PaymentMember.class);
-                when(buyer.getPublicId()).thenReturn("uuid-member-1");
+		// Member Mocking
+		PaymentMember buyer = mock(PaymentMember.class);
+		given(buyer.getId()).willReturn(memberId);
+		given(buyer.getPublicId()).willReturn(memberPublicId);
 
-                PaymentMember seller = mock(PaymentMember.class);
+		PaymentMember seller = mock(PaymentMember.class);
 
-                Deposit deposit = Deposit.create(buyer, auctionId, depositAmount);
-                Wallet wallet = Wallet.builder().balance(200000).holdingAmount(depositAmount).build();
+		Deposit deposit = Deposit.create(buyer, auctionId, depositAmount);
+		Wallet wallet = Wallet.builder().balance(200000).holdingAmount(depositAmount).build();
 
-                when(auctionOrderPort.findByAuctionId(auctionId)).thenReturn(Optional.of(order));
-                when(depositRepository.findByMemberIdAndAuctionId(memberId, auctionId))
-                                .thenReturn(Optional.of(deposit));
-                when(paymentSupport.findWalletByMemberIdForUpdate(memberId)).thenReturn(wallet);
-                when(paymentSupport.findMemberById(memberId)).thenReturn(buyer);
-                when(paymentSupport.findMemberById(sellerId)).thenReturn(seller);
+		// [중요] Public ID로 조회 시 Member 반환 (ID 포함)
+		given(paymentSupport.findMemberByPublicId(memberPublicId)).willReturn(buyer);
 
-                // when
-                AuctionFinalPaymentResponseDto response = paymentAuctionFinalUseCase.finalPayment(memberId, auctionId,
-                                request);
+		// 이후 로직은 memberId(Long)를 사용하므로 기존 Mock 유지
+		given(auctionOrderPort.findByAuctionId(auctionId)).willReturn(Optional.of(order));
+		given(depositRepository.findByMemberIdAndAuctionId(memberId, auctionId))
+			.willReturn(Optional.of(deposit));
+		given(paymentSupport.findWalletByMemberIdForUpdate(memberId)).willReturn(wallet);
 
-                // then
-                assertThat(response.auctionId()).isEqualTo(auctionId);
-                assertThat(response.finalPrice()).isEqualTo(finalPrice);
-                assertThat(response.depositAmount()).isEqualTo(depositAmount);
-                assertThat(response.paidAmount()).isEqualTo(expectedPaymentAmount);
-                assertThat(response.status()).isEqualTo("PAID");
+		// recordTransaction 등에서 재조회 하는 경우를 위한 Mock
+		given(paymentSupport.findMemberById(memberId)).willReturn(buyer);
+		given(paymentSupport.findMemberById(sellerId)).willReturn(seller);
 
-                // Wallet 잔액 검증
-                int expectedBalance = 200000 - depositAmount - expectedPaymentAmount;
-                assertThat(wallet.getBalance()).isEqualTo(expectedBalance);
-                assertThat(wallet.getHoldingAmount()).isEqualTo(0);
+		// when
+		AuctionFinalPaymentResponseDto response = paymentAuctionFinalUseCase.finalPayment(memberPublicId, auctionId,
+			request);
 
-                // Deposit 상태 검증
-                assertThat(deposit.getStatus()).isEqualTo(DepositStatus.USED);
+		// then
+		assertThat(response.auctionId()).isEqualTo(auctionId);
+		assertThat(response.finalPrice()).isEqualTo(finalPrice);
+		assertThat(response.depositAmount()).isEqualTo(depositAmount);
+		assertThat(response.paidAmount()).isEqualTo(expectedPaymentAmount);
+		assertThat(response.status()).isEqualTo("PAID");
 
-                // 트랜잭션 이력 2건 (보증금 사용, 잔금 결제)
-                verify(transactionRepository, times(2)).save(any(PaymentTransaction.class));
-                verify(auctionOrderPort).completeOrder(auctionId);
-        }
+		// Wallet 잔액 검증
+		int expectedBalance = 200000 - depositAmount - expectedPaymentAmount;
+		assertThat(wallet.getBalance()).isEqualTo(expectedBalance);
+		assertThat(wallet.getHoldingAmount()).isEqualTo(0);
 
-        @Test
-        @DisplayName("실패: 주문 정보 없음")
-        void finalPayment_OrderNotFound() {
-                // given
-                Long memberId = 1L;
-                Long auctionId = 100L;
-                AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
-                                "홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
+		// Deposit 상태 검증
+		assertThat(deposit.getStatus()).isEqualTo(DepositStatus.USED);
 
-                when(auctionOrderPort.findByAuctionId(auctionId)).thenReturn(Optional.empty());
+		// 트랜잭션 이력 2건 (보증금 사용, 잔금 결제)
+		verify(transactionRepository, times(2)).save(any(PaymentTransaction.class));
+		verify(auctionOrderPort).completeOrder(auctionId);
+	}
 
-                // when & then
-                assertThatThrownBy(() -> paymentAuctionFinalUseCase.finalPayment(memberId, auctionId, request))
-                                .isInstanceOf(CustomException.class)
-                                .extracting("errorType")
-                                .isEqualTo(ErrorType.AUCTION_ORDER_NOT_FOUND);
-        }
+	@Test
+	@DisplayName("실패: 주문 정보 없음")
+	void finalPayment_OrderNotFound() {
+		// given
+		String memberPublicId = "uuid-member-1";
+		Long memberId = 1L;
+		Long auctionId = 100L;
+		AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
+			"홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
 
-        @Test
-        @DisplayName("실패: 낙찰자 아님")
-        void finalPayment_NotWinner() {
-                // given
-                Long memberId = 1L;
-                Long auctionId = 100L;
-                Long winnerId = 999L; // 다른 사람
+		PaymentMember buyer = mock(PaymentMember.class);
+		given(buyer.getId()).willReturn(memberId);
 
-                AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
-                                "홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
-                AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, 5L, winnerId, 100000, "PROCESSING",
-                                LocalDateTime.now());
+		// [중요] Public ID -> Member 매핑
+		given(paymentSupport.findMemberByPublicId(memberPublicId)).willReturn(buyer);
 
-                when(auctionOrderPort.findByAuctionId(auctionId)).thenReturn(Optional.of(order));
+		given(auctionOrderPort.findByAuctionId(auctionId)).willReturn(Optional.empty());
 
-                // when & then
-                assertThatThrownBy(() -> paymentAuctionFinalUseCase.finalPayment(memberId, auctionId, request))
-                                .isInstanceOf(CustomException.class)
-                                .extracting("errorType")
-                                .isEqualTo(ErrorType.NOT_AUCTION_WINNER);
-        }
+		// when & then
+		assertThatThrownBy(() -> paymentAuctionFinalUseCase.finalPayment(memberPublicId, auctionId, request))
+			.isInstanceOf(CustomException.class)
+			.extracting("errorType")
+			.isEqualTo(ErrorType.AUCTION_ORDER_NOT_FOUND);
+	}
 
-        @Test
-        @DisplayName("실패: 주문 상태가 PROCESSING 아님")
-        void finalPayment_InvalidOrderStatus() {
-                // given
-                Long memberId = 1L;
-                Long auctionId = 100L;
+	@Test
+	@DisplayName("실패: 낙찰자 아님")
+	void finalPayment_NotWinner() {
+		// given
+		String memberPublicId = "uuid-member-1";
+		Long memberId = 1L;
+		Long auctionId = 100L;
+		Long winnerId = 999L; // 다른 사람
 
-                AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
-                                "홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
-                AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, 5L, memberId, 100000, "SUCCESS",
-                                LocalDateTime.now()); // 이미 완료
+		AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
+			"홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
+		AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, 5L, winnerId, 100000, "PROCESSING",
+			LocalDateTime.now());
 
-                when(auctionOrderPort.findByAuctionId(auctionId)).thenReturn(Optional.of(order));
+		PaymentMember buyer = mock(PaymentMember.class);
+		given(buyer.getId()).willReturn(memberId);
+		given(paymentSupport.findMemberByPublicId(memberPublicId)).willReturn(buyer);
 
-                // when & then
-                assertThatThrownBy(() -> paymentAuctionFinalUseCase.finalPayment(memberId, auctionId, request))
-                                .isInstanceOf(CustomException.class)
-                                .extracting("errorType")
-                                .isEqualTo(ErrorType.INVALID_ORDER_STATUS);
-        }
+		given(auctionOrderPort.findByAuctionId(auctionId)).willReturn(Optional.of(order));
 
-        @Test
-        @DisplayName("실패: 보증금 없음")
-        void finalPayment_DepositNotFound() {
-                // given
-                Long memberId = 1L;
-                Long auctionId = 100L;
+		// when & then
+		assertThatThrownBy(() -> paymentAuctionFinalUseCase.finalPayment(memberPublicId, auctionId, request))
+			.isInstanceOf(CustomException.class)
+			.extracting("errorType")
+			.isEqualTo(ErrorType.NOT_AUCTION_WINNER);
+	}
 
-                AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
-                                "홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
-                AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, 5L, memberId, 100000, "PROCESSING",
-                                LocalDateTime.now());
+	@Test
+	@DisplayName("실패: 주문 상태가 PROCESSING 아님")
+	void finalPayment_InvalidOrderStatus() {
+		// given
+		String memberPublicId = "uuid-member-1";
+		Long memberId = 1L;
+		Long auctionId = 100L;
 
-                when(auctionOrderPort.findByAuctionId(auctionId)).thenReturn(Optional.of(order));
-                when(depositRepository.findByMemberIdAndAuctionId(memberId, auctionId)).thenReturn(Optional.empty());
+		AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
+			"홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
+		AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, 5L, memberId, 100000, "SUCCESS",
+			LocalDateTime.now()); // 이미 완료
 
-                // when & then
-                assertThatThrownBy(() -> paymentAuctionFinalUseCase.finalPayment(memberId, auctionId, request))
-                                .isInstanceOf(CustomException.class)
-                                .extracting("errorType")
-                                .isEqualTo(ErrorType.DEPOSIT_NOT_FOUND);
-        }
+		PaymentMember buyer = mock(PaymentMember.class);
+		given(buyer.getId()).willReturn(memberId);
+		given(paymentSupport.findMemberByPublicId(memberPublicId)).willReturn(buyer);
 
-        @Test
-        @DisplayName("실패: 잔액 부족")
-        void finalPayment_InsufficientBalance() {
-                // given
-                Long memberId = 1L;
-                Long auctionId = 100L;
-                int finalPrice = 100000;
-                int depositAmount = 10000;
+		given(auctionOrderPort.findByAuctionId(auctionId)).willReturn(Optional.of(order));
 
-                AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
-                                "홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
-                AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, 5L, memberId, finalPrice, "PROCESSING",
-                                LocalDateTime.now());
+		// when & then
+		assertThatThrownBy(() -> paymentAuctionFinalUseCase.finalPayment(memberPublicId, auctionId, request))
+			.isInstanceOf(CustomException.class)
+			.extracting("errorType")
+			.isEqualTo(ErrorType.INVALID_ORDER_STATUS);
+	}
 
-                PaymentMember member = mock(PaymentMember.class);
+	@Test
+	@DisplayName("실패: 보증금 없음")
+	void finalPayment_DepositNotFound() {
+		// given
+		String memberPublicId = "uuid-member-1";
+		Long memberId = 1L;
+		Long auctionId = 100L;
 
-                Deposit deposit = Deposit.create(member, auctionId, depositAmount);
-                Wallet wallet = Wallet.builder().balance(50000).holdingAmount(depositAmount).build(); // 잔액 부족
+		AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
+			"홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
+		AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, 5L, memberId, 100000, "PROCESSING",
+			LocalDateTime.now());
 
-                when(auctionOrderPort.findByAuctionId(auctionId)).thenReturn(Optional.of(order));
-                when(depositRepository.findByMemberIdAndAuctionId(memberId, auctionId))
-                                .thenReturn(Optional.of(deposit));
-                when(paymentSupport.findWalletByMemberIdForUpdate(memberId)).thenReturn(wallet);
-                when(paymentSupport.findMemberById(memberId)).thenReturn(member);
+		PaymentMember buyer = mock(PaymentMember.class);
+		given(buyer.getId()).willReturn(memberId);
+		given(paymentSupport.findMemberByPublicId(memberPublicId)).willReturn(buyer);
 
-                // when & then
-                assertThatThrownBy(() -> paymentAuctionFinalUseCase.finalPayment(memberId, auctionId, request))
-                                .isInstanceOf(CustomException.class)
-                                .extracting("errorType")
-                                .isEqualTo(ErrorType.INSUFFICIENT_BALANCE);
-        }
+		given(auctionOrderPort.findByAuctionId(auctionId)).willReturn(Optional.of(order));
+		given(depositRepository.findByMemberIdAndAuctionId(memberId, auctionId)).willReturn(Optional.empty());
+
+		// when & then
+		assertThatThrownBy(() -> paymentAuctionFinalUseCase.finalPayment(memberPublicId, auctionId, request))
+			.isInstanceOf(CustomException.class)
+			.extracting("errorType")
+			.isEqualTo(ErrorType.DEPOSIT_NOT_FOUND);
+	}
+
+	@Test
+	@DisplayName("실패: 잔액 부족")
+	void finalPayment_InsufficientBalance() {
+		// given
+		String memberPublicId = "uuid-member-1";
+		Long memberId = 1L;
+		Long auctionId = 100L;
+		int finalPrice = 100000;
+		int depositAmount = 10000;
+
+		AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
+			"홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
+		AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, 5L, memberId, finalPrice, "PROCESSING",
+			LocalDateTime.now());
+
+		PaymentMember buyer = mock(PaymentMember.class);
+		given(buyer.getId()).willReturn(memberId);
+		given(paymentSupport.findMemberByPublicId(memberPublicId)).willReturn(buyer);
+
+		Deposit deposit = Deposit.create(buyer, auctionId, depositAmount);
+		Wallet wallet = Wallet.builder().balance(50000).holdingAmount(depositAmount).build(); // 잔액 부족
+
+		given(auctionOrderPort.findByAuctionId(auctionId)).willReturn(Optional.of(order));
+		given(depositRepository.findByMemberIdAndAuctionId(memberId, auctionId))
+			.willReturn(Optional.of(deposit));
+		given(paymentSupport.findWalletByMemberIdForUpdate(memberId)).willReturn(wallet);
+		given(paymentSupport.findMemberById(memberId)).willReturn(buyer);
+
+		// when & then
+		assertThatThrownBy(() -> paymentAuctionFinalUseCase.finalPayment(memberPublicId, auctionId, request))
+			.isInstanceOf(CustomException.class)
+			.extracting("errorType")
+			.isEqualTo(ErrorType.INSUFFICIENT_BALANCE);
+	}
 }
