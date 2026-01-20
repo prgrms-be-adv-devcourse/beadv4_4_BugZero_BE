@@ -56,6 +56,10 @@ public enum ErrorType {
     SERVICE_SUBSCRIBER_LIMIT_EXCEEDED(503, 2506, "구독자 수 한도를 초과했습니다."),
 
 	// Product (3000 ~ 3999)
+	PRODUCT_NOT_FOUND(404, 3001, "상품이 존재하지 않습니다."),
+
+	INSPECTION_REJECT_REASON_REQUIRED(400, 3501, "검수 반려시 사유가 있어야 합니다."),
+	INSPECTION_ALREADY_COMPLETED(400, 3502, "검수가 이미 완료된 상품입니다."),
 
 	// Payment (4000 ~ 4999)
 	WALLET_NOT_FOUND(404, 4001, "회원의 지갑이 존재하지 않습니다."),
