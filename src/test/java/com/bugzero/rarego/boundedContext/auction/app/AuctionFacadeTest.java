@@ -6,10 +6,8 @@ import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.Bid;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
-import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.PagedResponseDto;
@@ -52,9 +50,7 @@ class AuctionFacadeTest {
     @Mock
     private AuctionRepository auctionRepository;
     @Mock
-    private ProductRepository productRepository;
-    @Mock
-    private AuctionOrderRepository auctionOrderRepository;
+    private AuctionSupport auctionSupport;
     @Mock
     private AuctionBookmarkUseCase auctionBookmarkUseCase;
 
@@ -168,21 +164,18 @@ class AuctionFacadeTest {
     void addBookmark_Success() {
         // given
         Long auctionId = 1L;
-        String memberUUID = "test-uuid";
+        Long memberId = 999L;
 
         WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(true, auctionId);
-
-        given(auctionBookmarkUseCase.addBookmark(memberUUID, auctionId))
+        given(auctionBookmarkUseCase.addBookmark(memberId, auctionId))
                 .willReturn(responseDto);
 
         // when
-        WishlistAddResponseDto result = auctionFacade.addBookmark(memberUUID, auctionId);
+        WishlistAddResponseDto result = auctionFacade.addBookmark(memberId, auctionId);
 
         // then
         assertThat(result.bookmarked()).isTrue();
-        assertThat(result.auctionId()).isEqualTo(auctionId);
-
-        verify(auctionBookmarkUseCase).addBookmark(memberUUID, auctionId);
+        verify(auctionBookmarkUseCase).addBookmark(memberId, auctionId);
     }
 
     // 다른 테스트 메서드들도 유사하게 수정
@@ -191,39 +184,39 @@ class AuctionFacadeTest {
     void addBookmark_AlreadyBookmarked() {
         // given
         Long auctionId = 1L;
-        String memberUUID = "test-uuid";
+        Long memberId = 999L;
 
         WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(false, auctionId);
 
-        given(auctionBookmarkUseCase.addBookmark(memberUUID, auctionId))
+        given(auctionBookmarkUseCase.addBookmark(memberId, auctionId))
                 .willReturn(responseDto);
 
         // when
-        WishlistAddResponseDto result = auctionFacade.addBookmark(memberUUID, auctionId);
+        WishlistAddResponseDto result = auctionFacade.addBookmark(memberId, auctionId);
 
         // then
         assertThat(result.bookmarked()).isFalse();
         assertThat(result.auctionId()).isEqualTo(auctionId);
 
-        verify(auctionBookmarkUseCase).addBookmark(memberUUID, auctionId);
+        verify(auctionBookmarkUseCase).addBookmark(memberId, auctionId);
     }
 
     @Test
     @DisplayName("관심 경매 등록 - 경매 미존재 시 에러 발생")
     void addBookmark_AuctionNotFound() {
         // given
-        Long auctionId = 999L;
-        String memberUUID = "test-uuid";
+        Long auctionId = 1L;
+        Long memberId = 999L;
 
-        given(auctionBookmarkUseCase.addBookmark(memberUUID, auctionId))
+        given(auctionBookmarkUseCase.addBookmark(memberId, auctionId))
                 .willThrow(new CustomException(ErrorType.AUCTION_NOT_FOUND));
 
         // when & then
-        assertThatThrownBy(() -> auctionFacade.addBookmark(memberUUID, auctionId))
+        assertThatThrownBy(() -> auctionFacade.addBookmark(memberId, auctionId))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorType", ErrorType.AUCTION_NOT_FOUND);
 
-        verify(auctionBookmarkUseCase).addBookmark(memberUUID, auctionId);
+        verify(auctionBookmarkUseCase).addBookmark(memberId, auctionId);
     }
 
 

@@ -174,7 +174,7 @@ class AuctionControllerTest {
         Long auctionId = 1L;
         WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(true, auctionId);
 
-        given(auctionFacade.addBookmark(anyString(), eq(auctionId)))
+        given(auctionFacade.addBookmark(anyLong(), eq(auctionId)))
                 .willReturn(responseDto);
 
         // when & then
@@ -193,7 +193,7 @@ class AuctionControllerTest {
         // given
         Long auctionId = 999L;
 
-        given(auctionFacade.addBookmark(anyString(), eq(auctionId)))
+        given(auctionFacade.addBookmark(anyLong(), eq(auctionId)))
                 .willThrow(new CustomException(ErrorType.AUCTION_NOT_FOUND));
 
         // when & then
@@ -211,7 +211,7 @@ class AuctionControllerTest {
         // given
         Long auctionId = 1L;
 
-        given(auctionFacade.addBookmark(anyString(), eq(auctionId)))
+        given(auctionFacade.addBookmark(anyLong(), eq(auctionId)))
                 .willThrow(new CustomException(ErrorType.MEMBER_NOT_FOUND));
 
         // when & then

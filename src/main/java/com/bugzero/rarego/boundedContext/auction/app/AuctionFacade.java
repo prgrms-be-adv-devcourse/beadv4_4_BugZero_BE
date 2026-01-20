@@ -119,8 +119,12 @@ public class AuctionFacade {
         return new PagedResponseDto<>(dtoList, PageDto.from(auctionPage));
     }
 
-    public WishlistAddResponseDto addBookmark(String memberUUID, Long auctionId) {
-        return auctionBookmarkUseCase.addBookmark(memberUUID, auctionId);
+    @Transactional
+    public WishlistAddResponseDto addBookmark(Long memberId, Long auctionId) {
+        AuctionMember member = auctionMemberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
+
+        return auctionBookmarkUseCase.addBookmark(member.getId(), auctionId);
     }
 
     @Transactional

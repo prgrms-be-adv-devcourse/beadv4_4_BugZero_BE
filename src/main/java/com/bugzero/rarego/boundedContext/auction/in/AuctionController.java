@@ -59,9 +59,7 @@ public class AuctionController {
             @PathVariable Long auctionId
     ) {
         // TODO: MemberPrincipals로 변경 필요
-        String memberUUID = String.valueOf(memberId);
-
-        WishlistAddResponseDto response = auctionFacade.addBookmark(memberUUID, auctionId);
+        WishlistAddResponseDto response = auctionFacade.addBookmark(memberId, auctionId);
 
         return SuccessResponseDto.from(SuccessType.OK, response);
     }
