@@ -1,20 +1,13 @@
 package com.bugzero.rarego.boundedContext.member.in;
 
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.member.app.MemberFacade;
 import com.bugzero.rarego.boundedContext.member.domain.MemberMeResponseDto;
 import com.bugzero.rarego.boundedContext.member.domain.MemberUpdateRequestDto;
@@ -40,7 +33,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MemberController {
 
-	private final AuctionFacade auctionFacade;
 	private final MemberFacade memberFacade;
 
 	@GetMapping("/me/bids")

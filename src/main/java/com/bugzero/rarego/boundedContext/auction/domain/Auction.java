@@ -87,7 +87,9 @@ public class Auction extends BaseIdAndTime {
 
     // 입찰 가격 갱신
     public void updateCurrentPrice(int price) {
-      this.currentPrice = price;
+        if (this.currentPrice == null || price > this.currentPrice) {
+            this.currentPrice = price;
+        }
     }
 
     // 경매 시작 상태로 전이
