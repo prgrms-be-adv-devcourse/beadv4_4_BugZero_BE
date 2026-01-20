@@ -35,31 +35,33 @@ class PaymentRequestPaymentUseCaseTest {
 	@DisplayName("예치금 결제 요청 성공 테스트")
 	void requestPayment_success() {
 		// given
-		Long memberId = 1L;
+		String memberPublicId = "uuid-user-1234";
 		Integer amount = 10000;
 		PaymentRequestDto requestDto = new PaymentRequestDto(amount);
 
 		// 가짜 멤버 객체 생성
-		PaymentMember member = PaymentMember.builder().id(memberId).build();
+		PaymentMember member = PaymentMember.builder()
+			.id(1L)
+			.build();
 
-		// repository.findById 호출 시 가짜 멤버 리턴하도록 설정
-		given(paymentSupport.findMemberById(memberId)).willReturn(member);
+		// [변경] paymentSupport.findMemberByPublicId 호출 스텁 설정
+		given(paymentSupport.findMemberByPublicId(memberPublicId)).willReturn(member);
 
 		// when
-		PaymentRequestResponseDto response = useCase.requestPayment(memberId, requestDto);
+		PaymentRequestResponseDto response = useCase.requestPayment(memberPublicId, requestDto);
 
 		// then
-		// 1. 실제로 DB 저장 메서드가 호출되었는지 검증 & 저장되려던 객체 포획(Capture)
+		// 1. Repository 저장 호출 검증
 		ArgumentCaptor<Payment> paymentCaptor = ArgumentCaptor.forClass(Payment.class);
 		verify(paymentRepository, times(1)).save(paymentCaptor.capture());
 
 		Payment savedPayment = paymentCaptor.getValue();
 
-		// 2. 내부 로직 검증
+		// 2. 저장된 객체 검증
 		assertThat(savedPayment.getMember()).isEqualTo(member);
 		assertThat(savedPayment.getAmount()).isEqualTo(amount);
 		assertThat(savedPayment.getStatus()).isEqualTo(PaymentStatus.PENDING);
-		assertThat(savedPayment.getOrderId()).isNotNull();
+		assertThat(savedPayment.getOrderId()).isNotNull(); // UUID 생성 확인
 
 		// 3. 반환값 검증
 		assertThat(response.amount()).isEqualTo(amount);
@@ -69,16 +71,16 @@ class PaymentRequestPaymentUseCaseTest {
 	@DisplayName("결제 요청 실패: 존재하지 않는 회원")
 	void requestPayment_fail_member_not_found() {
 		// given
-		Long memberId = 999L;
+		String memberPublicId = "unknown-user"; // Long -> String 변경
 		Integer amount = 10000;
 		PaymentRequestDto requestDto = new PaymentRequestDto(amount);
 
-		// repository가 빈 값을 반환하도록 설정
-		given(paymentSupport.findMemberById(memberId))
+		// [변경] paymentSupport.findMemberByPublicId 호출 시 예외 발생 설정
+		given(paymentSupport.findMemberByPublicId(memberPublicId))
 			.willThrow(new CustomException(ErrorType.MEMBER_NOT_FOUND));
 
 		// when & then
-		assertThatThrownBy(() -> useCase.requestPayment(memberId, requestDto))
+		assertThatThrownBy(() -> useCase.requestPayment(memberPublicId, requestDto))
 			.isInstanceOf(CustomException.class)
 			.hasFieldOrPropertyWithValue("errorType", ErrorType.MEMBER_NOT_FOUND);
 
