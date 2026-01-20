@@ -103,7 +103,7 @@ class ProductUpdateProductUseCaseTest {
 			category,
 			"설명",
 			new ProductAuctionUpdateDto(1L, 1000, 7),
-			List.of(new ProductImageUpdateDto(1L, "url", 1))
+			List.of(new ProductImageUpdateDto(null, "url", 1))
 		);
 	}
 
