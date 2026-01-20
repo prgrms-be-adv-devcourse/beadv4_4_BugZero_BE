@@ -48,8 +48,6 @@ class MemberUpdateMemberUseCaseTest {
 			"12345",
 			" new address ",
 			" detail ",
-			null,
-			null,
 			null
 		);
 		given(memberSupport.findByPublicId("public-id")).willReturn(member);
@@ -77,8 +75,6 @@ class MemberUpdateMemberUseCaseTest {
 			null,
 			null,
 			null,
-			null,
-			null,
 			Set.of(MemberClearField.INTRO)
 		);
 		given(memberSupport.findByPublicId("public-id")).willReturn(member);
@@ -102,8 +98,6 @@ class MemberUpdateMemberUseCaseTest {
 			"54321",
 			" new address ",
 			" new detail ",
-			null,
-			null,
 			Set.of(
 				MemberClearField.INTRO,
 				MemberClearField.ADDRESS_DETAIL

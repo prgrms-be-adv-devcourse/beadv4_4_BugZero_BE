@@ -20,7 +20,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -28,6 +27,7 @@ import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
 import com.bugzero.rarego.boundedContext.member.app.MemberFacade;
 import com.bugzero.rarego.boundedContext.member.domain.MemberClearField;
 import com.bugzero.rarego.boundedContext.member.domain.MemberMeResponseDto;
+import com.bugzero.rarego.boundedContext.member.domain.MemberUpdateIdentityRequestDto;
 import com.bugzero.rarego.boundedContext.member.domain.MemberUpdateRequestDto;
 import com.bugzero.rarego.boundedContext.member.domain.MemberUpdateResponseDto;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
@@ -142,8 +142,6 @@ class MemberControllerTest {
 			"12345",
 			"Seoul",
 			"Apt 1",
-			null,
-			null,
 			null
 		);
 		MemberUpdateResponseDto responseDto = new MemberUpdateResponseDto(
@@ -188,14 +186,62 @@ class MemberControllerTest {
 	}
 
 	@Test
+	@DisplayName("성공: 본인인증 정보 수정 요청이 정상 처리되면 회원 정보를 반환한다")
+	void updateIdentity_success() throws Exception {
+		// given
+		MemberUpdateIdentityRequestDto requestDto = new MemberUpdateIdentityRequestDto(
+			"010-1234-5678",
+			"Alice"
+		);
+		MemberUpdateResponseDto responseDto = new MemberUpdateResponseDto(
+			"public-id",
+			"test@example.com",
+			"newbie",
+			"intro",
+			"Seoul",
+			"Apt 1",
+			"12345",
+			"01012345678",
+			"Alice",
+			LocalDateTime.of(2024, 1, 1, 0, 0),
+			LocalDateTime.of(2024, 1, 2, 0, 0)
+		);
+		given(memberFacade.updateIdentity("public-id", requestDto)).willReturn(responseDto);
+
+		MemberPrincipal principal = new MemberPrincipal("public-id", "USER");
+		Authentication authentication = new UsernamePasswordAuthenticationToken(
+			principal,
+			null,
+			List.of(new SimpleGrantedAuthority("ROLE_USER"))
+		);
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+		try {
+			// when
+			var result = mockMvc.perform(patch("/api/v1/members/me/identity")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(requestDto)));
+
+			// then
+			result
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value(SuccessType.OK.getHttpStatus()))
+				.andExpect(jsonPath("$.message").value(SuccessType.OK.getMessage()))
+				.andExpect(jsonPath("$.data.publicId").value("public-id"))
+				.andExpect(jsonPath("$.data.contactPhone").value("01012345678"))
+				.andExpect(jsonPath("$.data.realName").value("Alice"));
+		} finally {
+			SecurityContextHolder.clearContext();
+		}
+	}
+
+	@Test
 	@DisplayName("실패: clearFields와 patch가 동시에 오면 HTTP 400을 반환한다")
 	void updateMe_fail_clear_and_patch_conflict() throws Exception {
 		// given
 		MemberUpdateRequestDto requestDto = new MemberUpdateRequestDto(
 			"newbie",
 			"intro",
-			null,
-			null,
 			null,
 			null,
 			null,
