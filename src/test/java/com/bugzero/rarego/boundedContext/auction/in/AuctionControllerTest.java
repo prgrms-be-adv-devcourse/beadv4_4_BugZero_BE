@@ -242,11 +242,11 @@ class AuctionControllerTest {
     @WithMockMemberPrincipal(publicId = "test-public-id")
     void addBookmark_success() throws Exception {
         // given
-        String publicId = "test-public-id";
         Long auctionId = 1L;
         WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(true, auctionId);
 
-        given(auctionFacade.addBookmark(eq(publicId), eq(auctionId)))
+        // any(String.class) 사용
+        given(auctionFacade.addBookmark(any(String.class), eq(auctionId)))
                 .willReturn(responseDto);
 
         // when & then
@@ -264,11 +264,10 @@ class AuctionControllerTest {
     @WithMockMemberPrincipal(publicId = "test-public-id")
     void addBookmark_already_exists() throws Exception {
         // given
-        String publicId = "test-public-id";
         Long auctionId = 1L;
         WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(false, auctionId);
 
-        given(auctionFacade.addBookmark(eq(publicId), eq(auctionId)))
+        given(auctionFacade.addBookmark(any(String.class), eq(auctionId)))
                 .willReturn(responseDto);
 
         // when & then
@@ -286,10 +285,9 @@ class AuctionControllerTest {
     @WithMockMemberPrincipal(publicId = "test-public-id")
     void addBookmark_fail_auction_not_found() throws Exception {
         // given
-        String publicId = "test-public-id";
         Long auctionId = 999L;
 
-        given(auctionFacade.addBookmark(eq(publicId), eq(auctionId)))
+        given(auctionFacade.addBookmark(any(String.class), eq(auctionId)))
                 .willThrow(new CustomException(ErrorType.AUCTION_NOT_FOUND));
 
         // when & then
