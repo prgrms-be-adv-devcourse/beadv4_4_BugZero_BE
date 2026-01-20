@@ -6,12 +6,14 @@ import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Table(name = "AUCTION_BID")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public class Bid extends BaseIdAndTime {
