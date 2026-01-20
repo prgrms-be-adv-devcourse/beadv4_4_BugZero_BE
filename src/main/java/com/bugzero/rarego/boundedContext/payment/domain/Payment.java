@@ -1,5 +1,7 @@
 package com.bugzero.rarego.boundedContext.payment.domain;
 
+import java.util.UUID;
+
 import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
 
 import jakarta.persistence.Column;
@@ -38,6 +40,15 @@ public class Payment extends BaseIdAndTime {
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	private PaymentStatus status;
+
+	public static Payment of(PaymentMember member, int amount) {
+		return Payment.builder()
+			.member(member)
+			.orderId(UUID.randomUUID().toString())
+			.amount(amount)
+			.status(PaymentStatus.PENDING)
+			.build();
+	}
 
 	public void complete(String paymentKey) {
 		this.paymentKey = paymentKey;
