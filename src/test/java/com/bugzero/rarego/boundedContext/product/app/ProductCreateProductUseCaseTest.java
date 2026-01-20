@@ -18,67 +18,83 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.List;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.BDDMockito.*;
+import com.bugzero.rarego.boundedContext.product.domain.Category;
+import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
+import com.bugzero.rarego.boundedContext.product.domain.Product;
+import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
+import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
+import com.bugzero.rarego.shared.product.auction.out.AuctionApiClient;
+import com.bugzero.rarego.shared.product.dto.ProductAuctionRequestDto;
+import com.bugzero.rarego.shared.product.dto.ProductImageRequestDto;
+import com.bugzero.rarego.shared.product.dto.ProductRequestDto;
+import com.bugzero.rarego.shared.product.dto.ProductResponseDto;
 
 @ExtendWith(MockitoExtension.class)
 class ProductCreateProductUseCaseTest {
-    @InjectMocks
-    private ProductCreateProductUseCase useCase;
+	@InjectMocks
+	private ProductCreateProductUseCase useCase;
 
-    @Mock
-    private ProductRepository productRepository;
+	@Mock
+	private ProductRepository productRepository;
 
-    @Mock
-    private AuctionApiClient auctionApiClient;
+	@Mock
+	private AuctionApiClient auctionApiClient;
 
-    @Test
-    @DisplayName("상품 정보 등록 성공")
-    void createProduct_success() {
-        // given
-        String memberId = "1L";
-        Long expectedAuctionId = 100L;
+	@Mock
+	private ProductSupport productSupport;
 
-        ProductRequestDto request = new ProductRequestDto(
-                "스타워즈 시리즈",
-                Category.스타워즈,
-                "설명",
-                new ProductAuctionRequestDto(1000, 7),
-                List.of(new ProductImageRequestDto("url", 0))
-        );
+	@Test
+	@DisplayName("상품 정보 등록 성공")
+	void createProduct_success() {
+		// given
+		String memberId = "1L";
+		Long expectedAuctionId = 100L;
 
-        //productRepository 에 저장되었을 때 반환되는 값 지정
-        given(productRepository.save(any(Product.class))).willAnswer(invocation -> {
-            Product product = invocation.getArgument(0); //들어온 인자값
-            ReflectionTestUtils.setField(product, "id", 1L); // 임의로 ID 부여
-            return product;
-        });
+		ProductRequestDto request = new ProductRequestDto(
+			"스타워즈 시리즈",
+			Category.스타워즈,
+			"설명",
+			new ProductAuctionRequestDto(1000, 7),
+			List.of(new ProductImageRequestDto("url", 0))
+		);
 
-        given(auctionApiClient.createAuction(eq(1L), eq("1L"), any(ProductAuctionRequestDto.class)))
-                .willReturn(expectedAuctionId);
+		ProductMember seller = ProductMember.builder()
+			.id(1L)
+			.build();
 
-        // when
-        ProductResponseDto response = useCase.createProduct(memberId, request);
-        ArgumentCaptor<Product> productCaptor = ArgumentCaptor.forClass(Product.class);
+		//유효한 멤버 반환
+		given(productSupport.verifyValidateMember(memberId)).willReturn(seller);
 
-        verify(productRepository, times(1)).save(productCaptor.capture());
-        verify(auctionApiClient, times(1)).createAuction(eq(1L), eq("1L"), any());
+		//productRepository 에 저장되었을 때 반환되는 값 지정
+		given(productRepository.save(any(Product.class))).willAnswer(invocation -> {
+			Product product = invocation.getArgument(0); //들어온 인자값
+			ReflectionTestUtils.setField(product, "id", 1L); // 임의로 ID 부여
+			return product;
+		});
 
-        Product product = productCaptor.getValue();
+		given(auctionApiClient.createAuction(eq(1L),eq("1L"), any(ProductAuctionRequestDto.class)))
+			.willReturn(expectedAuctionId);
 
-        // then
-        // 저장값 검증
-        assertThat(product.getName()).isEqualTo("스타워즈 시리즈");
-        assertThat(product.getCategory()).isEqualTo(Category.스타워즈);
-        assertThat(product.getDescription()).isEqualTo("설명");
-        assertThat(product.getImages().size()).isEqualTo(1);
+		// when
+		ProductResponseDto response = useCase.createProduct(memberId, request);
+		ArgumentCaptor<Product> productCaptor = ArgumentCaptor.forClass(Product.class);
 
-        // 반환값 검증
-        assertThat(response.productId()).isNotNull();
-        assertThat(response.auctionId()).isNotNull();
-        assertThat(response.auctionId()).isEqualTo(expectedAuctionId);
-        assertThat(response.inspectionStatus()).isEqualTo(InspectionStatus.PENDING);
-    }
+		verify(productRepository, times(1)).save(productCaptor.capture());
+		verify(auctionApiClient, times(1)).createAuction(eq(1L),eq("1L"), any());
+
+		Product product = productCaptor.getValue();
+
+		// then
+		// 저장값 검증
+		assertThat(product.getName()).isEqualTo("스타워즈 시리즈");
+		assertThat(product.getCategory()).isEqualTo(Category.스타워즈);
+		assertThat(product.getDescription()).isEqualTo("설명");
+		assertThat(product.getImages().size()).isEqualTo(1);
+
+		// 반환값 검증
+		assertThat(response.productId()).isNotNull();
+		assertThat(response.auctionId()).isNotNull();
+		assertThat(response.auctionId()).isEqualTo(expectedAuctionId);
+		assertThat(response.inspectionStatus()).isEqualTo(InspectionStatus.PENDING);
+	}
 }

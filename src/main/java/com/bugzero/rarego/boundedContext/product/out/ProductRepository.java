@@ -1,5 +1,6 @@
 package com.bugzero.rarego.boundedContext.product.out;
 
+import java.util.Optional;
 import java.util.Collection;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
+	Optional<Product> findByIdAndDeletedIsFalse(Long id);
 
 	// 판매자의 모든 상품(경매) ID 조회
 	@Query("SELECT p.id FROM Product p WHERE p.sellerId = :sellerId")

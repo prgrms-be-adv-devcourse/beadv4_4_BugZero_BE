@@ -1,7 +1,9 @@
 package com.bugzero.rarego.boundedContext.payment.app;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -19,10 +21,14 @@ public class PaymentProcessSettlementUseCase {
 	private final SettlementRepository settlementRepository;
 	private final PaymentSettlementProcessor paymentSettlementProcessor;
 
+	@Value("${payment.settlement.hold-days:7}")
+	private int settlementHoldDays;
+
 	public int processSettlements(int limit) {
-		// 락 없이 정산 목록 조회
-		List<Settlement> settlements = settlementRepository.findAllByStatus(SettlementStatus.READY,
-			PageRequest.of(0, limit));
+		// 7일 경과한 정산만 처리
+		LocalDateTime cutoffDate = LocalDateTime.now().minusDays(settlementHoldDays);
+		List<Settlement> settlements = settlementRepository.findSettlementsForBatch(
+				SettlementStatus.READY, cutoffDate, PageRequest.of(0, limit));
 
 		if (settlements.isEmpty()) {
 			return 0;
