@@ -55,15 +55,15 @@ public class PaymentFacade {
 	/**
 	 * 예치금 결제 요청
 	 */
-	public PaymentRequestResponseDto requestPayment(long memberId, PaymentRequestDto requestDto) {
-		return paymentRequestPaymentUseCase.requestPayment(memberId, requestDto);
+	public PaymentRequestResponseDto requestPayment(String memberPublicId, PaymentRequestDto requestDto) {
+		return paymentRequestPaymentUseCase.requestPayment(memberPublicId, requestDto);
 	}
 
 	/**
 	 * 예치금 결제 승인
 	 */
-	public PaymentConfirmResponseDto confirmPayment(Long memberId, PaymentConfirmRequestDto requestDto) {
-		return paymentConfirmPaymentUseCase.confirmPayment(memberId, requestDto);
+	public PaymentConfirmResponseDto confirmPayment(String memberPublicId, PaymentConfirmRequestDto requestDto) {
+		return paymentConfirmPaymentUseCase.confirmPayment(memberPublicId, requestDto);
 	}
 
 	/**
@@ -76,17 +76,19 @@ public class PaymentFacade {
 	/**
 	 * 낙찰 결제 (최종 결제)
 	 */
-	public AuctionFinalPaymentResponseDto auctionFinalPayment(Long memberId, Long auctionId,
+	public AuctionFinalPaymentResponseDto auctionFinalPayment(String memberPublicId, Long auctionId,
 		AuctionFinalPaymentRequestDto requestDto) {
-		return paymentAuctionFinalUseCase.finalPayment(memberId, auctionId, requestDto);
+		return paymentAuctionFinalUseCase.finalPayment(memberPublicId, auctionId, requestDto);
 	}
 
 	/**
 	 * 지갑 거래 내역 조회
 	 */
-	public PagedResponseDto<WalletTransactionResponseDto> getWalletTransactions(Long memberId, int page, int size,
+	public PagedResponseDto<WalletTransactionResponseDto> getWalletTransactions(String memberPublicId, int page,
+		int size,
 		WalletTransactionType transactionType, LocalDate from, LocalDate to) {
-		return paymentGetWalletTransactionsUseCase.getWalletTransactions(memberId, page, size, transactionType, from,
+		return paymentGetWalletTransactionsUseCase.getWalletTransactions(memberPublicId, page, size, transactionType,
+			from,
 			to);
 
 	}
@@ -94,9 +96,9 @@ public class PaymentFacade {
 	/**
 	 * 정산 내역 조회
 	 */
-	public PagedResponseDto<SettlementResponseDto> getSettlements(Long memberId, int page, int size,
+	public PagedResponseDto<SettlementResponseDto> getSettlements(String memberPublicId, int page, int size,
 		SettlementStatus status, LocalDate from, LocalDate to) {
-		return paymentGetSettlementsUseCase.getSettlements(memberId, page, size, status, from, to);
+		return paymentGetSettlementsUseCase.getSettlements(memberPublicId, page, size, status, from, to);
 	}
 
 	/**

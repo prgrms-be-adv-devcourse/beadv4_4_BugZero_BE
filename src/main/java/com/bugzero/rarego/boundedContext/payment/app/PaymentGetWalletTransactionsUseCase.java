@@ -23,14 +23,17 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PaymentGetWalletTransactionsUseCase {
 	private final PaymentTransactionRepository paymentTransactionRepository;
+	private final PaymentSupport paymentSupport;
 
 	@Transactional(readOnly = true)
-	public PagedResponseDto<WalletTransactionResponseDto> getWalletTransactions(Long memberId, int page, int size,
-		WalletTransactionType transactionType, LocalDate from, LocalDate to) {
+	public PagedResponseDto<WalletTransactionResponseDto> getWalletTransactions(String memberPublicId, int page,
+		int size, WalletTransactionType transactionType, LocalDate from, LocalDate to) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
 
 		LocalDateTime fromDateTime = (from != null) ? from.atStartOfDay() : null;
 		LocalDateTime toDateTime = (to != null) ? to.atTime(LocalTime.MAX) : null;
+
+		Long memberId = paymentSupport.findMemberByPublicId(memberPublicId).getId();
 
 		Page<PaymentTransaction> transactions = paymentTransactionRepository.findAllByMemberIdAndTransactionType(
 			memberId, transactionType, fromDateTime, toDateTime, pageable);

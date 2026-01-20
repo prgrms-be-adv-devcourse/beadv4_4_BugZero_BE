@@ -21,8 +21,8 @@ public class PaymentRequestPaymentUseCase {
 	private final PaymentSupport paymentSupport;
 
 	@Transactional
-	public PaymentRequestResponseDto requestPayment(Long memberId, PaymentRequestDto requestDto) {
-		PaymentMember member = paymentSupport.findMemberById(memberId);
+	public PaymentRequestResponseDto requestPayment(String memberPublicId, PaymentRequestDto requestDto) {
+		PaymentMember member = paymentSupport.findMemberByPublicId(memberPublicId);
 
 		String orderId = UUID.randomUUID().toString();
 
