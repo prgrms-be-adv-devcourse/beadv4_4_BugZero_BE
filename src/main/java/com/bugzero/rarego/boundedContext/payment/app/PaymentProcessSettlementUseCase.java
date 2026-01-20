@@ -28,7 +28,7 @@ public class PaymentProcessSettlementUseCase {
 		// 7일 경과한 정산만 처리
 		LocalDateTime cutoffDate = LocalDateTime.now().minusDays(settlementHoldDays);
 		List<Settlement> settlements = settlementRepository.findSettlementsForBatch(
-				SettlementStatus.READY, cutoffDate, PageRequest.of(0, limit));
+			SettlementStatus.READY, cutoffDate, PageRequest.of(0, limit));
 
 		if (settlements.isEmpty()) {
 			return 0;
@@ -37,8 +37,7 @@ public class PaymentProcessSettlementUseCase {
 		int successCount = 0;
 
 		for (Settlement settlement : settlements) {
-			boolean success = processOne(settlement);
-			if (success) {
+			if (processOne(settlement)) {
 				successCount++;
 			}
 		}
@@ -55,7 +54,7 @@ public class PaymentProcessSettlementUseCase {
 			paymentSettlementProcessor.process(settlement.getId());
 			return true;
 		} catch (Exception e) {
-			log.error("정산 실패 ID: {} - {}", settlement.getId(), e.getMessage());
+			log.error("정산 실패 ID: {} - {}", settlement.getId(), e.getMessage(), e);
 			markAsFailed(settlement); // 실패 처리 메서드 호출
 			return false;
 		}
@@ -66,9 +65,10 @@ public class PaymentProcessSettlementUseCase {
 	 */
 	private void markAsFailed(Settlement settlement) {
 		try {
+			// TODO: 실패 정산 처리 로직 구현
 			paymentSettlementProcessor.fail(settlement.getId());
 		} catch (Exception e) {
-			log.error("정산 실패 처리(FAILED 마킹) 실패 ID: {} - {}", settlement.getId(), e.getMessage());
+			log.error("정산 실패 처리 중 에러 발생 ID: {} - {}", settlement.getId(), e.getMessage(), e);
 		}
 	}
 }

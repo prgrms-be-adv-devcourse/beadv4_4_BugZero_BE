@@ -73,19 +73,4 @@ public class Wallet extends BaseIdAndTime {
 		this.holdingAmount -= amount;
 		this.balance -= amount;
 	}
-
-	public PaymentTransaction topUp(int amount, ReferenceType referenceType, Long id) {
-		this.balance += amount;
-
-		return PaymentTransaction.builder()
-			.wallet(this)
-			.member(this.member)
-			.transactionType(WalletTransactionType.TOPUP_DONE)
-			.balanceDelta(amount)
-			.holdingDelta(0)
-			.balanceAfter(this.balance)
-			.referenceType(referenceType)
-			.referenceId(id)
-			.build();
-	}
 }

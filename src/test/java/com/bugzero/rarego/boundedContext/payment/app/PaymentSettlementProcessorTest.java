@@ -36,81 +36,70 @@ class PaymentSettlementProcessorTest {
 	@Test
 	@DisplayName("process 성공: 판매자 정산금(PAID) 및 시스템 수수료(FEE) 입금과 내역 저장")
 	void process_success() {
-		// ✅ [1] @Value 필드 주입 (단위 테스트에서는 Reflection으로 주입해야 함)
+		// given
 		Long systemMemberId = 2L;
 		ReflectionTestUtils.setField(processor, "systemMemberId", systemMemberId);
 
-		// given
 		Long settlementId = 1L;
 		Long sellerId = 100L;
-
 		int settlementAmount = 10000;
 		int feeAmount = 1000;
 
-		// Mock 객체 생성
 		Settlement settlement = mock(Settlement.class);
-
 		Wallet sellerWallet = mock(Wallet.class);
 		PaymentMember seller = mock(PaymentMember.class);
-
-		// ✅ [2] 시스템 관련 Mock 추가
 		Wallet systemWallet = mock(Wallet.class);
 		PaymentMember systemMember = mock(PaymentMember.class);
 
-		// Stubbing 1: 정산 정보
+		// Stubbing: 정산 정보
 		given(paymentSupport.findSettlementByIdForUpdate(settlementId)).willReturn(settlement);
 		given(settlement.getId()).willReturn(settlementId);
 		given(settlement.getStatus()).willReturn(SettlementStatus.READY);
 		given(settlement.getSettlementAmount()).willReturn(settlementAmount);
 		given(settlement.getFeeAmount()).willReturn(feeAmount);
-
 		given(settlement.getSeller()).willReturn(seller);
 		given(seller.getId()).willReturn(sellerId);
 
-		// Stubbing 2: 판매자 지갑
+		// Stubbing: 판매자 지갑
 		given(paymentSupport.findWalletByMemberIdForUpdate(sellerId)).willReturn(sellerWallet);
-		given(sellerWallet.getMember()).willReturn(seller); // Transaction 저장 시 NPE 방지
-		given(sellerWallet.getBalance()).willReturn(50000); // 스냅샷용 임의 잔액
+		given(sellerWallet.getMember()).willReturn(seller);
+		given(sellerWallet.getBalance()).willReturn(50000);
 
-		// Stubbing 3: 시스템 지갑 (수수료가 > 0 이므로 호출됨)
+		// Stubbing: 시스템 지갑
 		given(paymentSupport.findWalletByMemberIdForUpdate(systemMemberId)).willReturn(systemWallet);
-		given(systemWallet.getMember()).willReturn(systemMember); // Transaction 저장 시 NPE 방지
-		given(systemWallet.getBalance()).willReturn(0);
+		given(systemWallet.getMember()).willReturn(systemMember);
+		given(systemWallet.getBalance()).willReturn(1000);
 
 		// when
-		processor.process(settlementId);
+		processor.process(settlementId); // 반환값 없음(void)
 
 		// then
 		// 1. 지갑 입금 확인
-		verify(sellerWallet).addBalance(settlementAmount); // 판매자
-		verify(systemWallet).addBalance(feeAmount);        // 시스템
+		verify(sellerWallet).addBalance(settlementAmount);
+		verify(systemWallet).addBalance(feeAmount);
 
 		// 2. 정산 상태 변경 확인
 		verify(settlement).complete();
 
-		// 3. 거래 내역 저장 검증 (총 2번: 판매자 1번 + 시스템 1번)
+		// 3. 거래 내역 저장 검증
 		ArgumentCaptor<PaymentTransaction> captor = ArgumentCaptor.forClass(PaymentTransaction.class);
-
-		// ✅ times(2)로 두 번의 호출을 모두 잡습니다.
 		verify(paymentTransactionRepository, times(2)).save(captor.capture());
 
 		List<PaymentTransaction> savedTransactions = captor.getAllValues();
 
-		// [검증 A] 판매자용 Transaction
-		PaymentTransaction sellerTx = savedTransactions.get(0); // 순서상 먼저 저장됨
-		assertThat(sellerTx.getWallet()).isEqualTo(sellerWallet);
-		assertThat(sellerTx.getBalanceDelta()).isEqualTo(settlementAmount);
+		// 판매자 트랜잭션 검증
+		PaymentTransaction sellerTx = savedTransactions.get(0);
 		assertThat(sellerTx.getTransactionType()).isEqualTo(WalletTransactionType.SETTLEMENT_PAID);
+		assertThat(sellerTx.getBalanceDelta()).isEqualTo(settlementAmount);
 
-		// [검증 B] 시스템용 Transaction
-		PaymentTransaction systemTx = savedTransactions.get(1); // 나중에 저장됨
-		assertThat(systemTx.getWallet()).isEqualTo(systemWallet);
-		assertThat(systemTx.getBalanceDelta()).isEqualTo(feeAmount);
+		// 시스템 트랜잭션 검증
+		PaymentTransaction systemTx = savedTransactions.get(1);
 		assertThat(systemTx.getTransactionType()).isEqualTo(WalletTransactionType.SETTLEMENT_FEE);
+		assertThat(systemTx.getBalanceDelta()).isEqualTo(feeAmount);
 	}
 
 	@Test
-	@DisplayName("process 스킵: 이미 READY 상태가 아니면 0 반환")
+	@DisplayName("process 스킵: 이미 READY 상태가 아니면 아무 작업도 하지 않아야 함")
 	void process_skip_if_not_ready() {
 		// given
 		Long settlementId = 1L;
@@ -120,15 +109,17 @@ class PaymentSettlementProcessorTest {
 		given(settlement.getStatus()).willReturn(SettlementStatus.DONE);
 
 		// when
-		int result = processor.process(settlementId);
+		processor.process(settlementId); // void 이므로 실행만 함
 
 		// then
-		assertThat(result).isEqualTo(0);
+		// READY가 아니면 지갑 조회 및 상태 변경이 일어나지 않아야 함
 		verify(paymentSupport, never()).findWalletByMemberIdForUpdate(any());
+		verify(settlement, never()).complete();
+		verifyNoInteractions(paymentTransactionRepository);
 	}
 
 	@Test
-	@DisplayName("fail 성공: 정산 상태를 FAILED로 변경")
+	@DisplayName("fail 성공: 정산 상태가 READY인 경우에만 FAILED로 변경")
 	void fail_success() {
 		// given
 		Long settlementId = 1L;
