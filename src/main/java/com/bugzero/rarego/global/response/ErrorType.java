@@ -62,7 +62,8 @@ public enum ErrorType {
 	INVALID_ORDER_STATUS(409, 4203, "결제 가능한 주문 상태가 아닙니다."),
 	DEPOSIT_NOT_FOUND(404, 4204, "보증금 정보를 찾을 수 없습니다."),
 	ALREADY_USED_DEPOSIT(409, 4205, "이미 사용된 보증금입니다."),
-	PAYMENT_DEADLINE_EXCEEDED(400, 4206, "결제 기한이 지났습니다.");
+	PAYMENT_DEADLINE_EXCEEDED(400, 4206, "결제 기한이 지났습니다."),
+	SETTLEMENT_ALREADY_COMPLETED(400, 4207, "이미 정산이 완료되어 환불할 수 없습니다.");
 
 	private final Integer httpStatus;
 	private final int code;
