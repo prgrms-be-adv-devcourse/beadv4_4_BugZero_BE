@@ -21,7 +21,6 @@ import com.bugzero.rarego.shared.auction.dto.AuctionDetailResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionListResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionOrderResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionSearchCondition;
-import com.bugzero.rarego.shared.auction.dto.MyAuctionOrderListResponseDto;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
