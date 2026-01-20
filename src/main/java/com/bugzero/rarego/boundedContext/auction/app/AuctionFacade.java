@@ -33,9 +33,9 @@ import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
+import com.bugzero.rarego.shared.member.domain.MemberDto;
 
 import lombok.RequiredArgsConstructor;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -50,6 +50,7 @@ public class AuctionFacade {
 	private final AuctionRepository auctionRepository;
 	private final ProductRepository productRepository;
 	private final AuctionOrderRepository auctionOrderRepository;
+	private final AuctionSyncMemberUseCase auctionSyncMemberUseCase;
 
 	@Transactional
 	public SuccessResponseDto<BidResponseDto> createBid(Long auctionId, Long memberId, int bidAmount) {
@@ -189,4 +190,10 @@ public class AuctionFacade {
 				return auctionRepository.findAllByProductIdIn(productIds, pageable);
 		}
 	}
+	//
+	@Transactional
+	public AuctionMember syncMember(MemberDto member) {
+		return auctionSyncMemberUseCase.syncMember(member);
+	}
+
 }

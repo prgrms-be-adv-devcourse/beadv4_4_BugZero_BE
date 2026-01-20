@@ -3,8 +3,10 @@ package com.bugzero.rarego.boundedContext.payment.app;
 import java.time.LocalDate;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.boundedContext.payment.domain.SettlementStatus;
+import com.bugzero.rarego.boundedContext.payment.domain.PaymentMember;
 import com.bugzero.rarego.boundedContext.payment.domain.WalletTransactionType;
 import com.bugzero.rarego.boundedContext.payment.in.dto.AuctionFinalPaymentRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.AuctionFinalPaymentResponseDto;
@@ -15,6 +17,7 @@ import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestResponseDt
 import com.bugzero.rarego.boundedContext.payment.in.dto.SettlementResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.WalletTransactionResponseDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
+import com.bugzero.rarego.shared.member.domain.MemberDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldRequestDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
 
@@ -31,6 +34,7 @@ public class PaymentFacade {
 	private final PaymentAuctionFinalUseCase paymentAuctionFinalUseCase;
 	private final PaymentGetWalletTransactionsUseCase paymentGetWalletTransactionsUseCase;
 	private final PaymentGetSettlementsUseCase paymentGetSettlementsUseCase;
+	private final PaymentSyncMemberUseCase paymentSyncMemberUseCase;
 
 	/**
 	 * 보증금 홀딩
@@ -92,4 +96,13 @@ public class PaymentFacade {
 		SettlementStatus status, LocalDate from, LocalDate to) {
 		return paymentGetSettlementsUseCase.getSettlements(memberId, page, size, status, from, to);
 	}
+
+	/**
+	 * PaymentMember 동기화
+	 */
+	@Transactional
+	public PaymentMember syncMember(MemberDto member) {
+		return paymentSyncMemberUseCase.syncMember(member);
+	}
+
 }

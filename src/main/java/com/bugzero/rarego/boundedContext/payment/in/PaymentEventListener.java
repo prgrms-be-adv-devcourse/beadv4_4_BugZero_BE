@@ -9,6 +9,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 import com.bugzero.rarego.boundedContext.payment.app.PaymentFacade;
 import com.bugzero.rarego.shared.auction.event.AuctionEndedEvent;
+import com.bugzero.rarego.shared.member.event.MemberJoinedEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,5 +26,11 @@ public class PaymentEventListener {
     public void handle(AuctionEndedEvent event) {
         log.info("경매 종료 이벤트 수신: auctionId={}, winnerId={}", event.auctionId(), event.winnerId());
         paymentFacade.releaseDeposits(event.auctionId(), event.winnerId());
+    }
+
+    @TransactionalEventListener(phase = AFTER_COMMIT)
+    @Transactional(propagation = REQUIRES_NEW)
+    public void onMemberCreated(MemberJoinedEvent event) {
+        paymentFacade.syncMember(event.memberDto());
     }
 }
