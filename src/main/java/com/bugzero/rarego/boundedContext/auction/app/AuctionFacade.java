@@ -15,6 +15,7 @@ import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
+import com.bugzero.rarego.shared.member.domain.MemberDto;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,12 @@ public class AuctionFacade {
 
 	private final AuctionCreateBidUseCase auctionCreateBidUseCase;
 	private final AuctionReadUseCase auctionReadUseCase;
+	private final BidRepository bidRepository;
+	private final AuctionMemberRepository auctionMemberRepository;
+	private final AuctionRepository auctionRepository;
+	private final ProductRepository productRepository;
+	private final AuctionOrderRepository auctionOrderRepository;
+	private final AuctionSyncMemberUseCase auctionSyncMemberUseCase;
 
 	// 쓰기 작업 (입찰 생성)
 	@Transactional
@@ -61,4 +68,10 @@ public class AuctionFacade {
 		AuctionOrderResponseDto response = auctionReadUseCase.getAuctionOrder(auctionId, memberPublicId);
 		return SuccessResponseDto.from(SuccessType.OK, response);
 	}
+
+	@Transactional
+	public AuctionMember syncMember(MemberDto member) {
+		return auctionSyncMemberUseCase.syncMember(member);
+	}
+
 }
