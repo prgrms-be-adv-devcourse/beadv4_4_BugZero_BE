@@ -129,36 +129,6 @@ class MemberUpdateMemberUseCaseTest {
 	}
 
 	@Test
-	@DisplayName("SELLER는 닉네임이 없으면 MEMBER_NICKNAME_REQUIRED 예외를 발생시킨다")
-	void updateMe_requiresNicknameForSeller() {
-		// given
-		Member member = baseMember();
-		MemberUpdateRequestDto requestDto = new MemberUpdateRequestDto(
-			null,
-			"intro",
-			"12345",
-			"Seoul",
-			"Detail",
-			"Alice",
-			"01012345678",
-			null
-		);
-		given(memberSupport.findByPublicId("public-id")).willReturn(member);
-
-		// when
-		Throwable thrown = catchThrowable(
-			() -> memberUpdateMemberUseCase.updateMe("public-id", "SELLER", requestDto)
-		);
-
-		// then
-		assertThat(thrown)
-			.isInstanceOf(CustomException.class)
-			.extracting("errorType")
-			.isEqualTo(ErrorType.MEMBER_NICKNAME_REQUIRED);
-		verify(memberRepository, never()).save(any(Member.class));
-	}
-
-	@Test
 	@DisplayName("SELLER가 필수 값을 clear 하면 MEMBER_SELLER_REQUIRED_FIELD_CANNOT_BE_CLEARED 예외를 발생시킨다")
 	void updateMe_sellerCannotClearRequiredFields() {
 		// given

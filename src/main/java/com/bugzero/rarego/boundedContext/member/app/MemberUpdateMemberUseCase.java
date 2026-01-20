@@ -29,11 +29,7 @@ public class MemberUpdateMemberUseCase {
 	public MemberUpdateResponseDto updateMe(String publicId, String role, MemberUpdateRequestDto requestDto) {
 		Member member = memberSupport.findByPublicId(publicId);
 
-		// SELLER면 intro 제외 전부 "요청에 존재"해야 함
-		if (isSeller(role)) {
-			validateSellerRequired(requestDto);
-		}
-
+		// Seller clear 전략 => seller라면 값을 비울 수 없음
 		validateClearFieldsPolicy(role, requestDto);
 
 		// 1) 삭제(clear) 먼저 적용 (SELLER면 일부 clear 금지)
@@ -50,19 +46,6 @@ public class MemberUpdateMemberUseCase {
 
 	private boolean isSeller(String role) {
 		return "SELLER".equals(role);
-	}
-
-	/**
-	 * SELLER일 때 intro 제외 필드들은 null이면 안 됨 (= 요청에서 빠지면 안 됨)
-	 */
-	private void validateSellerRequired(MemberUpdateRequestDto dto) {
-		if (dto.nickname() == null) throw new CustomException(ErrorType.MEMBER_NICKNAME_REQUIRED);
-		if (dto.zipCode() == null) throw new CustomException(ErrorType.MEMBER_ZIPCODE_REQUIRED);
-		if (dto.address() == null) throw new CustomException(ErrorType.MEMBER_ADDRESS_REQUIRED);
-		if (dto.addressDetail() == null) throw new CustomException(ErrorType.MEMBER_ADDRESS_DETAIL_REQUIRED);
-		if (dto.contactPhone() == null) throw new CustomException(ErrorType.MEMBER_PHONE_REQUIRED);
-		if (dto.realName() == null) throw new CustomException(ErrorType.MEMBER_REALNAME_REQUIRED);
-		// intro는 null이어도 됨
 	}
 
 	private void validateClearFieldsPolicy(String role, MemberUpdateRequestDto dto) {
