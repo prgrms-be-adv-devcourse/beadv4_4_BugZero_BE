@@ -66,7 +66,7 @@ public enum ErrorType {
     PAYMENT_DEADLINE_EXCEEDED(400, 4206, "결제 기한이 지났습니다."),
     SETTLEMENT_ALREADY_COMPLETED(400, 4207, "이미 정산이 완료되어 환불할 수 없습니다.");
 
-    private final Integer httpStatus;
-    private final int code;
-    private final String message;
+	private final Integer httpStatus;
+	private final int code;
+	private final String message;
 }
