@@ -17,6 +17,14 @@ import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
 import com.bugzero.rarego.shared.member.domain.MemberDto;
 
+import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
+import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
+import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
+
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
