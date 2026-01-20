@@ -46,7 +46,6 @@ import com.bugzero.rarego.shared.auction.dto.AuctionListResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionOrderResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionSearchCondition;
 import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
-import com.bugzero.rarego.shared.auction.dto.MyAuctionOrderListResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
 
