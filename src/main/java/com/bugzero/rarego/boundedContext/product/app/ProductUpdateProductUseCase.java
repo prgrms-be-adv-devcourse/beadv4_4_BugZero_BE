@@ -5,7 +5,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
+import com.bugzero.rarego.shared.product.auction.out.AuctionApiClient;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateDto;
+import com.bugzero.rarego.shared.product.dto.ProductUpdateResponseDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -13,9 +15,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProductUpdateProductUseCase {
 	private final ProductSupport productSupport;
+	private final AuctionApiClient auctionApiClient;
 
 	@Transactional
-	public Long updateProduct(String  publicId, Long productId, ProductUpdateDto productUpdateDto) {
+	public ProductUpdateResponseDto updateProduct(String  publicId, Long productId, ProductUpdateDto productUpdateDto) {
 		//유효한 멤버인지 확인
 		ProductMember seller = productSupport.verifyValidateMember(publicId);
 		//유효한 상품인지 확인
@@ -31,7 +34,11 @@ public class ProductUpdateProductUseCase {
 		);
 
 		//TODO경매 정보 수정 내부 api 호출하여 응답값을 성공적으로 받으면 커밋할 수 있도록 함.
+		Long auctionId = auctionApiClient.updateAuction(publicId, productUpdateDto.productAuctionUpdateDto());
 
-		return product.getId();
+		return ProductUpdateResponseDto.builder()
+			.productId(productId)
+			.auctionId(auctionId)
+			.build();
 	}
 }
