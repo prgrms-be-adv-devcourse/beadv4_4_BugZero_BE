@@ -7,6 +7,8 @@ import com.bugzero.rarego.global.security.MemberPrincipal;
 import com.bugzero.rarego.shared.auction.dto.AuctionFilterType;
 import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Auction Member API", description = "회원별 경매 활동(내역) 조회 API")
 @RestController
 @RequestMapping("/api/v1/members")
 @RequiredArgsConstructor
@@ -24,6 +27,7 @@ public class AuctionMemberController {
 
 	private final AuctionFacade auctionFacade;
 
+	@Operation(summary = "나의 입찰 내역 조회", description = "내가 참여한 경매 입찰 목록을 상태별로 조회합니다.")
 	@GetMapping("/me/bids")
 	public PagedResponseDto<MyBidResponseDto> getMyBids(
 		@RequestParam(required = false) AuctionStatus auctionStatus,
@@ -33,6 +37,7 @@ public class AuctionMemberController {
 		return auctionFacade.getMyBids(principal.publicId(), auctionStatus, pageable);
 	}
 
+	@Operation(summary = "나의 판매 내역 조회", description = "내가 등록한 경매 물품 목록을 필터(진행중/종료 등)에 따라 조회합니다. (판매자 권한 필요)")
 	@GetMapping("/me/sales")
 	@PreAuthorize("hasRole('SELLER')")
 	public PagedResponseDto<MySaleResponseDto> getMySales(
