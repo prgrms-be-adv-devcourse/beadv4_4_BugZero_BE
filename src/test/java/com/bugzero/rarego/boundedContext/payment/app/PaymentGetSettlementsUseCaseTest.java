@@ -82,7 +82,7 @@ class PaymentGetSettlementsUseCaseTest {
 		Page<Settlement> settlementPage = new PageImpl<>(List.of(settlement));
 
 		// 2. Repository Mocking (조회된 Long ID가 전달되는지 확인)
-		given(settlementRepository.findAllBySellerIdAndStatus(
+		given(settlementRepository.searchSettlements(
 			eq(memberId), // ★ PublicId가 아닌 조회된 Long ID 검증
 			eq(status),
 			eq(expectedFrom),
@@ -101,7 +101,7 @@ class PaymentGetSettlementsUseCaseTest {
 
 		// 호출 검증
 		verify(paymentSupport).findMemberByPublicId(memberPublicId); // ID 조회 호출 확인
-		verify(settlementRepository).findAllBySellerIdAndStatus(
+		verify(settlementRepository).searchSettlements(
 			eq(memberId),
 			eq(status),
 			eq(expectedFrom),
@@ -124,7 +124,7 @@ class PaymentGetSettlementsUseCaseTest {
 		given(paymentSupport.findMemberByPublicId(memberPublicId)).willReturn(mockMember);
 
 		// null -> null 변환 확인
-		given(settlementRepository.findAllBySellerIdAndStatus(
+		given(settlementRepository.searchSettlements(
 			eq(memberId), // ★ 변환된 ID 확인
 			eq(null),
 			eq(null),
@@ -139,7 +139,7 @@ class PaymentGetSettlementsUseCaseTest {
 		// then
 		assertThat(result.data()).isEmpty();
 
-		verify(settlementRepository).findAllBySellerIdAndStatus(
+		verify(settlementRepository).searchSettlements(
 			eq(memberId),
 			eq(null),
 			eq(null),

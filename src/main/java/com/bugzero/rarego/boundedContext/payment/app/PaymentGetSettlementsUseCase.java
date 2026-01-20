@@ -24,17 +24,18 @@ public class PaymentGetSettlementsUseCase {
 	private final SettlementRepository settlementRepository;
 	private final PaymentSupport paymentSupport;
 
+	// sellerId, status, createdAt 복합 인덱스 고려
 	@Transactional(readOnly = true)
 	public PagedResponseDto<SettlementResponseDto> getSettlements(String memberPublicId, int page, int size,
 		SettlementStatus status, LocalDate from, LocalDate to) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
 
 		LocalDateTime fromDateTime = (from != null) ? from.atStartOfDay() : null;
-		LocalDateTime toDateTime = (to != null) ? to.atTime(java.time.LocalTime.MAX) : null;
+		LocalDateTime toDateTime = (to != null) ? to.plusDays(1).atStartOfDay() : null;
 
 		Long memberId = paymentSupport.findMemberByPublicId(memberPublicId).getId();
 
-		Page<Settlement> settlements = settlementRepository.findAllBySellerIdAndStatus(memberId, status, fromDateTime,
+		Page<Settlement> settlements = settlementRepository.searchSettlements(memberId, status, fromDateTime,
 			toDateTime, pageable);
 
 		return PagedResponseDto.from(settlements, SettlementResponseDto::from);

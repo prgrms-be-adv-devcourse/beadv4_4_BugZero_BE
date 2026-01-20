@@ -88,8 +88,7 @@ public class PaymentFacade {
 		int size,
 		WalletTransactionType transactionType, LocalDate from, LocalDate to) {
 		return paymentGetWalletTransactionsUseCase.getWalletTransactions(memberPublicId, page, size, transactionType,
-			from,
-			to);
+			from, to);
 
 	}
 

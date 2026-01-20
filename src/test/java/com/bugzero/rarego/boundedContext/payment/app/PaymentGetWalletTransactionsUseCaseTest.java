@@ -82,7 +82,7 @@ class PaymentGetWalletTransactionsUseCaseTest {
 		Page<PaymentTransaction> entityPage = new PageImpl<>(List.of(transaction));
 
 		// 2. Repository 동작 정의 (조회된 memberId가 전달되는지 확인)
-		given(paymentTransactionRepository.findAllByMemberIdAndTransactionType(
+		given(paymentTransactionRepository.searchPaymentTransactions(
 			eq(memberId), // ★ PublicId가 아닌 조회된 Long ID가 들어가야 함
 			eq(type),
 			eq(expectedFrom),
@@ -100,7 +100,7 @@ class PaymentGetWalletTransactionsUseCaseTest {
 
 		// 호출 검증
 		verify(paymentSupport).findMemberByPublicId(memberPublicId); // ID 조회 호출 확인
-		verify(paymentTransactionRepository).findAllByMemberIdAndTransactionType(
+		verify(paymentTransactionRepository).searchPaymentTransactions(
 			eq(memberId), eq(type), eq(expectedFrom), eq(expectedTo), any(Pageable.class)
 		);
 	}
@@ -118,7 +118,7 @@ class PaymentGetWalletTransactionsUseCaseTest {
 		given(mockMember.getId()).willReturn(memberId);
 		given(paymentSupport.findMemberByPublicId(memberPublicId)).willReturn(mockMember);
 
-		given(paymentTransactionRepository.findAllByMemberIdAndTransactionType(
+		given(paymentTransactionRepository.searchPaymentTransactions(
 			any(), any(), any(), any(), any()))
 			.willReturn(emptyPage);
 
@@ -126,7 +126,7 @@ class PaymentGetWalletTransactionsUseCaseTest {
 		useCase.getWalletTransactions(memberPublicId, 0, 10, null, null, null);
 
 		// then
-		verify(paymentTransactionRepository).findAllByMemberIdAndTransactionType(
+		verify(paymentTransactionRepository).searchPaymentTransactions(
 			eq(memberId), // ★ 변환된 ID 확인
 			eq(null),
 			eq(null),

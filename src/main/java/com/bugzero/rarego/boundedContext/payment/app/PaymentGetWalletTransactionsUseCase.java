@@ -2,7 +2,6 @@ package com.bugzero.rarego.boundedContext.payment.app;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,17 +24,18 @@ public class PaymentGetWalletTransactionsUseCase {
 	private final PaymentTransactionRepository paymentTransactionRepository;
 	private final PaymentSupport paymentSupport;
 
+	// memberId, transactionType, createdAt 복합 인덱스 고려
 	@Transactional(readOnly = true)
 	public PagedResponseDto<WalletTransactionResponseDto> getWalletTransactions(String memberPublicId, int page,
 		int size, WalletTransactionType transactionType, LocalDate from, LocalDate to) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
 
 		LocalDateTime fromDateTime = (from != null) ? from.atStartOfDay() : null;
-		LocalDateTime toDateTime = (to != null) ? to.atTime(LocalTime.MAX) : null;
+		LocalDateTime toDateTime = (to != null) ? to.plusDays(1).atStartOfDay() : null;
 
 		Long memberId = paymentSupport.findMemberByPublicId(memberPublicId).getId();
 
-		Page<PaymentTransaction> transactions = paymentTransactionRepository.findAllByMemberIdAndTransactionType(
+		Page<PaymentTransaction> transactions = paymentTransactionRepository.searchPaymentTransactions(
 			memberId, transactionType, fromDateTime, toDateTime, pageable);
 
 		return PagedResponseDto.from(transactions, WalletTransactionResponseDto::from);
