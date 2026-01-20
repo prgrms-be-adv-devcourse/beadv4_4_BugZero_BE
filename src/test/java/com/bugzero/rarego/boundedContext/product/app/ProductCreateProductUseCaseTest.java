@@ -17,6 +17,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.bugzero.rarego.boundedContext.product.domain.Category;
 import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
+import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.shared.product.auction.out.AuctionApiClient;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionRequestDto;
@@ -35,6 +36,9 @@ class ProductCreateProductUseCaseTest {
 	@Mock
 	private AuctionApiClient auctionApiClient;
 
+	@Mock
+	private ProductSupport productSupport;
+
 	@Test
 	@DisplayName("상품 정보 등록 성공")
 	void createProduct_success() {
@@ -49,6 +53,13 @@ class ProductCreateProductUseCaseTest {
 			new ProductAuctionRequestDto(1000, 7),
 			List.of(new ProductImageRequestDto("url", 0))
 		);
+
+		ProductMember seller = ProductMember.builder()
+			.id(1L)
+			.build();
+
+		//유효한 멤버 반환
+		given(productSupport.verifyValidateMember(memberId)).willReturn(seller);
 
 		//productRepository 에 저장되었을 때 반환되는 값 지정
 		given(productRepository.save(any(Product.class))).willAnswer(invocation -> {

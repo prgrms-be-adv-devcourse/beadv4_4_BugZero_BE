@@ -59,4 +59,11 @@ public class AuctionOrder extends BaseIdAndTime {
 		}
 		this.status = AuctionOrderStatus.FAILED;
 	}
+
+	public void refund() {
+		if (this.status != AuctionOrderStatus.SUCCESS) {
+			throw new CustomException(ErrorType.INVALID_ORDER_STATUS);
+		}
+		this.status = AuctionOrderStatus.FAILED;
+	}
 }

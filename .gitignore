@@ -72,3 +72,5 @@ log/
 
 ### Custom ###
 src/main/resources/static/*
+.agent/
+.mantic/

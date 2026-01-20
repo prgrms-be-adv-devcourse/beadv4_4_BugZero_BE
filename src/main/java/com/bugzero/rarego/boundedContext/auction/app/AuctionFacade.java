@@ -4,7 +4,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
@@ -16,9 +15,17 @@ import com.bugzero.rarego.shared.auction.dto.AuctionOrderResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionSearchCondition;
 import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
-import com.bugzero.rarego.shared.auction.dto.MyAuctionOrderListResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
+import com.bugzero.rarego.shared.member.domain.MemberDto;
+
+import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
+import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
+import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
+
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +38,12 @@ public class AuctionFacade {
 
 	private final AuctionCreateBidUseCase auctionCreateBidUseCase;
 	private final AuctionReadUseCase auctionReadUseCase;
+	private final BidRepository bidRepository;
+	private final AuctionMemberRepository auctionMemberRepository;
+	private final AuctionRepository auctionRepository;
+	private final ProductRepository productRepository;
+	private final AuctionOrderRepository auctionOrderRepository;
+	private final AuctionSyncMemberUseCase auctionSyncMemberUseCase;
 
 	// 쓰기 작업 (입찰 생성)
 	@Transactional
@@ -69,6 +82,11 @@ public class AuctionFacade {
 	// 경매 상태/현재가 요약 조회
 	public PagedResponseDto<AuctionListResponseDto> getAuctions(AuctionSearchCondition condition, Pageable pageable) {
 		return auctionReadUseCase.getAuctions(condition, pageable);
+	}
+
+	@Transactional
+	public AuctionMember syncMember(MemberDto member) {
+		return auctionSyncMemberUseCase.syncMember(member);
 	}
 
 }
