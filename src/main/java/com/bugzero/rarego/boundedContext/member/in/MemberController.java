@@ -26,6 +26,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/members")
@@ -33,7 +35,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MemberController {
 
-	private final MemberFacade memberFacade;
+    private final MemberFacade memberFacade;
 
 	@GetMapping("/me/bids")
 	@Operation(summary = "본인 입찰목록 조회", description = "본인의 입찰목록을 조회합니다. (이후 이동 예정)")
