@@ -48,7 +48,7 @@ class AuthControllerTest {
 	void login_success() throws Exception {
 		TokenIssueDto request = new TokenIssueDto("public-id", "USER");
 
-		given(authFacade.issueAccessToken(request)).willReturn("access-token");
+		given(authFacade.issueAccessToken("public-id", "USER")).willReturn("access-token");
 
 		mockMvc.perform(post("/api/v1/auth/test/login")
 				.contentType(MediaType.APPLICATION_JSON)
