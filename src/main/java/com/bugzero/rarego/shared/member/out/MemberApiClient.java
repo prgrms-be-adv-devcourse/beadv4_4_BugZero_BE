@@ -37,7 +37,8 @@ public class MemberApiClient {
     public Long findMemberIdByPublicId(String publicId) {
         try {
             SuccessResponseDto<Long> response = restClient.get()
-                    .uri("/id")
+                    .uri("/me")
+                    .header("X-Public-Id", publicId)
                     .retrieve()
                     .body(new ParameterizedTypeReference<>() {
                     });
