@@ -65,6 +65,35 @@ class MemberUpdateMemberUseCaseTest {
 	}
 
 	@Test
+	@DisplayName("닉네임이 이미 존재하면 MEMBER_NICKNAME_ALREADY_EXISTS 예외를 발생시킨다")
+	void updateMe_rejectsExistingNickname() {
+		// given
+		Member member = baseMember();
+		MemberUpdateRequestDto requestDto = new MemberUpdateRequestDto(
+			" dupNick ",
+			null,
+			null,
+			null,
+			null,
+			null
+		);
+		given(memberSupport.findByPublicId("public-id")).willReturn(member);
+		given(memberRepository.existsByNickname("dupNick")).willReturn(true);
+
+		// when
+		Throwable thrown = catchThrowable(
+			() -> memberUpdateMemberUseCase.updateMe("public-id", "USER", requestDto)
+		);
+
+		// then
+		assertThat(thrown)
+			.isInstanceOf(CustomException.class)
+			.extracting("errorType")
+			.isEqualTo(ErrorType.MEMBER_NICKNAME_ALREADY_EXISTS);
+		verify(memberRepository, never()).save(any(Member.class));
+	}
+
+	@Test
 	@DisplayName("clearFields가 전달되면 해당 값이 null로 초기화된다")
 	void updateMe_appliesClearFields() {
 		// given
