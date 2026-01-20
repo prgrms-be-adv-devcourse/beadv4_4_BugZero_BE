@@ -14,8 +14,8 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class ProductAuctionSupport {
-	private AuctionMemberRepository auctionMemberRepository;
-	private AuctionRepository auctionRepository;
+	private final AuctionMemberRepository auctionMemberRepository;
+	private final AuctionRepository auctionRepository;
 
 	public AuctionMember getAuctionMember(String publicId) {
 		return auctionMemberRepository.findByPublicId(publicId)

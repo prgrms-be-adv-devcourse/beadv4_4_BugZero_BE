@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class AuctionUpdateAuctionUseCase {
-	private ProductAuctionSupport productAuctionSupport;
+	private final ProductAuctionSupport productAuctionSupport;
 
 	@Transactional
 	public Long updateAuction(String publicId, ProductAuctionUpdateDto dto) {
