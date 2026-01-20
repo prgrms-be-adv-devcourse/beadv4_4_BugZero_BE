@@ -16,7 +16,7 @@ services:
     # 포트 매핑 (호스트 포트 : 3306)
     # .env 파일의 DB_PORT 변수를 사용하여 로컬 포트 충돌 방지
     ports:
-      - "${DB_PORT}:3306"
+      - "${DB_PORT:-3306}:3306"
 
     # 환경변수 설정 (.env 파일 참조)
     environment:
@@ -24,7 +24,7 @@ services:
       MYSQL_DATABASE: ${DB_NAME}               # 초기 생성할 DB 이름
       MYSQL_USER: ${DB_USERNAME}               # 사용할 유저 아이디
       MYSQL_PASSWORD: ${DB_PASSWORD}           # 사용할 유저 비밀번호
-      TZ: Asia/Seoul                           # 로그 시간 확인용 타임존 (한국)
+      TZ: ${TZ:-Asia/Seoul}                    # 로그 시간 확인용 타임존 (한국)
 
     # 한글/이모지 깨짐 방지 설정 (utf8mb4)
     command:
@@ -42,6 +42,35 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  app:
+    image: ${DOCKER_IMAGE:-rarego-app:latest}
+    container_name: rarego-app
+    ports:
+      - "8080:8080"
+    environment:
+      # DB 연결 정보 (서비스 이름 'db' 사용)
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+
+      # 애플리케이션 환경 변수
+      TOSS_PAYMENTS_SECRET_KEY: ${TOSS_PAYMENTS_SECRET_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
+      AWS_SECRET_KEY: ${AWS_SECRET_KEY}
+      INTERNAL_BACK_URL: ${INTERNAL_BACK_URL}
+
+      # Social Login (OAuth2)
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET: ${GOOGLE_SECRET}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KAKAO_CLIENT_ID: ${KAKAO_CLIENT}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_NAVER_CLIENT_ID: ${NAVER_CLIENT}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_NAVER_CLIENT_SECRET: ${NAVER_SECRET}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
 
 # 도커 볼륨 생성 (최상위 레벨 정의)
 volumes:
