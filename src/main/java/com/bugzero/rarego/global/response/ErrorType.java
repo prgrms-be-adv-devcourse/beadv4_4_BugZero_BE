@@ -39,6 +39,7 @@ public enum ErrorType {
     SCHEDULER_CAPACITY_EXCEEDED(503, 2505, "스케줄러 용량이 초과되었습니다."),
     SERVICE_SUBSCRIBER_LIMIT_EXCEEDED(503, 2506, "구독자 수 한도를 초과했습니다."),
     BOOKMARK_ALREADY_EXISTS(409, 2507, "이미 관심 경매로 등록된 경매입니다."),
+    BOOKMARK_NOT_FOUND(404, 2508, "관심 경매로 등록되지 않은 경매입니다."),
 
     // Product (3000 ~ 3999)
     PRODUCT_NOT_FOUND(404, 3001, "상품이 존재하지 않습니다."),
