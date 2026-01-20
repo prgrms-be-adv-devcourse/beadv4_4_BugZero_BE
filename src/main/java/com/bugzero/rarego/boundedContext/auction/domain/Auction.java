@@ -1,6 +1,7 @@
 package com.bugzero.rarego.boundedContext.auction.domain;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
@@ -95,6 +96,21 @@ public class Auction extends BaseIdAndTime {
     // 경매 시작 상태로 전이
     public void startAuction() {
       this.status = AuctionStatus.IN_PROGRESS;
+    }
+
+    // 접근 회원이 경매 판매자인지 확인
+    public boolean isSeller(Long sellerId) {
+        return Objects.equals(this.sellerId, sellerId);
+    }
+
+    // 경매 시작 전인지 확인
+    public boolean isPending() {
+        return status == AuctionStatus.SCHEDULED;
+    }
+
+    public void update(int durationDays, int startPrice, int tickSize) {
+        this.durationDays = durationDays;
+        this.startPrice = startPrice;
     }
 
 }
