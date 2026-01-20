@@ -17,6 +17,10 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -24,12 +28,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.member.app.MemberFacade;
+import com.bugzero.rarego.boundedContext.member.domain.MemberMeResponseDto;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.PageDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
+import com.bugzero.rarego.global.security.MemberPrincipal;
 import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
 import com.bugzero.rarego.shared.member.domain.MemberJoinRequestDto;
 import com.bugzero.rarego.shared.member.domain.MemberJoinResponseDto;
@@ -112,5 +118,48 @@ class MemberControllerTest {
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.data[0].auctionId").value(20L))
 			.andExpect(jsonPath("$.pageDto.totalItems").value(1));
+	}
+
+	@Test
+	@DisplayName("성공: 내 정보 조회 요청이 정상 처리되면 회원 정보를 반환한다")
+	void getMe_success() throws Exception {
+		MemberMeResponseDto responseDto = new MemberMeResponseDto(
+			"public-id",
+			"USER",
+			"test@example.com",
+			"tester",
+			"intro",
+			"Seoul",
+			"Apt 1",
+			"12345",
+			"010****5678",
+			"A***e",
+			LocalDateTime.of(2024, 1, 1, 0, 0),
+			LocalDateTime.of(2024, 1, 2, 0, 0)
+		);
+
+		given(memberFacade.getMe("public-id", "USER")).willReturn(responseDto);
+
+		MemberPrincipal principal = new MemberPrincipal("public-id", "USER");
+		Authentication authentication = new UsernamePasswordAuthenticationToken(
+			principal,
+			null,
+			List.of(new SimpleGrantedAuthority("ROLE_USER"))
+		);
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+		try {
+			mockMvc.perform(get("/api/v1/members/me"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value(SuccessType.OK.getHttpStatus()))
+				.andExpect(jsonPath("$.message").value(SuccessType.OK.getMessage()))
+				.andExpect(jsonPath("$.data.publicId").value("public-id"))
+				.andExpect(jsonPath("$.data.role").value("USER"))
+				.andExpect(jsonPath("$.data.email").value("test@example.com"))
+				.andExpect(jsonPath("$.data.contactPhoneMasked").value("010****5678"))
+				.andExpect(jsonPath("$.data.realNameMasked").value("A***e"));
+		} finally {
+			SecurityContextHolder.clearContext();
+		}
 	}
 }

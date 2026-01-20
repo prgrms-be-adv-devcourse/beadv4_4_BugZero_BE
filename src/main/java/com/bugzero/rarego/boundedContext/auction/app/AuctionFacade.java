@@ -14,6 +14,7 @@ import com.bugzero.rarego.global.response.PageDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.shared.auction.dto.*;
+import com.bugzero.rarego.shared.member.domain.MemberDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -36,6 +37,7 @@ public class AuctionFacade {
 
     private final AuctionCreateBidUseCase auctionCreateBidUseCase;
     private final AuctionBookmarkUseCase auctionBookmarkUseCase;
+    private final AuctionSyncMemberUseCase auctionSyncMemberUseCase;
     private final BidRepository bidRepository;
     private final AuctionMemberRepository auctionMemberRepository;
     private final AuctionRepository auctionRepository;
@@ -51,10 +53,8 @@ public class AuctionFacade {
     public PagedResponseDto<BidLogResponseDto> getBidLogs(Long auctionId, Pageable pageable) {
         Page<Bid> bidPage = bidRepository.findAllByAuctionIdOrderByBidTimeDesc(auctionId, pageable);
 
-        // 1. 입찰자 정보 Map 생성 (Helper 사용)
         Map<Long, String> bidderMap = getBidderPublicIdMap(bidPage.getContent());
 
-        // 2. DTO 변환
         Page<BidLogResponseDto> dtoPage = bidPage.map(bid -> {
             String publicId = bidderMap.get(bid.getBidderId());
             if (publicId == null) {
@@ -64,28 +64,21 @@ public class AuctionFacade {
             return BidLogResponseDto.from(bid, publicId);
         });
 
-
         return new PagedResponseDto<>(dtoPage.getContent(), PageDto.from(dtoPage));
     }
 
     // 나의 입찰 내역 조회
     public PagedResponseDto<MyBidResponseDto> getMyBids(Long memberId, AuctionStatus status, Pageable pageable) {
-        // 1. Bid 목록 조회
         Page<Bid> bidPage = bidRepository.findMyBids(memberId, status, pageable);
         List<Bid> bids = bidPage.getContent();
 
-        // 2. Auction Map 생성 (Helper 메서드 재사용)
         Map<Long, Auction> auctionMap = getAuctionMap(bids);
 
-        // 3. DTO 변환 (상품명 매핑 과정 생략)
         Page<MyBidResponseDto> dtoPage = bidPage.map(bid -> {
             Auction auction = auctionMap.get(bid.getAuctionId());
-
-            // 데이터 무결성 체크 (Auction이 없는 경우 예외 발생)
             if (auction == null) {
                 throw new CustomException(ErrorType.AUCTION_NOT_FOUND);
             }
-
             return MyBidResponseDto.from(bid, auction);
         });
 
@@ -93,10 +86,8 @@ public class AuctionFacade {
     }
 
     public PagedResponseDto<MySaleResponseDto> getMySales(Long memberId, AuctionFilterType auctionFilterType, Pageable pageable) {
-        // 상품 Id 목록 조회
         List<Long> myProductIds = productRepository.findAllIdsBySellerId(memberId);
 
-        // 경매 목록 조회
         Page<Auction> auctionPage = fetchAuctionsByFilter(myProductIds, auctionFilterType, pageable);
         List<Auction> auctions = auctionPage.getContent();
 
@@ -104,23 +95,18 @@ public class AuctionFacade {
             return new PagedResponseDto<>(List.of(), PageDto.from(auctionPage));
         }
 
-        // 연관 데이터 일괄적으로 조회
         Set<Long> productIds = auctions.stream().map(Auction::getProductId).collect(Collectors.toSet());
         Set<Long> auctionIds = auctions.stream().map(Auction::getId).collect(Collectors.toSet());
 
-        // 상품 정보
         Map<Long, Product> productMap = productRepository.findAllByIdIn(productIds).stream()
                 .collect(Collectors.toMap(Product::getId, p -> p));
 
-        // 주문 정보 (거래 상태)
         Map<Long, AuctionOrder> orderMap = auctionOrderRepository.findAllByAuctionIdIn(auctionIds).stream()
                 .collect(Collectors.toMap(AuctionOrder::getAuctionId, Function.identity()));
 
-        // 입찰 횟수 정보
         Map<Long, Integer> bidCountMap = bidRepository.countByAuctionIdIn(auctionIds).stream()
                 .collect(Collectors.toMap(row -> (Long) row[0], row -> ((Long) row[1]).intValue()));
 
-        // DTO 변환
         List<MySaleResponseDto> dtoList = auctions.stream()
                 .map(auction -> MySaleResponseDto.from(
                         auction,
@@ -133,15 +119,21 @@ public class AuctionFacade {
         return new PagedResponseDto<>(dtoList, PageDto.from(auctionPage));
     }
 
+    // 님 추가 메서드
     public WishlistAddResponseDto addBookmark(String memberUUID, Long auctionId) {
         return auctionBookmarkUseCase.addBookmark(memberUUID, auctionId);
     }
 
+    // dev 추가 메서드
+    @Transactional
+    public AuctionMember syncMember(MemberDto member) {
+        return auctionSyncMemberUseCase.syncMember(member);
+    }
+
     // =========================================================================
-    //  Helper Methods (Private) - 복잡한 조회/매핑 로직을 아래로 숨김
+    //  Helper Methods (Private)
     // =========================================================================
 
-    // 입찰 목록에서 입찰자 ID를 추출하여 PublicId Map 반환
     private Map<Long, String> getBidderPublicIdMap(List<Bid> bids) {
         if (bids.isEmpty()) return Collections.emptyMap();
 
@@ -153,7 +145,6 @@ public class AuctionFacade {
                 .collect(Collectors.toMap(AuctionMember::getId, AuctionMember::getPublicId));
     }
 
-    // 입찰 목록에서 경매 ID를 추출하여 Auction Map 반환
     private Map<Long, Auction> getAuctionMap(List<Bid> bids) {
         if (bids.isEmpty()) return Collections.emptyMap();
 
@@ -167,15 +158,10 @@ public class AuctionFacade {
 
     private Page<Auction> fetchAuctionsByFilter(List<Long> productIds, AuctionFilterType filter, Pageable pageable) {
         switch (filter) {
-            // 진행 중 & 진행 예정
             case ONGOING:
                 return auctionRepository.findAllByProductIdInAndStatusIn(productIds,
                         List.of(AuctionStatus.SCHEDULED, AuctionStatus.IN_PROGRESS), pageable);
-            // 판매 완료 (정상 거래)
             case COMPLETED:
-                return auctionRepository.findAllByProductIdInAndStatusIn(productIds,
-                        List.of(AuctionStatus.ENDED), pageable);
-            // 유찰 등 조치 필요
             case ACTION_REQUIRED:
                 return auctionRepository.findAllByProductIdInAndStatusIn(productIds,
                         List.of(AuctionStatus.ENDED), pageable);

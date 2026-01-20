@@ -1,7 +1,9 @@
 package com.bugzero.rarego.boundedContext.payment.app;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.bugzero.rarego.boundedContext.payment.domain.PaymentMember;
 import com.bugzero.rarego.boundedContext.payment.domain.WalletTransactionType;
 import com.bugzero.rarego.boundedContext.payment.in.dto.AuctionFinalPaymentRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.AuctionFinalPaymentResponseDto;
@@ -11,6 +13,7 @@ import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.WalletTransactionResponseDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
+import com.bugzero.rarego.shared.member.domain.MemberDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldRequestDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
 
@@ -26,6 +29,7 @@ public class PaymentFacade {
 	private final PaymentProcessSettlementUseCase paymentProcessSettlementUseCase;
 	private final PaymentAuctionFinalUseCase paymentAuctionFinalUseCase;
 	private final PaymentGetWalletTransactionsUseCase paymentGetWalletTransactionsUseCase;
+	private final PaymentSyncMemberUseCase paymentSyncMemberUseCase;
 
 	/**
 	 * 보증금 홀딩
@@ -78,4 +82,13 @@ public class PaymentFacade {
 		return paymentGetWalletTransactionsUseCase.getWalletTransactions(memberId, page, size, transactionType);
 
 	}
+
+	/**
+	 * PaymentMember 동기화
+	 */
+	@Transactional
+	public PaymentMember syncMember(MemberDto member) {
+		return paymentSyncMemberUseCase.syncMember(member);
+	}
+
 }
