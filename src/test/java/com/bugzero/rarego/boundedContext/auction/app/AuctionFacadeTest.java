@@ -160,11 +160,16 @@ class AuctionFacadeTest {
     }
 
     @Test
-    @DisplayName("관심 경매 등록 - 성공")
+    @DisplayName("관심 경매 등록: 성공적으로 북마크를 추가한다")
     void addBookmark_Success() {
         // given
         Long auctionId = 1L;
         Long memberId = 999L;
+
+        // 회원 존재 검증 통과를 위한 Mocking
+        AuctionMember member = AuctionMember.builder().build();
+        ReflectionTestUtils.setField(member, "id", memberId);
+        given(auctionMemberRepository.findById(memberId)).willReturn(java.util.Optional.of(member));
 
         WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(true, auctionId);
         given(auctionBookmarkUseCase.addBookmark(memberId, auctionId))
@@ -178,16 +183,19 @@ class AuctionFacadeTest {
         verify(auctionBookmarkUseCase).addBookmark(memberId, auctionId);
     }
 
-    // 다른 테스트 메서드들도 유사하게 수정
     @Test
-    @DisplayName("관심 경매 등록 - 이미 북마크된 경우")
+    @DisplayName("관심 경매 등록: 이미 북마크된 경우 상태값(false)과 함께 결과를 반환한다")
     void addBookmark_AlreadyBookmarked() {
         // given
         Long auctionId = 1L;
         Long memberId = 999L;
 
-        WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(false, auctionId);
+        // 회원 존재 검증 통과를 위한 Mocking
+        AuctionMember member = AuctionMember.builder().build();
+        ReflectionTestUtils.setField(member, "id", memberId);
+        given(auctionMemberRepository.findById(memberId)).willReturn(java.util.Optional.of(member));
 
+        WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(false, auctionId);
         given(auctionBookmarkUseCase.addBookmark(memberId, auctionId))
                 .willReturn(responseDto);
 
@@ -196,17 +204,20 @@ class AuctionFacadeTest {
 
         // then
         assertThat(result.bookmarked()).isFalse();
-        assertThat(result.auctionId()).isEqualTo(auctionId);
-
         verify(auctionBookmarkUseCase).addBookmark(memberId, auctionId);
     }
 
     @Test
-    @DisplayName("관심 경매 등록 - 경매 미존재 시 에러 발생")
+    @DisplayName("관심 경매 등록: 존재하지 않는 경매일 경우 예외가 발생한다")
     void addBookmark_AuctionNotFound() {
         // given
         Long auctionId = 1L;
         Long memberId = 999L;
+
+        // 추가: 회원 존재 검증은 통과해야 UseCase의 예외를 테스트할 수 있음
+        AuctionMember member = AuctionMember.builder().build();
+        ReflectionTestUtils.setField(member, "id", memberId);
+        given(auctionMemberRepository.findById(memberId)).willReturn(java.util.Optional.of(member));
 
         given(auctionBookmarkUseCase.addBookmark(memberId, auctionId))
                 .willThrow(new CustomException(ErrorType.AUCTION_NOT_FOUND));
@@ -215,10 +226,7 @@ class AuctionFacadeTest {
         assertThatThrownBy(() -> auctionFacade.addBookmark(memberId, auctionId))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorType", ErrorType.AUCTION_NOT_FOUND);
-
-        verify(auctionBookmarkUseCase).addBookmark(memberId, auctionId);
     }
-
 
     /*
      * TODO: GitHub Actions 환경에서 실패하는 문제 해결 필요

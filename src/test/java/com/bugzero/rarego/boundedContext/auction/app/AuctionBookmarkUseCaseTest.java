@@ -4,6 +4,8 @@ import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionBookmark;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionBookmarkRepository;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +17,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
@@ -72,7 +75,7 @@ class AuctionBookmarkUseCaseTest {
     }
 
     @Test
-    @DisplayName("관심 경매 등록 - 이미 북마크된 경우")
+    @DisplayName("관심 경매 등록 - 이미 북마크된 경우 예외 발생")
     void addBookmark_AlreadyBookmarked() {
         // given
         Long memberId = 100L;
@@ -95,12 +98,11 @@ class AuctionBookmarkUseCaseTest {
         given(auctionBookmarkRepository.existsByAuctionIdAndMemberId(auctionId, memberId))
                 .willReturn(true);
 
-        // when
-        WishlistAddResponseDto result = auctionBookmarkUseCase.addBookmark(memberId, auctionId);
-
-        // then
-        assertThat(result.bookmarked()).isFalse();
-        assertThat(result.auctionId()).isEqualTo(auctionId);
+        // when & then
+        assertThatThrownBy(() -> auctionBookmarkUseCase.addBookmark(memberId, auctionId))
+                .isInstanceOf(CustomException.class)
+                .satisfies(ex -> assertThat(((CustomException) ex).getErrorType())
+                        .isEqualTo(ErrorType.BOOKMARK_ALREADY_EXISTS));
 
         verify(auctionBookmarkRepository, never()).save(any(AuctionBookmark.class));
     }

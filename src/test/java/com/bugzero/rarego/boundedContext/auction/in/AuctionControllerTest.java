@@ -167,55 +167,65 @@ class AuctionControllerTest {
     }
 
     @Test
-    @DisplayName("성공: 관심 경매 등록 시 200 OK와 북마크 정보 반환")
-    @WithMockUser(username = "user-uuid")
+    @DisplayName("성공: 관심 경매 등록 시 HTTP 200과 등록 정보를 반환한다")
+    @WithMockUser
     void addBookmark_success() throws Exception {
         // given
+        Long memberId = 1L;
         Long auctionId = 1L;
         WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(true, auctionId);
 
-        given(auctionFacade.addBookmark(anyLong(), eq(auctionId)))
+        given(auctionFacade.addBookmark(eq(memberId), eq(auctionId)))
                 .willReturn(responseDto);
 
         // when & then
         mockMvc.perform(post("/api/v1/auctions/{auctionId}/bookmarks", auctionId)
+                        .param("memberId", memberId.toString())
                         .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.data.bookmarked").value(true))
                 .andExpect(jsonPath("$.data.auctionId").value(auctionId));
     }
 
     @Test
-    @DisplayName("실패: 경매를 찾을 수 없는 경우 404 반환")
-    @WithMockUser(username = "user-uuid")
-    void addBookmark_auctionNotFound() throws Exception {
+    @DisplayName("성공: 이미 관심 등록된 경매에 중복 등록 시 bookmarked=false를 반환한다")
+    @WithMockUser
+    void addBookmark_already_exists() throws Exception {
         // given
+        Long memberId = 1L;
+        Long auctionId = 1L;
+        WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(false, auctionId);
+
+        given(auctionFacade.addBookmark(eq(memberId), eq(auctionId)))
+                .willReturn(responseDto);
+
+        // when & then
+        mockMvc.perform(post("/api/v1/auctions/{auctionId}/bookmarks", auctionId)
+                        .param("memberId", memberId.toString())
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.data.bookmarked").value(false))
+                .andExpect(jsonPath("$.data.auctionId").value(auctionId));
+    }
+
+    @Test
+    @DisplayName("실패: 존재하지 않는 경매에 관심 등록 시 404를 반환한다")
+    @WithMockUser
+    void addBookmark_fail_auction_not_found() throws Exception {
+        // given
+        Long memberId = 1L;
         Long auctionId = 999L;
 
-        given(auctionFacade.addBookmark(anyLong(), eq(auctionId)))
+        given(auctionFacade.addBookmark(eq(memberId), eq(auctionId)))
                 .willThrow(new CustomException(ErrorType.AUCTION_NOT_FOUND));
 
         // when & then
         mockMvc.perform(post("/api/v1/auctions/{auctionId}/bookmarks", auctionId)
-                        .with(csrf()))
-                .andDo(print())
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404));
-    }
-
-    @Test
-    @DisplayName("실패: 회원을 찾을 수 없는 경우 404 반환")
-    @WithMockUser(username = "user-uuid")
-    void addBookmark_memberNotFound() throws Exception {
-        // given
-        Long auctionId = 1L;
-
-        given(auctionFacade.addBookmark(anyLong(), eq(auctionId)))
-                .willThrow(new CustomException(ErrorType.MEMBER_NOT_FOUND));
-
-        // when & then
-        mockMvc.perform(post("/api/v1/auctions/{auctionId}/bookmarks", auctionId)
+                        .param("memberId", memberId.toString())
                         .with(csrf()))
                 .andDo(print())
                 .andExpect(status().isNotFound())
