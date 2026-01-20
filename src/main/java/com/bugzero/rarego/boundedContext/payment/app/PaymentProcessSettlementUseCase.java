@@ -21,7 +21,7 @@ public class PaymentProcessSettlementUseCase {
 	private final SettlementRepository settlementRepository;
 	private final PaymentSettlementProcessor paymentSettlementProcessor;
 
-	@Value("${payment.settlement.hold-days:7}")
+	@Value("${custom.payment.settlement.holdDays:7}")
 	private int settlementHoldDays;
 
 	public int processSettlements(int limit) {
