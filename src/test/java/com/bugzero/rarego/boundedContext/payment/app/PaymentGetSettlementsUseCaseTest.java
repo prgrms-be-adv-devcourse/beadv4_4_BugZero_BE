@@ -39,29 +39,34 @@ class PaymentGetSettlementsUseCaseTest {
 	@Mock
 	private SettlementRepository settlementRepository;
 
+	@Mock
+	private PaymentSupport paymentSupport; // [추가]
+
 	@Test
-	@DisplayName("정산 내역 조회 시 LocalDate를 시간 범위(Start~End)로 변환하여 Repository를 호출한다")
+	@DisplayName("정산 내역 조회 시 날짜 조건이 시간으로 변환되어 Repository를 호출한다")
 	void getSettlements_success() {
 		// given
-		Long memberId = 1L;
+		String memberPublicId = "uuid-member-1"; // [변경] 입력값 String
+		Long memberId = 1L; // [변경] 내부 ID
 		Long sellerId = 1L;
 		int page = 0;
 		int size = 10;
 		SettlementStatus status = SettlementStatus.READY;
 
-		// ✅ [변경] 입력값: LocalDate (날짜만)
 		LocalDate fromDate = LocalDate.now().minusDays(7);
 		LocalDate toDate = LocalDate.now();
 
-		// ✅ [변경] 검증값: Service 내부에서 변환될 LocalDateTime 예상값
-		LocalDateTime expectedFrom = fromDate.atStartOfDay();      // 00:00:00
-		LocalDateTime expectedTo = toDate.atTime(LocalTime.MAX);   // 23:59:59.999...
+		LocalDateTime expectedFrom = fromDate.atStartOfDay();
+		LocalDateTime expectedTo = toDate.atTime(LocalTime.MAX);
 
-		// 1. 연관 관계 Mocking
+		// [추가] Member 조회 Mocking
 		PaymentMember mockSeller = mock(PaymentMember.class);
 		given(mockSeller.getId()).willReturn(sellerId);
 
-		// 2. Settlement 객체 생성
+		// paymentSupport가 memberPublicId로 조회 시 mockSeller를 반환
+		given(paymentSupport.findMemberByPublicId(memberPublicId)).willReturn(mockSeller);
+
+		// 1. Settlement 객체 생성
 		Settlement settlement = Settlement.builder()
 			.auctionId(100L)
 			.seller(mockSeller)
@@ -76,30 +81,31 @@ class PaymentGetSettlementsUseCaseTest {
 
 		Page<Settlement> settlementPage = new PageImpl<>(List.of(settlement));
 
-		// 3. Repository Mocking (변환된 LocalDateTime으로 호출될 것을 정의)
+		// 2. Repository Mocking (조회된 Long ID가 전달되는지 확인)
 		given(settlementRepository.findAllBySellerIdAndStatus(
-			eq(memberId),
+			eq(memberId), // ★ PublicId가 아닌 조회된 Long ID 검증
 			eq(status),
-			eq(expectedFrom), // ★ 변환된 시간 검증
-			eq(expectedTo),   // ★ 변환된 시간 검증
+			eq(expectedFrom),
+			eq(expectedTo),
 			any(Pageable.class))
 		).willReturn(settlementPage);
 
 		// when
-		// ✅ [변경] LocalDate 전달
+		// ✅ String PublicId 전달
 		PagedResponseDto<SettlementResponseDto> result =
-			useCase.getSettlements(memberId, page, size, status, fromDate, toDate);
+			useCase.getSettlements(memberPublicId, page, size, status, fromDate, toDate);
 
 		// then
 		assertThat(result.data()).hasSize(1);
 		assertThat(result.data().get(0).id()).isEqualTo(50L);
 
-		// 4. Repository 호출 파라미터 검증
+		// 호출 검증
+		verify(paymentSupport).findMemberByPublicId(memberPublicId); // ID 조회 호출 확인
 		verify(settlementRepository).findAllBySellerIdAndStatus(
 			eq(memberId),
 			eq(status),
-			eq(expectedFrom), // ★ 00:00:00 확인
-			eq(expectedTo),   // ★ 23:59:59 확인
+			eq(expectedFrom),
+			eq(expectedTo),
 			any(Pageable.class)
 		);
 	}
@@ -108,22 +114,27 @@ class PaymentGetSettlementsUseCaseTest {
 	@DisplayName("날짜 조건이 null이면 Repository에도 null(시간 범위 없음)이 전달된다")
 	void getSettlements_withNullParams() {
 		// given
+		String memberPublicId = "uuid-member-1";
 		Long memberId = 1L;
 		Page<Settlement> emptyPage = Page.empty();
 
+		// [추가] Member 조회 Mocking
+		PaymentMember mockMember = mock(PaymentMember.class);
+		given(mockMember.getId()).willReturn(memberId);
+		given(paymentSupport.findMemberByPublicId(memberPublicId)).willReturn(mockMember);
+
 		// null -> null 변환 확인
 		given(settlementRepository.findAllBySellerIdAndStatus(
-			eq(memberId),
+			eq(memberId), // ★ 변환된 ID 확인
 			eq(null),
-			eq(null), // fromDateTime
-			eq(null), // toDateTime
+			eq(null),
+			eq(null),
 			any(Pageable.class))
 		).willReturn(emptyPage);
 
 		// when
-		// ✅ LocalDate 파라미터 자리에 null 전달
-		PagedResponseDto<SettlementResponseDto> result =
-			useCase.getSettlements(memberId, 0, 10, null, null, null);
+		PagedResponseDto<SettlementResponseDto> result = useCase.getSettlements(memberPublicId, 0, 10, null, null,
+			null);
 
 		// then
 		assertThat(result.data()).isEmpty();

@@ -45,6 +45,7 @@ class PaymentConfirmPaymentUseCaseTest {
 	@DisplayName("결제 승인 성공: 모든 검증을 통과하고 최종 저장까지 호출되어야 한다")
 	void confirmPayment_success() {
 		// given
+		String memberPublicId = "user-uuid"; // Long -> String 변경
 		Long memberId = 1L;
 		String orderId = "ORDER_001";
 		int amount = 10000;
@@ -62,38 +63,52 @@ class PaymentConfirmPaymentUseCaseTest {
 		TossPaymentsConfirmResponseDto tossResponse = new TossPaymentsConfirmResponseDto(orderId, "paymentKey", amount);
 		PaymentConfirmResponseDto expectedResponse = new PaymentConfirmResponseDto(orderId, amount, 20000);
 
+		// [추가] PublicId -> Member 조회 Mocking
+		given(paymentSupport.findMemberByPublicId(memberPublicId)).willReturn(member);
+
 		given(paymentSupport.findPaymentByOrderId(orderId)).willReturn(payment);
 		given(tossApiClient.confirm(requestDto)).willReturn(tossResponse);
 		given(paymentConfirmFinalizer.finalizePayment(payment, tossResponse)).willReturn(expectedResponse);
 
 		// when
-		PaymentConfirmResponseDto result = useCase.confirmPayment(memberId, requestDto);
+		PaymentConfirmResponseDto result = useCase.confirmPayment(memberPublicId, requestDto);
 
 		// then
 		assertThat(result).isNotNull();
 		assertThat(result.orderId()).isEqualTo(orderId);
 
 		// 순서대로 호출되었는지 확인
-		verify(paymentSupport).findPaymentByOrderId(orderId); // 1. 검증
-		verify(tossApiClient).confirm(requestDto);        // 2. 외부 통신
-		verify(paymentConfirmFinalizer).finalizePayment(payment, tossResponse); // 3. 최종 저장
+		verify(paymentSupport).findMemberByPublicId(memberPublicId); // 0. 멤버 조회 확인
+		verify(paymentSupport).findPaymentByOrderId(orderId);        // 1. 주문 조회 확인
+		verify(tossApiClient).confirm(requestDto);                   // 2. 외부 통신 확인
+		verify(paymentConfirmFinalizer).finalizePayment(payment, tossResponse); // 3. 최종 저장 확인
 	}
 
 	@Test
 	@DisplayName("실패: 요청한 사람이 결제 주인이 아니면 예외 발생 & 상태 FAILED 변경")
 	void confirmPayment_fail_owner_mismatch() {
 		// given
+		String hackerPublicId = "hacker-uuid"; // 해커의 ID
+		Long hackerInternalId = 999L;
+
 		Long realOwnerId = 1L;
-		Long hackerId = 999L; // 다른 사람
 		String orderId = "ORDER_001";
 
 		PaymentConfirmRequestDto requestDto = new PaymentConfirmRequestDto("key", orderId, 10000);
 
+		// 해커 멤버 (요청자)
+		PaymentMember hacker = PaymentMember.builder().id(hackerInternalId).build();
+
+		// 진짜 주인 멤버
 		PaymentMember owner = PaymentMember.builder().id(realOwnerId).build();
+
 		Payment payment = Payment.builder()
-			.member(owner)
+			.member(owner) // 주문 주인은 owner
 			.status(PaymentStatus.PENDING)
 			.build();
+
+		// [추가] 해커 조회
+		given(paymentSupport.findMemberByPublicId(hackerPublicId)).willReturn(hacker);
 
 		// 1. validateRequest 단계 (Support 사용)
 		given(paymentSupport.findPaymentByOrderId(orderId)).willReturn(payment);
@@ -102,23 +117,24 @@ class PaymentConfirmPaymentUseCaseTest {
 		given(paymentRepository.findByOrderId(orderId)).willReturn(Optional.of(payment));
 
 		// when & then
-		assertThatThrownBy(() -> useCase.confirmPayment(hackerId, requestDto))
+		assertThatThrownBy(() -> useCase.confirmPayment(hackerPublicId, requestDto))
 			.isInstanceOf(CustomException.class)
 			.hasFieldOrPropertyWithValue("errorType", ErrorType.PAYMENT_OWNER_MISMATCH);
 
 		// 실패 처리 로직(fail())이 수행되었는지 확인
-		assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED); // 상태 변경 확인
-		verify(paymentRepository, times(1)).save(payment); // 저장 호출 확인
-		verifyNoInteractions(tossApiClient); // 토스 API는 호출되지 않아야 함
+		assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
+		verify(paymentRepository, times(1)).save(payment);
+		verifyNoInteractions(tossApiClient);
 	}
 
 	@Test
 	@DisplayName("실패: 결제 금액이 다르면 예외 발생")
 	void confirmPayment_fail_amount_mismatch() {
 		// given
+		String memberPublicId = "user-uuid";
 		Long memberId = 1L;
 		int realAmount = 10000;
-		int fakeAmount = 5000; // 금액 조작
+		int fakeAmount = 5000;
 		String orderId = "ORDER_001";
 
 		PaymentConfirmRequestDto requestDto = new PaymentConfirmRequestDto("key", orderId, fakeAmount);
@@ -126,20 +142,21 @@ class PaymentConfirmPaymentUseCaseTest {
 		PaymentMember member = PaymentMember.builder().id(memberId).build();
 		Payment payment = Payment.builder()
 			.member(member)
-			.amount(realAmount) // DB에는 10000원
+			.amount(realAmount)
 			.status(PaymentStatus.PENDING)
 			.build();
 
-		given(paymentSupport.findPaymentByOrderId(orderId)).willReturn(payment);
+		// [추가] 멤버 조회
+		given(paymentSupport.findMemberByPublicId(memberPublicId)).willReturn(member);
 
+		given(paymentSupport.findPaymentByOrderId(orderId)).willReturn(payment);
 		given(paymentRepository.findByOrderId(orderId)).willReturn(Optional.of(payment));
 
 		// when & then
-		assertThatThrownBy(() -> useCase.confirmPayment(memberId, requestDto))
+		assertThatThrownBy(() -> useCase.confirmPayment(memberPublicId, requestDto))
 			.isInstanceOf(CustomException.class)
 			.hasFieldOrPropertyWithValue("errorType", ErrorType.INVALID_PAYMENT_AMOUNT);
 
-		// 상태가 FAILED로 변했는지 확인
 		assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
 		verify(paymentRepository, times(1)).save(payment);
 	}
@@ -148,6 +165,7 @@ class PaymentConfirmPaymentUseCaseTest {
 	@DisplayName("실패: 이미 처리된 주문이면 예외 발생 (FAILED 변경 로직 안 탐)")
 	void confirmPayment_fail_already_processed() {
 		// given
+		String memberPublicId = "user-uuid";
 		Long memberId = 1L;
 		String orderId = "ORDER_001";
 
@@ -157,19 +175,20 @@ class PaymentConfirmPaymentUseCaseTest {
 		Payment payment = Payment.builder()
 			.member(member)
 			.amount(10000)
-			.status(PaymentStatus.DONE) // 이미 완료된 상태
+			.status(PaymentStatus.DONE)
 			.build();
 
-		given(paymentSupport.findPaymentByOrderId(orderId)).willReturn(payment);
+		// [추가] 멤버 조회
+		given(paymentSupport.findMemberByPublicId(memberPublicId)).willReturn(member);
 
+		given(paymentSupport.findPaymentByOrderId(orderId)).willReturn(payment);
 		given(paymentRepository.findByOrderId(orderId)).willReturn(Optional.of(payment));
 
 		// when & then
-		assertThatThrownBy(() -> useCase.confirmPayment(memberId, requestDto))
+		assertThatThrownBy(() -> useCase.confirmPayment(memberPublicId, requestDto))
 			.isInstanceOf(CustomException.class)
 			.hasFieldOrPropertyWithValue("errorType", ErrorType.ALREADY_PROCESSED_PAYMENT);
 
-		// Verify: save가 호출되지 않았는지 확인 (handlePaymentFailure 로직 상 PENDING 아니면 스킵함)
 		verify(paymentRepository, never()).save(any());
 	}
 
@@ -177,6 +196,7 @@ class PaymentConfirmPaymentUseCaseTest {
 	@DisplayName("실패: 토스 API 호출 중 에러 발생 시 상태를 FAILED로 변경해야 한다")
 	void confirmPayment_fail_toss_api_error() {
 		// given
+		String memberPublicId = "user-uuid";
 		Long memberId = 1L;
 		String orderId = "ORDER_001";
 		PaymentConfirmRequestDto requestDto = new PaymentConfirmRequestDto("key", orderId, 10000);
@@ -188,20 +208,20 @@ class PaymentConfirmPaymentUseCaseTest {
 			.status(PaymentStatus.PENDING)
 			.build();
 
-		given(paymentSupport.findPaymentByOrderId(orderId)).willReturn(payment);
+		// [추가] 멤버 조회
+		given(paymentSupport.findMemberByPublicId(memberPublicId)).willReturn(member);
 
+		given(paymentSupport.findPaymentByOrderId(orderId)).willReturn(payment);
 		given(paymentRepository.findByOrderId(orderId)).willReturn(Optional.of(payment));
-		;
 
 		// Toss API 호출 시 예외 발생시키기
 		given(tossApiClient.confirm(any())).willThrow(new CustomException(ErrorType.PAYMENT_CONFIRM_FAILED));
 
 		// when & then
-		assertThatThrownBy(() -> useCase.confirmPayment(memberId, requestDto))
+		assertThatThrownBy(() -> useCase.confirmPayment(memberPublicId, requestDto))
 			.isInstanceOf(CustomException.class)
 			.hasFieldOrPropertyWithValue("errorType", ErrorType.PAYMENT_CONFIRM_FAILED);
 
-		// Verify: 예외가 터져도 handlePaymentFailure가 작동해서 FAILED로 바꿨는지 확인
 		assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
 		verify(paymentRepository, times(1)).save(payment);
 	}

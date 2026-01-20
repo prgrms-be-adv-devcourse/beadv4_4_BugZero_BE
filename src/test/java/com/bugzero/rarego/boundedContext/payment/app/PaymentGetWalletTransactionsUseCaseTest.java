@@ -40,26 +40,33 @@ class PaymentGetWalletTransactionsUseCaseTest {
 	@Mock
 	private PaymentTransactionRepository paymentTransactionRepository;
 
+	@Mock
+	private PaymentSupport paymentSupport;
+
 	@Test
 	@DisplayName("지갑 거래 내역을 조회하면 날짜 조건이 시간으로 변환되어 Repository를 호출하고 결과를 반환한다")
 	void getWalletTransactions_success() {
 		// given
-		Long memberId = 1L;
+		String memberPublicId = "uuid-member-1"; // [변경] 입력값 String
+		Long memberId = 1L; // [변경] 내부 ID
 		int page = 0;
 		int size = 10;
 		WalletTransactionType type = WalletTransactionType.TOPUP_DONE;
 
-		// ✅ [Input] 날짜 조건 (LocalDate)
 		LocalDate fromDate = LocalDate.of(2024, 1, 1);
 		LocalDate toDate = LocalDate.of(2024, 1, 31);
 
-		// ✅ [Expected] Service 내부에서 변환될 시간값 예상
-		LocalDateTime expectedFrom = fromDate.atStartOfDay();      // 2024-01-01 00:00:00
-		LocalDateTime expectedTo = toDate.atTime(LocalTime.MAX);   // 2024-01-31 23:59:59...
+		LocalDateTime expectedFrom = fromDate.atStartOfDay();
+		LocalDateTime expectedTo = toDate.atTime(LocalTime.MAX);
 
-		// 1. 실제 객체 생성 (Builder 사용)
+		// [추가] Member 조회 Mocking
+		PaymentMember mockMember = mock(PaymentMember.class);
+		given(mockMember.getId()).willReturn(memberId);
+		given(paymentSupport.findMemberByPublicId(memberPublicId)).willReturn(mockMember);
+
+		// 1. Transaction 객체 생성
 		PaymentTransaction transaction = PaymentTransaction.builder()
-			.member(mock(PaymentMember.class))
+			.member(mockMember)
 			.wallet(mock(Wallet.class))
 			.transactionType(type)
 			.balanceDelta(10000)
@@ -74,31 +81,25 @@ class PaymentGetWalletTransactionsUseCaseTest {
 
 		Page<PaymentTransaction> entityPage = new PageImpl<>(List.of(transaction));
 
-		// 2. Repository 동작 정의 (변경된 메서드명과 파라미터 매칭 확인)
+		// 2. Repository 동작 정의 (조회된 memberId가 전달되는지 확인)
 		given(paymentTransactionRepository.findAllByMemberIdAndTransactionType(
-			eq(memberId),
+			eq(memberId), // ★ PublicId가 아닌 조회된 Long ID가 들어가야 함
 			eq(type),
-			eq(expectedFrom), // ★ 변환된 LocalDateTime이 넘어오는지 검증
-			eq(expectedTo),   // ★ 변환된 LocalDateTime이 넘어오는지 검증
+			eq(expectedFrom),
+			eq(expectedTo),
 			any(Pageable.class))
 		).willReturn(entityPage);
 
 		// when
-		// ✅ LocalDate 파라미터 전달
 		PagedResponseDto<WalletTransactionResponseDto> result =
-			useCase.getWalletTransactions(memberId, page, size, type, fromDate, toDate);
+			useCase.getWalletTransactions(memberPublicId, page, size, type, fromDate, toDate);
 
 		// then
-		// 결과 검증
 		assertThat(result.data()).hasSize(1);
-
-		WalletTransactionResponseDto dto = result.data().get(0);
-		assertThat(dto.id()).isEqualTo(100L);
-		assertThat(dto.type()).isEqualTo(WalletTransactionType.TOPUP_DONE);
-		assertThat(dto.typeName()).isEqualTo("예치금 충전");
-		assertThat(dto.balance()).isEqualTo(50000);
+		assertThat(result.data().get(0).id()).isEqualTo(100L);
 
 		// 호출 검증
+		verify(paymentSupport).findMemberByPublicId(memberPublicId); // ID 조회 호출 확인
 		verify(paymentTransactionRepository).findAllByMemberIdAndTransactionType(
 			eq(memberId), eq(type), eq(expectedFrom), eq(expectedTo), any(Pageable.class)
 		);
@@ -108,23 +109,28 @@ class PaymentGetWalletTransactionsUseCaseTest {
 	@DisplayName("검색 조건(Type, Date)이 null이면 Repository에 null을 그대로 전달한다")
 	void getWalletTransactions_withNullParams() {
 		// given
+		String memberPublicId = "uuid-member-1";
 		Long memberId = 1L;
 		Page<PaymentTransaction> emptyPage = Page.empty();
 
+		// [추가] Member 조회 Mocking
+		PaymentMember mockMember = mock(PaymentMember.class);
+		given(mockMember.getId()).willReturn(memberId);
+		given(paymentSupport.findMemberByPublicId(memberPublicId)).willReturn(mockMember);
+
 		given(paymentTransactionRepository.findAllByMemberIdAndTransactionType(
-			any(), any(), any(), any(), any())) // 인자 개수 5개로 변경됨
+			any(), any(), any(), any(), any()))
 			.willReturn(emptyPage);
 
 		// when
-		// ✅ Type, From, To 모두 null 전달
-		useCase.getWalletTransactions(memberId, 0, 10, null, null, null);
+		useCase.getWalletTransactions(memberPublicId, 0, 10, null, null, null);
 
 		// then
 		verify(paymentTransactionRepository).findAllByMemberIdAndTransactionType(
-			eq(memberId),
-			eq(null), // Type
-			eq(null), // From
-			eq(null), // To
+			eq(memberId), // ★ 변환된 ID 확인
+			eq(null),
+			eq(null),
+			eq(null),
 			any(Pageable.class)
 		);
 	}

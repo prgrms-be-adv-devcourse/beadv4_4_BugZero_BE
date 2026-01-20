@@ -3,7 +3,6 @@ package com.bugzero.rarego.boundedContext.payment.app;
 import org.springframework.stereotype.Service;
 
 import com.bugzero.rarego.boundedContext.payment.domain.Payment;
-import com.bugzero.rarego.boundedContext.payment.domain.PaymentMember;
 import com.bugzero.rarego.boundedContext.payment.domain.PaymentStatus;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmResponseDto;
@@ -27,7 +26,9 @@ public class PaymentConfirmPaymentUseCase {
 
 	public PaymentConfirmResponseDto confirmPayment(String memberPublicId, PaymentConfirmRequestDto requestDto) {
 		try {
-			Payment payment = validateRequest(memberPublicId, requestDto);
+			Long memberId = paymentSupport.findMemberByPublicId(memberPublicId).getId();
+
+			Payment payment = validateRequest(memberId, requestDto);
 
 			TossPaymentsConfirmResponseDto tossResponse = tossPaymentsApiClient.confirm(requestDto);
 
@@ -38,12 +39,11 @@ public class PaymentConfirmPaymentUseCase {
 		}
 	}
 
-	private Payment validateRequest(String memberPublicId, PaymentConfirmRequestDto requestDto) {
+	private Payment validateRequest(Long memberId, PaymentConfirmRequestDto requestDto) {
 		Payment payment = paymentSupport.findPaymentByOrderId(requestDto.orderId());
-		PaymentMember member = paymentSupport.findMemberByPublicId(memberPublicId);
 
 		// 내 주문이 맞는지 확인
-		if (!payment.getMember().getId().equals(member.getId())) {
+		if (!payment.getMember().getId().equals(memberId)) {
 			throw new CustomException(ErrorType.PAYMENT_OWNER_MISMATCH);
 		}
 
