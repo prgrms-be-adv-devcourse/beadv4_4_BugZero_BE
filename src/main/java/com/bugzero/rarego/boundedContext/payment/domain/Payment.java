@@ -2,7 +2,9 @@ package com.bugzero.rarego.boundedContext.payment.domain;
 
 import java.util.UUID;
 
+import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
+import com.bugzero.rarego.global.response.ErrorType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -57,5 +59,19 @@ public class Payment extends BaseIdAndTime {
 
 	public void fail() {
 		this.status = PaymentStatus.FAILED;
+	}
+
+	public void validate(Long memberId, int amount) {
+		if (!this.member.getId().equals(memberId)) {
+			throw new CustomException(ErrorType.PAYMENT_OWNER_MISMATCH);
+		}
+
+		if (this.amount != amount) {
+			throw new CustomException(ErrorType.INVALID_PAYMENT_AMOUNT);
+		}
+
+		if (this.status != PaymentStatus.PENDING) {
+			throw new CustomException(ErrorType.ALREADY_PROCESSED_PAYMENT);
+		}
 	}
 }
