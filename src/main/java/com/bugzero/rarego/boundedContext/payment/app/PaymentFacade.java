@@ -1,7 +1,12 @@
 package com.bugzero.rarego.boundedContext.payment.app;
 
-import org.springframework.stereotype.Service;
+import java.time.LocalDate;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.bugzero.rarego.boundedContext.payment.domain.SettlementStatus;
+import com.bugzero.rarego.boundedContext.payment.domain.PaymentMember;
 import com.bugzero.rarego.boundedContext.payment.domain.WalletTransactionType;
 import com.bugzero.rarego.boundedContext.payment.in.dto.AuctionFinalPaymentRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.AuctionFinalPaymentResponseDto;
@@ -9,8 +14,10 @@ import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmRequestDto
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestResponseDto;
+import com.bugzero.rarego.boundedContext.payment.in.dto.SettlementResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.WalletTransactionResponseDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
+import com.bugzero.rarego.shared.member.domain.MemberDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldRequestDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
 
@@ -26,6 +33,8 @@ public class PaymentFacade {
 	private final PaymentProcessSettlementUseCase paymentProcessSettlementUseCase;
 	private final PaymentAuctionFinalUseCase paymentAuctionFinalUseCase;
 	private final PaymentGetWalletTransactionsUseCase paymentGetWalletTransactionsUseCase;
+	private final PaymentGetSettlementsUseCase paymentGetSettlementsUseCase;
+	private final PaymentSyncMemberUseCase paymentSyncMemberUseCase;
 
 	/**
 	 * 보증금 홀딩
@@ -74,8 +83,26 @@ public class PaymentFacade {
 	 * 지갑 거래 내역 조회
 	 */
 	public PagedResponseDto<WalletTransactionResponseDto> getWalletTransactions(Long memberId, int page, int size,
-		WalletTransactionType transactionType) {
-		return paymentGetWalletTransactionsUseCase.getWalletTransactions(memberId, page, size, transactionType);
+		WalletTransactionType transactionType, LocalDate from, LocalDate to) {
+		return paymentGetWalletTransactionsUseCase.getWalletTransactions(memberId, page, size, transactionType, from,
+			to);
 
 	}
+
+	/**
+	 * 정산 내역 조회
+	 */
+	public PagedResponseDto<SettlementResponseDto> getSettlements(Long memberId, int page, int size,
+		SettlementStatus status, LocalDate from, LocalDate to) {
+		return paymentGetSettlementsUseCase.getSettlements(memberId, page, size, status, from, to);
+	}
+
+	/**
+	 * PaymentMember 동기화
+	 */
+	@Transactional
+	public PaymentMember syncMember(MemberDto member) {
+		return paymentSyncMemberUseCase.syncMember(member);
+	}
+
 }

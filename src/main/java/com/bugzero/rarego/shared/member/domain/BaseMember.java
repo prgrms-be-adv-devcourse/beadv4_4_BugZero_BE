@@ -43,4 +43,16 @@ public abstract class BaseMember extends BaseEntity {
 
 	@Column(name = "real_name", length = 10)
 	private String realName;
+
+	protected void updateFrom(MemberDto member) {
+		this.publicId = member.publicId();
+		this.email = member.email();
+		this.nickname = member.nickname();
+		this.intro = member.intro();
+		this.address = member.address();
+		this.addressDetail = member.addressDetail();
+		this.zipCode = member.zipCode();
+		this.contactPhone = member.contactPhone();
+		this.realName = member.realName();
+	}
 }

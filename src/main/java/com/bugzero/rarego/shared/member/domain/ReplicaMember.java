@@ -20,4 +20,13 @@ public abstract class ReplicaMember extends BaseMember {
 	private LocalDateTime createdAt;
 
 	private LocalDateTime updatedAt;
+
+	@Override
+	public void updateFrom(MemberDto member) {
+		super.updateFrom(member);
+		this.createdAt = member.createdAt();
+		this.updatedAt = member.updatedAt();
+		this.deleted = member.deleted();
+	}
+
 }
