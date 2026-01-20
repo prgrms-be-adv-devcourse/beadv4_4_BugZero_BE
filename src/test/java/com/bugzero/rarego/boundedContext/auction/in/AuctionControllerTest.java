@@ -4,6 +4,7 @@ import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
+import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.exception.GlobalExceptionHandler;
 import com.bugzero.rarego.global.response.*;
@@ -36,8 +37,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -293,6 +293,57 @@ class AuctionControllerTest {
         // when & then
         mockMvc.perform(post("/api/v1/auctions/{auctionId}/bookmarks", auctionId)
                         .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    @DisplayName("성공: 관심 경매 해제 시 HTTP 200과 해제 정보를 반환한다")
+    void removeBookmark_success() throws Exception {
+        // given
+        Long auctionId = 1L;
+        WishlistRemoveResponseDto responseDto = WishlistRemoveResponseDto.of(true, auctionId);
+
+        given(auctionFacade.removeBookmark(any(String.class), eq(auctionId)))
+                .willReturn(responseDto);
+
+        // when & then
+        mockMvc.perform(delete("/api/v1/auctions/{auctionId}/bookmarks", auctionId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.data.removed").value(true))
+                .andExpect(jsonPath("$.data.auctionId").value(auctionId));
+    }
+
+    @Test
+    @DisplayName("실패: 관심 등록되지 않은 경매 해제 시 404를 반환한다")
+    void removeBookmark_fail_bookmark_not_found() throws Exception {
+        // given
+        Long auctionId = 1L;
+
+        given(auctionFacade.removeBookmark(any(String.class), eq(auctionId)))
+                .willThrow(new CustomException(ErrorType.BOOKMARK_NOT_FOUND));
+
+        // when & then
+        mockMvc.perform(delete("/api/v1/auctions/{auctionId}/bookmarks", auctionId))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    @DisplayName("실패: 존재하지 않는 경매의 관심 해제 시 404를 반환한다")
+    void removeBookmark_fail_auction_not_found() throws Exception {
+        // given
+        Long auctionId = 999L;
+
+        given(auctionFacade.removeBookmark(any(String.class), eq(auctionId)))
+                .willThrow(new CustomException(ErrorType.AUCTION_NOT_FOUND));
+
+        // when & then
+        mockMvc.perform(delete("/api/v1/auctions/{auctionId}/bookmarks", auctionId))
                 .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404));
