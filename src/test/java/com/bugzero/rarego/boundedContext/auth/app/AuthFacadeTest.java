@@ -16,6 +16,12 @@ public class AuthFacadeTest {
 	@Mock
 	private AuthIssueTokenUseCase authIssueTokenUseCase;
 
+	@Mock
+	private AuthLoginAccountFacade authLoginAccountFacade;
+
+	@Mock
+	private AuthStoreRefreshTokenUseCase authStoreRefreshTokenUseCase;
+
 	@InjectMocks
 	private AuthFacade authFacade;
 
