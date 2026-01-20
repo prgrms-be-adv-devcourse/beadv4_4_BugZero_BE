@@ -149,8 +149,12 @@ public class AuctionReadUseCase {
 	// 경매 상세 조회
 	public AuctionDetailResponseDto getAuctionDetail(Long auctionId, String memberPublicId) {
 		// 회원 ID 조회
-		AuctionMember member = auctionMemberRepository.findByPublicId(memberPublicId)
-			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
+		// 로그인한 경우에만 조회, 비로그인이면 null 처리
+		AuctionMember member = null;
+		if (memberPublicId != null) {
+			member = auctionMemberRepository.findByPublicId(memberPublicId)
+				.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
+		}
 
 		// 1. 경매 조회
 		Auction auction = auctionRepository.findById(auctionId)
@@ -167,8 +171,10 @@ public class AuctionReadUseCase {
 				.orElse(null);
 		}
 
-		// 4. DTO 변환 (memberId가 null이면 DTO 내부에서 기본값 false/null 처리)
-		return AuctionDetailResponseDto.from(auction, highestBid, myLastBid, member.getId());
+		Long memberId = (member != null) ? member.getId() : null;
+
+		// 4. DTO 변환
+		return AuctionDetailResponseDto.from(auction, highestBid, myLastBid, memberId);
 	}
 
 	// 낙찰 기록 상세 조회
@@ -196,10 +202,9 @@ public class AuctionReadUseCase {
 		List<ProductImage> productImages = productImageRepository.findAllByProductId(product.getId());
 
 		String thumbnailUrl = productImages.stream()
-			// 썸네일 구분 로직이 있다면 filter 추가 (예: .filter(img -> img.getImageType() == ImageType.THUMBNAIL))
-			.findFirst() // 구분 로직이 없다면 첫 번째 이미지를 썸네일로 사용
+			.findFirst()
 			.map(ProductImage::getImageUrl)
-			.orElse(null); // 이미지가 없을 경우 null 처리
+			.orElse(null);
 
 		Long traderId = viewerRole.equals("BUYER") ? order.getSellerId() : order.getBidderId();
 		AuctionMember trader = auctionMemberRepository.findById(traderId)
