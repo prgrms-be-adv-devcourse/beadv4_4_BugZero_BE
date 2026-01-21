@@ -97,7 +97,6 @@ class AuctionControllerTest {
                 bidResponse
         );
 
-        // [수정] memberId(Long) -> memberPublicId(String)
         given(auctionFacade.createBid(eq(auctionId), eq(memberPublicId), eq(bidAmount.intValue())))
                 .willReturn(successResponse);
 
@@ -149,7 +148,6 @@ class AuctionControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andDo(print())
-                // GlobalExceptionHandler에서 ResponseEntity를 반환하므로 실제 상태코드 검증
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400));
     }
@@ -159,11 +157,10 @@ class AuctionControllerTest {
     void createBid_fail_business_exception() throws Exception {
         // given
         Long auctionId = 999L;
-        String memberPublicId = "1"; // [수정] String 타입
+        String memberPublicId = "1";
         Long bidAmount = 10000L;
         BidRequestDto requestDto = new BidRequestDto(bidAmount);
 
-        // [수정] memberId(Long) -> memberPublicId(String)
         given(auctionFacade.createBid(eq(auctionId), eq(memberPublicId), eq(bidAmount.intValue())))
                 .willThrow(new CustomException(ErrorType.AUCTION_NOT_FOUND));
 
@@ -172,7 +169,6 @@ class AuctionControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andDo(print())
-                // GlobalExceptionHandler에서 ResponseEntity를 반환하므로 실제 상태코드 검증
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(ErrorType.AUCTION_NOT_FOUND.getHttpStatus()));
     }
@@ -182,7 +178,7 @@ class AuctionControllerTest {
     void getAuctionDetail_success() throws Exception {
         // given
         Long auctionId = 100L;
-        String memberPublicId = "1"; // [수정] String 타입
+        String memberPublicId = "1";
 
         AuctionDetailResponseDto responseDto = new AuctionDetailResponseDto(
                 auctionId,
@@ -196,7 +192,6 @@ class AuctionControllerTest {
                 new AuctionDetailResponseDto.MyParticipationInfo(false, null)
         );
 
-        // [수정] memberId(Long) -> memberPublicId(String)
         given(auctionFacade.getAuctionDetail(eq(auctionId), eq(memberPublicId)))
                 .willReturn(SuccessResponseDto.from(SuccessType.OK, responseDto));
 
@@ -214,7 +209,7 @@ class AuctionControllerTest {
     void getAuctionOrder_success() throws Exception {
         // given
         Long auctionId = 100L;
-        String memberPublicId = "1"; // [수정] String 타입
+        String memberPublicId = "1";
 
         AuctionOrderResponseDto responseDto = new AuctionOrderResponseDto(
                 7001L, auctionId, "BUYER", AuctionOrderStatus.PROCESSING, "결제 대기중",
@@ -225,7 +220,6 @@ class AuctionControllerTest {
                 new AuctionOrderResponseDto.ShippingInfo(null, null, null)
         );
 
-        // [수정] memberId(Long) -> memberPublicId(String)
         given(auctionFacade.getAuctionOrder(eq(auctionId), eq(memberPublicId)))
                 .willReturn(SuccessResponseDto.from(SuccessType.OK, responseDto));
 
@@ -246,7 +240,6 @@ class AuctionControllerTest {
         Long auctionId = 1L;
         WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(true, auctionId);
 
-        // any(String.class) 사용
         given(auctionFacade.addBookmark(any(String.class), eq(auctionId)))
                 .willReturn(responseDto);
 
@@ -374,7 +367,7 @@ class AuctionControllerTest {
     }
 
     @Test
-    @DisplayName("실패: 판매자가 아닌 사용자가 판매 포기 요청 시 400 에러를 반환한다")
+    @DisplayName("실패: 판매자가 아닌 사용자가 판매 포기 요청 시 403 에러를 반환한다")
     void withdraw_fail_not_seller() throws Exception {
         // given
         Long auctionId = 1L;
@@ -386,8 +379,8 @@ class AuctionControllerTest {
         // when & then
         mockMvc.perform(post("/api/v1/auctions/{auctionId}/withdraw", auctionId))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
                 .andExpect(jsonPath("$.message").value(ErrorType.AUCTION_NOT_SELLER.getMessage()));
     }
 }
