@@ -20,4 +20,8 @@ public record ProductImageUpdateDto(
 			.sortOrder(sortOrder)
 			.build();
 	}
+
+	public ProductImageUpdateDto withOrder(int newOrder) {
+		return new ProductImageUpdateDto(this.id, this.imgUrl, newOrder);
+	}
 }
