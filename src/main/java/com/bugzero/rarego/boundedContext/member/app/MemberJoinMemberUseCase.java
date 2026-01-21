@@ -20,9 +20,41 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class MemberJoinMemberUseCase {
+	private static final SecureRandom RND = new SecureRandom();
+	private static final String[] ADJECTIVES = {
+		"귀여운", "멋진", "용감한", "똑똑한", "행복한", "차분한", "활발한", "신비한",
+		"따뜻한", "성실한", "엉뚱한", "재빠른", "고요한", "빛나는", "상냥한", "든든한"
+	};
+	private static final String[] NOUNS = {
+		"고양이", "강아지", "여우", "호랑이", "토끼", "곰", "펭귄", "돌고래",
+		"사자", "다람쥐", "부엉이", "거북이", "햄스터", "수달", "늑대", "치타"
+	};
 	private final MemberRepository memberRepository;
 	private final EventPublisher eventPublisher;
-	private static final SecureRandom RND = new SecureRandom();
+
+	// 랜덤으로 닉네임 제공
+	public static String randomUserNickname() {
+		int num = RND.nextInt(10000); // 0000~9999
+		String adj = ADJECTIVES[RND.nextInt(ADJECTIVES.length)];
+		String noun = NOUNS[RND.nextInt(NOUNS.length)];
+		return adj + noun + String.format("%04d", num);
+	}
+
+	// 존재하는 닉네임인지 확인하고, 존재하지 않을때까지 최대 5번 생성
+	// 겹칠 확률: 1 / 2백만
+	public String uniqueMemberNickname() {
+		String checkedNickname;
+		int maxAttempts = 5;
+		int attempt = 0;
+		do {
+			checkedNickname = randomUserNickname();
+			attempt++;
+			if (attempt >= maxAttempts) {
+				throw new CustomException(ErrorType.MEMBER_JOIN_FAILED);	// 닉네임 생성 실패
+			}
+		} while (memberRepository.existsByNickname(checkedNickname));
+		return checkedNickname;
+	}
 
 	public MemberJoinResponseDto join(String email) {
 		if (email == null || email.isBlank()) {
@@ -39,7 +71,7 @@ public class MemberJoinMemberUseCase {
 		try {
 			Member member = Member.builder()
 				.publicId(newPublicId.toString())
-				.nickname(randomUserNickname())
+				.nickname(uniqueMemberNickname())
 				.email(email)
 				.build();
 			Member saved = memberRepository.save(member);
@@ -52,11 +84,6 @@ public class MemberJoinMemberUseCase {
 		} catch (Exception e) {
 			throw new CustomException(ErrorType.MEMBER_JOIN_FAILED);
 		}
-	}
-
-	public static String randomUserNickname() {
-		int num = RND.nextInt(10000); // 0~9999
-		return "사용자" + String.format("%04d", num);
 	}
 
 }
