@@ -7,7 +7,6 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -46,38 +45,35 @@ class PaymentProcessSettlementUseCaseIntegrationTest {
 
 	@BeforeEach
 	void setUp() {
-		// 삭제 순서 중요 (자식 -> 부모)
 		paymentTransactionRepository.deleteAll();
 		settlementRepository.deleteAll();
 		walletRepository.deleteAll();
 		memberRepository.deleteAll();
 
-		// 1. 시스템 유저 및 지갑 생성 (ID: 2)
+		// 1. 시스템 유저 및 지갑 생성
 		createMemberAndWallet(SYSTEM_ID, "system");
 
-		// 2. [동시성 테스트용] 판매자 생성 (ID: 100)
+		// 2. 판매자 생성
 		createMemberAndWallet(100L, "seller");
 	}
 
 	@Test
-	@DisplayName("동시성 테스트: 동시에 5개 스레드가 정산을 시도해도, 중복 정산되지 않아야 한다")
+	@DisplayName("동시성 테스트: 동시에 5개 스레드가 정산을 시도해도 중복 정산 및 중복 입금이 없어야 한다")
 	void concurrency_double_spending_check() throws InterruptedException {
 		// given
 		PaymentMember seller = memberRepository.findById(100L).get();
-		// 정산 데이터는 딱 1건만 존재 (10000원 정산, 1000원 수수료)
+		// 딱 1건만 존재
 		createSettlement(seller, 10000, 1000);
 
 		int threadCount = 5;
 		ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
 		CountDownLatch latch = new CountDownLatch(threadCount);
 
-		AtomicInteger successCount = new AtomicInteger();
-		AtomicInteger failCount = new AtomicInteger();
-
 		// when
 		for (int i = 0; i < threadCount; i++) {
 			executorService.submit(() -> {
 				try {
+					// 여러 스레드가 동시에 이 메서드를 호출
 					useCase.processSettlements(10);
 				} finally {
 					latch.countDown();
@@ -88,58 +84,55 @@ class PaymentProcessSettlementUseCaseIntegrationTest {
 		latch.await();
 
 		// then
+		// 1. 정산 상태 검증
 		Settlement settlement = settlementRepository.findAll().get(0);
 		assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.DONE);
 
+		// 2. 판매자 잔액 검증 (중복 입금 확인)
 		Wallet sellerWallet = walletRepository.findByMemberId(100L).get();
 		assertThat(sellerWallet.getBalance()).isEqualTo(10000);
 
+		// 3. 시스템 잔액 검증 (Bulk 입금 중복 확인)
 		Wallet systemWallet = walletRepository.findByMemberId(SYSTEM_ID).get();
 		assertThat(systemWallet.getBalance()).isEqualTo(1000);
 
+		// 4. 트랜잭션 수 검증 (판매자 입금 1건 + 시스템 수수료 입금 1건 = 2건)
 		assertThat(paymentTransactionRepository.count()).isEqualTo(2);
 	}
 
 	@Test
-	@DisplayName("부분 성공 테스트: 지갑이 없는 판매자(실패)와 정상 판매자(성공)가 섞여 있어도 배치는 멈추지 않는다")
+	@DisplayName("부분 성공 테스트: 실패 건이 있어도 성공 건의 수수료만 합산되어 시스템 지갑에 들어간다")
 	void partial_success_integration_test() {
 		// given
-		// 1. 정상 판매자 (ID: 200, 지갑 있음)
+		// 1. 정상 판매자 (수수료 1000원)
 		PaymentMember normalSeller = createMember(200L, "normal");
 		createWallet(normalSeller);
 		createSettlement(normalSeller, 10000, 1000);
 
-		// 2. 오류 판매자 (ID: 300, 지갑 없음 -> WALLET_NOT_FOUND 유발)
+		// 2. 오류 판매자 (수수료 2000원 - 지갑이 없어 FAILED 유발)
 		PaymentMember errorSeller = createMember(300L, "error");
-		// createWallet(errorSeller); ❌ 지갑 생성 누락시킴
 		createSettlement(errorSeller, 20000, 2000);
 
 		// when
-		// 배치 실행 (총 2건 처리 시도)
+		// 배치 실행
 		int successCount = useCase.processSettlements(10);
 
 		// then
-		// 1. 성공 건수는 1건이어야 함 (정상 판매자만 성공)
-		assertThat(successCount).isEqualTo(1);
+		assertThat(successCount).isEqualTo(1); // 1건만 성공
 
-		// 2. 정상 판매자 처리 검증
-		Settlement normalSettlement = findSettlementBySellerId(200L);
-		assertThat(normalSettlement.getStatus()).isEqualTo(SettlementStatus.DONE);
-
+		// 정상 판매자 입금 확인
 		Wallet normalWallet = walletRepository.findByMemberId(200L).get();
-		assertThat(normalWallet.getBalance()).isEqualTo(10000); // 10000원 입금됨
+		assertThat(normalWallet.getBalance()).isEqualTo(10000);
 
-		// 3. 오류 판매자 처리 검증
+		// 오류 판매자 상태 확인
 		Settlement errorSettlement = findSettlementBySellerId(300L);
-		assertThat(errorSettlement.getStatus()).isEqualTo(SettlementStatus.FAILED); // FAILED 상태 변경됨
+		assertThat(errorSettlement.getStatus()).isEqualTo(SettlementStatus.FAILED);
 
-		// 4. 시스템 지갑 검증
-		// setUp()에서 초기화되었으므로, 성공한 1건의 수수료(1000원)만 있어야 함
+		// ✅ 시스템 지갑 검증: 성공한 1건의 수수료(1000원)만 입금되어야 함
 		Wallet systemWallet = walletRepository.findByMemberId(SYSTEM_ID).get();
 		assertThat(systemWallet.getBalance()).isEqualTo(1000);
 
-		// 5. 트랜잭션 타입 검증 (중요)
-		// 시스템 수수료 입금 건이 'SETTLEMENT_FEE' 타입으로 잘 저장되었는지 확인
+		// 트랜잭션 타입 검증
 		boolean hasSystemFeeTx = paymentTransactionRepository.findAll().stream()
 			.anyMatch(tx -> tx.getTransactionType() == WalletTransactionType.SETTLEMENT_FEE
 				&& tx.getBalanceDelta() == 1000);

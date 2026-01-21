@@ -19,4 +19,8 @@ public record ProductImageRequestDto(
 			.sortOrder(sortOrder)
 			.build();
 	}
+
+	public ProductImageRequestDto withOrder(int newOrder) {
+		return new ProductImageRequestDto(this.imgUrl, newOrder);
+	}
 }

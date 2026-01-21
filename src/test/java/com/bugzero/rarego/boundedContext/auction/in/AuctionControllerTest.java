@@ -1,14 +1,16 @@
 package com.bugzero.rarego.boundedContext.auction.in;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
+import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
+import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.exception.GlobalExceptionHandler;
+import com.bugzero.rarego.global.response.*;
+import com.bugzero.rarego.global.security.MemberPrincipal;
+import com.bugzero.rarego.shared.auction.dto.*;
+import com.bugzero.rarego.support.WithMockMemberPrincipal;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,12 +42,24 @@ import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.global.security.MemberPrincipal;
 import com.bugzero.rarego.shared.auction.dto.AuctionDetailResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionOrderResponseDto;
-import com.bugzero.rarego.shared.auction.dto.AuctionRelistRequestDto;
-import com.bugzero.rarego.shared.auction.dto.AuctionRelistResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidRequestDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 
 @ExtendWith(MockitoExtension.class)
 class AuctionControllerTest {
@@ -269,4 +283,65 @@ class AuctionControllerTest {
 				condition.getSort().equals("CLOSING_SOON")
 		), any(Pageable.class));
 	}
+  
+  @Test
+    @DisplayName("성공: 관심 경매 등록 시 HTTP 200과 등록 정보를 반환한다")
+    @WithMockMemberPrincipal(publicId = "test-public-id")
+    void addBookmark_success() throws Exception {
+        // given
+        Long auctionId = 1L;
+        WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(true, auctionId);
+
+        // any(String.class) 사용
+        given(auctionFacade.addBookmark(any(String.class), eq(auctionId)))
+                .willReturn(responseDto);
+
+        // when & then
+        mockMvc.perform(post("/api/v1/auctions/{auctionId}/bookmarks", auctionId)
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.data.bookmarked").value(true))
+                .andExpect(jsonPath("$.data.auctionId").value(auctionId));
+    }
+
+    @Test
+    @DisplayName("성공: 이미 관심 등록된 경매에 중복 등록 시 bookmarked=false를 반환한다")
+    @WithMockMemberPrincipal(publicId = "test-public-id")
+    void addBookmark_already_exists() throws Exception {
+        // given
+        Long auctionId = 1L;
+        WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(false, auctionId);
+
+        given(auctionFacade.addBookmark(any(String.class), eq(auctionId)))
+                .willReturn(responseDto);
+
+        // when & then
+        mockMvc.perform(post("/api/v1/auctions/{auctionId}/bookmarks", auctionId)
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.data.bookmarked").value(false))
+                .andExpect(jsonPath("$.data.auctionId").value(auctionId));
+    }
+
+    @Test
+    @DisplayName("실패: 존재하지 않는 경매에 관심 등록 시 404를 반환한다")
+    @WithMockMemberPrincipal(publicId = "test-public-id")
+    void addBookmark_fail_auction_not_found() throws Exception {
+        // given
+        Long auctionId = 999L;
+
+        given(auctionFacade.addBookmark(any(String.class), eq(auctionId)))
+                .willThrow(new CustomException(ErrorType.AUCTION_NOT_FOUND));
+
+        // when & then
+        mockMvc.perform(post("/api/v1/auctions/{auctionId}/bookmarks", auctionId)
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
 }

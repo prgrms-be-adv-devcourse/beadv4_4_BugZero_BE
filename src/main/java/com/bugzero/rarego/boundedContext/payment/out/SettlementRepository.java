@@ -24,10 +24,10 @@ public interface SettlementRepository extends JpaRepository<Settlement, Long> {
 
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("""
-		    SELECT s
-		    FROM Settlement s
-		    JOIN FETCH s.seller
-		    WHERE s.id = :id
+		SELECT s
+		FROM Settlement s
+		JOIN FETCH s.seller
+		WHERE s.id = :id
 		""")
 	Optional<Settlement> findByIdForUpdate(Long id);
 
@@ -36,17 +36,17 @@ public interface SettlementRepository extends JpaRepository<Settlement, Long> {
 		WHERE s.seller.id = :sellerId
 		AND (:status IS NULL OR s.status = :status)
 		AND (:from IS NULL OR s.createdAt >= :from)
-		AND (:to IS NULL OR s.createdAt <= :to)
+		AND (:to IS NULL OR s.createdAt < :to)
 		""")
-	Page<Settlement> findAllBySellerIdAndStatus(Long sellerId, SettlementStatus status, LocalDateTime from,
+	Page<Settlement> searchSettlements(Long sellerId, SettlementStatus status, LocalDateTime from,
 		LocalDateTime to, Pageable pageable);
 
 	@Query("""
-			    SELECT s
-			    FROM Settlement s
-			    JOIN FETCH s.seller
-			    WHERE s.status = :status AND s.createdAt < :cutoffDate
-			    ORDER BY s.id ASC
-			""")
+		SELECT s
+		FROM Settlement s
+		JOIN FETCH s.seller
+		WHERE s.status = :status AND s.createdAt < :cutoffDate
+		ORDER BY s.id ASC
+		""")
 	List<Settlement> findSettlementsForBatch(SettlementStatus status, LocalDateTime cutoffDate, Pageable pageable);
 }

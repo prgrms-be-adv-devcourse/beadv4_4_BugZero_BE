@@ -53,9 +53,7 @@ target/
 ### Spring config (local/prod secrets) ###
 application-local.yml
 application-local.yaml
-application-prod.yml
-application-prod.yaml
-application-prod.properties
+
 
 ### Logs ###
 logs/
@@ -74,3 +72,4 @@ log/
 src/main/resources/static/*
 .agent/
 .mantic/
+bin/

@@ -2,6 +2,7 @@ package com.bugzero.rarego.boundedContext.payment.app;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.boundedContext.payment.domain.PaymentTransaction;
@@ -23,39 +24,43 @@ public class PaymentSettlementProcessor {
 	@Value("${custom.payment.systemMemberId}")
 	private Long systemMemberId;
 
-	@Transactional
-	public int process(Long settlementId) {
-		// 비관적 락
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	public boolean processSellerDeposit(Long settlementId) {
 		Settlement settlement = paymentSupport.findSettlementByIdForUpdate(settlementId);
 
 		if (settlement.getStatus() != SettlementStatus.READY) {
-			return 0; // 이미 처리된 건은 스킵
+			return false;
 		}
 
-		Wallet wallet = paymentSupport.findWalletByMemberIdForUpdate(settlement.getSeller().getId());
+		Wallet sellerWallet = paymentSupport.findWalletByMemberIdForUpdate(settlement.getSeller().getId());
+		sellerWallet.addBalance(settlement.getSettlementAmount());
 
-		wallet.addBalance(settlement.getSettlementAmount());
+		saveSettlementTransaction(
+			sellerWallet,
+			WalletTransactionType.SETTLEMENT_PAID,
+			settlement.getSettlementAmount(),
+			settlement.getId()
+		);
+
 		settlement.complete();
 
-		// 판매자 정산 이력 저장
-		saveTransaction(wallet, WalletTransactionType.SETTLEMENT_PAID, settlement.getSettlementAmount(),
-			settlement.getId());
-
-		// 시스템 수수료 입금
-		if (settlement.getFeeAmount() > 0) {
-			Wallet systemWallet = paymentSupport.findWalletByMemberIdForUpdate(systemMemberId);
-
-			systemWallet.addBalance(settlement.getFeeAmount());
-
-			// 수수료 처리 이력 저장
-			saveTransaction(systemWallet, WalletTransactionType.SETTLEMENT_FEE,
-				settlement.getFeeAmount(), settlement.getId());
-		}
-
-		return settlement.getFeeAmount();
+		return true;
 	}
 
-	@Transactional
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	public void processSystemDeposit(int totalFeeAmount) {
+		Wallet systemWallet = paymentSupport.findWalletByMemberIdForUpdate(systemMemberId);
+		systemWallet.addBalance(totalFeeAmount);
+
+		saveSettlementTransaction(
+			systemWallet,
+			WalletTransactionType.SETTLEMENT_FEE,
+			totalFeeAmount,
+			0L
+		); // 합산 건이므로 referenceId는 고민
+	}
+
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public void fail(Long settlementId) {
 		// 비관적 락
 		Settlement settlement = paymentSupport.findSettlementByIdForUpdate(settlementId);
@@ -67,17 +72,18 @@ public class PaymentSettlementProcessor {
 		settlement.fail();
 	}
 
-	private void saveTransaction(Wallet wallet, WalletTransactionType type, int amount, Long refId) {
+	private void saveSettlementTransaction(Wallet wallet, WalletTransactionType type, int amount, Long settlementId) {
 		PaymentTransaction transaction = PaymentTransaction.builder()
 			.wallet(wallet)
 			.member(wallet.getMember())
 			.transactionType(type)
 			.balanceDelta(amount)
 			.holdingDelta(0)
-			.balanceAfter(wallet.getBalance()) // 변경 후 잔액 스냅샷
+			.balanceAfter(wallet.getBalance())
 			.referenceType(ReferenceType.SETTLEMENT)
-			.referenceId(refId)
+			.referenceId(settlementId)
 			.build();
+
 		paymentTransactionRepository.save(transaction);
 	}
 }

@@ -21,10 +21,10 @@ services:
     # 환경변수 설정 (.env 파일 참조)
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD} # 루트 비밀번호
-      MYSQL_DATABASE: ${DB_NAME}               # 초기 생성할 DB 이름
-      MYSQL_USER: ${DB_USERNAME}               # 사용할 유저 아이디
-      MYSQL_PASSWORD: ${DB_PASSWORD}           # 사용할 유저 비밀번호
-      TZ: ${TZ:-Asia/Seoul}                    # 로그 시간 확인용 타임존 (한국)
+      MYSQL_DATABASE: ${DB_NAME} # 초기 생성할 DB 이름
+      MYSQL_USER: ${DB_USERNAME} # 사용할 유저 아이디
+      MYSQL_PASSWORD: ${DB_PASSWORD} # 사용할 유저 비밀번호
+      TZ: ${TZ:-Asia/Seoul} # 로그 시간 확인용 타임존 (한국)
 
     # 한글/이모지 깨짐 방지 설정 (utf8mb4)
     command:
@@ -34,11 +34,13 @@ services:
     # 데이터 영속성 설정 (컨테이너 삭제돼도 데이터 보존)
     volumes:
       - db_data:/var/lib/mysql
+    networks:
+      - rarego-network
 
     # 컨테이너 상태 체크 (Spring Boot의 depends_on 조건 등으로 활용 가능)
     # DB가 완전히 부팅되어 쿼리를 받을 수 있는지 주기적으로 확인
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -60,6 +62,7 @@ services:
       AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
       AWS_SECRET_KEY: ${AWS_SECRET_KEY}
       INTERNAL_BACK_URL: ${INTERNAL_BACK_URL}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
 
       # Social Login (OAuth2)
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT}
@@ -71,7 +74,14 @@ services:
       db:
         condition: service_healthy
     restart: always
+    networks:
+      - rarego-network
 
 # 도커 볼륨 생성 (최상위 레벨 정의)
 volumes:
   db_data:
+
+
+networks:
+  rarego-network:
+    external: true
