@@ -4,6 +4,7 @@ import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
+import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.exception.GlobalExceptionHandler;
 import com.bugzero.rarego.global.response.*;
@@ -36,8 +37,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -296,5 +296,61 @@ class AuctionControllerTest {
                 .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    @DisplayName("성공: 관심 경매 해제 시 HTTP 200과 해제 정보를 반환한다")
+    void removeBookmark_success() throws Exception {
+        // given
+        Long bookmarkId = 1L; // 리팩토링: auctionId -> bookmarkId
+        // 서비스 응답 DTO가 bookmarkId를 담고 있다면 그에 맞게 수정
+        WishlistRemoveResponseDto responseDto = WishlistRemoveResponseDto.of(true, bookmarkId);
+
+        // Facade의 메서드 인자가 변경되었으므로 eq(bookmarkId)로 수정
+        given(auctionFacade.removeBookmark(any(String.class), eq(bookmarkId)))
+                .willReturn(responseDto);
+
+        // when & then
+        // URL 경로 변수도 명확하게 bookmarkId로 인지되도록 변경
+        mockMvc.perform(delete("/api/v1/auctions/{bookmarkId}/bookmarks", bookmarkId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.data.removed").value(true))
+                // DTO의 필드명이 bookmarkId로 바뀌었다면 아래 코드도 수정 필요
+                .andExpect(jsonPath("$.data.bookmarkId").value(bookmarkId));
+    }
+
+    @Test
+    @DisplayName("실패: 관심 등록되지 않은 경매 해제 시 404를 반환한다")
+    void removeBookmark_fail_bookmark_not_found() throws Exception {
+        // given
+        Long bookmarkId = 1L;
+
+        given(auctionFacade.removeBookmark(any(String.class), eq(bookmarkId)))
+                .willThrow(new CustomException(ErrorType.BOOKMARK_NOT_FOUND));
+
+        // when & then
+        mockMvc.perform(delete("/api/v1/auctions/{bookmarkId}/bookmarks", bookmarkId))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    @DisplayName("실패: 타인의 북마크를 해제하려 할 때 403을 반환한다")
+        // 새로 추가된 보안 로직 테스트
+    void removeBookmark_fail_unauthorized() throws Exception {
+        // given
+        Long bookmarkId = 1L;
+
+        given(auctionFacade.removeBookmark(any(String.class), eq(bookmarkId)))
+                .willThrow(new CustomException(ErrorType.BOOKMARK_UNAUTHORIZED_ACCESS));
+
+        // when & then
+        mockMvc.perform(delete("/api/v1/auctions/{bookmarkId}/bookmarks", bookmarkId))
+                .andDo(print())
+                .andExpect(status().isForbidden()) // 403 Forbidden
+                .andExpect(jsonPath("$.status").value(403));
     }
 }
