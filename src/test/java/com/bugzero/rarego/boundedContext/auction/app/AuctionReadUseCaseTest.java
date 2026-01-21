@@ -106,7 +106,7 @@ class AuctionReadUseCaseTest {
 
 		// [변경] Repository -> Support로 Mocking 대상 변경
 		given(support.getMember(memberPublicId)).willReturn(member);
-		given(support.getAuctionById(auctionId)).willReturn(auction);
+		given(support.findAuctionById(auctionId)).willReturn(auction);
 
 		// [유지] BidRepository는 UseCase가 직접 사용함
 		given(bidRepository.findTopByAuctionIdOrderByBidAmountDesc(auctionId)).willReturn(Optional.of(highestBid));
@@ -163,7 +163,7 @@ class AuctionReadUseCaseTest {
 		// [변경] Repository -> Support Mocking
 		given(support.getMember(buyerPublicId)).willReturn(buyer);   // 1. 요청자 조회
 		given(support.getOrder(auctionId)).willReturn(order);        // 2. 주문 조회
-		given(support.getAuctionById(auctionId)).willReturn(auction);    // 3. 경매 조회
+		given(support.findAuctionById(auctionId)).willReturn(auction);    // 3. 경매 조회
 		given(support.getProduct(50L)).willReturn(product);          // 4. 상품 조회
 		given(support.getMember(sellerId)).willReturn(sellerMember); // 5. 거래상대 조회
 
@@ -203,7 +203,7 @@ class AuctionReadUseCaseTest {
 		// [변경] Support Mocking
 		given(support.getMember(strangerPublicId)).willReturn(stranger);
 		given(support.getOrder(auctionId)).willReturn(order);
-		given(support.getAuctionById(auctionId)).willReturn(auction);
+		given(support.findAuctionById(auctionId)).willReturn(auction);
 
 		// when & then
 		assertThatThrownBy(() -> auctionReadUseCase.getAuctionOrder(auctionId, strangerPublicId))
