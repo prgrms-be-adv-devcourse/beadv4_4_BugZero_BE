@@ -34,7 +34,7 @@ public class AuthRefreshTokenFacade {
 			throw new CustomException(ErrorType.AUTH_REFRESH_TOKEN_REQUIRED);
 		}
 
-		RefreshToken storedRefreshToken = refreshTokenRepository.findByRefreshTokenAndRevokedFalse(refreshToken)
+		RefreshToken storedRefreshToken = refreshTokenRepository.findByRefreshToken(refreshToken)
 			.orElseThrow(() -> new CustomException(ErrorType.AUTH_REFRESH_TOKEN_INVALID));
 
 		if (storedRefreshToken.isExpired(LocalDateTime.now())) {
@@ -59,8 +59,7 @@ public class AuthRefreshTokenFacade {
 		Account account = accountRepository.findByMemberPublicId(refreshPublicId)
 			.orElseThrow(() -> new CustomException(ErrorType.AUTH_REFRESH_TOKEN_INVALID));
 
-		storedRefreshToken.revoke();
-		refreshTokenRepository.save(storedRefreshToken);
+		refreshTokenRepository.delete(storedRefreshToken);
 
 		String newAccessToken = authIssueTokenUseCase.issueToken(account.getMemberPublicId(), account.getRole().name(), true);
 		String newRefreshToken = authIssueTokenUseCase.issueToken(account.getMemberPublicId(), account.getRole().name(), false);

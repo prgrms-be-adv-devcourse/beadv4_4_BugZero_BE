@@ -46,7 +46,6 @@ class AuthStoreRefreshTokenUseCaseTest {
 		RefreshToken saved = captor.getValue();
 		assertThat(saved.getMemberPublicId()).isEqualTo(memberPublicId);
 		assertThat(saved.getRefreshToken()).isEqualTo(refreshToken);
-		assertThat(saved.isRevoked()).isFalse();
 		assertThat(saved.getExpiresAt())
 			.isAfterOrEqualTo(start.plusSeconds(3600))
 			.isBeforeOrEqualTo(end.plusSeconds(3600));

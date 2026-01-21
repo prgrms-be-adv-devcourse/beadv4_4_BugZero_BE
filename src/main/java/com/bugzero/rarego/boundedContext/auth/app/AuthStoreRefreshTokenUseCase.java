@@ -32,6 +32,6 @@ public class AuthStoreRefreshTokenUseCase {
 		}
 
 		LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(refreshTokenExpireSeconds);
-		refreshTokenRepository.save(new RefreshToken(memberPublicId, refreshToken, expiresAt, false));
+		refreshTokenRepository.save(new RefreshToken(memberPublicId, refreshToken, expiresAt));
 	}
 }

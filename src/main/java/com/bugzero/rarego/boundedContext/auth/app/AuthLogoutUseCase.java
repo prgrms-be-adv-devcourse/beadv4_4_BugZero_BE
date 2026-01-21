@@ -21,10 +21,7 @@ public class AuthLogoutUseCase {
 			return;
 		}
 
-		refreshTokenRepository.findByRefreshTokenAndRevokedFalse(refreshToken)
-			.ifPresent(token -> {
-				token.revoke();
-				refreshTokenRepository.save(token);
-			});
+		refreshTokenRepository.findByRefreshToken(refreshToken)
+			.ifPresent(refreshTokenRepository::delete);
 	}
 }

@@ -9,7 +9,6 @@ import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -79,7 +78,7 @@ class AuthRefreshTokenFacadeTest {
 		// given
 		String refreshToken = "refresh-token";
 		String accessToken = "access-token";
-		when(refreshTokenRepository.findByRefreshTokenAndRevokedFalse(refreshToken)).thenReturn(Optional.empty());
+		when(refreshTokenRepository.findByRefreshToken(refreshToken)).thenReturn(Optional.empty());
 
 		// when
 		Throwable thrown = catchThrowable(() -> authRefreshTokenFacade.refresh(refreshToken, accessToken));
@@ -89,7 +88,7 @@ class AuthRefreshTokenFacadeTest {
 			.isInstanceOf(CustomException.class)
 			.extracting("errorType")
 			.isEqualTo(ErrorType.AUTH_REFRESH_TOKEN_INVALID);
-		verify(refreshTokenRepository).findByRefreshTokenAndRevokedFalse(refreshToken);
+		verify(refreshTokenRepository).findByRefreshToken(refreshToken);
 		verifyNoInteractions(jwtParser, authIssueTokenUseCase, authStoreRefreshTokenUseCase, authAccessTokenBlacklistUseCase, accountRepository);
 	}
 
@@ -102,10 +101,9 @@ class AuthRefreshTokenFacadeTest {
 		RefreshToken stored = new RefreshToken(
 			"member-public-id",
 			refreshToken,
-			LocalDateTime.now().minusMinutes(1),
-			false
+			LocalDateTime.now().minusMinutes(1)
 		);
-		when(refreshTokenRepository.findByRefreshTokenAndRevokedFalse(refreshToken)).thenReturn(Optional.of(stored));
+		when(refreshTokenRepository.findByRefreshToken(refreshToken)).thenReturn(Optional.of(stored));
 
 		// when
 		Throwable thrown = catchThrowable(() -> authRefreshTokenFacade.refresh(refreshToken, accessToken));
@@ -127,10 +125,9 @@ class AuthRefreshTokenFacadeTest {
 		RefreshToken stored = new RefreshToken(
 			"member-public-id",
 			refreshToken,
-			LocalDateTime.now().plusMinutes(5),
-			false
+			LocalDateTime.now().plusMinutes(5)
 		);
-		when(refreshTokenRepository.findByRefreshTokenAndRevokedFalse(refreshToken)).thenReturn(Optional.of(stored));
+		when(refreshTokenRepository.findByRefreshToken(refreshToken)).thenReturn(Optional.of(stored));
 		when(jwtParser.parseRefreshPublicId(refreshToken)).thenReturn(null);
 		when(jwtParser.expiresAt(refreshToken)).thenReturn(LocalDateTime.now().plusMinutes(5));
 
@@ -154,10 +151,9 @@ class AuthRefreshTokenFacadeTest {
 		RefreshToken stored = new RefreshToken(
 			"member-public-id",
 			refreshToken,
-			LocalDateTime.now().plusMinutes(5),
-			false
+			LocalDateTime.now().plusMinutes(5)
 		);
-		when(refreshTokenRepository.findByRefreshTokenAndRevokedFalse(refreshToken)).thenReturn(Optional.of(stored));
+		when(refreshTokenRepository.findByRefreshToken(refreshToken)).thenReturn(Optional.of(stored));
 		when(jwtParser.parseRefreshPublicId(refreshToken)).thenReturn("other-member");
 		when(jwtParser.expiresAt(refreshToken)).thenReturn(LocalDateTime.now().plusMinutes(5));
 
@@ -182,10 +178,9 @@ class AuthRefreshTokenFacadeTest {
 		RefreshToken stored = new RefreshToken(
 			memberPublicId,
 			refreshToken,
-			LocalDateTime.now().plusMinutes(5),
-			false
+			LocalDateTime.now().plusMinutes(5)
 		);
-		when(refreshTokenRepository.findByRefreshTokenAndRevokedFalse(refreshToken)).thenReturn(Optional.of(stored));
+		when(refreshTokenRepository.findByRefreshToken(refreshToken)).thenReturn(Optional.of(stored));
 		when(jwtParser.parseRefreshPublicId(refreshToken)).thenReturn(memberPublicId);
 		when(accountRepository.findByMemberPublicId(memberPublicId)).thenReturn(Optional.empty());
 
@@ -211,8 +206,7 @@ class AuthRefreshTokenFacadeTest {
 		RefreshToken stored = new RefreshToken(
 			memberPublicId,
 			refreshToken,
-			LocalDateTime.now().plusMinutes(5),
-			false
+			LocalDateTime.now().plusMinutes(5)
 		);
 		Account account = Account.builder()
 			.memberPublicId(memberPublicId)
@@ -221,7 +215,7 @@ class AuthRefreshTokenFacadeTest {
 			.providerId("google-123")
 			.build();
 
-		when(refreshTokenRepository.findByRefreshTokenAndRevokedFalse(refreshToken)).thenReturn(Optional.of(stored));
+		when(refreshTokenRepository.findByRefreshToken(refreshToken)).thenReturn(Optional.of(stored));
 		when(jwtParser.parseRefreshPublicId(refreshToken)).thenReturn(memberPublicId);
 		when(accountRepository.findByMemberPublicId(memberPublicId)).thenReturn(Optional.of(account));
 		when(authIssueTokenUseCase.issueToken(memberPublicId, AuthRole.USER.name(), true)).thenReturn("new-access");
@@ -233,10 +227,7 @@ class AuthRefreshTokenFacadeTest {
 		// then
 		assertThat(result.accessToken()).isEqualTo("new-access");
 		assertThat(result.refreshToken()).isEqualTo("new-refresh");
-		assertThat(stored.isRevoked()).isTrue();
-		ArgumentCaptor<RefreshToken> captor = ArgumentCaptor.forClass(RefreshToken.class);
-		verify(refreshTokenRepository).save(captor.capture());
-		assertThat(captor.getValue().isRevoked()).isTrue();
+		verify(refreshTokenRepository).delete(stored);
 		verify(authIssueTokenUseCase).issueToken(memberPublicId, AuthRole.USER.name(), true);
 		verify(authIssueTokenUseCase).issueToken(memberPublicId, AuthRole.USER.name(), false);
 		verify(authStoreRefreshTokenUseCase).store(memberPublicId, "new-refresh");
