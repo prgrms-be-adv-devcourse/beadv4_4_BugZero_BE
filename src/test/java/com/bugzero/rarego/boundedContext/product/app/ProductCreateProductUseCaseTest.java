@@ -1,10 +1,15 @@
 package com.bugzero.rarego.boundedContext.product.app;
 
-import static org.assertj.core.api.AssertionsForClassTypes.*;
-import static org.mockito.BDDMockito.*;
-
-import java.util.List;
-
+import com.bugzero.rarego.boundedContext.product.domain.Category;
+import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
+import com.bugzero.rarego.boundedContext.product.domain.Product;
+import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
+import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
+import com.bugzero.rarego.shared.auction.out.AuctionApiClient;
+import com.bugzero.rarego.shared.product.dto.ProductAuctionRequestDto;
+import com.bugzero.rarego.shared.product.dto.ProductImageRequestDto;
+import com.bugzero.rarego.shared.product.dto.ProductRequestDto;
+import com.bugzero.rarego.shared.product.dto.ProductResponseDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,16 +19,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.bugzero.rarego.boundedContext.product.domain.Category;
-import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
-import com.bugzero.rarego.boundedContext.product.domain.Product;
-import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
-import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
-import com.bugzero.rarego.shared.product.auction.out.AuctionApiClient;
-import com.bugzero.rarego.shared.product.dto.ProductAuctionRequestDto;
-import com.bugzero.rarego.shared.product.dto.ProductImageRequestDto;
-import com.bugzero.rarego.shared.product.dto.ProductRequestDto;
-import com.bugzero.rarego.shared.product.dto.ProductResponseDto;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class ProductCreateProductUseCaseTest {

@@ -12,8 +12,9 @@ import com.bugzero.rarego.shared.product.auction.out.AuctionApiClient;
 import com.bugzero.rarego.shared.product.dto.ProductImageRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductResponseDto;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,8 +23,8 @@ public class ProductCreateProductUseCase {
 	private final AuctionApiClient auctionApiClient;
 	private final ProductSupport productSupport;
 
-	@Transactional
-	public ProductResponseDto createProduct(String memberUUID, ProductRequestDto productRequestDto) {
+    @Transactional
+    public ProductResponseDto createProduct(String memberUUID, ProductRequestDto productRequestDto) {
 
 		ProductMember seller = productSupport.verifyValidateMember(memberUUID);
 
@@ -37,12 +38,12 @@ public class ProductCreateProductUseCase {
 			product.addImage(imageRequestDto.toEntity(product));
 		});
 
-		// 부모만 저장 (CascadeType.PERSIST에 의해 자식인 ProductImage들도 자동으로 INSERT됨)
-		Product savedProduct = productRepository.save(product);
+        // 부모만 저장 (CascadeType.PERSIST에 의해 자식인 ProductImage들도 자동으로 INSERT됨)
+        Product savedProduct = productRepository.save(product);
 
-		//경매정보 생성 요청하는 api
-		Long auctionId = auctionApiClient.createAuction(savedProduct.getId(), memberUUID,
-			productRequestDto.productAuctionRequestDto());
+        //경매정보 생성 요청하는 api
+        Long auctionId = auctionApiClient.createAuction(savedProduct.getId(), memberUUID,
+                productRequestDto.productAuctionRequestDto());
 
 		return ProductResponseDto.builder()
 			.productId(savedProduct.getId())
