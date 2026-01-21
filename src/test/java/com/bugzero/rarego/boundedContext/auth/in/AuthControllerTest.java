@@ -15,13 +15,13 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.bugzero.rarego.boundedContext.auth.app.AuthService;
+import com.bugzero.rarego.boundedContext.auth.app.AuthFacade;
 import com.bugzero.rarego.boundedContext.auth.domain.TokenIssueDto;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
 import com.bugzero.rarego.global.response.SuccessType;
@@ -41,14 +41,14 @@ class AuthControllerTest {
 	private ObjectMapper objectMapper;
 
 	@MockitoBean
-	private AuthService authService;
+	private AuthFacade authFacade;
 
 	@Test
 	@DisplayName("성공: 테스트 로그인 요청 시 토큰을 반환한다")
 	void login_success() throws Exception {
 		TokenIssueDto request = new TokenIssueDto("public-id", "USER");
 
-		given(authService.issueAccessToken(request)).willReturn("access-token");
+		given(authFacade.issueAccessToken(request)).willReturn("access-token");
 
 		mockMvc.perform(post("/api/v1/auth/test/login")
 				.contentType(MediaType.APPLICATION_JSON)
