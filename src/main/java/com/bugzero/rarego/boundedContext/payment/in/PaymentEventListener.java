@@ -10,6 +10,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import com.bugzero.rarego.boundedContext.payment.app.PaymentFacade;
 import com.bugzero.rarego.shared.auction.event.AuctionEndedEvent;
 import com.bugzero.rarego.shared.member.event.MemberJoinedEvent;
+import com.bugzero.rarego.shared.member.event.MemberUpdatedEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,12 @@ public class PaymentEventListener {
     @TransactionalEventListener(phase = AFTER_COMMIT)
     @Transactional(propagation = REQUIRES_NEW)
     public void onMemberCreated(MemberJoinedEvent event) {
+        paymentFacade.syncMember(event.memberDto());
+    }
+
+    @TransactionalEventListener(phase = AFTER_COMMIT)
+    @Transactional(propagation = REQUIRES_NEW)
+    public void onMemberUpdated(MemberUpdatedEvent event) {
         paymentFacade.syncMember(event.memberDto());
     }
 }

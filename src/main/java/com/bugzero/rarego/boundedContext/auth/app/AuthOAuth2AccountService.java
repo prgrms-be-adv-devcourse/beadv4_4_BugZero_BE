@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthOAuth2AccountService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 	private static final String ACCESS_TOKEN_ATTRIBUTE = "accessToken";
 
-	private final AuthService authService;
+	private final AuthFacade authFacade;
 
 	@Override
 	public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -37,7 +37,7 @@ public class AuthOAuth2AccountService implements OAuth2UserService<OAuth2UserReq
 
 		AccountDto accountDto = OAuth2AttributeMapper.toAccountDto(
 			registrationId, userNameAttributeName, oauth2User.getAttributes());
-		String accessToken = authService.login(accountDto);
+		String accessToken = authFacade.login(accountDto);
 
 		Map<String, Object> attributes = new HashMap<>(oauth2User.getAttributes());
 		attributes.put(ACCESS_TOKEN_ATTRIBUTE, accessToken);

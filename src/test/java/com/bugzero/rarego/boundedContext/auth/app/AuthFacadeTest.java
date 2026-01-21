@@ -12,12 +12,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class AuthServiceTest {
+public class AuthFacadeTest {
 	@Mock
 	private AuthIssueTokenUseCase authIssueTokenUseCase;
 
 	@InjectMocks
-	private AuthService authService;
+	private AuthFacade authFacade;
 
 	@BeforeEach
 	void setUp() throws Exception {
@@ -28,6 +28,6 @@ public class AuthServiceTest {
 	@Test
 	@DisplayName("authTokenService 서비스가 존재한다.")
 	void t1() {
-		assertThat(authService).isNotNull();
+		assertThat(authFacade).isNotNull();
 	}
 }
