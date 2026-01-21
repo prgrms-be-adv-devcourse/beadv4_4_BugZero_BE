@@ -167,7 +167,7 @@ public class AuctionReadUseCase {
 		}
 
 		// 1. 경매 조회
-		Auction auction = support.getAuction(auctionId);
+		Auction auction = support.getAuctionById(auctionId);
 
 		// 2. 전체 최고가 입찰 조회
 		Bid highestBid = bidRepository.findTopByAuctionIdOrderByBidAmountDesc(auctionId)
@@ -193,7 +193,7 @@ public class AuctionReadUseCase {
 		Long memberId = member.getId();
 
 		AuctionOrder order = support.getOrder(auctionId);
-		Auction auction = support.getAuction(auctionId);
+		Auction auction = support.getAuctionById(auctionId);
 
 		AuctionViewerRoleStatus viewerRole = determineViewerRole(order, memberId);
 
