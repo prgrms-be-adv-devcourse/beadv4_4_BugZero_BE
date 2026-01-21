@@ -32,12 +32,22 @@ public class ProductDataInit implements CommandLineRunner {
 		ProductMember admin = ProductMember.builder()
 			.id(1L)
 			.publicId(UUID.randomUUID().toString())
-			.email("test@bugzero.com")
+			.email("test1@bugzero.com")
 			.nickname("테스트유저")
 			.createdAt(LocalDateTime.now())
 			.updatedAt(LocalDateTime.now())
 			.build();
 		productMemberRepository.save(admin);
+
+		ProductMember member = ProductMember.builder()
+			.id(2L)
+			.publicId(UUID.randomUUID().toString())
+			.email("test2@bugzero.com")
+			.nickname("일반회원")
+			.createdAt(LocalDateTime.now())
+			.updatedAt(LocalDateTime.now())
+			.build();
+		productMemberRepository.save(member);
 
 		//ProductMember 초기 데이터
 		createProduct(1L, "다크나이트");
