@@ -33,6 +33,8 @@ import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
+import com.bugzero.rarego.boundedContext.product.domain.Inspection;
+import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductImage;
 import com.bugzero.rarego.boundedContext.product.out.ProductImageRepository;
@@ -51,6 +53,8 @@ import com.bugzero.rarego.shared.auction.dto.MyAuctionOrderListResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
 
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -230,12 +234,30 @@ public class AuctionReadUseCase {
 	// 경매 목록 조회 (Bulk + 검색)
 	public PagedResponseDto<AuctionListResponseDto> getAuctions(AuctionSearchCondition condition, Pageable pageable) {
 
-		// 정렬 조건 적용
+		// 1. 정렬 조건 적용
 		Pageable sortedPageable = applySorting(pageable, condition.getSort());
 
-		// 검색 조건으로 경매 목록 조회
-		Specification<Auction> spec = createSearchSpec(condition);
-		Page<Auction> auctionPage = auctionRepository.findAll(spec, sortedPageable);
+		// 2. 키워드/카테고리 검색 (Product 테이블 조회)
+		List<Long> matchedProductIds = null;
+		if (condition.getKeyword() != null || condition.getCategory() != null) {
+			matchedProductIds = productRepository.findIdsBySearchCondition(
+				condition.getKeyword(), condition.getCategory()
+			);
+
+			// 검색 결과가 없으면 빈 페이지 반환 (최적화)
+			if (matchedProductIds.isEmpty()) {
+				return new PagedResponseDto<>(Collections.emptyList(), PageDto.from(Page.empty()));
+			}
+		}
+
+		// 3. [핵심] 리포지토리 쿼리 메서드 호출 (@Query 사용)
+		// matchedProductIds가 null이면 조건 무시, 값이 있으면 해당 ID들 내에서만 조회
+		Page<Auction> auctionPage = auctionRepository.findAllApproved(
+			condition.getStatus(),
+			matchedProductIds,
+			sortedPageable
+		);
+
 		List<Auction> auctions = auctionPage.getContent();
 
 		if (auctions.isEmpty()) {
@@ -277,6 +299,7 @@ public class AuctionReadUseCase {
 
 		return new PagedResponseDto<>(dtos, PageDto.from(auctionPage));
 	}
+
 
 	public PagedResponseDto<MyAuctionOrderListResponseDto> getMyAuctionOrders(String memberPublicId, AuctionOrderStatus status, Pageable pageable) {
 		AuctionMember member = support.getMember(memberPublicId);
@@ -321,7 +344,11 @@ public class AuctionReadUseCase {
 				Auction auction = auctionMap.get(order.getAuctionId());
 
 				// 경매가 없을 경우(데이터 무결성 문제)
-				if (auction == null) return null;
+				if (auction == null) {
+					log.error("데이터 불일치 감지: 주문(ID={})은 존재하나 경매(ID={})가 없음",
+						order.getId(), order.getAuctionId());
+					return null;
+				}
 
 				Product product = productMap.get(auction.getProductId());
 				String thumbnailUrl = thumbnailMap.get(auction.getProductId());
@@ -393,18 +420,12 @@ public class AuctionReadUseCase {
 
 	private Pageable applySorting(Pageable pageable, String sortStr) {
 		if (sortStr == null) return pageable;
-
 		Sort sort = Sort.unsorted();
-		// 마감 임박한 순서
 		if ("CLOSING_SOON".equalsIgnoreCase(sortStr)) {
 			sort = Sort.by(Sort.Direction.ASC, "endTime");
-		// 최신 순서
 		} else if ("NEWEST".equalsIgnoreCase(sortStr)) {
 			sort = Sort.by(Sort.Direction.DESC, "createdAt");
-		}
-		// TODO: 인기순(MOST_BIDS)은 입찰 수 정렬이므로 DB 컬럼이 없으면 복잡함.
-		// 현재는 ID 역순(최신 등록순) 등을 기본으로 처리
-		else {
+		} else {
 			sort = Sort.by(Sort.Direction.DESC, "id");
 		}
 		return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
