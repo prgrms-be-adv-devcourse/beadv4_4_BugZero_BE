@@ -46,6 +46,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 
+import jakarta.persistence.criteria.*;
+
+
 @ExtendWith(MockitoExtension.class)
 class AuctionReadUseCaseTest {
 
@@ -264,5 +267,73 @@ class AuctionReadUseCaseTest {
 
 		assertThat(result.data()).isEmpty();
 		assertThat(result.pageDto().totalItems()).isEqualTo(0);
+	}
+
+	@Test
+	@DisplayName("경매 목록 조회 - 검색 조건(키워드+상태)이 있을 때 상품 검색 후 경매 조회 수행")
+	void getAuctions_with_search_condition() {
+		// given
+		AuctionSearchCondition condition = new AuctionSearchCondition();
+		ReflectionTestUtils.setField(condition, "keyword", "Galaxy");
+		ReflectionTestUtils.setField(condition, "status", AuctionStatus.IN_PROGRESS);
+
+		Pageable pageable = PageRequest.of(0, 10);
+
+		// [Mock Setup 1] 키워드 검색 결과
+		List<Long> matchedProductIds = List.of(50L);
+		given(productRepository.findIdsBySearchCondition(eq("Galaxy"), isNull()))
+			.willReturn(matchedProductIds);
+
+		// [Mock Setup 2] 경매 조회 결과
+		Auction auction = Auction.builder().productId(50L).startPrice(10000).durationDays(3).build();
+		ReflectionTestUtils.setField(auction, "id", 1L);
+		ReflectionTestUtils.setField(auction, "status", AuctionStatus.IN_PROGRESS);
+		Page<Auction> auctionPage = new PageImpl<>(List.of(auction), pageable, 1);
+
+		given(auctionRepository.findAll(any(Specification.class), any(Pageable.class)))
+			.willReturn(auctionPage);
+
+		// [Mock Setup 3] 연관 데이터 (DTO 조립용)
+		Product product = Product.builder().name("Galaxy Lego").build();
+		ReflectionTestUtils.setField(product, "id", 50L);
+		given(productRepository.findAllById(Set.of(50L))).willReturn(List.of(product));
+		given(bidRepository.countByAuctionIdIn(Set.of(1L))).willReturn(List.<Object[]>of(new Object[]{1L, 5L}));
+		given(productImageRepository.findAllByProductIdIn(Set.of(50L))).willReturn(Collections.emptyList());
+
+		// [추가] JPA Criteria 객체 Mocking (Specification 강제 실행을 위함)
+		Root<Auction> root = mock(Root.class);
+		CriteriaQuery<?> query = mock(CriteriaQuery.class);
+		CriteriaBuilder cb = mock(CriteriaBuilder.class);
+		Path<Object> path = mock(Path.class);
+
+		// JPA 내부 호출 시 NPE 방지용 Stubbing
+		given(root.get(anyString())).willReturn(path);
+		given(path.in(anyCollection())).willReturn(mock(Predicate.class));
+
+		// [핵심 수정 1] equal 오버로딩 문제 해결
+		// any() -> any(Object.class)로 변경하여 (Expression, Object) 메서드가 호출되도록 강제함
+		given(cb.equal(any(), any(Object.class))).willReturn(mock(Predicate.class));
+
+		// [핵심 수정 2] and 가변인자 문제 해결 (이전 단계에서 적용함)
+		given(cb.and(any(Predicate[].class))).willReturn(mock(Predicate.class));
+
+		// when
+		PagedResponseDto<AuctionListResponseDto> result = auctionReadUseCase.getAuctions(condition, pageable);
+
+		// then
+		assertThat(result.data()).hasSize(1);
+		assertThat(result.data().get(0).productName()).isEqualTo("Galaxy Lego");
+
+		// [핵심 수정] Specification을 캡처하여 내부 로직 강제 실행
+		ArgumentCaptor<Specification<Auction>> specCaptor = ArgumentCaptor.forClass(Specification.class);
+		verify(auctionRepository).findAll(specCaptor.capture(), any(Pageable.class));
+
+		Specification<Auction> capturedSpec = specCaptor.getValue();
+
+		// 강제 실행! -> 이때 내부의 productRepository.findIdsBySearchCondition()이 호출됨
+		capturedSpec.toPredicate(root, query, cb);
+
+		// 이제 검증하면 성공함
+		verify(productRepository).findIdsBySearchCondition(eq("Galaxy"), isNull());
 	}
 }
