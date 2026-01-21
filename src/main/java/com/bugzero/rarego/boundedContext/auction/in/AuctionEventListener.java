@@ -12,6 +12,7 @@ import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
 import com.bugzero.rarego.boundedContext.auction.domain.event.AuctionCreatedEvent;
 import com.bugzero.rarego.boundedContext.auction.domain.event.AuctionUpdatedEvent;
 import com.bugzero.rarego.shared.member.event.MemberJoinedEvent;
+import com.bugzero.rarego.shared.member.event.MemberUpdatedEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -66,4 +67,9 @@ public class AuctionEventListener {
 		auctionFacade.syncMember(event.memberDto());
 	}
 
+	@TransactionalEventListener(phase = AFTER_COMMIT)
+	@Transactional(propagation = REQUIRES_NEW)
+	public void onMemberUpdated(MemberUpdatedEvent event) {
+		auctionFacade.syncMember(event.memberDto());
+	}
 }
