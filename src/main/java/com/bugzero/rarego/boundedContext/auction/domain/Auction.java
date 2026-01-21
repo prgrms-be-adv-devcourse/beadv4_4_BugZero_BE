@@ -1,20 +1,15 @@
 package com.bugzero.rarego.boundedContext.auction.domain;
 
-import java.time.LocalDateTime;
-
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
 import com.bugzero.rarego.global.response.ErrorType;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "AUCTION_AUCTION")
@@ -51,7 +46,7 @@ public class Auction extends BaseIdAndTime {
 
     // 입찰 가격 갱신
     @Builder
-    public Auction(Long productId, Long sellerId, LocalDateTime startTime,  Integer durationDays, LocalDateTime endTime, int startPrice, int tickSize) {
+    public Auction(Long productId, Long sellerId, LocalDateTime startTime, Integer durationDays, LocalDateTime endTime, int startPrice, int tickSize) {
         this.productId = productId;
         this.sellerId = sellerId;
         this.startTime = startTime;
@@ -75,7 +70,7 @@ public class Auction extends BaseIdAndTime {
         }
         this.status = AuctionStatus.ENDED;
     }
-  
+
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(this.endTime);
     }
@@ -94,7 +89,13 @@ public class Auction extends BaseIdAndTime {
 
     // 경매 시작 상태로 전이
     public void startAuction() {
-      this.status = AuctionStatus.IN_PROGRESS;
+        this.status = AuctionStatus.IN_PROGRESS;
     }
 
+    public void withdraw() {
+        if (this.status != AuctionStatus.ENDED) {
+            throw new CustomException(ErrorType.AUCTION_WITHDRAW_NOT_ENDED);
+        }
+        this.status = AuctionStatus.WITHDRAWN;
+    }
 }

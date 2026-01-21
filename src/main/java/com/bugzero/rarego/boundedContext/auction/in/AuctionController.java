@@ -1,6 +1,7 @@
 package com.bugzero.rarego.boundedContext.auction.in;
 
 import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionWithdrawResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
@@ -90,6 +91,17 @@ public class AuctionController {
             @PathVariable Long auctionId
     ) {
         WishlistRemoveResponseDto response = auctionFacade.removeBookmark(memberPrincipal.publicId(), auctionId);
+        return SuccessResponseDto.from(SuccessType.OK, response);
+    }
+
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "판매 포기", description = "경매 실패/유찰 시 상품을 더 이상 경매에 올리지 않습니다.")
+    @PostMapping("/{auctionId}/withdraw")
+    public SuccessResponseDto<AuctionWithdrawResponseDto> withdraw(
+            @PathVariable Long auctionId,
+            @AuthenticationPrincipal MemberPrincipal principal
+    ) {
+        AuctionWithdrawResponseDto response = auctionFacade.withdraw(auctionId, principal.publicId());
         return SuccessResponseDto.from(SuccessType.OK, response);
     }
 }
