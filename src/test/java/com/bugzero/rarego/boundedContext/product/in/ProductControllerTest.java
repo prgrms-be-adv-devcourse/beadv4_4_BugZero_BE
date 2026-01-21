@@ -110,7 +110,7 @@ class ProductControllerTest {
 	// --- 상품 수정 (PATCH) 테스트 ---
 
 	@Test
-	@DisplayName("상품 수정 API 호출 시 성공하면 200 OK와 수정된 상품 ID를 반환한다")
+	@DisplayName("성공 - 상품 수정 API 호출 시 성공하면 200 OK와 수정된 상품 ID를 반환한다")
 	void updateProduct_success() throws Exception {
 		// given
 		ProductUpdateDto updateDto = createUpdateDto("수정된 상품명");
@@ -126,6 +126,43 @@ class ProductControllerTest {
 			.andExpect(jsonPath("$.status").value(200))
 			.andExpect(jsonPath("$.data.productId").value(defaultUpdateResponse.productId()))
 			.andExpect(jsonPath("$.data.auctionId").value(defaultUpdateResponse.auctionId()))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("성공 - 상품 삭제 API 호출 시 200 OK를 반환한다")
+	void deleteProduct_Success() throws Exception {
+		// given
+		String publicId = "seller-uuid";
+		Long productId = 100L;
+
+		// Facade 호출 시 아무런 예외도 발생하지 않음을 가정 (void 리턴)
+		doNothing().when(productFacade).deleteProduct(eq(publicId), eq(productId));
+
+		// when & then
+		mockMvc.perform(delete("/api/v1/products/{productId}", productId)
+				.param("publicId", publicId)
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value(200))
+			.andExpect(jsonPath("$.message").exists())
+			.andDo(print());
+
+		// Facade가 실제로 호출되었는지 검증
+		verify(productFacade).deleteProduct(eq(publicId), eq(productId));
+	}
+
+	@Test
+	@DisplayName("실패 - 필수 파라미터(publicId)가 누락되면 400 에러를 반환한다")
+	void deleteProduct_Fail_MissingParam() throws Exception {
+		// given
+		Long productId = 100L;
+
+		// when & then
+		mockMvc.perform(delete("/api/v1/products/{productId}", productId)
+				// .param("publicId", ...) 누락
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isBadRequest())
 			.andDo(print());
 	}
 
