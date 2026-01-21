@@ -28,4 +28,8 @@ public class ProductImage extends BaseIdAndTime {
 	private String imageUrl;
 	private int sortOrder;
 
+	public void update(String url,int sortOrder) {
+		this.imageUrl = url;
+		this.sortOrder = sortOrder;
+	}
 }
