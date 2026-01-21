@@ -25,8 +25,11 @@ import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.shared.auction.dto.AuctionFilterType;
+import com.bugzero.rarego.shared.auction.dto.AuctionRelistRequestDto;
+import com.bugzero.rarego.shared.auction.dto.AuctionRelistResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
+import com.bugzero.rarego.shared.auction.dto.MyAuctionOrderListResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
 
@@ -41,6 +44,9 @@ class AuctionFacadeTest {
 
 	@Mock
 	private AuctionReadUseCase auctionReadUseCase;
+
+	@Mock
+	private AuctionRelistUseCase auctionRelistUseCase;
 
 	@Test
 	@DisplayName("입찰 생성 요청 시 UseCase를 호출하고 결과를 반환한다")
@@ -178,4 +184,35 @@ class AuctionFacadeTest {
 
 		verify(auctionReadUseCase).getMySales(eq(sellerPublicId), eq(filter), any(Pageable.class));
 	}
+
+	@Test
+	@DisplayName("나의 낙찰 목록 조회: ReadUseCase에 위임한다")
+	void getMyAuctionOrders_Success() {
+		// given
+		String memberPublicId = "user_uuid";
+		AuctionOrderStatus status = AuctionOrderStatus.PROCESSING;
+		Pageable pageable = PageRequest.of(0, 10);
+
+		// Mock Response
+		MyAuctionOrderListResponseDto dto = new MyAuctionOrderListResponseDto(
+			1L, 100L, "Product", "img", 1000, status, "desc", LocalDateTime.now(), true
+		);
+		PagedResponseDto<MyAuctionOrderListResponseDto> expectedResponse = new PagedResponseDto<>(
+			List.of(dto), new PageDto(1, 10, 1, 1, false, false)
+		);
+
+		given(auctionReadUseCase.getMyAuctionOrders(eq(memberPublicId), eq(status), any(Pageable.class)))
+			.willReturn(expectedResponse);
+
+		// when
+		PagedResponseDto<MyAuctionOrderListResponseDto> result =
+			auctionFacade.getMyAuctionOrders(memberPublicId, status, pageable);
+
+		// then
+		assertThat(result.data()).hasSize(1);
+		assertThat(result.data().get(0).orderStatus()).isEqualTo(AuctionOrderStatus.PROCESSING);
+
+		verify(auctionReadUseCase).getMyAuctionOrders(eq(memberPublicId), eq(status), any(Pageable.class));
+	}
+
 }

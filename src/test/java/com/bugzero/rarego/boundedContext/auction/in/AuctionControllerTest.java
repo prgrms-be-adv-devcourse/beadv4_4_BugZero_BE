@@ -40,6 +40,8 @@ import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.global.security.MemberPrincipal;
 import com.bugzero.rarego.shared.auction.dto.AuctionDetailResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionOrderResponseDto;
+import com.bugzero.rarego.shared.auction.dto.AuctionRelistRequestDto;
+import com.bugzero.rarego.shared.auction.dto.AuctionRelistResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidRequestDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
@@ -237,5 +239,34 @@ class AuctionControllerTest {
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.data.orderId").value(7001L))
 			.andExpect(jsonPath("$.data.viewerRole").value("BUYER"));
+	}
+
+	@Test
+	@DisplayName("GET /auctions - 경매 목록 검색 (조건 매핑 확인)")
+	void getAuctions_success() throws Exception {
+		// given
+		// Mock 응답 데이터
+		// (AuctionListResponseDto는 기존에 정의된 것을 사용한다고 가정)
+        /* AuctionListResponseDto dto = ...;
+           PagedResponseDto<AuctionListResponseDto> response = ...;
+           given(auctionFacade.getAuctions(any(AuctionSearchCondition.class), any(Pageable.class)))
+               .willReturn(response);
+        */
+
+		// *참고: DTO 객체 생성이 번거로우면 verify로 호출 여부만 검증해도 컨트롤러 테스트로는 충분합니다.
+
+		// when
+		mockMvc.perform(get("/api/v1/auctions")
+				.param("keyword", "Lego")
+				.param("category", "TOY")
+				.param("sort", "CLOSING_SOON"))
+			.andExpect(status().isOk());
+
+		// then: 파라미터가 Condition 객체로 잘 변환되어 Facade로 전달되었는지 검증
+		verify(auctionFacade).getAuctions(argThat(condition ->
+			condition.getKeyword().equals("Lego") &&
+				condition.getCategory().toString().equals("TOY") &&
+				condition.getSort().equals("CLOSING_SOON")
+		), any(Pageable.class));
 	}
 }

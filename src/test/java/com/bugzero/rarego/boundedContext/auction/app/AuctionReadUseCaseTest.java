@@ -21,10 +21,12 @@ import com.bugzero.rarego.shared.auction.dto.AuctionDetailResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionListResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionOrderResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionSearchCondition;
+import com.bugzero.rarego.shared.auction.dto.MyAuctionOrderListResponseDto;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -45,6 +47,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
+
+import jakarta.persistence.criteria.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuctionReadUseCaseTest {
@@ -103,7 +108,7 @@ class AuctionReadUseCaseTest {
 
 		// [변경] Repository -> Support로 Mocking 대상 변경
 		given(support.getMember(memberPublicId)).willReturn(member);
-		given(support.getAuction(auctionId)).willReturn(auction);
+		given(support.findAuctionById(auctionId)).willReturn(auction);
 
 		// [유지] BidRepository는 UseCase가 직접 사용함
 		given(bidRepository.findTopByAuctionIdOrderByBidAmountDesc(auctionId)).willReturn(Optional.of(highestBid));
@@ -160,7 +165,7 @@ class AuctionReadUseCaseTest {
 		// [변경] Repository -> Support Mocking
 		given(support.getMember(buyerPublicId)).willReturn(buyer);   // 1. 요청자 조회
 		given(support.getOrder(auctionId)).willReturn(order);        // 2. 주문 조회
-		given(support.getAuction(auctionId)).willReturn(auction);    // 3. 경매 조회
+		given(support.findAuctionById(auctionId)).willReturn(auction);    // 3. 경매 조회
 		given(support.getProduct(50L)).willReturn(product);          // 4. 상품 조회
 		given(support.getMember(sellerId)).willReturn(sellerMember); // 5. 거래상대 조회
 
@@ -200,7 +205,7 @@ class AuctionReadUseCaseTest {
 		// [변경] Support Mocking
 		given(support.getMember(strangerPublicId)).willReturn(stranger);
 		given(support.getOrder(auctionId)).willReturn(order);
-		given(support.getAuction(auctionId)).willReturn(auction);
+		given(support.findAuctionById(auctionId)).willReturn(auction);
 
 		// when & then
 		assertThatThrownBy(() -> auctionReadUseCase.getAuctionOrder(auctionId, strangerPublicId))
@@ -264,5 +269,171 @@ class AuctionReadUseCaseTest {
 
 		assertThat(result.data()).isEmpty();
 		assertThat(result.pageDto().totalItems()).isEqualTo(0);
+	}
+
+	@Test
+	@DisplayName("나의 낙찰 목록 조회 - 성공 (데이터 조립 및 정렬 확인)")
+	void getMyAuctionOrders_success() {
+		// given
+		String memberPublicId = "user_pub_id";
+		AuctionOrderStatus status = AuctionOrderStatus.PROCESSING;
+		Pageable pageable = PageRequest.of(0, 10);
+
+		// 1. Member Mock
+		AuctionMember member = AuctionMember.builder().publicId(memberPublicId).build();
+		ReflectionTestUtils.setField(member, "id", 10L);
+
+		// 2. Order Mock (낙찰 내역)
+		AuctionOrder order = AuctionOrder.builder()
+			.auctionId(1L)
+			.bidderId(10L)
+			.finalPrice(50000)
+			.build();
+		ReflectionTestUtils.setField(order, "id", 100L);
+		ReflectionTestUtils.setField(order, "status", AuctionOrderStatus.PROCESSING); // 결제 대기
+		ReflectionTestUtils.setField(order, "createdAt", LocalDateTime.now());
+
+		Page<AuctionOrder> orderPage = new PageImpl<>(List.of(order), pageable, 1);
+
+		// 3. Auction Mock
+		Auction auction = Auction.builder().productId(50L).startPrice(1000).tickSize(100).durationDays(3).build();
+		ReflectionTestUtils.setField(auction, "id", 1L);
+
+		// 4. Product Mock
+		Product product = Product.builder().name("Lego Titanic").build();
+		ReflectionTestUtils.setField(product, "id", 50L);
+
+		// 5. Image Mock (썸네일 정렬 확인용)
+		ProductImage img1 = ProductImage.builder().product(product).imageUrl("thumb.jpg").sortOrder(0).build();
+		ProductImage img2 = ProductImage.builder().product(product).imageUrl("detail.jpg").sortOrder(1).build();
+		ReflectionTestUtils.setField(img1, "product", product);
+
+		// Mocking Behavior
+		given(support.getMember(memberPublicId)).willReturn(member);
+
+		// [핵심] 레포지토리 호출
+		given(auctionOrderRepository.findAllByBidderIdAndStatus(eq(10L), eq(status), any(Pageable.class)))
+			.willReturn(orderPage);
+
+		// 연관 데이터 조회 Mocking
+		given(auctionRepository.findAllById(Set.of(1L))).willReturn(List.of(auction));
+		given(productRepository.findAllByIdIn(Set.of(50L))).willReturn(List.of(product));
+		given(productImageRepository.findAllByProductIdIn(Set.of(50L))).willReturn(List.of(img1, img2));
+
+		// when
+		PagedResponseDto<MyAuctionOrderListResponseDto> result =
+			auctionReadUseCase.getMyAuctionOrders(memberPublicId, status, pageable);
+
+		// then
+		assertThat(result.data()).hasSize(1);
+		MyAuctionOrderListResponseDto dto = result.data().get(0);
+
+		// 데이터 매핑 검증
+		assertThat(dto.orderId()).isEqualTo(100L);
+		assertThat(dto.productName()).isEqualTo("Lego Titanic"); // 상품명 확인
+		assertThat(dto.thumbnailUrl()).isEqualTo("thumb.jpg");   // 썸네일(sortOrder=0) 확인
+		assertThat(dto.finalPrice()).isEqualTo(50000);
+		assertThat(dto.statusDescription()).isEqualTo("결제 대기중"); // 한글 변환 확인
+		assertThat(dto.auctionRequired()).isTrue();
+	}
+
+	@Test
+	@DisplayName("나의 낙찰 목록 조회 - 내역이 없을 때 빈 리스트 반환 (Early Return)")
+	void getMyAuctionOrders_empty() {
+		// given
+		String memberPublicId = "user_pub_id";
+		Pageable pageable = PageRequest.of(0, 10);
+
+		AuctionMember member = AuctionMember.builder().publicId(memberPublicId).build();
+		ReflectionTestUtils.setField(member, "id", 10L);
+
+		// 빈 페이지 생성
+		Page<AuctionOrder> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
+
+		given(support.getMember(memberPublicId)).willReturn(member);
+
+		// status가 null인 경우로 테스트
+		given(auctionOrderRepository.findAllByBidderIdAndStatus(eq(10L), isNull(), any(Pageable.class)))
+			.willReturn(emptyPage);
+
+		// when
+		PagedResponseDto<MyAuctionOrderListResponseDto> result =
+			auctionReadUseCase.getMyAuctionOrders(memberPublicId, null, pageable);
+
+		// then
+		assertThat(result.data()).isEmpty();
+		assertThat(result.pageDto().totalItems()).isEqualTo(0);
+
+		// [중요] 최적화 검증: 목록이 비었으므로 다른 리포지토리는 호출되지 않아야 함
+		// (Mockito.verify는 선택 사항입니다)
+		// verify(auctionRepository, never()).findAllById(any());
+	}
+
+	@Test
+	@DisplayName("경매 목록 조회 - 검색 조건(키워드+상태)이 있을 때 상품 검색 후 경매 조회 수행")
+	void getAuctions_with_search_condition() {
+		// given
+		AuctionSearchCondition condition = new AuctionSearchCondition();
+		ReflectionTestUtils.setField(condition, "keyword", "Galaxy");
+		ReflectionTestUtils.setField(condition, "status", AuctionStatus.IN_PROGRESS);
+
+		Pageable pageable = PageRequest.of(0, 10);
+
+		// [Mock Setup 1] 키워드 검색 결과
+		List<Long> matchedProductIds = List.of(50L);
+		given(productRepository.findIdsBySearchCondition(eq("Galaxy"), isNull()))
+			.willReturn(matchedProductIds);
+
+		// [Mock Setup 2] 경매 조회 결과
+		Auction auction = Auction.builder().productId(50L).startPrice(10000).durationDays(3).build();
+		ReflectionTestUtils.setField(auction, "id", 1L);
+		ReflectionTestUtils.setField(auction, "status", AuctionStatus.IN_PROGRESS);
+		Page<Auction> auctionPage = new PageImpl<>(List.of(auction), pageable, 1);
+
+		given(auctionRepository.findAll(any(Specification.class), any(Pageable.class)))
+			.willReturn(auctionPage);
+
+		// [Mock Setup 3] 연관 데이터 (DTO 조립용)
+		Product product = Product.builder().name("Galaxy Lego").build();
+		ReflectionTestUtils.setField(product, "id", 50L);
+		given(productRepository.findAllById(Set.of(50L))).willReturn(List.of(product));
+		given(bidRepository.countByAuctionIdIn(Set.of(1L))).willReturn(List.<Object[]>of(new Object[]{1L, 5L}));
+		given(productImageRepository.findAllByProductIdIn(Set.of(50L))).willReturn(Collections.emptyList());
+
+		// [추가] JPA Criteria 객체 Mocking (Specification 강제 실행을 위함)
+		Root<Auction> root = mock(Root.class);
+		CriteriaQuery<?> query = mock(CriteriaQuery.class);
+		CriteriaBuilder cb = mock(CriteriaBuilder.class);
+		Path<Object> path = mock(Path.class);
+
+		// JPA 내부 호출 시 NPE 방지용 Stubbing
+		given(root.get(anyString())).willReturn(path);
+		given(path.in(anyCollection())).willReturn(mock(Predicate.class));
+
+		// [핵심 수정 1] equal 오버로딩 문제 해결
+		// any() -> any(Object.class)로 변경하여 (Expression, Object) 메서드가 호출되도록 강제함
+		given(cb.equal(any(), any(Object.class))).willReturn(mock(Predicate.class));
+
+		// [핵심 수정 2] and 가변인자 문제 해결 (이전 단계에서 적용함)
+		given(cb.and(any(Predicate[].class))).willReturn(mock(Predicate.class));
+
+		// when
+		PagedResponseDto<AuctionListResponseDto> result = auctionReadUseCase.getAuctions(condition, pageable);
+
+		// then
+		assertThat(result.data()).hasSize(1);
+		assertThat(result.data().get(0).productName()).isEqualTo("Galaxy Lego");
+
+		// [핵심 수정] Specification을 캡처하여 내부 로직 강제 실행
+		ArgumentCaptor<Specification<Auction>> specCaptor = ArgumentCaptor.forClass(Specification.class);
+		verify(auctionRepository).findAll(specCaptor.capture(), any(Pageable.class));
+
+		Specification<Auction> capturedSpec = specCaptor.getValue();
+
+		// 강제 실행! -> 이때 내부의 productRepository.findIdsBySearchCondition()이 호출됨
+		capturedSpec.toPredicate(root, query, cb);
+
+		// 이제 검증하면 성공함
+		verify(productRepository).findIdsBySearchCondition(eq("Galaxy"), isNull());
 	}
 }

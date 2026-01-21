@@ -1,6 +1,7 @@
 package com.bugzero.rarego.boundedContext.auction.in;
 
 import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.member.app.MemberFacade;
 import com.bugzero.rarego.boundedContext.member.in.MemberController;
@@ -8,6 +9,7 @@ import com.bugzero.rarego.global.exception.GlobalExceptionHandler;
 import com.bugzero.rarego.global.response.PageDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.security.MemberPrincipal;
+import com.bugzero.rarego.shared.auction.dto.MyAuctionOrderListResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -100,4 +102,36 @@ public class AuctionMemberControllerTest {
 			// PageDto 구조에 따라 jsonPath 수정 (totalElements 등)
 			.andExpect(jsonPath("$.pageDto.totalItems").value(1));
 	}
+
+	@Test
+	@DisplayName("성공: 내 낙찰(주문) 목록 조회 - 상태 필터링 포함")
+	void getMyAuctionOrders_success() throws Exception {
+		// given
+		// DTO 생성 (방금 만드신 DTO)
+		MyAuctionOrderListResponseDto orderDto = new MyAuctionOrderListResponseDto(
+			1001L, 1L, "Lego Titanic", "thumb.jpg",
+			850000, AuctionOrderStatus.PROCESSING, "결제 대기중",
+			LocalDateTime.now(), true
+		);
+
+		PagedResponseDto<MyAuctionOrderListResponseDto> response = new PagedResponseDto<>(
+			List.of(orderDto),
+			new PageDto(1, 10, 1, 1, false, false)
+		);
+
+		// Mocking: status 파라미터가 제대로 넘어가는지 확인
+		given(auctionFacade.getMyAuctionOrders(eq("2"), eq(AuctionOrderStatus.PROCESSING), any(Pageable.class)))
+			.willReturn(response);
+
+		// when & then
+		mockMvc.perform(get("/api/v1/members/me/orders")
+				.param("status", "PROCESSING") // 쿼리 파라미터 테스트
+				.param("page", "0")
+				.param("size", "10"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data[0].orderId").value(1001L))
+			.andExpect(jsonPath("$.data[0].productName").value("Lego Titanic"))
+			.andExpect(jsonPath("$.data[0].statusDescription").value("결제 대기중"));
+	}
+
 }
