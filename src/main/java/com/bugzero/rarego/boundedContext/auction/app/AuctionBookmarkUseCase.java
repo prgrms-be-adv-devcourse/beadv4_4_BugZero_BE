@@ -53,16 +53,21 @@ public class AuctionBookmarkUseCase {
     }
 
     @Transactional
-    public WishlistRemoveResponseDto removeBookmark(String publicId, Long auctionId) {
+    public WishlistRemoveResponseDto removeBookmark(String publicId, Long bookmarkId) {
         AuctionMember member = auctionMemberRepository.findByPublicId(publicId)
                 .orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
 
-        AuctionBookmark bookmark = auctionBookmarkRepository.findByAuctionIdAndMemberId(auctionId, member.getId())
+        AuctionBookmark bookmark = auctionBookmarkRepository.findById(bookmarkId)
                 .orElseThrow(() -> new CustomException(ErrorType.BOOKMARK_NOT_FOUND));
+
+        // 해당 북마크의 주인이 현재 요청한 사용자가 맞는지 체크
+        if (!bookmark.getMemberId().equals(member.getId())) {
+            throw new CustomException(ErrorType.BOOKMARK_UNAUTHORIZED_ACCESS);
+        }
 
         auctionBookmarkRepository.delete(bookmark);
 
-        return WishlistRemoveResponseDto.of(true, auctionId);
+        return WishlistRemoveResponseDto.of(true, bookmarkId);
     }
 
     @Transactional(readOnly = true)

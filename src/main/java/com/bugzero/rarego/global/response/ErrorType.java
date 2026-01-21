@@ -14,6 +14,26 @@ public enum ErrorType {
     MEMBER_NOT_FOUND(404, 1001, "존재하지 않는 회원입니다."),
     MEMBER_EMAIL_EMPTY(400, 1003, "이메일은 필수 입력값입니다."),
     MEMBER_JOIN_FAILED(500, 1004, "회원 가입에 실패했습니다."),
+    MEMBER_INVALID_NICKNAME(400, 1005, "닉네임이 공백이거나 50자 이상입니다."),
+    MEMBER_INVALID_INTRO(400, 1006, "자기소개 형식이 올바르지 않습니다."),
+    MEMBER_INVALID_ZIPCODE(400, 1007, "우편번호 형식이 올바르지 않습니다."),
+    MEMBER_INVALID_ADDRESS(400, 1008, "주소 형식이 올바르지 않습니다."),
+    MEMBER_INVALID_ADDRESS_DETAIL(400, 1009, "상세주소 형식이 올바르지 않습니다."),
+    MEMBER_INVALID_REALNAME(400, 1010, "이름은 한국어/영어로 이루어진 1~10자여야 합니다."),
+    MEMBER_INVALID_PHONE_NUMBER(400, 1011, "연락처 형식이 올바르지 않습니다."),
+    MEMBER_IDENTITY_REQUIRED(400, 1012, "이름과 연락처를 입력해주세요"),
+    // Member - checking
+    MEMBER_NICKNAME_REQUIRED(400, 1013, "닉네임은 필수 입력값입니다."),
+    MEMBER_ZIPCODE_REQUIRED(400, 1014, "우편번호는 필수 입력값입니다."),
+    MEMBER_ADDRESS_REQUIRED(400, 1015, "주소는 필수 입력값입니다."),
+    MEMBER_ADDRESS_DETAIL_REQUIRED(400, 1016, "상세주소는 필수 입력값입니다."),
+    MEMBER_PHONE_REQUIRED(400, 1017, "연락처는 필수 입력값입니다."),
+    MEMBER_REALNAME_REQUIRED(400, 1018, "실명은 필수 입력값입니다."),
+    MEMBER_SELLER_REQUIRED_FIELD_CANNOT_BE_CLEARED(400, 1019, "판매자 정보의 필수 항목은 삭제할 수 없습니다."),
+    MEMBER_UPDATED_FAILED(400, 1020, "삭제 요청된 항목에 값이 함께 전달되었습니다."),
+    MEMBER_IDENTITY_ALREADY_VERIFIED(409, 1021, "이미 본인인증이 완료되었습니다."),
+    MEMBER_NICKNAME_ALREADY_EXISTS(409, 1022, "이미 존재하는 닉네임입니다."),
+
     // Auth/JWT (1500 ~ 1999)
     AUTH_MEMBER_REQUIRED(400, 1501, "회원 정보가 필요합니다."),
     JWT_EXPIRE_SECONDS_INVALID(500, 1504, "토큰 만료 설정이 올바르지 않습니다."),
@@ -33,6 +53,7 @@ public enum ErrorType {
     AUCTION_BID_AMOUNT_TOO_LOW(400, 2006, "입찰 금액이 현재가 또는 시작가보다 낮습니다."),
     ORDER_NOT_FOUND(404, 2007, "낙찰 기록 정보를 찾을 수 없습니다."),
     AUCTION_ORDER_ACCESS_DENIED(403, 2008, "낙찰 기록 정보에 접근 권한이 없습니다."),
+    AUCTION_ALREADY_HAS_START_TIME(400, 2009, "이미 시작이 예정된 경매입니다."),
     BID_NOT_FOUND(404, 2501, "입찰가를 찾을 수 없습니다."),
     AUCTION_NOT_SCHEDULED(400, 2503, "예정된 경매가 아닙니다."),
     AUCTION_SCHEDULE_FAILED(500, 2504, "경매 정산 예약에 실패했습니다."),
@@ -40,9 +61,12 @@ public enum ErrorType {
     SERVICE_SUBSCRIBER_LIMIT_EXCEEDED(503, 2506, "구독자 수 한도를 초과했습니다."),
     BOOKMARK_ALREADY_EXISTS(409, 2507, "이미 관심 경매로 등록된 경매입니다."),
     BOOKMARK_NOT_FOUND(404, 2508, "관심 경매로 등록되지 않은 경매입니다."),
+    BOOKMARK_UNAUTHORIZED_ACCESS(403, 2511, "요청한 사용자가 북마크의 memberId와 일치하지 않습니다."),
 
     // Product (3000 ~ 3999)
     PRODUCT_NOT_FOUND(404, 3001, "상품이 존재하지 않습니다."),
+    UNAUTHORIZED_SELLER(400, 3002, "해당 상품의 판매자가 아닙니다."),
+    IMAGE_NOT_FOUND(400, 3003, "해당 상품 이미지가 존재하지 않습니다."),
 
     INSPECTION_REJECT_REASON_REQUIRED(400, 3501, "검수 반려시 사유가 있어야 합니다."),
     INSPECTION_ALREADY_COMPLETED(400, 3502, "검수가 이미 완료된 상품입니다."),

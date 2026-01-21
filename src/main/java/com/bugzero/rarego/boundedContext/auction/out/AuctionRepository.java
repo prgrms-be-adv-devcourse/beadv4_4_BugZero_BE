@@ -1,9 +1,9 @@
 package com.bugzero.rarego.boundedContext.auction.out;
 
-import com.bugzero.rarego.boundedContext.auction.domain.Auction;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
-
-import jakarta.persistence.LockModeType;
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,10 +12,10 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import com.bugzero.rarego.boundedContext.auction.domain.Auction;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
+
+import jakarta.persistence.LockModeType;
 
 public interface AuctionRepository extends JpaRepository<Auction, Long> {
     // 비관적 락 처리
@@ -43,4 +43,6 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
         Collection<AuctionStatus> statuses,
         Pageable pageable
     );
+
+    Optional<Auction> findByIdAndDeletedIsFalse(Long auctionId);
 }
