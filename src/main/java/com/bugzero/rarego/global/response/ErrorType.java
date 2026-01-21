@@ -40,6 +40,7 @@ public enum ErrorType {
     SERVICE_SUBSCRIBER_LIMIT_EXCEEDED(503, 2506, "구독자 수 한도를 초과했습니다."),
     BOOKMARK_ALREADY_EXISTS(409, 2507, "이미 관심 경매로 등록된 경매입니다."),
     BOOKMARK_NOT_FOUND(404, 2508, "관심 경매로 등록되지 않은 경매입니다."),
+    BOOKMARK_UNAUTHORIZED_ACCESS(401, 2511, "요청한 사용자가 북마크의 memberId와 일치하지 않습니다."),
 
     // Product (3000 ~ 3999)
     PRODUCT_NOT_FOUND(404, 3001, "상품이 존재하지 않습니다."),

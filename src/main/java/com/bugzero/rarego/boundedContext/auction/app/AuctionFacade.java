@@ -75,8 +75,8 @@ public class AuctionFacade {
 
     // 관심 경매 해제
     @Transactional
-    public WishlistRemoveResponseDto removeBookmark(String publicId, Long auctionId) {
-        return auctionBookmarkUseCase.removeBookmark(publicId, auctionId);
+    public WishlistRemoveResponseDto removeBookmark(String publicId, Long bookmarkId) {
+        return auctionBookmarkUseCase.removeBookmark(publicId, bookmarkId);
     }
 
     @Transactional
