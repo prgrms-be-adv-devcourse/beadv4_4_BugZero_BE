@@ -8,13 +8,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
-import com.bugzero.rarego.shared.product.auction.out.AuctionApiClient;
+import com.bugzero.rarego.shared.auction.out.AuctionApiClient;
 import com.bugzero.rarego.shared.product.dto.ProductImageRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductResponseDto;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
