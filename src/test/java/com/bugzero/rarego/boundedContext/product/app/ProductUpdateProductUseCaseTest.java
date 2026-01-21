@@ -19,7 +19,7 @@ import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
-import com.bugzero.rarego.shared.product.auction.out.AuctionApiClient;
+import com.bugzero.rarego.shared.auction.out.AuctionApiClient;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionUpdateDto;
 import com.bugzero.rarego.shared.product.dto.ProductImageUpdateDto;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateDto;
@@ -32,7 +32,7 @@ class ProductUpdateProductUseCaseTest {
 	private ProductSupport productSupport;
 
 	@Mock
-	private AuctionApiClient  auctionApiClient;
+	private AuctionApiClient auctionApiClient;
 
 	@InjectMocks
 	private ProductUpdateProductUseCase useCase;

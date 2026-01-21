@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
-import com.bugzero.rarego.shared.product.auction.out.AuctionApiClient;
+import com.bugzero.rarego.shared.auction.out.AuctionApiClient;
 import com.bugzero.rarego.shared.product.dto.ProductImageUpdateDto;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateDto;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateResponseDto;
@@ -40,7 +40,6 @@ public class ProductUpdateProductUseCase {
 			images
 		);
 
-		//TODO경매 정보 수정 내부 api 호출하여 응답값을 성공적으로 받으면 커밋할 수 있도록 함.
 		Long auctionId = auctionApiClient.updateAuction(publicId, productUpdateDto.productAuctionUpdateDto());
 
 		return ProductUpdateResponseDto.builder()
