@@ -30,6 +30,7 @@ import com.bugzero.rarego.shared.product.dto.ProductImageUpdateDto;
 import com.bugzero.rarego.shared.product.dto.ProductRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateDto;
+import com.bugzero.rarego.shared.product.dto.ProductUpdateResponseDto;
 
 import tools.jackson.databind.ObjectMapper;
 
@@ -51,8 +52,10 @@ class ProductControllerTest {
 	// 공통 상수 정의
 	private final String PUBLIC_ID = "seller-uuid";
 	private final Long PRODUCT_ID = 100L;
+	private final Long AUCTION_ID = 200L;
 
 	private ProductResponseDto defaultResponse;
+	private ProductUpdateResponseDto defaultUpdateResponse;
 
 	@BeforeEach
 	void setUp() {
@@ -61,6 +64,11 @@ class ProductControllerTest {
 			.productId(PRODUCT_ID)
 			.auctionId(1)
 			.inspectionStatus(InspectionStatus.PENDING)
+			.build();
+
+		defaultUpdateResponse = ProductUpdateResponseDto.builder()
+			.productId(PRODUCT_ID)
+			.auctionId(AUCTION_ID)
 			.build();
 	}
 
@@ -107,7 +115,7 @@ class ProductControllerTest {
 		// given
 		ProductUpdateDto updateDto = createUpdateDto("수정된 상품명");
 		given(productFacade.updateProduct(eq(PUBLIC_ID), eq(PRODUCT_ID), any(ProductUpdateDto.class)))
-			.willReturn(PRODUCT_ID);
+			.willReturn(defaultUpdateResponse);
 
 		// when & then
 		mockMvc.perform(patch("/api/v1/products/{productId}", PRODUCT_ID)
@@ -116,7 +124,8 @@ class ProductControllerTest {
 				.content(objectMapper.writeValueAsString(updateDto)))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.status").value(200))
-			.andExpect(jsonPath("$.data").value(PRODUCT_ID))
+			.andExpect(jsonPath("$.data.productId").value(defaultUpdateResponse.productId()))
+			.andExpect(jsonPath("$.data.auctionId").value(defaultUpdateResponse.auctionId()))
 			.andDo(print());
 	}
 
