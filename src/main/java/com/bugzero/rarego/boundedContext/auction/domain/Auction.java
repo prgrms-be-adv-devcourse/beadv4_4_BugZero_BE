@@ -98,6 +98,7 @@ public class Auction extends BaseIdAndTime {
       this.status = AuctionStatus.IN_PROGRESS;
     }
 
+    //시작 시간 유무에 따라 경매예정이 확정되었는지 확인
     public boolean hasStartTime() {
         return this.startTime != null;
     }
@@ -112,10 +113,6 @@ public class Auction extends BaseIdAndTime {
         return Objects.equals(this.sellerId, sellerId);
     }
 
-    // 경매 시작 전인지 확인
-    public boolean isPending() {
-        return status == AuctionStatus.SCHEDULED;
-    }
 
     public void update(int durationDays, int startPrice) {
         this.durationDays = durationDays;

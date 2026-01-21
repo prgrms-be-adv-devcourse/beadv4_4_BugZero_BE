@@ -24,9 +24,9 @@ public class AuctionApiClient {
                 .build();
     }
 
-    public Long createAuction(Long productId, String sellerUUID, ProductAuctionRequestDto productAuctionRequestDto) {
+    public Long createAuction(Long productId, String publicId, ProductAuctionRequestDto productAuctionRequestDto) {
         SuccessResponseDto<Long> response = restClient.post()
-                .uri("/{productId}/{sellerUUID}", productId, sellerUUID)
+                .uri("/{productId}/{publicId}", productId, publicId)
                 .body(productAuctionRequestDto)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, (httpRequest, httpResponse) -> {
@@ -56,5 +56,15 @@ public class AuctionApiClient {
 
         return Optional.ofNullable(result)
             .orElseThrow(() -> new CustomException(ErrorType.AUCTION_UPDATE_FAILED));
+    }
+
+    public void deleteAuction(String publicId,Long productId) {
+        restClient.delete()
+            .uri("/{productId}/{publicId}", productId ,publicId)
+            .retrieve()
+            .onStatus(HttpStatusCode::isError, (httpRequest, httpResponse) -> {
+                throw new CustomException(ErrorType.AUCTION_DELETE_FAILED);
+            })
+            .toBodilessEntity();
     }
 }

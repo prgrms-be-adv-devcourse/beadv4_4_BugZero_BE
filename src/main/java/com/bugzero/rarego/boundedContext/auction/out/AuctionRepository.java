@@ -33,6 +33,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
             @Param("now") LocalDateTime now,
             Pageable pageable
     );
+    Optional<Auction> findByProductId(Long productId);
 
     //삭제가 되지 않은 경매 정보만 반환
     Optional<Auction> findByIdAndDeletedIsFalse(Long auctionId);
