@@ -13,8 +13,6 @@ import com.bugzero.rarego.shared.auction.dto.AuctionDetailResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionFilterType;
 import com.bugzero.rarego.shared.auction.dto.AuctionListResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionOrderResponseDto;
-import com.bugzero.rarego.shared.auction.dto.AuctionRelistRequestDto;
-import com.bugzero.rarego.shared.auction.dto.AuctionRelistResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionSearchCondition;
 import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
@@ -37,7 +35,6 @@ public class AuctionFacade {
 	private final AuctionCreateBidUseCase auctionCreateBidUseCase;
 	private final AuctionReadUseCase auctionReadUseCase;
 	private final AuctionSyncMemberUseCase auctionSyncMemberUseCase;
-	private final AuctionRelistUseCase auctionRelistUseCase;
 
 	// 쓰기 작업 (입찰 생성)
 	@Transactional
