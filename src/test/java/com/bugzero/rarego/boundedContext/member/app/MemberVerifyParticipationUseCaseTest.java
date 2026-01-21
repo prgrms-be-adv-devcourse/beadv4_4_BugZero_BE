@@ -15,13 +15,13 @@ import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 
 @ExtendWith(MockitoExtension.class)
-class MemberVerifyEligibilityUseCaseTest {
+class MemberVerifyParticipationUseCaseTest {
 
 	@Mock
 	private MemberSupport memberSupport;
 
 	@InjectMocks
-	private MemberVerifyEligibilityUseCase memberVerifyEligibilityUseCase;
+	private MemberVerifyParticipationUseCase memberVerifyParticipationUseCase;
 
 	@Test
 	@DisplayName("필수 항목이 모두 있으면 검수가 통과한다")
@@ -29,7 +29,7 @@ class MemberVerifyEligibilityUseCaseTest {
 		Member member = baseMember();
 		when(memberSupport.findByPublicId("public-id")).thenReturn(member);
 
-		memberVerifyEligibilityUseCase.verifyParticipation("public-id");
+		memberVerifyParticipationUseCase.verifyParticipation("public-id");
 
 		verify(memberSupport).findByPublicId("public-id");
 	}
@@ -78,7 +78,7 @@ class MemberVerifyEligibilityUseCaseTest {
 		when(memberSupport.findByPublicId("public-id")).thenReturn(member);
 
 		Throwable thrown = catchThrowable(
-			() -> memberVerifyEligibilityUseCase.verifyParticipation("public-id")
+			() -> memberVerifyParticipationUseCase.verifyParticipation("public-id")
 		);
 
 		assertThat(thrown)

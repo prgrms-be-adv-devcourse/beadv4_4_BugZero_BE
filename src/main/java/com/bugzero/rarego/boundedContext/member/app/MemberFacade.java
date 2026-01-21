@@ -19,7 +19,7 @@ public class MemberFacade {
 	private final MemberUpdateMemberUseCase memberUpdateMemberUseCase;
 	private final MemberUpdateIdentityUseCase memberUpdateIdentityUseCase;
 	private final MemberPromoteSellerUseCase memberPromoteSellerUseCase;
-	private final MemberVerifyEligibilityUseCase memberVerifyParticipationUseCase;
+	private final MemberVerifyParticipationUseCase memberVerifyParticipationUseCase;
 
 	@Transactional
 	public MemberJoinResponseDto join(String email) {

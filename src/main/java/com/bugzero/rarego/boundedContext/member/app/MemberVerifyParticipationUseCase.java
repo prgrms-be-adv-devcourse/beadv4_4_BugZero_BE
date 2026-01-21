@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 // 회원이 입찰이나 확정 시 필수 요소들을 작성했는지 판별하는 검수 로직
 @Service
 @RequiredArgsConstructor
-public class MemberVerifyEligibilityUseCase {
+public class MemberVerifyParticipationUseCase {
 	private final MemberSupport memberSupport;
 
 	// 허용시 OK, 공백이 있다면 오류
