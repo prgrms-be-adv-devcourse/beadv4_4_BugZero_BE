@@ -68,6 +68,9 @@ class ProductCreateProductUseCaseTest {
 			return product;
 		});
 
+		given(productSupport.normalizeCreateImageOrder(request.productImageRequestDto()))
+			.willReturn(request.productImageRequestDto());
+
 		given(auctionApiClient.createAuction(eq(1L),eq("1L"), any(ProductAuctionRequestDto.class)))
 			.willReturn(expectedAuctionId);
 
