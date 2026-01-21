@@ -48,9 +48,7 @@ public class AuctionCreateBidUseCase {
         int depositAmount = (int) (auction.getStartPrice() * 0.1);
 
         // 보증금 Hold (유효성 검증 통과 후 보증금 Hold)
-        // TODO: 현재 holdDeposit 같은 경우 memberId를 받기 때문에 추후에 변경 예정
-
-        // DepositHoldResponseDto depositResponse = paymentApiClient.holdDeposit(depositAmount, memberId, auctionId);
+        // DepositHoldResponseDto depositResponse = paymentApiClient.holdDeposit(depositAmount, memberPublicId, auctionId);
 
         // 4. 현재가 갱신
         auction.updateCurrentPrice(bidAmount);

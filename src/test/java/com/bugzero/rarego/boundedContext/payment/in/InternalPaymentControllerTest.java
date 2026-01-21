@@ -46,7 +46,7 @@ class InternalPaymentControllerTest {
         @DisplayName("성공: 보증금 홀드 요청이 정상 처리되면 HTTP 201과 결과 데이터를 반환한다")
         void holdDeposit_Success() throws Exception {
                 // given
-                DepositHoldRequestDto request = new DepositHoldRequestDto(20000, 4L, 3L);
+                DepositHoldRequestDto request = new DepositHoldRequestDto(20000, "member-uuid-123", 3L);
                 DepositHoldResponseDto response = new DepositHoldResponseDto(
                                 1L, 3L, 20000, "HOLD", LocalDateTime.now());
 
