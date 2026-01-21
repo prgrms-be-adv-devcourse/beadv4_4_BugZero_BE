@@ -74,3 +74,4 @@ log/
 src/main/resources/static/*
 .agent/
 .mantic/
+bin/
