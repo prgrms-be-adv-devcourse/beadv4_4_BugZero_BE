@@ -26,7 +26,7 @@ public class AuctionSupport {
 	private final ProductRepository productRepository;
 	private final AuctionOrderRepository auctionOrderRepository;
 
-	public Auction getAuction(Long auctionId) {
+	public Auction getAuctionById(Long auctionId) {
 		return auctionRepository.findById(auctionId)
 			.orElseThrow(() -> new CustomException(ErrorType.AUCTION_NOT_FOUND));
 	}
