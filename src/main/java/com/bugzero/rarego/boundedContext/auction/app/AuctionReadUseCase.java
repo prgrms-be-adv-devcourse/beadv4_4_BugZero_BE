@@ -194,9 +194,9 @@ public class AuctionReadUseCase {
 		AuctionOrder order = support.getOrder(auctionId);
 		Auction auction = support.getAuction(auctionId);
 
-		String viewerRole = determineViewerRole(order, memberId);
+		AuctionViewerRoleStatus viewerRole = determineViewerRole(order, memberId);
 
-		if (viewerRole.equals("GUEST")) {
+		if (viewerRole == GUEST) {
 			throw new CustomException(ErrorType.AUCTION_ORDER_ACCESS_DENIED);
 		}
 
@@ -209,14 +209,14 @@ public class AuctionReadUseCase {
 			.map(ProductImage::getImageUrl)
 			.orElse(null);
 
-		Long traderId = viewerRole.equals("BUYER") ? order.getSellerId() : order.getBidderId();
+		Long traderId = viewerRole == BUYER ? order.getSellerId() : order.getBidderId();
 		AuctionMember trader = support.getMember(traderId);
 
 		String statusDescription = convertStatusDescription(order.getStatus(), viewerRole);
 
 		return AuctionOrderResponseDto.from(
 			order,
-			viewerRole,
+			viewerRole.name(),
 			statusDescription,
 			product.getName(),
 			thumbnailUrl,
@@ -321,19 +321,19 @@ public class AuctionReadUseCase {
 	}
 
 	// 상태 설명 헬퍼 메서드
-	private String convertStatusDescription(AuctionOrderStatus status, String role) {
+	private String convertStatusDescription(AuctionOrderStatus status, AuctionViewerRoleStatus role) {
 		if (status == AuctionOrderStatus.PROCESSING) {
-			return role.equals("BUYER") ? "결제 대기중" : "입금 대기중";
+			return role == BUYER ? "결제 대기중" : "입금 대기중";
 		} else if (status == AuctionOrderStatus.SUCCESS) {
 			return "결제 완료";
 		}
 		return "-";
 	}
 
-	private String determineViewerRole(AuctionOrder order, Long memberId) {
-		if (memberId.equals(order.getBidderId())) return BUYER.toString();
-		if (memberId.equals(order.getSellerId())) return SELLER.toString();
-		return GUEST.toString();
+	private AuctionViewerRoleStatus determineViewerRole(AuctionOrder order, Long memberId) {
+		if (Objects.equals(memberId, order.getBidderId())) return BUYER;
+		if (Objects.equals(memberId, order.getSellerId())) return SELLER;
+		return GUEST;
 	}
 
 	private Pageable applySorting(Pageable pageable, String sortStr) {
@@ -347,7 +347,7 @@ public class AuctionReadUseCase {
 		} else if ("NEWEST".equalsIgnoreCase(sortStr)) {
 			sort = Sort.by(Sort.Direction.DESC, "createdAt");
 		}
-		// 인기순(MOST_BIDS)은 입찰 수 정렬이므로 DB 컬럼이 없으면 복잡함.
+		// TODO: 인기순(MOST_BIDS)은 입찰 수 정렬이므로 DB 컬럼이 없으면 복잡함.
 		// 현재는 ID 역순(최신 등록순) 등을 기본으로 처리
 		else {
 			sort = Sort.by(Sort.Direction.DESC, "id");
