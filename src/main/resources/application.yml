@@ -7,7 +7,7 @@ spring:
   config:
     import: optional:file:.env[.properties]
   profiles:
-    active: ${SPRING_ACTIVE_PROFILES:dev}
+    active: ${SPRING_PROFILES_ACTIVE:dev}
   output:
     ansi:
       enabled: always
@@ -81,6 +81,9 @@ custom:
   global:
     internalBackUrl: ${INTERNAL_BACK_URL:http://localhost:8080}
   payment:
+    settlement:
+      chunkSize: 10
+      holdDays: 7
     systemMemberId: 2
 
 

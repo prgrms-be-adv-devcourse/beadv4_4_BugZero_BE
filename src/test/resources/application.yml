@@ -52,8 +52,7 @@ custom:
   global:
     internalBackUrl: ${INTERNAL_BACK_URL:http://localhost:8080}
   payment:
+    settlement:
+      holdDays: 0
     systemMemberId: 2
 
-payment:
-  settlement:
-    hold-days: 0
