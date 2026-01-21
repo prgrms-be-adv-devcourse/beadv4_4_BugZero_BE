@@ -25,15 +25,13 @@ public class PaymentSettlementProcessor {
 	private Long systemMemberId;
 
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
-	public void process(Long settlementId) {
-		// 비관적 락
+	public boolean processSellerDeposit(Long settlementId) {
 		Settlement settlement = paymentSupport.findSettlementByIdForUpdate(settlementId);
 
 		if (settlement.getStatus() != SettlementStatus.READY) {
-			return; // 이미 처리된 건은 스킵
+			return false;
 		}
 
-		// 판매자 정산금 입금
 		Wallet sellerWallet = paymentSupport.findWalletByMemberIdForUpdate(settlement.getSeller().getId());
 		sellerWallet.addBalance(settlement.getSettlementAmount());
 
@@ -44,20 +42,22 @@ public class PaymentSettlementProcessor {
 			settlement.getId()
 		);
 
-		// 시스템 수수료 입금
-		if (settlement.getFeeAmount() > 0) {
-			Wallet systemWallet = paymentSupport.findWalletByMemberIdForUpdate(systemMemberId);
-			systemWallet.addBalance(settlement.getFeeAmount());
-
-			saveSettlementTransaction(
-				systemWallet,
-				WalletTransactionType.SETTLEMENT_FEE,
-				settlement.getFeeAmount(),
-				settlement.getId()
-			);
-		}
-
 		settlement.complete();
+
+		return true;
+	}
+
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	public void processSystemDeposit(int totalFeeAmount) {
+		Wallet systemWallet = paymentSupport.findWalletByMemberIdForUpdate(systemMemberId);
+		systemWallet.addBalance(totalFeeAmount);
+
+		saveSettlementTransaction(
+			systemWallet,
+			WalletTransactionType.SETTLEMENT_FEE,
+			totalFeeAmount,
+			0L
+		); // 합산 건이므로 referenceId는 고민
 	}
 
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
