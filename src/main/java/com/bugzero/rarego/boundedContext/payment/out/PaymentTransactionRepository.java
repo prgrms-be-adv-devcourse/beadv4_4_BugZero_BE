@@ -16,9 +16,9 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
 		WHERE pt.member.id = :memberId
 		AND (:type IS NULL OR pt.transactionType = :type)
 		AND (:from IS NULL OR pt.createdAt >= :from)
-		AND (:to IS NULL OR pt.createdAt <= :to)
+		AND (:to IS NULL OR pt.createdAt < :to)
 		"""
 	)
-	Page<PaymentTransaction> findAllByMemberIdAndTransactionType(Long memberId, WalletTransactionType type,
+	Page<PaymentTransaction> searchPaymentTransactions(Long memberId, WalletTransactionType type,
 		LocalDateTime from, LocalDateTime to, Pageable pageable);
 }

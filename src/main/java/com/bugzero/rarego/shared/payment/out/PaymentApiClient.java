@@ -21,8 +21,8 @@ public class PaymentApiClient {
                 .build();
     }
 
-    public DepositHoldResponseDto holdDeposit(int amount, Long memberId, Long auctionId) {
-        DepositHoldRequestDto request = new DepositHoldRequestDto(amount, memberId, auctionId);
+    public DepositHoldResponseDto holdDeposit(int amount, String memberPublicId, Long auctionId) {
+        DepositHoldRequestDto request = new DepositHoldRequestDto(amount, memberPublicId, auctionId);
         SuccessResponseDto<DepositHoldResponseDto> response = restClient.post()
                 .uri("/deposits/hold")
                 .body(request)

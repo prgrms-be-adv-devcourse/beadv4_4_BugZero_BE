@@ -26,18 +26,19 @@ public class PaymentHoldDepositUseCase {
 
 	@Transactional
 	public DepositHoldResponseDto holdDeposit(DepositHoldRequestDto request) {
-		// 1. 멱등성 체크
-		return depositRepository.findByMemberIdAndAuctionId(request.memberId(), request.auctionId())
+		// publicId → memberId 변환
+		PaymentMember member = paymentSupport.findMemberByPublicId(request.memberPublicId());
+		Long memberId = member.getId();
+
+		// 1. 멱등성 체크 (memberId로 조회)
+		return depositRepository.findByMemberIdAndAuctionId(memberId, request.auctionId())
 			.map(DepositHoldResponseDto::from)
-			.orElseGet(() -> executeHold(request));
+			.orElseGet(() -> executeHold(member, request));
 	}
 
-	private DepositHoldResponseDto executeHold(DepositHoldRequestDto request) {
-		PaymentMember member = paymentSupport.findMemberById(request.memberId());
-
-		Wallet wallet = paymentSupport.findWalletByMemberIdForUpdate(request.memberId());
-
+	private DepositHoldResponseDto executeHold(PaymentMember member, DepositHoldRequestDto request) {
 		// 2. 잔액 검증 & Wallet 업데이트
+		Wallet wallet = paymentSupport.findWalletByMemberIdForUpdate(member.getId());
 		wallet.hold(request.amount());
 
 		// 3. Deposit 엔티티 생성 및 저장

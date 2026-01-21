@@ -1,6 +1,7 @@
 package com.bugzero.rarego.boundedContext.product.app;
 
-import static org.assertj.core.api.AssertionsForClassTypes.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
 import java.util.List;
@@ -19,7 +20,7 @@ import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
-import com.bugzero.rarego.shared.product.auction.out.AuctionApiClient;
+import com.bugzero.rarego.shared.auction.out.AuctionApiClient;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductImageRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductRequestDto;
@@ -67,6 +68,9 @@ class ProductCreateProductUseCaseTest {
 			ReflectionTestUtils.setField(product, "id", 1L); // 임의로 ID 부여
 			return product;
 		});
+
+		given(productSupport.normalizeCreateImageOrder(request.productImageRequestDto()))
+			.willReturn(request.productImageRequestDto());
 
 		given(auctionApiClient.createAuction(eq(1L),eq("1L"), any(ProductAuctionRequestDto.class)))
 			.willReturn(expectedAuctionId);

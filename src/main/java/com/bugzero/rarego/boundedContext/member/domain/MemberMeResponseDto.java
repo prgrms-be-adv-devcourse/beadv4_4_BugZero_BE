@@ -36,5 +36,4 @@ public record MemberMeResponseDto(
 			member.getUpdatedAt()
 		);
 	}
-
 }

@@ -1,0 +1,31 @@
+spring:
+  datasource:
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: false
+        use_sql_comments: false
+        default_batch_fetch_size: 100
+    open-in-view: false
+
+logging:
+  level:
+    root: INFO
+    com.bugzero.rarego: INFO
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:3600}
+  refresh-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:86400}
+
+custom:
+  payment:
+    settlement:
+      holdDays: 7

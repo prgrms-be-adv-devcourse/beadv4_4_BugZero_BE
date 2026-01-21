@@ -54,4 +54,9 @@ public class PaymentSupport {
 		return settlementRepository.findByIdForUpdate(settlementId)
 			.orElseThrow(() -> new CustomException(ErrorType.SETTLEMENT_NOT_FOUND));
 	}
+
+	public PaymentMember findMemberByPublicId(String memberPublicId) {
+		return paymentMemberRepository.findByPublicId(memberPublicId)
+			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
+	}
 }

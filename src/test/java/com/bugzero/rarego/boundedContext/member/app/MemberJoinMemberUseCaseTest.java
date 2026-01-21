@@ -99,4 +99,15 @@ class MemberJoinMemberUseCaseTest {
 		assertThat(result.memberPublicId()).isEqualTo("dup-public-id");
 		verify(eventPublisher, never()).publish(any());
 	}
+
+	@Test
+	@DisplayName("닉네임이 계속 중복되면 MEMBER_JOIN_FAILED 예외를 발생시킨다.")
+	void uniqueMemberNickname_throwsWhenRepeatedDuplicates() {
+		when(memberRepository.existsByNickname(anyString())).thenReturn(true);
+
+		assertThatThrownBy(() -> memberJoinMemberUseCase.uniqueMemberNickname())
+			.isInstanceOf(CustomException.class)
+			.extracting("errorType")
+			.isEqualTo(ErrorType.MEMBER_JOIN_FAILED);
+	}
 }
