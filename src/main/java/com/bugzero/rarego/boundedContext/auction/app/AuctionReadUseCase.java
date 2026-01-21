@@ -27,6 +27,7 @@ import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionViewerRoleStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.Bid;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
@@ -46,6 +47,7 @@ import com.bugzero.rarego.shared.auction.dto.AuctionListResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionOrderResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionSearchCondition;
 import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
+import com.bugzero.rarego.shared.auction.dto.MyAuctionOrderListResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
 
@@ -166,7 +168,7 @@ public class AuctionReadUseCase {
 		}
 
 		// 1. 경매 조회
-		Auction auction = support.getAuction(auctionId);
+		Auction auction = support.findAuctionById(auctionId);
 
 		// 2. 전체 최고가 입찰 조회
 		Bid highestBid = bidRepository.findTopByAuctionIdOrderByBidAmountDesc(auctionId)
@@ -192,11 +194,11 @@ public class AuctionReadUseCase {
 		Long memberId = member.getId();
 
 		AuctionOrder order = support.getOrder(auctionId);
-		Auction auction = support.getAuction(auctionId);
+		Auction auction = support.findAuctionById(auctionId);
 
-		String viewerRole = determineViewerRole(order, memberId);
+		AuctionViewerRoleStatus viewerRole = determineViewerRole(order, memberId);
 
-		if (viewerRole.equals("GUEST")) {
+		if (viewerRole == GUEST) {
 			throw new CustomException(ErrorType.AUCTION_ORDER_ACCESS_DENIED);
 		}
 
@@ -209,14 +211,14 @@ public class AuctionReadUseCase {
 			.map(ProductImage::getImageUrl)
 			.orElse(null);
 
-		Long traderId = viewerRole.equals("BUYER") ? order.getSellerId() : order.getBidderId();
+		Long traderId = viewerRole == BUYER ? order.getSellerId() : order.getBidderId();
 		AuctionMember trader = support.getMember(traderId);
 
 		String statusDescription = convertStatusDescription(order.getStatus(), viewerRole);
 
 		return AuctionOrderResponseDto.from(
 			order,
-			viewerRole,
+			viewerRole.name(),
 			statusDescription,
 			product.getName(),
 			thumbnailUrl,
@@ -276,8 +278,61 @@ public class AuctionReadUseCase {
 		return new PagedResponseDto<>(dtos, PageDto.from(auctionPage));
 	}
 
+	public PagedResponseDto<MyAuctionOrderListResponseDto> getMyAuctionOrders(String memberPublicId, AuctionOrderStatus status, Pageable pageable) {
+		AuctionMember member = support.getMember(memberPublicId);
 
+		// status가 null이면 전체, 있으면 필터링해서 가져옴
+		Page<AuctionOrder> orderPage = auctionOrderRepository.findAllByBidderIdAndStatus(
+			member.getId(),
+			status,
+			pageable
+		);
 
+		List<AuctionOrder> orders = orderPage.getContent();
+
+		if (orders.isEmpty()) {
+			return new PagedResponseDto<>(Collections.emptyList(), PageDto.from(orderPage));
+		}
+
+		Set<Long> auctionIds = orders.stream().map(AuctionOrder::getAuctionId).collect(Collectors.toSet());
+
+		Map<Long, Auction> auctionMap = auctionRepository.findAllById(auctionIds).stream()
+			.collect(Collectors.toMap(Auction::getId, Function.identity()));
+
+		Set<Long> productIds = auctionMap.values().stream()
+			.map(Auction::getProductId)
+			.collect(Collectors.toSet());
+
+		Map<Long, Product> productMap = productRepository.findAllByIdIn(productIds).stream()
+			.collect(Collectors.toMap(Product::getId, Function.identity()));
+
+		List<ProductImage> images = productImageRepository.findAllByProductIdIn(productIds);
+		Map<Long, String> thumbnailMap = images.stream()
+			// sortOrder 오름차순 정렬 (0, 1, 2...)
+			.sorted(Comparator.comparingInt(ProductImage::getSortOrder))
+			.collect(Collectors.toMap(
+				img -> img.getProduct().getId(),
+				ProductImage::getImageUrl,
+				(existing, replacement) -> existing
+			));
+
+		List<MyAuctionOrderListResponseDto> dtos = orders.stream()
+			.map(order -> {
+				Auction auction = auctionMap.get(order.getAuctionId());
+
+				// 경매가 없을 경우(데이터 무결성 문제)
+				if (auction == null) return null;
+
+				Product product = productMap.get(auction.getProductId());
+				String thumbnailUrl = thumbnailMap.get(auction.getProductId());
+
+				return MyAuctionOrderListResponseDto.from(order, product, thumbnailUrl);
+			})
+			.filter(Objects::nonNull) // null 제외
+			.toList();
+
+		return new PagedResponseDto<>(dtos, PageDto.from(orderPage));
+	}
 
 
 	// =========================================================================
@@ -321,19 +376,19 @@ public class AuctionReadUseCase {
 	}
 
 	// 상태 설명 헬퍼 메서드
-	private String convertStatusDescription(AuctionOrderStatus status, String role) {
+	private String convertStatusDescription(AuctionOrderStatus status, AuctionViewerRoleStatus role) {
 		if (status == AuctionOrderStatus.PROCESSING) {
-			return role.equals("BUYER") ? "결제 대기중" : "입금 대기중";
+			return role == BUYER ? "결제 대기중" : "입금 대기중";
 		} else if (status == AuctionOrderStatus.SUCCESS) {
 			return "결제 완료";
 		}
 		return "-";
 	}
 
-	private String determineViewerRole(AuctionOrder order, Long memberId) {
-		if (memberId.equals(order.getBidderId())) return BUYER.toString();
-		if (memberId.equals(order.getSellerId())) return SELLER.toString();
-		return GUEST.toString();
+	private AuctionViewerRoleStatus determineViewerRole(AuctionOrder order, Long memberId) {
+		if (Objects.equals(memberId, order.getBidderId())) return BUYER;
+		if (Objects.equals(memberId, order.getSellerId())) return SELLER;
+		return GUEST;
 	}
 
 	private Pageable applySorting(Pageable pageable, String sortStr) {
@@ -347,7 +402,7 @@ public class AuctionReadUseCase {
 		} else if ("NEWEST".equalsIgnoreCase(sortStr)) {
 			sort = Sort.by(Sort.Direction.DESC, "createdAt");
 		}
-		// 인기순(MOST_BIDS)은 입찰 수 정렬이므로 DB 컬럼이 없으면 복잡함.
+		// TODO: 인기순(MOST_BIDS)은 입찰 수 정렬이므로 DB 컬럼이 없으면 복잡함.
 		// 현재는 ID 역순(최신 등록순) 등을 기본으로 처리
 		else {
 			sort = Sort.by(Sort.Direction.DESC, "id");

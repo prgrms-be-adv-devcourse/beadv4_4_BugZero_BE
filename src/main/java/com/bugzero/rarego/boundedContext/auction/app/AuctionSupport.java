@@ -1,11 +1,14 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
+import java.util.Optional;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
@@ -26,7 +29,7 @@ public class AuctionSupport {
 	private final ProductRepository productRepository;
 	private final AuctionOrderRepository auctionOrderRepository;
 
-	public Auction getAuction(Long auctionId) {
+	public Auction findAuctionById(Long auctionId) {
 		return auctionRepository.findById(auctionId)
 			.orElseThrow(() -> new CustomException(ErrorType.AUCTION_NOT_FOUND));
 	}
@@ -55,6 +58,10 @@ public class AuctionSupport {
 	public AuctionOrder getOrder(Long auctionId) {
 		return auctionOrderRepository.findByAuctionId(auctionId)
 			.orElseThrow(() -> new CustomException(ErrorType.ORDER_NOT_FOUND));
+	}
+
+	public Optional<AuctionOrder> findOrder(Long auctionId) {
+		return auctionOrderRepository.findByAuctionId(auctionId);
 	}
 
 }

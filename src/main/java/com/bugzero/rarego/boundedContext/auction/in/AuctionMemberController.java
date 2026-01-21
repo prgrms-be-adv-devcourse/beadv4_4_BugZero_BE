@@ -1,10 +1,12 @@
 package com.bugzero.rarego.boundedContext.auction.in;
 
 import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.security.MemberPrincipal;
 import com.bugzero.rarego.shared.auction.dto.AuctionFilterType;
+import com.bugzero.rarego.shared.auction.dto.MyAuctionOrderListResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -46,5 +48,15 @@ public class AuctionMemberController {
 		@PageableDefault(size = 20) Pageable pageable
 	) {
 		return auctionFacade.getMySales(principal.publicId(), filter, pageable);
+	}
+
+	@Operation(summary = "나의 낙찰(주문) 목록 조회", description = "내가 낙찰받은 경매 목록을 결제 상태(대기/완료)에 따라 조회합니다.")
+	@GetMapping("/me/orders")
+	public PagedResponseDto<MyAuctionOrderListResponseDto> getMyAuctionOrders(
+		@RequestParam(required = false) AuctionOrderStatus status,
+		@AuthenticationPrincipal MemberPrincipal principal,
+		@PageableDefault(size = 20) Pageable pageable
+	) {
+		return auctionFacade.getMyAuctionOrders(principal.publicId(), status, pageable);
 	}
 }
