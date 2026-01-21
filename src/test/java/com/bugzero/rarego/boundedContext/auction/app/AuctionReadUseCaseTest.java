@@ -45,6 +45,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
+import org.mockito.ArgumentCaptor;
+import static org.mockito.Mockito.*;
 
 import jakarta.persistence.criteria.*;
 
