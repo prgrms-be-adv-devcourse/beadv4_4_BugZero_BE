@@ -53,6 +53,7 @@ public enum ErrorType {
     AUCTION_BID_AMOUNT_TOO_LOW(400, 2006, "입찰 금액이 현재가 또는 시작가보다 낮습니다."),
     ORDER_NOT_FOUND(404, 2007, "낙찰 기록 정보를 찾을 수 없습니다."),
     AUCTION_ORDER_ACCESS_DENIED(403, 2008, "낙찰 기록 정보에 접근 권한이 없습니다."),
+    AUCTION_ALREADY_HAS_START_TIME(400, 2009, "이미 시작이 예정된 경매입니다."),
     BID_NOT_FOUND(404, 2501, "입찰가를 찾을 수 없습니다."),
     AUCTION_NOT_SCHEDULED(400, 2503, "예정된 경매가 아닙니다."),
     AUCTION_SCHEDULE_FAILED(500, 2504, "경매 정산 예약에 실패했습니다."),
