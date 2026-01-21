@@ -2,8 +2,11 @@ package com.bugzero.rarego.boundedContext.auction.app;
 
 import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionBookmark;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
+import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionBookmarkRepository;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import org.junit.jupiter.api.DisplayName;
@@ -15,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
@@ -35,6 +39,9 @@ class AuctionBookmarkUseCaseTest {
 
     @InjectMocks
     private AuctionBookmarkUseCase auctionBookmarkUseCase;
+
+    @Mock
+    private AuctionMemberRepository auctionMemberRepository;
 
     @Test
     @DisplayName("관심 경매 등록 - 성공")
@@ -105,5 +112,98 @@ class AuctionBookmarkUseCaseTest {
                         .isEqualTo(ErrorType.BOOKMARK_ALREADY_EXISTS));
 
         verify(auctionBookmarkRepository, never()).save(any(AuctionBookmark.class));
+    }
+
+    @Test
+    @DisplayName("관심 경매 해제 - 성공")
+    void removeBookmark_Success() {
+        // given
+        String publicId = "test-public-id";
+        Long memberId = 100L;
+        Long bookmarkId = 1L;
+
+        AuctionMember member = AuctionMember.builder().publicId(publicId).build();
+        ReflectionTestUtils.setField(member, "id", memberId);
+
+        AuctionBookmark bookmark = AuctionBookmark.builder()
+                .memberId(memberId)
+                .auctionId(500L)
+                .productId(50L)
+                .build();
+        ReflectionTestUtils.setField(bookmark, "id", bookmarkId);
+
+        given(auctionMemberRepository.findByPublicId(publicId))
+                .willReturn(Optional.of(member));
+
+        given(auctionBookmarkRepository.findById(bookmarkId))
+                .willReturn(Optional.of(bookmark));
+
+        // when
+        WishlistRemoveResponseDto result = auctionBookmarkUseCase.removeBookmark(publicId, bookmarkId);
+
+        // then
+        assertThat(result.removed()).isTrue();
+        assertThat(result.bookmarkId()).isEqualTo(bookmarkId);
+
+        verify(auctionBookmarkRepository).delete(bookmark);
+    }
+
+    @Test
+    @DisplayName("관심 경매 해제 - 북마크를 찾을 수 없는 경우 예외 발생")
+    void removeBookmark_BookmarkNotFound() {
+        // given
+        String publicId = "test-public-id";
+        Long memberId = 100L;
+        Long bookmarkId = 1L;
+
+        AuctionMember member = AuctionMember.builder().publicId(publicId).build();
+        ReflectionTestUtils.setField(member, "id", memberId);
+
+        given(auctionMemberRepository.findByPublicId(publicId))
+                .willReturn(Optional.of(member));
+
+        // 존재하지 않는 북마크 ID 조회 시나리오
+        given(auctionBookmarkRepository.findById(bookmarkId))
+                .willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> auctionBookmarkUseCase.removeBookmark(publicId, bookmarkId))
+                .isInstanceOf(CustomException.class)
+                .satisfies(ex -> assertThat(((CustomException) ex).getErrorType())
+                        .isEqualTo(ErrorType.BOOKMARK_NOT_FOUND));
+
+        verify(auctionBookmarkRepository, never()).delete(any(AuctionBookmark.class));
+    }
+
+    @Test
+    @DisplayName("관심 경매 해제 - 소유자가 아닌 경우 예외 발생")
+    void removeBookmark_UnauthorizedAccess() {
+        // given
+        String publicId = "test-public-id";
+        Long requesterId = 100L; // 요청자
+        Long ownerId = 200L;     // 실제 북마크 주인 (다름)
+        Long bookmarkId = 1L;
+
+        AuctionMember member = AuctionMember.builder().publicId(publicId).build();
+        ReflectionTestUtils.setField(member, "id", requesterId);
+
+        AuctionBookmark bookmark = AuctionBookmark.builder()
+                .memberId(ownerId) // 주인을 다르게 설정
+                .build();
+        ReflectionTestUtils.setField(bookmark, "id", bookmarkId);
+
+        given(auctionMemberRepository.findByPublicId(publicId))
+                .willReturn(Optional.of(member));
+
+        given(auctionBookmarkRepository.findById(bookmarkId))
+                .willReturn(Optional.of(bookmark));
+
+        // when & then
+        assertThatThrownBy(() -> auctionBookmarkUseCase.removeBookmark(publicId, bookmarkId))
+                .isInstanceOf(CustomException.class)
+                .satisfies(ex -> assertThat(((CustomException) ex).getErrorType())
+                        .isEqualTo(ErrorType.BOOKMARK_UNAUTHORIZED_ACCESS));
+
+        verify(auctionBookmarkRepository, never()).delete(any(AuctionBookmark.class));
     }
 }
