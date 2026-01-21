@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class AuthLogoutUseCase {
+public class AuthLogoutAccountUseCase {
 	private final RefreshTokenRepository refreshTokenRepository;
 	private final AuthAccessTokenBlacklistUseCase authAccessTokenBlacklistUseCase;
 

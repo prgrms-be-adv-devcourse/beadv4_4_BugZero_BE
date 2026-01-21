@@ -15,7 +15,7 @@ public class AuthFacade {
 	private final AuthLoginAccountFacade authLoginAccountFacade;
 	private final AuthStoreRefreshTokenUseCase authStoreRefreshTokenUseCase;
 	private final AuthRefreshTokenFacade authRefreshTokenFacade;
-	private final AuthLogoutUseCase authLogoutUseCase;
+	private final AuthLogoutAccountUseCase authLogoutAccountUseCase;
 
 	// 테스트용 accessToken 발급
 	public String issueAccessToken(String providerId, String role) {
@@ -36,6 +36,6 @@ public class AuthFacade {
 	}
 
 	public void logout(String refreshToken, String accessToken) {
-		authLogoutUseCase.logout(refreshToken, accessToken);
+		authLogoutAccountUseCase.logout(refreshToken, accessToken);
 	}
 }
