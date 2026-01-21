@@ -21,7 +21,7 @@ public class AuctionDetermineStartAuctionUseCase {
 	@Transactional
 	public Long determineStartAuction(Long AuctionId) {
 
-		//햔제 시작시간이 안정해져 있고 삭제되지 않은 경매만 가져올 수 있도록 함.
+		//햔제 삭제되지 않은 경매만 가져올 수 있도록 함.
 		Auction auction = auctionRepository.findByIdAndDeletedIsFalse(AuctionId)
 			.orElseThrow(() -> new CustomException(ErrorType.AUCTION_NOT_FOUND));
 
