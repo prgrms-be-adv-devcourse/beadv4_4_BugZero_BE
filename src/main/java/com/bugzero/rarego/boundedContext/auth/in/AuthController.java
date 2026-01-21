@@ -114,32 +114,4 @@ public class AuthController {
 			Map.of("accessToken", tokenPair.accessToken())
 		);
 	}
-
-
-
-	@SecurityRequirement(name = "bearerAuth")
-	@Operation(summary = "토큰 재발급", description = "리프레시 토큰으로 액세스 토큰을 재발급합니다")
-	@PostMapping("/refresh")
-	public SuccessResponseDto<Map<String, String>> logout(
-		@CookieValue(value = REFRESH_TOKEN_ATTRIBUTE, required = false) String refreshToken,
-		@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
-		HttpServletResponse response) {
-		String accessToken = resolveToken(authorization);
-		TokenPairDto tokenPair = authFacade.refresh(refreshToken, accessToken);
-
-		// 본문에 accessToken, 쿠키에 refreshToken
-		ResponseCookie refreshTokenCookie = ResponseCookie.from(REFRESH_TOKEN_ATTRIBUTE, tokenPair.refreshToken())
-			.httpOnly(true)
-			.secure(refreshTokenCookieSecure)
-			.path("/")
-			.maxAge(Duration.ofSeconds(refreshTokenExpireSeconds))
-			.sameSite(refreshTokenCookieSameSite)
-			.build();
-		response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
-
-		return SuccessResponseDto.from(
-			SuccessType.OK,
-			Map.of("accessToken", tokenPair.accessToken())
-		);
-	}
 }
