@@ -1,5 +1,7 @@
 package com.bugzero.rarego.boundedContext.product.app;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -7,6 +9,7 @@ import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.shared.product.auction.out.AuctionApiClient;
+import com.bugzero.rarego.shared.product.dto.ProductImageRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductResponseDto;
 
@@ -26,8 +29,11 @@ public class ProductCreateProductUseCase {
 
 		Product product = productRequestDto.toEntity(seller.getId());
 
-		//상품 이미지 정보 저장
-		productRequestDto.productImageRequestDto().forEach(imageRequestDto -> {
+		//상품 이미지 순서 보장 정렬 후 저장
+		List<ProductImageRequestDto> images = productSupport.normalizeCreateImageOrder(
+			productRequestDto.productImageRequestDto());
+
+		images.forEach(imageRequestDto -> {
 			product.addImage(imageRequestDto.toEntity(product));
 		});
 
