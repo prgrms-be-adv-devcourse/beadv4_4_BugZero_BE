@@ -82,7 +82,6 @@ jwt:
 custom:
   global:
     internalBackUrl: ${INTERNAL_BACK_URL:http://localhost:8080}
-    frontUrl: ${FRONT_URL:http://localhost:3000}
   payment:
     settlement:
       chunkSize: 10
