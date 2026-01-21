@@ -23,20 +23,16 @@ public class PaymentConfirmFinalizer {
 	private final PaymentSupport paymentSupport;
 
 	@Transactional
-	public PaymentConfirmResponseDto finalizePayment(Payment payment,
-		TossPaymentsConfirmResponseDto tossResponse) {
-		// 결제 완료 처리
-		payment.complete(tossResponse.paymentKey());
+	public PaymentConfirmResponseDto finalizePayment(Payment payment, TossPaymentsConfirmResponseDto tossResponse) {
+		payment.complete(tossResponse.paymentKey()); // 결제 완료 처리
+		paymentRepository.save(payment); // payment는 준영속 상태이므로 명시적 저장
 
-		paymentRepository.save(payment); // payment는 영속성 컨텍스트와 연결이 끊긴 상태라 명시적으로 저장
-
+		// 지갑 조회(비관적 락)
 		Wallet wallet = paymentSupport.findWalletByMemberIdForUpdate(payment.getMember().getId());
 
-		// 지갑 잔액 증가
 		wallet.addBalance(payment.getAmount());
 
-		// PaymentTransaction 기록
-		PaymentTransaction paymentTransaction = PaymentTransaction.builder()
+		PaymentTransaction transaction = PaymentTransaction.builder()
 			.member(payment.getMember())
 			.wallet(wallet)
 			.transactionType(WalletTransactionType.TOPUP_DONE)
@@ -47,7 +43,7 @@ public class PaymentConfirmFinalizer {
 			.referenceId(payment.getId())
 			.build();
 
-		paymentTransactionRepository.save(paymentTransaction);
+		paymentTransactionRepository.save(transaction);
 
 		return PaymentConfirmResponseDto.of(tossResponse, wallet.getBalance());
 	}
