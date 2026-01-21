@@ -14,6 +14,7 @@ public class AuthFacade {
 	private final AuthIssueTokenUseCase authIssueTokenUseCase;
 	private final AuthLoginAccountFacade authLoginAccountFacade;
 	private final AuthStoreRefreshTokenUseCase authStoreRefreshTokenUseCase;
+	private final AuthRefreshTokenFacade authRefreshTokenFacade;
 
 	// 테스트용 accessToken 발급
 	public String issueAccessToken(String providerId, String role) {
@@ -27,5 +28,9 @@ public class AuthFacade {
 		String refreshToken = authIssueTokenUseCase.issueToken(account.getMemberPublicId(), account.getRole().name(), false);
 		authStoreRefreshTokenUseCase.store(account.getMemberPublicId(), refreshToken);
 		return new TokenPairDto(accessToken, refreshToken);
+	}
+
+	public TokenPairDto refresh(String refreshToken, String accessToken) {
+		return authRefreshTokenFacade.refresh(refreshToken, accessToken);
 	}
 }
