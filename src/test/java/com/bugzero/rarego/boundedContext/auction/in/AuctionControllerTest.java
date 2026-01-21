@@ -3,6 +3,7 @@ package com.bugzero.rarego.boundedContext.auction.in;
 import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionWithdrawResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
 import com.bugzero.rarego.global.exception.CustomException;
@@ -347,5 +348,46 @@ class AuctionControllerTest {
                 .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    @DisplayName("성공: 판매 포기 요청 시 HTTP 200과 처리 결과를 반환한다")
+    void withdraw_success() throws Exception {
+        // given
+        Long auctionId = 1L;
+        String memberPublicId = "1";
+
+        AuctionWithdrawResponseDto responseDto = AuctionWithdrawResponseDto.of(
+                auctionId, 100L, AuctionStatus.ENDED
+        );
+
+        given(auctionFacade.withdraw(eq(auctionId), eq(memberPublicId)))
+                .willReturn(responseDto);
+
+        // when & then
+        mockMvc.perform(post("/api/v1/auctions/{auctionId}/withdraw", auctionId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.data.auctionId").value(auctionId))
+                .andExpect(jsonPath("$.data.beforeStatus").value("ENDED"));
+    }
+
+    @Test
+    @DisplayName("실패: 판매자가 아닌 사용자가 판매 포기 요청 시 400 에러를 반환한다")
+    void withdraw_fail_not_seller() throws Exception {
+        // given
+        Long auctionId = 1L;
+        String memberPublicId = "1";
+
+        given(auctionFacade.withdraw(eq(auctionId), eq(memberPublicId)))
+                .willThrow(new CustomException(ErrorType.AUCTION_NOT_SELLER));
+
+        // when & then
+        mockMvc.perform(post("/api/v1/auctions/{auctionId}/withdraw", auctionId))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value(ErrorType.AUCTION_NOT_SELLER.getMessage()));
     }
 }
