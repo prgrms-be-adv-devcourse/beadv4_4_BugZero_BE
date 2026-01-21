@@ -46,4 +46,6 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
         Collection<AuctionStatus> statuses,
         Pageable pageable
     );
+
+    Optional<Auction> findByIdAndDeletedIsFalse(Long auctionId);
 }

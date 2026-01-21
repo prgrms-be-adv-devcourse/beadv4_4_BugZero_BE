@@ -98,6 +98,15 @@ public class Auction extends BaseIdAndTime {
       this.status = AuctionStatus.IN_PROGRESS;
     }
 
+    public boolean hasStartTime() {
+        return this.startTime != null;
+    }
+
+    public void determineStart(LocalDateTime startTime) {
+        this.startTime = startTime;
+        this.endTime = startTime.plusDays(this.durationDays);
+    }
+
     // 접근 회원이 경매 판매자인지 확인
     public boolean isSeller(Long sellerId) {
         return Objects.equals(this.sellerId, sellerId);
