@@ -29,24 +29,6 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
-import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
-import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.exception.GlobalExceptionHandler;
-import com.bugzero.rarego.global.response.ErrorType;
-import com.bugzero.rarego.global.response.PageDto;
-import com.bugzero.rarego.global.response.PagedResponseDto;
-import com.bugzero.rarego.global.response.SuccessResponseDto;
-import com.bugzero.rarego.global.response.SuccessType;
-import com.bugzero.rarego.global.security.MemberPrincipal;
-import com.bugzero.rarego.shared.auction.dto.AuctionDetailResponseDto;
-import com.bugzero.rarego.shared.auction.dto.AuctionOrderResponseDto;
-import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
-import com.bugzero.rarego.shared.auction.dto.BidRequestDto;
-import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -59,6 +41,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.*
 
 
 @ExtendWith(MockitoExtension.class)
