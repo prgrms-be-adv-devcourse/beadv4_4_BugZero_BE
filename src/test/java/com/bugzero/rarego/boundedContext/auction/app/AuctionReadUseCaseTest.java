@@ -217,9 +217,6 @@ class AuctionReadUseCaseTest {
 	@Test
 	@DisplayName("경매 목록 조회 - 썸네일 정렬(sortOrder) 및 데이터 조립 확인")
 	void getAuctions_success() {
-		// ... (기존 코드 유지)
-		// getAuctions는 아직 Repository를 직접 사용하므로 기존 코드가 정상 동작합니다.
-
 		// given
 		AuctionSearchCondition condition = new AuctionSearchCondition();
 		Pageable pageable = PageRequest.of(0, 10);
@@ -241,8 +238,11 @@ class AuctionReadUseCaseTest {
 		ProductImage img2 = ProductImage.builder().product(product1).imageUrl("url_0.jpg").sortOrder(0).build();
 		ProductImage img3 = ProductImage.builder().product(product1).imageUrl("url_1.jpg").sortOrder(1).build();
 
-		// Mocking Behavior (Repository 직접 사용)
-		given(auctionRepository.findAll(any(Specification.class), any(Pageable.class))).willReturn(auctionPage);
+		// [수정] findAll -> findAllApproved 로 변경
+		// 조건이 없으므로 인자는 (null, null, pageable)
+		given(auctionRepository.findAllApproved(isNull(), isNull(), any(Pageable.class)))
+			.willReturn(auctionPage);
+
 		given(productRepository.findAllById(Set.of(productId1))).willReturn(List.of(product1));
 		given(bidRepository.countByAuctionIdIn(Set.of(auctionId1))).willReturn(bidCounts);
 		given(productImageRepository.findAllByProductIdIn(Set.of(productId1))).willReturn(List.of(img1, img2, img3));
@@ -263,7 +263,9 @@ class AuctionReadUseCaseTest {
 		Pageable pageable = PageRequest.of(0, 10);
 		Page<Auction> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
 
-		given(auctionRepository.findAll(any(Specification.class), any(Pageable.class))).willReturn(emptyPage);
+		// [수정] findAll -> findAllApproved 로 변경
+		given(auctionRepository.findAllApproved(any(), any(), any(Pageable.class)))
+			.willReturn(emptyPage);
 
 		PagedResponseDto<AuctionListResponseDto> result = auctionReadUseCase.getAuctions(condition, pageable);
 
@@ -390,8 +392,13 @@ class AuctionReadUseCaseTest {
 		ReflectionTestUtils.setField(auction, "status", AuctionStatus.IN_PROGRESS);
 		Page<Auction> auctionPage = new PageImpl<>(List.of(auction), pageable, 1);
 
-		given(auctionRepository.findAll(any(Specification.class), any(Pageable.class)))
-			.willReturn(auctionPage);
+		// [수정] findAllApproved Mocking (Specification 관련 코드 제거)
+		// status와 matchedProductIds가 올바르게 전달되는지 확인
+		given(auctionRepository.findAllApproved(
+			eq(AuctionStatus.IN_PROGRESS),
+			eq(matchedProductIds),
+			any(Pageable.class))
+		).willReturn(auctionPage);
 
 		// [Mock Setup 3] 연관 데이터 (DTO 조립용)
 		Product product = Product.builder().name("Galaxy Lego").build();
@@ -400,22 +407,7 @@ class AuctionReadUseCaseTest {
 		given(bidRepository.countByAuctionIdIn(Set.of(1L))).willReturn(List.<Object[]>of(new Object[]{1L, 5L}));
 		given(productImageRepository.findAllByProductIdIn(Set.of(50L))).willReturn(Collections.emptyList());
 
-		// [추가] JPA Criteria 객체 Mocking (Specification 강제 실행을 위함)
-		Root<Auction> root = mock(Root.class);
-		CriteriaQuery<?> query = mock(CriteriaQuery.class);
-		CriteriaBuilder cb = mock(CriteriaBuilder.class);
-		Path<Object> path = mock(Path.class);
-
-		// JPA 내부 호출 시 NPE 방지용 Stubbing
-		given(root.get(anyString())).willReturn(path);
-		given(path.in(anyCollection())).willReturn(mock(Predicate.class));
-
-		// [핵심 수정 1] equal 오버로딩 문제 해결
-		// any() -> any(Object.class)로 변경하여 (Expression, Object) 메서드가 호출되도록 강제함
-		given(cb.equal(any(), any(Object.class))).willReturn(mock(Predicate.class));
-
-		// [핵심 수정 2] and 가변인자 문제 해결 (이전 단계에서 적용함)
-		given(cb.and(any(Predicate[].class))).willReturn(mock(Predicate.class));
+		// (삭제) Specification 관련 Mocking 코드들 (Root, CriteriaQuery, cb 등)은 이제 필요 없습니다.
 
 		// when
 		PagedResponseDto<AuctionListResponseDto> result = auctionReadUseCase.getAuctions(condition, pageable);
@@ -424,16 +416,8 @@ class AuctionReadUseCaseTest {
 		assertThat(result.data()).hasSize(1);
 		assertThat(result.data().get(0).productName()).isEqualTo("Galaxy Lego");
 
-		// [핵심 수정] Specification을 캡처하여 내부 로직 강제 실행
-		ArgumentCaptor<Specification<Auction>> specCaptor = ArgumentCaptor.forClass(Specification.class);
-		verify(auctionRepository).findAll(specCaptor.capture(), any(Pageable.class));
-
-		Specification<Auction> capturedSpec = specCaptor.getValue();
-
-		// 강제 실행! -> 이때 내부의 productRepository.findIdsBySearchCondition()이 호출됨
-		capturedSpec.toPredicate(root, query, cb);
-
-		// 이제 검증하면 성공함
+		// [검증] Specification Captor 대신 findAllApproved 호출 여부 검증
 		verify(productRepository).findIdsBySearchCondition(eq("Galaxy"), isNull());
+		verify(auctionRepository).findAllApproved(eq(AuctionStatus.IN_PROGRESS), eq(matchedProductIds), any(Pageable.class));
 	}
 }
