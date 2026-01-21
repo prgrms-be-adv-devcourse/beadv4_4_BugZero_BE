@@ -23,7 +23,7 @@ public class AuctionCreateAuctionUseCase {
 		int tickSize = productAuctionSupport.determineTickSize(productAuctionRequestDto.startPrice());
 
 		return auctionRepository
-			.save(productAuctionRequestDto.toEntity(productId, seller.getId(), tickSize))
+			.save(productAuctionRequestDto.toEntity(productId, seller.getId()))
 			.getId();
 	}
 

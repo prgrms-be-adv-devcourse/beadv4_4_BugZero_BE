@@ -27,7 +27,6 @@ import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
-import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
 import com.bugzero.rarego.shared.payment.out.PaymentApiClient;
 
@@ -70,7 +69,6 @@ class AuctionCreateBidUseCaseTest {
 			.productId(PRODUCT_ID)
 			.sellerId(SELLER_ID)
 			.startPrice(1000)
-			.tickSize(100)
 			.startTime(LocalDateTime.now().minusHours(1))
 			.endTime(LocalDateTime.now().plusHours(1))
 			.durationDays(1)
@@ -116,7 +114,6 @@ class AuctionCreateBidUseCaseTest {
 			.productId(PRODUCT_ID)
 			.sellerId(SELLER_ID)
 			.startPrice(10000)
-			.tickSize(1000)
 			.startTime(LocalDateTime.now().minusHours(1))
 			.endTime(LocalDateTime.now().plusHours(1))
 			.durationDays(1)
@@ -151,7 +148,6 @@ class AuctionCreateBidUseCaseTest {
 			.productId(PRODUCT_ID)
 			.sellerId(SELLER_ID)
 			.startPrice(5000)
-			.tickSize(1000)
 			.startTime(LocalDateTime.now().minusHours(1))
 			.endTime(LocalDateTime.now().plusHours(1))
 			.durationDays(1)

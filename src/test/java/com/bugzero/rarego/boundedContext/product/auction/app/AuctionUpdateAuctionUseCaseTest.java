@@ -64,7 +64,6 @@ class AuctionUpdateAuctionUseCaseTest {
 
 		given(productAuctionSupport.getAuctionMember(PUBLIC_ID)).willReturn(commonSeller);
 		given(productAuctionSupport.getAuction(AUCTION_ID)).willReturn(spyAuction);
-		given(productAuctionSupport.determineTickSize(updateDto.startPrice())).willReturn(expectedTickSize);
 
 		// when
 		Long resultId = useCase.updateAuction(PUBLIC_ID, updateDto);
@@ -72,7 +71,7 @@ class AuctionUpdateAuctionUseCaseTest {
 		// then
 		assertThat(resultId).isEqualTo(AUCTION_ID);
 		// 정책 반영 확인: 새로운 호가 단위(500)가 엔티티에 잘 전달되었는가
-		verify(spyAuction).update(eq(14), eq(20000), eq(expectedTickSize));
+		verify(spyAuction).update(eq(14), eq(20000));
 		verify(productAuctionSupport).isAbleToChange(commonSeller, spyAuction);
 	}
 
@@ -94,7 +93,7 @@ class AuctionUpdateAuctionUseCaseTest {
 			.isInstanceOf(CustomException.class)
 			.hasFieldOrPropertyWithValue("errorType", ErrorType.AUCTION_ALREADY_IN_PROGRESS);
 
-		verify(spyAuction, never()).update(anyInt(), anyInt(), anyInt());
+		verify(spyAuction, never()).update(anyInt(), anyInt());
 	}
 
 	// --- Helper Methods (Fixture Factory) ---

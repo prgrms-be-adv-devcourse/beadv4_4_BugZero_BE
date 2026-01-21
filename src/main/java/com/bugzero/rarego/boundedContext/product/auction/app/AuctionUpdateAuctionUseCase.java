@@ -24,9 +24,8 @@ public class AuctionUpdateAuctionUseCase {
 		//경매정보를 수정할 수 있는지 확인
 		productAuctionSupport.isAbleToChange(seller, auction);
 		//경매 정보 수정 (시작가격 수정 시 그에 따라 호가단위도 바뀔 수 있기 때문에 다시 설정)
-		int tickSize = productAuctionSupport.determineTickSize(dto.startPrice());
 
-		auction.update(dto.durationDays(), dto.startPrice(), tickSize);
+		auction.update(dto.durationDays(), dto.startPrice());
 		//경매 id 값 반환
 		return auction.getId();
 	}
