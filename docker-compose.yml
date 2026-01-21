@@ -34,6 +34,8 @@ services:
     # 데이터 영속성 설정 (컨테이너 삭제돼도 데이터 보존)
     volumes:
       - db_data:/var/lib/mysql
+    networks:
+      - rarego-network
 
     # 컨테이너 상태 체크 (Spring Boot의 depends_on 조건 등으로 활용 가능)
     # DB가 완전히 부팅되어 쿼리를 받을 수 있는지 주기적으로 확인
