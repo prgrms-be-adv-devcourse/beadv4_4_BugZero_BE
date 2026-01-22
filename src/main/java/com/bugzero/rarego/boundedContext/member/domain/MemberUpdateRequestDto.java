@@ -2,11 +2,9 @@ package com.bugzero.rarego.boundedContext.member.domain;
 
 import java.util.Set;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record MemberUpdateRequestDto(
-	@NotBlank
 	@Size(max = 50)
 	String nickname,
 

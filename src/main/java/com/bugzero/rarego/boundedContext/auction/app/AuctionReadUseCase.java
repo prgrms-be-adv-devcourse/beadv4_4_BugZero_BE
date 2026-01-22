@@ -1,38 +1,8 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
-import static com.bugzero.rarego.boundedContext.auction.domain.AuctionViewerRoleStatus.*;
-
-import jakarta.persistence.criteria.Predicate;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.bugzero.rarego.boundedContext.auction.domain.Auction;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionViewerRoleStatus;
-import com.bugzero.rarego.boundedContext.auction.domain.Bid;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
-import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
+import com.bugzero.rarego.boundedContext.auction.domain.*;
+import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistListResponseDto;
+import com.bugzero.rarego.boundedContext.auction.out.*;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductImage;
 import com.bugzero.rarego.boundedContext.product.out.ProductImageRepository;
@@ -41,18 +11,24 @@ import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.PageDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
-import com.bugzero.rarego.shared.auction.dto.AuctionDetailResponseDto;
-import com.bugzero.rarego.shared.auction.dto.AuctionFilterType;
-import com.bugzero.rarego.shared.auction.dto.AuctionListResponseDto;
-import com.bugzero.rarego.shared.auction.dto.AuctionOrderResponseDto;
-import com.bugzero.rarego.shared.auction.dto.AuctionSearchCondition;
-import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
-import com.bugzero.rarego.shared.auction.dto.MyAuctionOrderListResponseDto;
-import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
-import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
+import com.bugzero.rarego.shared.auction.dto.*;
+import jakarta.persistence.criteria.Predicate;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static com.bugzero.rarego.boundedContext.auction.domain.AuctionViewerRoleStatus.*;
 
 @Slf4j
 @Service
@@ -187,24 +163,14 @@ public class AuctionReadUseCase {
 		return AuctionDetailResponseDto.from(auction, highestBid, myLastBid, memberId);
 	}
 
-	// 낙찰 기록 상세 조회
-	public AuctionOrderResponseDto getAuctionOrder(Long auctionId, String memberPublicId) {
-		// 회원 ID 조회
-		AuctionMember member = support.getPublicMember(memberPublicId);
-		Long memberId = member.getId();
+    // 낙찰 기록 상세 조회
+    public AuctionOrderResponseDto getAuctionOrder(Long auctionId, String memberPublicId) {
+        // 회원 ID 조회
+        AuctionMember member = support.getMember(memberPublicId);
+        Long memberId = member.getId();
 
-		AuctionOrder order = support.getOrder(auctionId);
-		Auction auction = support.findAuctionById(auctionId);
-
-		AuctionViewerRoleStatus viewerRole = determineViewerRole(order, memberId);
-
-		if (viewerRole == GUEST) {
-			throw new CustomException(ErrorType.AUCTION_ORDER_ACCESS_DENIED);
-		}
-
-		Product product = support.getProduct(auction.getProductId());
-
-		List<ProductImage> productImages = productImageRepository.findAllByProductId(product.getId());
+        AuctionOrder order = support.getOrder(auctionId);
+        Auction auction = support.findAuctionById(auctionId);
 
 		String thumbnailUrl = productImages.stream()
 			.findFirst()
@@ -297,6 +263,7 @@ public class AuctionReadUseCase {
 		return new PagedResponseDto<>(dtos, PageDto.from(auctionPage));
 	}
 
+  // 나의 낙찰 목록 조회
 	public PagedResponseDto<MyAuctionOrderListResponseDto> getMyAuctionOrders(String memberPublicId, AuctionOrderStatus status, Pageable pageable) {
 		AuctionMember member = support.getPublicMember(memberPublicId);
 
@@ -356,6 +323,39 @@ public class AuctionReadUseCase {
 
 		return new PagedResponseDto<>(dtos, PageDto.from(orderPage));
 	}
+  
+  // 내 관심 경매 목록 조회
+    public PagedResponseDto<WishlistListResponseDto> getMyBookmarks(String memberPublicId, Pageable pageable) {
+        AuctionMember member = support.getMember(memberPublicId);
+
+        // 북마크 페이징 조회 (TODO: MSA 분리 시 BookmarkUsecase쪽으로 분리 예상됨, WishlistFacde 생성 필요)
+        Page<AuctionBookmark> bookmarkPage = auctionBookmarkRepository.findAllByMemberId(member.getId(), pageable);
+
+        if (bookmarkPage.isEmpty()) {
+            return new PagedResponseDto<>(Collections.emptyList(), PageDto.from(bookmarkPage));
+        }
+
+        // 북마크된 경매 엔티티들 조회
+        List<Long> auctionIds = bookmarkPage.getContent().stream().map(AuctionBookmark::getAuctionId).toList();
+        List<Auction> auctions = auctionRepository.findAllById(auctionIds);
+
+        // 공통 변환 로직 호출
+        List<AuctionListResponseDto> auctionDtos = convertToAuctionListDtos(auctions);
+
+        // 순서 유지를 위한 Map 생성
+        Map<Long, AuctionListResponseDto> auctionDtoMap = auctionDtos.stream()
+                .collect(Collectors.toMap(AuctionListResponseDto::auctionId, Function.identity()));
+
+        // 최종 WishlistListResponseDto 조립
+        List<WishlistListResponseDto> finalDtos = bookmarkPage.getContent().stream()
+                .map(bookmark -> WishlistListResponseDto.of(
+                        bookmark.getId(),
+                        auctionDtoMap.get(bookmark.getAuctionId())
+                ))
+                .toList();
+
+        return new PagedResponseDto<>(finalDtos, PageDto.from(bookmarkPage));
+    }
 
 
 	// =========================================================================
