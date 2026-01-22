@@ -71,8 +71,15 @@ public record AuctionDetailResponseDto(
 			}
 		}
 
+		boolean isGuest = (currentMemberId == null);
+		boolean isSeller = (currentMemberId != null) && auction.getSellerId().equals(currentMemberId);
+
 		boolean canBid = auction.getStatus() == AuctionStatus.IN_PROGRESS
-			&& auction.getEndTime().isAfter(now);
+			&& auction.getEndTime().isAfter(now)
+			&& !isGuest
+			&& !isSeller
+			&& !isMyHighestBid;
+
 		int minBidPrice = auction.getCurrentPrice() + auction.getTickSize();
 		Long highestBidderId = (highestBid != null) ? highestBid.getBidderId() : null;
 

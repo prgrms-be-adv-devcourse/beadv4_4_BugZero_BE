@@ -11,8 +11,10 @@ import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.shared.auction.dto.*;
 import com.bugzero.rarego.shared.member.domain.MemberDto;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -73,6 +75,16 @@ public class AuctionFacade {
 
         return auctionBookmarkUseCase.addBookmark(member.getId(), auctionId);
     }
+
+	// 경매 상태/현재가 요약 조회
+	public PagedResponseDto<AuctionListResponseDto> getAuctions(AuctionSearchCondition condition, Pageable pageable) {
+		return auctionReadUseCase.getAuctions(condition, pageable);
+	}
+
+	@Transactional
+	public AuctionMember syncMember(MemberDto member) {
+		return auctionSyncMemberUseCase.syncMember(member);
+	}
 
     // 관심 경매 해제
     @Transactional
