@@ -3,6 +3,7 @@ package com.bugzero.rarego.boundedContext.auction.in;
 import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionWithdrawResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
 import com.bugzero.rarego.global.exception.CustomException;
@@ -96,7 +97,6 @@ class AuctionControllerTest {
                 bidResponse
         );
 
-        // [수정] memberId(Long) -> memberPublicId(String)
         given(auctionFacade.createBid(eq(auctionId), eq(memberPublicId), eq(bidAmount.intValue())))
                 .willReturn(successResponse);
 
@@ -148,7 +148,6 @@ class AuctionControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andDo(print())
-                // GlobalExceptionHandler에서 ResponseEntity를 반환하므로 실제 상태코드 검증
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400));
     }
@@ -158,11 +157,10 @@ class AuctionControllerTest {
     void createBid_fail_business_exception() throws Exception {
         // given
         Long auctionId = 999L;
-        String memberPublicId = "1"; // [수정] String 타입
+        String memberPublicId = "1";
         Long bidAmount = 10000L;
         BidRequestDto requestDto = new BidRequestDto(bidAmount);
 
-        // [수정] memberId(Long) -> memberPublicId(String)
         given(auctionFacade.createBid(eq(auctionId), eq(memberPublicId), eq(bidAmount.intValue())))
                 .willThrow(new CustomException(ErrorType.AUCTION_NOT_FOUND));
 
@@ -171,7 +169,6 @@ class AuctionControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andDo(print())
-                // GlobalExceptionHandler에서 ResponseEntity를 반환하므로 실제 상태코드 검증
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(ErrorType.AUCTION_NOT_FOUND.getHttpStatus()));
     }
@@ -181,7 +178,7 @@ class AuctionControllerTest {
     void getAuctionDetail_success() throws Exception {
         // given
         Long auctionId = 100L;
-        String memberPublicId = "1"; // [수정] String 타입
+        String memberPublicId = "1";
 
         AuctionDetailResponseDto responseDto = new AuctionDetailResponseDto(
                 auctionId,
@@ -195,7 +192,6 @@ class AuctionControllerTest {
                 new AuctionDetailResponseDto.MyParticipationInfo(false, null)
         );
 
-        // [수정] memberId(Long) -> memberPublicId(String)
         given(auctionFacade.getAuctionDetail(eq(auctionId), eq(memberPublicId)))
                 .willReturn(SuccessResponseDto.from(SuccessType.OK, responseDto));
 
@@ -213,7 +209,7 @@ class AuctionControllerTest {
     void getAuctionOrder_success() throws Exception {
         // given
         Long auctionId = 100L;
-        String memberPublicId = "1"; // [수정] String 타입
+        String memberPublicId = "1";
 
         AuctionOrderResponseDto responseDto = new AuctionOrderResponseDto(
                 7001L, auctionId, "BUYER", AuctionOrderStatus.PROCESSING, "결제 대기중",
@@ -224,7 +220,6 @@ class AuctionControllerTest {
                 new AuctionOrderResponseDto.ShippingInfo(null, null, null)
         );
 
-        // [수정] memberId(Long) -> memberPublicId(String)
         given(auctionFacade.getAuctionOrder(eq(auctionId), eq(memberPublicId)))
                 .willReturn(SuccessResponseDto.from(SuccessType.OK, responseDto));
 
@@ -245,7 +240,6 @@ class AuctionControllerTest {
         Long auctionId = 1L;
         WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(true, auctionId);
 
-        // any(String.class) 사용
         given(auctionFacade.addBookmark(any(String.class), eq(auctionId)))
                 .willReturn(responseDto);
 
@@ -302,22 +296,18 @@ class AuctionControllerTest {
     @DisplayName("성공: 관심 경매 해제 시 HTTP 200과 해제 정보를 반환한다")
     void removeBookmark_success() throws Exception {
         // given
-        Long bookmarkId = 1L; // 리팩토링: auctionId -> bookmarkId
-        // 서비스 응답 DTO가 bookmarkId를 담고 있다면 그에 맞게 수정
+        Long bookmarkId = 1L; 
         WishlistRemoveResponseDto responseDto = WishlistRemoveResponseDto.of(true, bookmarkId);
 
-        // Facade의 메서드 인자가 변경되었으므로 eq(bookmarkId)로 수정
         given(auctionFacade.removeBookmark(any(String.class), eq(bookmarkId)))
                 .willReturn(responseDto);
 
         // when & then
-        // URL 경로 변수도 명확하게 bookmarkId로 인지되도록 변경
         mockMvc.perform(delete("/api/v1/auctions/{bookmarkId}/bookmarks", bookmarkId))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.data.removed").value(true))
-                // DTO의 필드명이 bookmarkId로 바뀌었다면 아래 코드도 수정 필요
                 .andExpect(jsonPath("$.data.bookmarkId").value(bookmarkId));
     }
 

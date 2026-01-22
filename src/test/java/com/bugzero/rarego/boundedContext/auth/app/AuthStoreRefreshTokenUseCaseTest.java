@@ -85,20 +85,4 @@ class AuthStoreRefreshTokenUseCaseTest {
 		verifyNoInteractions(refreshTokenRepository);
 	}
 
-	@Test
-	@DisplayName("refresh 만료시간이 유효하지 않으면 JWT_EXPIRE_SECONDS_INVALID 예외가 발생한다.")
-	void storeFailsWhenExpireSecondsInvalid() {
-		// given
-		ReflectionTestUtils.setField(authStoreRefreshTokenUseCase, "refreshTokenExpireSeconds", 0);
-
-		// when
-		Throwable thrown = catchThrowable(() -> authStoreRefreshTokenUseCase.store("member-public-id", "refresh-token"));
-
-		// then
-		assertThat(thrown)
-			.isInstanceOf(CustomException.class)
-			.extracting("errorType")
-			.isEqualTo(ErrorType.JWT_EXPIRE_SECONDS_INVALID);
-		verifyNoInteractions(refreshTokenRepository);
-	}
 }

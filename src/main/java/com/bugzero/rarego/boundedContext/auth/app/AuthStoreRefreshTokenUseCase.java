@@ -10,6 +10,7 @@ import com.bugzero.rarego.boundedContext.auth.out.RefreshTokenRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -20,15 +21,19 @@ public class AuthStoreRefreshTokenUseCase {
 	@Value("${jwt.refresh-token-expire-seconds}")
 	private int refreshTokenExpireSeconds;
 
+	@PostConstruct
+	void validate() {
+		if (refreshTokenExpireSeconds <= 0) {
+			throw new CustomException(ErrorType.JWT_EXPIRE_SECONDS_INVALID);
+		}
+	}
+
 	public void store(String memberPublicId, String refreshToken) {
 		if (memberPublicId == null || memberPublicId.isBlank()) {
 			throw new CustomException(ErrorType.AUTH_MEMBER_REQUIRED);
 		}
 		if (refreshToken == null || refreshToken.isBlank()) {
 			throw new CustomException(ErrorType.AUTH_MEMBER_REQUIRED);
-		}
-		if (refreshTokenExpireSeconds <= 0) {
-			throw new CustomException(ErrorType.JWT_EXPIRE_SECONDS_INVALID);
 		}
 
 		LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(refreshTokenExpireSeconds);

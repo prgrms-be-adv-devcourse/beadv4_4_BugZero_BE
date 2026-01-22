@@ -30,6 +30,8 @@ public class AuthRefreshTokenFacade {
 
 	@Transactional
 	public TokenPairDto refresh(String refreshToken, String accessToken) {
+
+		// 1. refresh token 입력 검증
 		if (refreshToken == null || refreshToken.isBlank()) {
 			throw new CustomException(ErrorType.AUTH_REFRESH_TOKEN_REQUIRED);
 		}
@@ -41,18 +43,12 @@ public class AuthRefreshTokenFacade {
 			throw new CustomException(ErrorType.AUTH_REFRESH_TOKEN_EXPIRED);
 		}
 
-		// refreshToken 만든 주체가 아니면
+		// 3. JWT 검증
 		String refreshPublicId = jwtParser.parseRefreshPublicId(refreshToken);
 		if (refreshPublicId == null) {
-			log.warn("[Auth] 보안 경계: Refresh token parse failed. exp={}",
-				jwtParser.expiresAt(refreshToken));
 			throw new CustomException(ErrorType.AUTH_REFRESH_TOKEN_INVALID);
 		}
-		if (!storedRefreshToken.getMemberPublicId().equals(refreshPublicId)) {
-			log.warn("[Auth] 보안 경계: Refresh token owner mismatch. storedMemberPublicId={}, tokenMemberPublicId={}, exp={}",
-				storedRefreshToken.getMemberPublicId(),
-				refreshPublicId,
-				jwtParser.expiresAt(refreshToken));
+		if (!refreshPublicId.equals(storedRefreshToken.getMemberPublicId())) {
 			throw new CustomException(ErrorType.AUTH_REFRESH_TOKEN_OWNER_MISMATCH);
 		}
 
@@ -61,8 +57,10 @@ public class AuthRefreshTokenFacade {
 
 		refreshTokenRepository.delete(storedRefreshToken);
 
-		String newAccessToken = authIssueTokenUseCase.issueToken(account.getMemberPublicId(), account.getRole().name(), true);
-		String newRefreshToken = authIssueTokenUseCase.issueToken(account.getMemberPublicId(), account.getRole().name(), false);
+		String newAccessToken = authIssueTokenUseCase.issueToken(account.getMemberPublicId(), account.getRole().name(),
+			true);
+		String newRefreshToken = authIssueTokenUseCase.issueToken(account.getMemberPublicId(), account.getRole().name(),
+			false);
 		authStoreRefreshTokenUseCase.store(account.getMemberPublicId(), newRefreshToken);
 
 		// 블랙리스트 추가

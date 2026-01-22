@@ -18,6 +18,7 @@ public class MemberFacade {
 	private final MemberGetMemberUseCase memberGetMemberUseCase;
 	private final MemberUpdateMemberUseCase memberUpdateMemberUseCase;
 	private final MemberUpdateIdentityUseCase memberUpdateIdentityUseCase;
+	private final MemberPromoteSellerUseCase memberPromoteSellerUseCase;
 
 	@Transactional
 	public MemberJoinResponseDto join(String email) {
@@ -37,5 +38,9 @@ public class MemberFacade {
 	@Transactional
 	public MemberUpdateResponseDto updateIdentity(String publicId, MemberUpdateIdentityRequestDto requestDto) {
 		return memberUpdateIdentityUseCase.updateIdentity(publicId, requestDto);
+	}
+	@Transactional
+	public void promoteSeller(String publicId, String role) {
+		memberPromoteSellerUseCase.promoteSeller(publicId, role);
 	}
 }

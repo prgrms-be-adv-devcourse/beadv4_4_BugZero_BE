@@ -19,4 +19,16 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
 	// 상품 ID 목록으로 상품 엔티티 일괄 조회
 	List<Product> findAllByIdIn(Collection<Long> ids);
+
+	// 동적 쿼리 또는 COALESCE를 사용한 검색 조건 구현
+	// keyword가 null/빈문자열이면 무시, category가 null이면 무시
+	@Query("""
+        SELECT p.id FROM Product p
+        WHERE (:keyword IS NULL OR :keyword = '' OR p.name LIKE %:keyword%)
+        AND (:category IS NULL OR :category = '' OR p.category = :category)
+    """)
+	List<Long> findIdsBySearchCondition(
+		@Param("keyword") String keyword,
+		@Param("category") String category
+	);
 }

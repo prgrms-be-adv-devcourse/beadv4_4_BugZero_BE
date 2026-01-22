@@ -1,6 +1,7 @@
 package com.bugzero.rarego.boundedContext.auction.in;
 
 import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionWithdrawResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
@@ -26,6 +27,16 @@ import org.springframework.web.bind.annotation.*;
 public class AuctionController {
 
     private final AuctionFacade auctionFacade;
+
+	// 경매 상태/현재가 Bulk 조회
+	@Operation(summary = "경매 목록 조회", description = "검색 조건(키워드, 카테고리, 상태)과 정렬 조건에 따라 경매 목록을 조회합니다.")
+	@GetMapping
+	public PagedResponseDto<AuctionListResponseDto> getAuctions(
+		@ModelAttribute AuctionSearchCondition condition,
+		@PageableDefault(size = 10) Pageable pageable
+	) {
+		return auctionFacade.getAuctions(condition, pageable);
+	}
 
     @Operation(summary = "경매 상세 조회", description = "경매의 상세 정보를 조회합니다. (로그인 시 내 입찰 내역 포함)")
     @GetMapping("/{auctionId}")
@@ -84,12 +95,23 @@ public class AuctionController {
 
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "관심 경매 해제", description = "특정 경매를 관심 목록에서 제거합니다")
-    @DeleteMapping("/{bookmarkId}/bookmarks")
+    @DeleteMapping("/{auctionId}/bookmarks")
     public SuccessResponseDto<WishlistRemoveResponseDto> removeBookmark(
             @AuthenticationPrincipal MemberPrincipal memberPrincipal,
-            @PathVariable Long bookmarkId
+            @PathVariable Long auctionId
     ) {
-        WishlistRemoveResponseDto response = auctionFacade.removeBookmark(memberPrincipal.publicId(), bookmarkId);
+        WishlistRemoveResponseDto response = auctionFacade.removeBookmark(memberPrincipal.publicId(), auctionId);
+        return SuccessResponseDto.from(SuccessType.OK, response);
+    }
+
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "판매 포기", description = "경매 실패/유찰 시 상품을 더 이상 경매에 올리지 않습니다.")
+    @PostMapping("/{auctionId}/withdraw")
+    public SuccessResponseDto<AuctionWithdrawResponseDto> withdraw(
+            @PathVariable Long auctionId,
+            @AuthenticationPrincipal MemberPrincipal principal
+    ) {
+        AuctionWithdrawResponseDto response = auctionFacade.withdraw(auctionId, principal.publicId());
         return SuccessResponseDto.from(SuccessType.OK, response);
     }
 }

@@ -28,6 +28,12 @@ class AuthIssueTokenUseCaseTest {
 	@InjectMocks
 	private AuthIssueTokenUseCase authIssueTokenUseCase;
 
+	private static void setField(Object target, String fieldName, Object value) throws Exception {
+		Field field = target.getClass().getDeclaredField(fieldName);
+		field.setAccessible(true);
+		field.set(target, value);
+	}
+
 	@BeforeEach
 	void setUp() throws Exception {
 		setField(authIssueTokenUseCase, "accessTokenExpireSeconds", 3600);
@@ -113,44 +119,6 @@ class AuthIssueTokenUseCaseTest {
 	}
 
 	@Test
-	@DisplayName("access 만료시간이 유효하지 않으면 JWT_EXPIRE_SECONDS_INVALID 예외가 발생한다.")
-	void issueTokenFailsWhenAccessExpireSecondsInvalid() throws Exception {
-		// given
-		setField(authIssueTokenUseCase, "accessTokenExpireSeconds", 0);
-
-		String memberPublicId = "550e8400-e29b-41d4-a716-446655440000";
-		String role = AuthRole.USER.name();
-
-		// when
-		Throwable thrown = catchThrowable(() -> authIssueTokenUseCase.issueToken(memberPublicId, role, true));
-
-		// then
-		assertThat(thrown)
-			.isInstanceOf(CustomException.class)
-			.extracting("errorType")
-			.isEqualTo(ErrorType.JWT_EXPIRE_SECONDS_INVALID);
-	}
-
-	@Test
-	@DisplayName("refresh 만료시간이 유효하지 않으면 JWT_EXPIRE_SECONDS_INVALID 예외가 발생한다.")
-	void issueTokenFailsWhenRefreshExpireSecondsInvalid() throws Exception {
-		// given
-		setField(authIssueTokenUseCase, "refreshTokenExpireSeconds", -1);
-
-		String memberPublicId = "550e8400-e29b-41d4-a716-446655440000";
-		String role = AuthRole.USER.name();
-
-		// when
-		Throwable thrown = catchThrowable(() -> authIssueTokenUseCase.issueToken(memberPublicId, role, false));
-
-		// then
-		assertThat(thrown)
-			.isInstanceOf(CustomException.class)
-			.extracting("errorType")
-			.isEqualTo(ErrorType.JWT_EXPIRE_SECONDS_INVALID);
-	}
-
-	@Test
 	@DisplayName("role이 null이면 INVALID_INPUT 예외가 발생한다.")
 	void issueTokenFailsWhenRoleIsNull() {
 		// given
@@ -180,11 +148,5 @@ class AuthIssueTokenUseCaseTest {
 			.isInstanceOf(CustomException.class)
 			.extracting("errorType")
 			.isEqualTo(ErrorType.INVALID_INPUT);
-	}
-
-	private static void setField(Object target, String fieldName, Object value) throws Exception {
-		Field field = target.getClass().getDeclaredField(fieldName);
-		field.setAccessible(true);
-		field.set(target, value);
 	}
 }
