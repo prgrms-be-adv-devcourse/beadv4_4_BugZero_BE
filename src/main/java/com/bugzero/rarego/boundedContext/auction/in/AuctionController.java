@@ -1,6 +1,7 @@
 package com.bugzero.rarego.boundedContext.auction.in;
 
 import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionWithdrawResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
@@ -37,15 +38,15 @@ public class AuctionController {
 		return auctionFacade.getAuctions(condition, pageable);
 	}
 
-	@Operation(summary = "경매 상세 조회", description = "경매의 상세 정보를 조회합니다. (로그인 시 내 입찰 내역 포함)")
-	@GetMapping("/{auctionId}")
-	public SuccessResponseDto<AuctionDetailResponseDto> getAuctionDetail(
-		@PathVariable Long auctionId,
-		@AuthenticationPrincipal MemberPrincipal principal
-	) {
-		String memberPublicId = (principal != null) ? principal.publicId() : null;
-		return auctionFacade.getAuctionDetail(auctionId, memberPublicId);
-	}
+    @Operation(summary = "경매 상세 조회", description = "경매의 상세 정보를 조회합니다. (로그인 시 내 입찰 내역 포함)")
+    @GetMapping("/{auctionId}")
+    public SuccessResponseDto<AuctionDetailResponseDto> getAuctionDetail(
+            @PathVariable Long auctionId,
+            @AuthenticationPrincipal MemberPrincipal principal
+    ) {
+        String memberPublicId = (principal != null) ? principal.publicId() : null;
+        return auctionFacade.getAuctionDetail(auctionId, memberPublicId);
+    }
 
     @Operation(summary = "입찰하기", description = "특정 경매에 입찰을 진행합니다. (판매자 본인 입찰 불가)")
     @PostMapping("/{auctionId}/bids")
@@ -94,12 +95,23 @@ public class AuctionController {
 
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "관심 경매 해제", description = "특정 경매를 관심 목록에서 제거합니다")
-    @DeleteMapping("/{bookmarkId}/bookmarks")
+    @DeleteMapping("/{auctionId}/bookmarks")
     public SuccessResponseDto<WishlistRemoveResponseDto> removeBookmark(
             @AuthenticationPrincipal MemberPrincipal memberPrincipal,
-            @PathVariable Long bookmarkId
+            @PathVariable Long auctionId
     ) {
-        WishlistRemoveResponseDto response = auctionFacade.removeBookmark(memberPrincipal.publicId(), bookmarkId);
+        WishlistRemoveResponseDto response = auctionFacade.removeBookmark(memberPrincipal.publicId(), auctionId);
+        return SuccessResponseDto.from(SuccessType.OK, response);
+    }
+
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "판매 포기", description = "경매 실패/유찰 시 상품을 더 이상 경매에 올리지 않습니다.")
+    @PostMapping("/{auctionId}/withdraw")
+    public SuccessResponseDto<AuctionWithdrawResponseDto> withdraw(
+            @PathVariable Long auctionId,
+            @AuthenticationPrincipal MemberPrincipal principal
+    ) {
+        AuctionWithdrawResponseDto response = auctionFacade.withdraw(auctionId, principal.publicId());
         return SuccessResponseDto.from(SuccessType.OK, response);
     }
 }

@@ -11,6 +11,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.bugzero.rarego.boundedContext.auth.app.AuthAccessTokenBlacklistUseCase;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,9 +20,25 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	private final JwtParser jwtParser;
+	private final AuthAccessTokenBlacklistUseCase authAccessTokenBlacklistUseCase;
 
-	public JwtAuthenticationFilter(JwtParser jwtParser) {
+	public JwtAuthenticationFilter(JwtParser jwtParser,
+		AuthAccessTokenBlacklistUseCase authAccessTokenBlacklistUseCase) {
 		this.jwtParser = jwtParser;
+		this.authAccessTokenBlacklistUseCase = authAccessTokenBlacklistUseCase;
+	}
+
+	private static String resolveToken(HttpServletRequest request) {
+		String header = request.getHeader("Authorization");
+		if (header == null || !header.startsWith("Bearer "))
+			return null;
+		return header.substring(7);
+	}
+
+	private static List<GrantedAuthority> toAuthorities(String role) {
+		if (role == null || role.isBlank())
+			return Collections.emptyList();
+		return List.of(new SimpleGrantedAuthority("ROLE_" + role));
 	}
 
 	@Override
@@ -28,6 +46,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		throws ServletException, IOException {
 		String token = resolveToken(request);
 		if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+			// 블랙리스트에 올라있으면 null 반환
+			if (authAccessTokenBlacklistUseCase.isBlacklisted(token)) {
+				filterChain.doFilter(request, response);
+				return;
+			}
 
 			// 토큰이 유효한지 검사, 유효하지 않으면 null 반환
 			MemberPrincipal principal = jwtParser.parsePrincipal(token);
@@ -45,18 +68,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		}
 
 		filterChain.doFilter(request, response);
-	}
-
-	private static String resolveToken(HttpServletRequest request) {
-		String header = request.getHeader("Authorization");
-		if (header == null || !header.startsWith("Bearer "))
-			return null;
-		return header.substring(7);
-	}
-
-	private static List<GrantedAuthority> toAuthorities(String role) {
-		if (role == null || role.isBlank())
-			return Collections.emptyList();
-		return List.of(new SimpleGrantedAuthority("ROLE_" + role));
 	}
 }

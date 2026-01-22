@@ -31,8 +31,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MemberController {
 
-    private final MemberFacade memberFacade;
-    private final AuctionFacade auctionFacade;
+  private final MemberFacade memberFacade;
+  private final AuctionFacade auctionFacade;
 
 	@SecurityRequirement(name = "bearerAuth")
 	@Operation(summary = "소셜 로그인 이후 Member 생성(회원 가입)", description = "소셜 로그인 결과(email/provider)를 받아 회원가입 처리합니다.")
@@ -79,6 +79,14 @@ public class MemberController {
 	@PostMapping("/me/seller")
 	public SuccessResponseDto<Void> promoteSeller(@AuthenticationPrincipal MemberPrincipal memberPrincipal) {
 		memberFacade.promoteSeller(memberPrincipal.publicId(), memberPrincipal.role());
+		return SuccessResponseDto.from(SuccessType.OK);
+	}
+
+	@SecurityRequirement(name = "bearerAuth")
+	@Operation(summary = "회원 입찰시 필수 정보 존재 확인", description = "회원 입찰시 필요 정보(주소, 본인인증) 존재 확인")
+	@GetMapping("/participation")
+	public SuccessResponseDto<Void> verifyParticipation(@AuthenticationPrincipal MemberPrincipal memberPrincipal) {
+		memberFacade.verifyParticipation(memberPrincipal.publicId());
 		return SuccessResponseDto.from(SuccessType.OK);
 	}
 }

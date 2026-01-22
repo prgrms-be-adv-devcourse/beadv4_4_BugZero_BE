@@ -14,28 +14,20 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "AUTH_REFRESH_TOKEN",
+@Table(name = "AUTH_ACCESS_TOKEN_BLACKLIST",
 	indexes = {
-		@Index(name = "idx_auth_refresh_token_member_public_id", columnList = "member_public_id"),
-		@Index(name = "idx_auth_refresh_token_expires", columnList = "expires_at")
+		@Index(name = "idx_auth_access_token_blacklist_token", columnList = "access_token"),
+		@Index(name = "idx_auth_access_token_blacklist_expires", columnList = "expires_at")
 	}
 )
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class RefreshToken extends BaseIdAndTime {
+public class AccessTokenBlacklist extends BaseIdAndTime {
 
-	@Column(name = "member_public_id", nullable = false, length = 36)
-	private String memberPublicId;
-
-	@Column(name = "refresh_token", nullable = false, length = 255)
-	private String refreshToken;
+	@Column(name = "access_token", nullable = false, length = 512)
+	private String accessToken;
 
 	@Column(name = "expires_at", nullable = false)
 	private LocalDateTime expiresAt;
-
-	// 만료 확인
-	public boolean isExpired(LocalDateTime now) {
-		return expiresAt.isBefore(now);
-	}
 }

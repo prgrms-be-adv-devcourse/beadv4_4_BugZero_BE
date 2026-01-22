@@ -60,5 +60,4 @@ public class AuctionBookmarkUseCase {
 
         return WishlistRemoveResponseDto.of(true, bookmarkId);
     }
-
 }

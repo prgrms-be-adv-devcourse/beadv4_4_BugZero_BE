@@ -6,16 +6,13 @@ import java.util.Objects;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
 import com.bugzero.rarego.global.response.ErrorType;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "AUCTION_AUCTION")
@@ -76,7 +73,7 @@ public class Auction extends BaseIdAndTime {
         }
         this.status = AuctionStatus.ENDED;
     }
-  
+
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(this.endTime);
     }
@@ -95,7 +92,7 @@ public class Auction extends BaseIdAndTime {
 
     // 경매 시작 상태로 전이
     public void startAuction() {
-      this.status = AuctionStatus.IN_PROGRESS;
+        this.status = AuctionStatus.IN_PROGRESS;
     }
 
     //시작 시간 유무에 따라 경매예정이 확정되었는지 확인
@@ -119,7 +116,10 @@ public class Auction extends BaseIdAndTime {
         this.startPrice = startPrice;
         this.tickSize = determineTickSize(startPrice);
     }
-
+  
+    public void withdraw() {
+        this.status = AuctionStatus.WITHDRAWN;
+    }
 
     //호가단위 결정
     private int determineTickSize(int startPrice) {
