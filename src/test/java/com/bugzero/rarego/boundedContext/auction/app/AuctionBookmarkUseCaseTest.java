@@ -3,32 +3,23 @@ package com.bugzero.rarego.boundedContext.auction.app;
 import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionBookmark;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
-import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistListResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionBookmarkRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
-import com.bugzero.rarego.global.response.PagedResponseDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
@@ -66,7 +57,6 @@ class AuctionBookmarkUseCaseTest {
         Auction auction = Auction.builder()
                 .productId(50L)
                 .startPrice(1000)
-                .tickSize(100)
                 .startTime(LocalDateTime.now())
                 .endTime(LocalDateTime.now().plusDays(1))
                 .durationDays(1)
@@ -104,7 +94,6 @@ class AuctionBookmarkUseCaseTest {
         Auction auction = Auction.builder()
                 .productId(50L)
                 .startPrice(1000)
-                .tickSize(100)
                 .startTime(LocalDateTime.now())
                 .endTime(LocalDateTime.now().plusDays(1))
                 .durationDays(1)
@@ -218,78 +207,5 @@ class AuctionBookmarkUseCaseTest {
                         .isEqualTo(ErrorType.BOOKMARK_UNAUTHORIZED_ACCESS));
 
         verify(auctionBookmarkRepository, never()).delete(any(AuctionBookmark.class));
-    }
-
-    @Test
-    @DisplayName("내 관심 경매 목록 조회 - 성공")
-    void getMyBookmarks_Success() {
-        // given
-        String publicId = "test-public-id";
-        Long memberId = 100L;
-        Long auctionId = 1L;
-        Long bookmarkId = 10L;
-        Pageable pageable = PageRequest.of(0, 10);
-
-        AuctionMember member = AuctionMember.builder().publicId(publicId).build();
-        ReflectionTestUtils.setField(member, "id", memberId);
-
-        AuctionBookmark bookmark = AuctionBookmark.builder()
-                .memberId(memberId)
-                .auctionId(auctionId)
-                .productId(50L)
-                .build();
-        ReflectionTestUtils.setField(bookmark, "id", bookmarkId);
-
-        Auction auction = Auction.builder()
-                .productId(50L)
-                .startPrice(1000)
-                .tickSize(100)
-                .startTime(LocalDateTime.now())
-                .endTime(LocalDateTime.now().plusDays(1))
-                .durationDays(1)
-                .sellerId(1L)
-                .build();
-        ReflectionTestUtils.setField(auction, "id", auctionId);
-        auction.startAuction();
-        auction.updateCurrentPrice(15000);
-
-        Page<AuctionBookmark> bookmarkPage = new PageImpl<>(List.of(bookmark), pageable, 1);
-
-        given(auctionMemberRepository.findByPublicId(publicId))
-                .willReturn(Optional.of(member));
-
-        given(auctionBookmarkRepository.findAllByMemberId(memberId, pageable))
-                .willReturn(bookmarkPage);
-
-        given(auctionRepository.findAllById(Set.of(auctionId)))
-                .willReturn(List.of(auction));
-
-        // when
-        PagedResponseDto<WishlistListResponseDto> result = auctionBookmarkUseCase.getMyBookmarks(publicId, pageable);
-
-        // then
-        assertThat(result.data()).hasSize(1);
-        assertThat(result.data().get(0).bookmarkId()).isEqualTo(bookmarkId);
-        assertThat(result.data().get(0).auctionId()).isEqualTo(auctionId);
-        assertThat(result.data().get(0).productId()).isEqualTo(50L);
-        assertThat(result.data().get(0).auctionStatus()).isEqualTo(AuctionStatus.IN_PROGRESS);
-        assertThat(result.data().get(0).currentPrice()).isEqualTo(15000);
-    }
-
-    @Test
-    @DisplayName("내 관심 경매 목록 조회 - 회원을 찾을 수 없는 경우 예외 발생")
-    void getMyBookmarks_MemberNotFound() {
-        // given
-        String publicId = "non-existent-public-id";
-        Pageable pageable = PageRequest.of(0, 10);
-
-        given(auctionMemberRepository.findByPublicId(publicId))
-                .willReturn(Optional.empty());
-
-        // when & then
-        assertThatThrownBy(() -> auctionBookmarkUseCase.getMyBookmarks(publicId, pageable))
-                .isInstanceOf(CustomException.class)
-                .satisfies(ex -> assertThat(((CustomException) ex).getErrorType())
-                        .isEqualTo(ErrorType.MEMBER_NOT_FOUND));
     }
 }

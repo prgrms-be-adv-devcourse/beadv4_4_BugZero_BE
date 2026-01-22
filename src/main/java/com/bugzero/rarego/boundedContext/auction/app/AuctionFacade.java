@@ -88,7 +88,7 @@ public class AuctionFacade {
     // 내 관심 경매 목록 조회
     @Transactional(readOnly = true)
     public PagedResponseDto<WishlistListResponseDto> getMyBookmarks(String publicId, Pageable pageable) {
-        return auctionBookmarkUseCase.getMyBookmarks(publicId, pageable);
+        return auctionReadUseCase.getMyBookmarks(publicId, pageable);
     }
 
     @Transactional

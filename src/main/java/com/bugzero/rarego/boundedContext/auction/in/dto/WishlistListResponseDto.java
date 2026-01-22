@@ -1,35 +1,14 @@
 package com.bugzero.rarego.boundedContext.auction.in.dto;
 
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
+import com.bugzero.rarego.shared.auction.dto.AuctionListResponseDto;
+import lombok.Builder;
 
-import java.time.LocalDateTime;
-
+@Builder
 public record WishlistListResponseDto(
         Long bookmarkId,
-        Long auctionId,
-        Long productId,
-        AuctionStatus auctionStatus,
-        Integer currentPrice,
-        LocalDateTime startTime,
-        LocalDateTime endTime
+        AuctionListResponseDto auctionInfo
 ) {
-    public static WishlistListResponseDto of(
-            Long bookmarkId,
-            Long auctionId,
-            Long productId,
-            AuctionStatus auctionStatus,
-            Integer currentPrice,
-            LocalDateTime startTime,
-            LocalDateTime endTime
-    ) {
-        return new WishlistListResponseDto(
-                bookmarkId,
-                auctionId,
-                productId,
-                auctionStatus,
-                currentPrice,
-                startTime,
-                endTime
-        );
+    public static WishlistListResponseDto of(Long bookmarkId, AuctionListResponseDto auctionInfo) {
+        return new WishlistListResponseDto(bookmarkId, auctionInfo);
     }
 }
