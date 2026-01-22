@@ -64,8 +64,8 @@ class AuctionReadUseCaseTest {
 	private AuctionMemberRepository auctionMemberRepository;
 	@Mock
 	private ProductImageRepository productImageRepository;
-  @Mock
-  private AuctionBookmarkRepository auctionBookmarkRepository;
+  	@Mock
+  	private AuctionBookmarkRepository auctionBookmarkRepository;
 
 	// --- 1. 경매 상세 조회 (getAuctionDetail) 테스트 ---
 
@@ -98,7 +98,7 @@ class AuctionReadUseCaseTest {
 		Bid myLastBid = Bid.builder().bidAmount(5000).bidderId(memberId).build();
 
 		// [변경] Repository -> Support로 Mocking 대상 변경
-		given(support.getMember(memberPublicId)).willReturn(member);
+		given(support.getPublicMember(memberPublicId)).willReturn(member);
 		given(support.findAuctionById(auctionId)).willReturn(auction);
 
 		// [유지] BidRepository는 UseCase가 직접 사용함
@@ -158,7 +158,7 @@ class AuctionReadUseCaseTest {
 		AuctionMember sellerMember = AuctionMember.builder().id(sellerId).publicId("seller_pub_id").nickname("sellerNick").build();
 
 		// [변경] Repository -> Support Mocking
-		given(support.getMember(buyerPublicId)).willReturn(buyer);   // 1. 요청자 조회
+		given(support.getPublicMember(buyerPublicId)).willReturn(buyer);   // 1. 요청자 조회
 		given(support.getOrder(auctionId)).willReturn(order);        // 2. 주문 조회
 		given(support.findAuctionById(auctionId)).willReturn(auction);    // 3. 경매 조회
 		given(support.getProduct(50L)).willReturn(product);          // 4. 상품 조회
@@ -202,7 +202,7 @@ class AuctionReadUseCaseTest {
 			.build();
 
 		// [변경] Support Mocking
-		given(support.getMember(strangerPublicId)).willReturn(stranger);
+		given(support.getPublicMember(strangerPublicId)).willReturn(stranger);
 		given(support.getOrder(auctionId)).willReturn(order);
 		given(support.findAuctionById(auctionId)).willReturn(auction);
 
@@ -272,7 +272,7 @@ class AuctionReadUseCaseTest {
 		assertThat(result.pageDto().totalItems()).isEqualTo(0);
 	}
   
-   @Test
+   	@Test
     @DisplayName("경매 목록 조회 - 검색 조건(키워드+상태)이 있을 때 상품 검색 후 경매 조회 수행")
     void getAuctions_with_search_condition() {
         // given
@@ -368,7 +368,7 @@ class AuctionReadUseCaseTest {
         ReflectionTestUtils.setField(product, "id", 50L);
 
         // 3. Mocking
-        given(support.getMember(publicId)).willReturn(member);
+        given(support.getPublicMember(publicId)).willReturn(member);
         given(auctionBookmarkRepository.findAllByMemberId(memberId, pageable)).willReturn(bookmarkPage);
         given(auctionRepository.findAllById(List.of(100L))).willReturn(List.of(auction));
 
@@ -389,7 +389,6 @@ class AuctionReadUseCaseTest {
         verify(auctionBookmarkRepository).findAllByMemberId(memberId, pageable);
         verify(auctionRepository).findAllById(anyCollection());
     }
-}
 
 	@Test
 	@DisplayName("나의 낙찰 목록 조회 - 성공 (데이터 조립 및 정렬 확인)")
@@ -429,7 +428,7 @@ class AuctionReadUseCaseTest {
 		ReflectionTestUtils.setField(img1, "product", product);
 
 		// Mocking Behavior
-		given(support.getMember(memberPublicId)).willReturn(member);
+		given(support.getPublicMember(memberPublicId)).willReturn(member);
 
 		// [핵심] 레포지토리 호출
 		given(auctionOrderRepository.findAllByBidderIdAndStatus(eq(10L), eq(status), any(Pageable.class)))
@@ -470,7 +469,7 @@ class AuctionReadUseCaseTest {
 		// 빈 페이지 생성
 		Page<AuctionOrder> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
 
-		given(support.getMember(memberPublicId)).willReturn(member);
+		given(support.getPublicMember(memberPublicId)).willReturn(member);
 
 		// status가 null인 경우로 테스트
 		given(auctionOrderRepository.findAllByBidderIdAndStatus(eq(10L), isNull(), any(Pageable.class)))
