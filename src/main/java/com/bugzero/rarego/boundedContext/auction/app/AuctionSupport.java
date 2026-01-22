@@ -46,7 +46,7 @@ public class AuctionSupport {
                 .orElseThrow(() -> new CustomException(ErrorType.AUCTION_NOT_FOUND));
     }
 
-    public AuctionMember getMember(String publicId) {
+    public AuctionMember getPublicMember(String publicId) {
         return auctionMemberRepository.findByPublicId(publicId)
                 .orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
     }
@@ -71,10 +71,9 @@ public class AuctionSupport {
                 .orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
     }
 
-
-	  public Optional<AuctionOrder> findOrder(Long auctionId) {
-		    return auctionOrderRepository.findByAuctionId(auctionId);
-	  }
+	public Optional<AuctionOrder> findOrder(Long auctionId) {
+		 return auctionOrderRepository.findByAuctionId(auctionId);
+	}
   
     public Optional<AuctionOrder> findOrderByAuctionId(Long auctionId) {
         return auctionOrderRepository.findByAuctionId(auctionId);
