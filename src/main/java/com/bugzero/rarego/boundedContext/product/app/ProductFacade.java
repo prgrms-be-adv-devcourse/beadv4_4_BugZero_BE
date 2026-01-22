@@ -2,6 +2,8 @@ package com.bugzero.rarego.boundedContext.product.app;
 
 import org.springframework.stereotype.Service;
 
+import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
+import com.bugzero.rarego.shared.member.domain.MemberDto;
 import com.bugzero.rarego.shared.product.dto.ProductInspectionRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductInspectionResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductRequestDto;
@@ -17,6 +19,7 @@ public class ProductFacade {
 
 	private final ProductCreateProductUseCase productCreateProductUseCase;
 	private final ProductCreateInspectionUseCase productCreateInspectionUseCase;
+	private final ProductSyncMemberUseCase productSyncMemberUseCase;
 
 	public ProductResponseDto createProduct(String memberUUID, ProductRequestDto dto) {
 		return productCreateProductUseCase.createProduct(memberUUID, dto);
@@ -29,5 +32,9 @@ public class ProductFacade {
 
 	public ProductUpdateResponseDto updateProduct(String publicId, Long productId, ProductUpdateDto productUpdateDto) {
 		return productUpdateProductUseCase.updateProduct(publicId, productId, productUpdateDto);
+	}
+
+	public ProductMember syncMember(MemberDto member) {
+		return productSyncMemberUseCase.syncMember(member);
 	}
 }
