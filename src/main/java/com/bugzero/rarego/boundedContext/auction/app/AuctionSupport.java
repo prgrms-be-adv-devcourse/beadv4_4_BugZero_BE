@@ -19,8 +19,11 @@ import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -66,6 +69,14 @@ public class AuctionSupport {
 	public Optional<AuctionOrder> findOrder(Long auctionId) {
 		return auctionOrderRepository.findByAuctionId(auctionId);
 	}
+  
+  public AuctionMember findMemberByPublicId(String publicId) {
+        return auctionMemberRepository.findByPublicId(publicId)
+                .orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
+    }
+
+    public Optional<AuctionOrder> findOrderByAuctionId(Long auctionId) {
+        return 
 
 	// 판매자 권한 검증
 	public void validateSeller(Auction auction, Long memberId) {
@@ -80,5 +91,4 @@ public class AuctionSupport {
 			throw new CustomException(ErrorType.AUCTION_NOT_ENDED);
 		}
 	}
-
 }

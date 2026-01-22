@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionWithdrawResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistListResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
@@ -37,6 +38,7 @@ public class AuctionFacade {
     private final AuctionSyncMemberUseCase auctionSyncMemberUseCase;
     private final AuctionBookmarkUseCase auctionBookmarkUseCase;
     private final AuctionRelistUseCase auctionRelistUseCase;
+    private final AuctionWithdrawUseCase auctionWithdrawUseCase;
 
     // 쓰기 작업 (입찰 생성)
     @Transactional
@@ -110,6 +112,12 @@ public class AuctionFacade {
     @Transactional(readOnly = true)
     public PagedResponseDto<WishlistListResponseDto> getMyBookmarks(String publicId, Pageable pageable) {
         return auctionReadUseCase.getMyBookmarks(publicId, pageable);
+    }
+
+    // 판매 포기
+    @Transactional
+    public AuctionWithdrawResponseDto withdraw(Long auctionId, String memberPublicId) {
+        return auctionWithdrawUseCase.execute(auctionId, memberPublicId);
     }
 
     @Transactional

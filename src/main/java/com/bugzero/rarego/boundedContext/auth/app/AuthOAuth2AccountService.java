@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.bugzero.rarego.boundedContext.auth.domain.AccountDto;
 import com.bugzero.rarego.boundedContext.auth.domain.OAuth2AttributeMapper;
+import com.bugzero.rarego.boundedContext.auth.domain.TokenPairDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthOAuth2AccountService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 	private static final String ACCESS_TOKEN_ATTRIBUTE = "accessToken";
+	private static final String REFRESH_TOKEN_ATTRIBUTE = "refreshToken";
 
 	private final AuthFacade authFacade;
 
@@ -37,10 +39,11 @@ public class AuthOAuth2AccountService implements OAuth2UserService<OAuth2UserReq
 
 		AccountDto accountDto = OAuth2AttributeMapper.toAccountDto(
 			registrationId, userNameAttributeName, oauth2User.getAttributes());
-		String accessToken = authFacade.login(accountDto);
+		TokenPairDto tokenPair = authFacade.login(accountDto.providerId(), accountDto.email(), accountDto.provider());
 
 		Map<String, Object> attributes = new HashMap<>(oauth2User.getAttributes());
-		attributes.put(ACCESS_TOKEN_ATTRIBUTE, accessToken);
+		attributes.put(ACCESS_TOKEN_ATTRIBUTE, tokenPair.accessToken());
+		attributes.put(REFRESH_TOKEN_ATTRIBUTE, tokenPair.refreshToken());
 
 		return new DefaultOAuth2User(oauth2User.getAuthorities(), attributes, userNameAttributeName);
 	}

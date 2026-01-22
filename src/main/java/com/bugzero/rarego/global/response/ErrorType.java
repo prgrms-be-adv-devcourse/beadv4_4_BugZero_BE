@@ -41,6 +41,10 @@ public enum ErrorType {
 	AUTH_FORBIDDEN(403, 1507, "권한이 없습니다."),
 	AUTH_OAUTH2_INVALID_RESPONSE(400, 1508, "유효하지 않은 소셜 로그인입니다."),
 	AUTH_JOIN_FAILED(500, 1509, "회원 가입에 실패했습니다."),
+	AUTH_REFRESH_TOKEN_REQUIRED(401, 1510, "리프레시 토큰이 필요합니다."),
+	AUTH_REFRESH_TOKEN_INVALID(401, 1511, "유효하지 않은 리프레시 토큰입니다."),
+	AUTH_REFRESH_TOKEN_EXPIRED(401, 1512, "리프레시 토큰이 만료되었습니다."),
+	AUTH_REFRESH_TOKEN_OWNER_MISMATCH(401, 1513, "리프레시 토큰 소유자가 일치하지 않습니다."),
 	AUTH_ACCOUNT_NOT_FOUND(404, 1510, "회원 정보를 찾을 수 없습니다."),
 
     // Auction (2000 ~ 2999)
@@ -66,7 +70,12 @@ public enum ErrorType {
     SERVICE_SUBSCRIBER_LIMIT_EXCEEDED(503, 2506, "구독자 수 한도를 초과했습니다."),
     BOOKMARK_ALREADY_EXISTS(409, 2507, "이미 관심 경매로 등록된 경매입니다."),
     BOOKMARK_NOT_FOUND(404, 2508, "관심 경매로 등록되지 않은 경매입니다."),
-    BOOKMARK_UNAUTHORIZED_ACCESS(403, 2511, "요청한 사용자가 북마크의 memberId와 일치하지 않습니다."),
+    AUCTION_NOT_SELLER(403, 2509, "본인의 경매만 처리할 수 있습니다."),
+    AUCTION_WITHDRAW_NOT_ENDED(400, 2510, "종료된 경매만 판매 포기할 수 있습니다."),
+    AUCTION_WITHDRAW_ALREADY_PAID(400, 2511, "결제 완료된 경매는 판매 포기할 수 없습니다."),
+    AUCTION_WITHDRAW_PAYMENT_IN_PROGRESS(400, 2512, "결제 진행 중인 경매는 판매 포기할 수 없습니다."),
+    AUCTION_WITHDRAW_NOT_INSPECTED(400, 2513, "검수 전 경매는 판매 포기할 수 없습니다."),
+    BOOKMARK_UNAUTHORIZED_ACCESS(403, 2514, "요청한 사용자가 북마크의 memberId와 일치하지 않습니다."),
 
 	// Product (3000 ~ 3999)
 	PRODUCT_NOT_FOUND(404, 3001, "상품이 존재하지 않습니다."),

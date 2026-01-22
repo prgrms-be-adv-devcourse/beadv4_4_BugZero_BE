@@ -31,8 +31,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MemberController {
 
-    private final MemberFacade memberFacade;
-    private final AuctionFacade auctionFacade;
+  private final MemberFacade memberFacade;
+  private final AuctionFacade auctionFacade;
 
 	@SecurityRequirement(name = "bearerAuth")
 	@Operation(summary = "소셜 로그인 이후 Member 생성(회원 가입)", description = "소셜 로그인 결과(email/provider)를 받아 회원가입 처리합니다.")

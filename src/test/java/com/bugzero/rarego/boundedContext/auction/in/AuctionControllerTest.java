@@ -3,6 +3,7 @@ package com.bugzero.rarego.boundedContext.auction.in;
 import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionWithdrawResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
 import com.bugzero.rarego.global.exception.CustomException;
@@ -44,7 +45,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import static org.mockito.Mockito.*;
 import static org.mockito.ArgumentMatchers.*;
-
 
 @ExtendWith(MockitoExtension.class)
 class AuctionControllerTest {
@@ -268,7 +268,6 @@ class AuctionControllerTest {
         Long auctionId = 1L;
         WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(true, auctionId);
 
-        // any(String.class) 사용
         given(auctionFacade.addBookmark(any(String.class), eq(auctionId)))
                 .willReturn(responseDto);
 
@@ -325,22 +324,18 @@ class AuctionControllerTest {
     @DisplayName("성공: 관심 경매 해제 시 HTTP 200과 해제 정보를 반환한다")
     void removeBookmark_success() throws Exception {
         // given
-        Long bookmarkId = 1L; // 리팩토링: auctionId -> bookmarkId
-        // 서비스 응답 DTO가 bookmarkId를 담고 있다면 그에 맞게 수정
+        Long bookmarkId = 1L; 
         WishlistRemoveResponseDto responseDto = WishlistRemoveResponseDto.of(true, bookmarkId);
 
-        // Facade의 메서드 인자가 변경되었으므로 eq(bookmarkId)로 수정
         given(auctionFacade.removeBookmark(any(String.class), eq(bookmarkId)))
                 .willReturn(responseDto);
 
         // when & then
-        // URL 경로 변수도 명확하게 bookmarkId로 인지되도록 변경
         mockMvc.perform(delete("/api/v1/auctions/{bookmarkId}/bookmarks", bookmarkId))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.data.removed").value(true))
-                // DTO의 필드명이 bookmarkId로 바뀌었다면 아래 코드도 수정 필요
                 .andExpect(jsonPath("$.data.bookmarkId").value(bookmarkId));
     }
 
@@ -427,4 +422,3 @@ class AuctionControllerTest {
 	}
 
 }
-
