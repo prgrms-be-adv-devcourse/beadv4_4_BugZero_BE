@@ -41,6 +41,10 @@ public enum ErrorType {
 	AUTH_FORBIDDEN(403, 1507, "권한이 없습니다."),
 	AUTH_OAUTH2_INVALID_RESPONSE(400, 1508, "유효하지 않은 소셜 로그인입니다."),
 	AUTH_JOIN_FAILED(500, 1509, "회원 가입에 실패했습니다."),
+	AUTH_REFRESH_TOKEN_REQUIRED(401, 1510, "리프레시 토큰이 필요합니다."),
+	AUTH_REFRESH_TOKEN_INVALID(401, 1511, "유효하지 않은 리프레시 토큰입니다."),
+	AUTH_REFRESH_TOKEN_EXPIRED(401, 1512, "리프레시 토큰이 만료되었습니다."),
+	AUTH_REFRESH_TOKEN_OWNER_MISMATCH(401, 1513, "리프레시 토큰 소유자가 일치하지 않습니다."),
 	AUTH_ACCOUNT_NOT_FOUND(404, 1510, "회원 정보를 찾을 수 없습니다."),
 
     // Auction (2000 ~ 2999)

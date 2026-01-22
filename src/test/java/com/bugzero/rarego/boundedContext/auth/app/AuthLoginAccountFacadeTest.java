@@ -9,33 +9,28 @@ import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.bugzero.rarego.boundedContext.auth.domain.Account;
-import com.bugzero.rarego.boundedContext.auth.domain.AccountDto;
 import com.bugzero.rarego.boundedContext.auth.domain.AuthRole;
 import com.bugzero.rarego.boundedContext.auth.domain.Provider;
-import com.bugzero.rarego.boundedContext.auth.domain.TokenIssueDto;
+import com.bugzero.rarego.boundedContext.auth.out.AccountRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AuthLoginAccountFacadeTest {
 	@Mock
-	private AuthFindAccountUseCase authFindAccountUseCase;
+	private AccountRepository accountRepository;
 
 	@Mock
 	private AuthJoinAccountUseCase authJoinAccountUseCase;
-
-	@Mock
-	private AuthIssueTokenUseCase authIssueTokenUseCase;
 
 	@InjectMocks
 	private AuthLoginAccountFacade authLoginAccountFacade;
 
 	@Test
-	@DisplayName("기존 계정이 있으면 가입 없이 토큰을 발급한다.")
+	@DisplayName("기존 계정이 있으면 가입 없이 계정을 반환한다.")
 	void loginUsesExistingAccount() {
 		Account existing = Account.builder()
 			.provider(Provider.GOOGLE)
@@ -44,26 +39,21 @@ class AuthLoginAccountFacadeTest {
 			.role(AuthRole.USER)
 			.build();
 
-		when(authFindAccountUseCase.findByProviderAndProviderId(Provider.GOOGLE, "google-123"))
+		when(accountRepository.findByProviderAndProviderId(Provider.GOOGLE, "google-123"))
 			.thenReturn(Optional.of(existing));
-		when(authIssueTokenUseCase.issueToken(any(TokenIssueDto.class), eq(true)))
-			.thenReturn("token");
-
-		String token = authLoginAccountFacade.loginOrSignup(
-			new AccountDto("google-123", "test@example.com", Provider.GOOGLE)
+		Account account = authLoginAccountFacade.loginOrSignup(
+			"google-123",
+			"test@example.com",
+			Provider.GOOGLE
 		);
 
-		assertThat(token).isEqualTo("token");
+		assertThat(account).isEqualTo(existing);
 		verify(authJoinAccountUseCase, never()).join(any(), anyString(), anyString());
-		verify(authFindAccountUseCase).findByProviderAndProviderId(Provider.GOOGLE, "google-123");
-		verify(authIssueTokenUseCase).issueToken(argThat(dto ->
-			existing.getMemberPublicId().equals(dto.memberPublicId())
-				&& existing.getRole().name().equals(dto.role())
-		), eq(true));
+		verify(accountRepository).findByProviderAndProviderId(Provider.GOOGLE, "google-123");
 	}
 
 	@Test
-	@DisplayName("계정이 없으면 가입 후 토큰을 발급한다.")
+	@DisplayName("계정이 없으면 가입 후 계정을 반환한다.")
 	void loginCreatesAccountWhenMissing() {
 		Account created = Account.builder()
 			.provider(Provider.KAKAO)
@@ -72,23 +62,17 @@ class AuthLoginAccountFacadeTest {
 			.role(AuthRole.SELLER)
 			.build();
 
-		when(authFindAccountUseCase.findByProviderAndProviderId(Provider.KAKAO, "kakao-456"))
+		when(accountRepository.findByProviderAndProviderId(Provider.KAKAO, "kakao-456"))
 			.thenReturn(Optional.empty());
 		when(authJoinAccountUseCase.join(Provider.KAKAO, "kakao-456", "kakao@example.com"))
 			.thenReturn(created);
-		when(authIssueTokenUseCase.issueToken(any(TokenIssueDto.class), eq(true)))
-			.thenReturn("token");
-
-		String token = authLoginAccountFacade.loginOrSignup(
-			new AccountDto("kakao-456", "kakao@example.com", Provider.KAKAO)
+		Account account = authLoginAccountFacade.loginOrSignup(
+			"kakao-456",
+			"kakao@example.com",
+			Provider.KAKAO
 		);
 
-		ArgumentCaptor<TokenIssueDto> captor = ArgumentCaptor.forClass(TokenIssueDto.class);
-
-		assertThat(token).isEqualTo("token");
+		assertThat(account).isEqualTo(created);
 		verify(authJoinAccountUseCase).join(Provider.KAKAO, "kakao-456", "kakao@example.com");
-		verify(authIssueTokenUseCase).issueToken(captor.capture(), eq(true));
-		assertThat(captor.getValue().memberPublicId()).isEqualTo(created.getMemberPublicId());
-		assertThat(captor.getValue().role()).isEqualTo(created.getRole().name());
 	}
 }

@@ -13,6 +13,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.bugzero.rarego.boundedContext.auth.app.AuthAccessTokenBlacklistUseCase;
 import com.bugzero.rarego.global.security.CustomAccessDeniedHandler;
 import com.bugzero.rarego.global.security.CustomAuthenticationEntryPoint;
 import com.bugzero.rarego.boundedContext.auth.app.AuthOAuth2AccountService;
@@ -42,7 +43,8 @@ public class SecurityConfig {
 		CustomAuthenticationEntryPoint authenticationEntryPoint,
 		CustomAccessDeniedHandler accessDeniedHandler,
 		AuthOAuth2AccountService authOAuth2AccountService,
-		CustomOAuth2SuccessHandler customOAuth2SuccessHandler) throws Exception {
+		CustomOAuth2SuccessHandler customOAuth2SuccessHandler,
+		AuthAccessTokenBlacklistUseCase authAccessTokenBlacklistUseCase) throws Exception {
 		http.authorizeHttpRequests(
 				auth -> auth
 					.requestMatchers("/favicon.ico").permitAll()
@@ -68,7 +70,8 @@ public class SecurityConfig {
 				.authenticationEntryPoint(authenticationEntryPoint)
 				.accessDeniedHandler(accessDeniedHandler)
 			)
-			.addFilterBefore(new JwtAuthenticationFilter(jwtParser), UsernamePasswordAuthenticationFilter.class);
+			.addFilterBefore(new JwtAuthenticationFilter(jwtParser, authAccessTokenBlacklistUseCase),
+				UsernamePasswordAuthenticationFilter.class);
 
 		return http.build();
 	}
