@@ -273,4 +273,52 @@ class MemberControllerTest {
 			SecurityContextHolder.clearContext();
 		}
 	}
+
+	@Test
+	@DisplayName("성공: 입찰 참여 검수 요청이 정상 처리되면 HTTP 200을 반환한다")
+	void verifyParticipation_success() throws Exception {
+		MemberPrincipal principal = new MemberPrincipal("public-id", "USER");
+		Authentication authentication = new UsernamePasswordAuthenticationToken(
+			principal,
+			null,
+			List.of(new SimpleGrantedAuthority("ROLE_USER"))
+		);
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+		try {
+			mockMvc.perform(get("/api/v1/members/participation"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value(SuccessType.OK.getHttpStatus()))
+				.andExpect(jsonPath("$.message").value(SuccessType.OK.getMessage()));
+
+			verify(memberFacade).verifyParticipation("public-id");
+		} finally {
+			SecurityContextHolder.clearContext();
+		}
+	}
+
+	@Test
+	@DisplayName("실패: 입찰 참여 검수 실패 시 HTTP 400을 반환한다")
+	void verifyParticipation_fail() throws Exception {
+		willThrow(new CustomException(ErrorType.MEMBER_ZIPCODE_REQUIRED))
+			.given(memberFacade)
+			.verifyParticipation("public-id");
+
+		MemberPrincipal principal = new MemberPrincipal("public-id", "USER");
+		Authentication authentication = new UsernamePasswordAuthenticationToken(
+			principal,
+			null,
+			List.of(new SimpleGrantedAuthority("ROLE_USER"))
+		);
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+		try {
+			mockMvc.perform(get("/api/v1/members/participation"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.status").value(ErrorType.MEMBER_ZIPCODE_REQUIRED.getHttpStatus()))
+				.andExpect(jsonPath("$.message").value(ErrorType.MEMBER_ZIPCODE_REQUIRED.getMessage()));
+		} finally {
+			SecurityContextHolder.clearContext();
+		}
+	}
 }

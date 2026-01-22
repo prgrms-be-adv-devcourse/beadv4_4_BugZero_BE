@@ -34,6 +34,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, JpaSpec
             @Param("now") LocalDateTime now,
             Pageable pageable
     );
+    Optional<Auction> findByProductId(Long productId);
 
     List<Auction> findAllByStatusAndStartTimeBefore(AuctionStatus status, LocalDateTime now);
 
