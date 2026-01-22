@@ -1,5 +1,20 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.BDDMockito.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
@@ -92,9 +107,8 @@ class AuctionReadUseCaseTest {
 		// 2. 경매 Mock
 		Auction auction = Auction.builder()
 			.productId(50L)
-			.sellerId(20L)
-			.startPrice(1000)
-			.durationDays(3)
+			.startPrice(1000)   // 필수
+			.durationDays(3)    // [수정] NPE 원인 해결
 			.endTime(LocalDateTime.now().plusDays(1))
 			.build();
 		ReflectionTestUtils.setField(auction, "id", auctionId);
@@ -148,8 +162,12 @@ class AuctionReadUseCaseTest {
 		ReflectionTestUtils.setField(order, "id", 777L);
 		ReflectionTestUtils.setField(order, "status", AuctionOrderStatus.PROCESSING);
 
-		// 3. 경매 정보
-		Auction auction = Auction.builder().productId(50L).startPrice(1000).durationDays(3).build();
+		// 3. 관련 데이터 (경매) - NPE 방지
+		Auction auction = Auction.builder()
+			.productId(50L)
+			.startPrice(1000)  // [수정] 필수
+			.durationDays(3)   // [수정] NPE 원인 해결
+			.build();
 		ReflectionTestUtils.setField(auction, "id", auctionId);
 
 		// 4. 상품 정보
@@ -197,9 +215,13 @@ class AuctionReadUseCaseTest {
 		// 2. 주문
 		AuctionOrder order = AuctionOrder.builder().auctionId(auctionId).bidderId(buyerId).sellerId(sellerId).finalPrice(10000).build();
 		ReflectionTestUtils.setField(order, "id", 777L);
-
-		// 3. 경매
-		Auction auction = Auction.builder().productId(50L).startPrice(1000).durationDays(3).build();
+    
+		// 3. 경매 정보 (NPE 방지)
+		Auction auction = Auction.builder()
+			.productId(50L)
+			.startPrice(1000) // [수정]
+			.durationDays(3)  // [수정] NPE 원인 해결
+			.build();
 
 		// [변경] Support Mocking
 		given(support.getMember(strangerPublicId)).willReturn(stranger);

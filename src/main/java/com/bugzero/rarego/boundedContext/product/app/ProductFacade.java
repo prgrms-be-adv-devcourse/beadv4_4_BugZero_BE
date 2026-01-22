@@ -7,6 +7,7 @@ import com.bugzero.rarego.shared.product.dto.ProductInspectionResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateDto;
+import com.bugzero.rarego.shared.product.dto.ProductUpdateResponseDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,7 +27,7 @@ public class ProductFacade {
 		return productCreateInspectionUseCase.createInspection(memberUUID, dto);
 	}
 
-	public Long updateProduct(String publicId, Long productId, ProductUpdateDto productUpdateDto) {
+	public ProductUpdateResponseDto updateProduct(String publicId, Long productId, ProductUpdateDto productUpdateDto) {
 		return productUpdateProductUseCase.updateProduct(publicId, productId, productUpdateDto);
 	}
 }

@@ -71,7 +71,6 @@ class AuctionCreateBidUseCaseTest {
 			.productId(PRODUCT_ID)
 			.sellerId(SELLER_ID)
 			.startPrice(1000)
-			.tickSize(100)
 			.startTime(LocalDateTime.now().minusHours(1))
 			.endTime(LocalDateTime.now().plusHours(1))
 			.durationDays(1)
@@ -118,7 +117,6 @@ class AuctionCreateBidUseCaseTest {
 			.productId(PRODUCT_ID)
 			.sellerId(SELLER_ID)
 			.startPrice(10000)
-			.tickSize(1000)
 			.startTime(LocalDateTime.now().minusHours(1))
 			.endTime(LocalDateTime.now().plusHours(1))
 			.durationDays(1)
@@ -152,7 +150,6 @@ class AuctionCreateBidUseCaseTest {
 			.productId(PRODUCT_ID)
 			.sellerId(SELLER_ID)
 			.startPrice(5000)
-			.tickSize(1000)
 			.startTime(LocalDateTime.now().minusHours(1))
 			.endTime(LocalDateTime.now().plusHours(1))
 			.durationDays(1)
@@ -160,6 +157,8 @@ class AuctionCreateBidUseCaseTest {
 		ReflectionTestUtils.setField(auction, "id", AUCTION_ID);
 		ReflectionTestUtils.setField(auction, "status", AuctionStatus.IN_PROGRESS);
 		ReflectionTestUtils.setField(auction, "currentPrice", 10000);
+		ReflectionTestUtils.setField(auction, "tickSize", 1000);
+		// 현재가 10,000 -> 호가단위 1,000 -> 최소입찰가 11,000
 
 		// [수정] Support Mocking
 		given(support.getMember(BIDDER_PUBLICID)).willReturn(bidder);
