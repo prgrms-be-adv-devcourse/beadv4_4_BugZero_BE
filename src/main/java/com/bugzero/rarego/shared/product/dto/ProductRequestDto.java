@@ -7,6 +7,7 @@ import com.bugzero.rarego.boundedContext.product.domain.Category;
 import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductCondition;
+import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -26,9 +27,9 @@ public record ProductRequestDto(
 	@NotEmpty(message = "이미지는 최소 1장 이상 등록해야 합니다.")
 	List<@Valid ProductImageRequestDto> productImageRequestDto
 ) {
-	public Product toEntity(Long memberId) {
+	public Product toEntity(ProductMember seller) {
 		return Product.builder()
-			.sellerId(memberId)
+			.seller(seller)
 			.category(category)
 			.productCondition(ProductCondition.INSPECTION)
 			// 처음 상품이 등록될 때는 검수 대기상태로 지정
