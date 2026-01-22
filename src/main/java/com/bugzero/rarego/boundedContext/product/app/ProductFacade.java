@@ -20,11 +20,12 @@ public class ProductFacade {
 	private final ProductCreateProductUseCase productCreateProductUseCase;
 	private final ProductCreateInspectionUseCase productCreateInspectionUseCase;
 	private final ProductSyncMemberUseCase productSyncMemberUseCase;
+	private final ProductUpdateProductUseCase productUpdateProductUseCase;
+	private final ProductDeleteProductUseCase productDeleteProductUseCase;
 
 	public ProductResponseDto createProduct(String memberUUID, ProductRequestDto dto) {
 		return productCreateProductUseCase.createProduct(memberUUID, dto);
 	}
-	private final ProductUpdateProductUseCase productUpdateProductUseCase;
 
 	public ProductInspectionResponseDto createInspection(String memberUUID, ProductInspectionRequestDto dto) {
 		return productCreateInspectionUseCase.createInspection(memberUUID, dto);
@@ -36,5 +37,9 @@ public class ProductFacade {
 
 	public ProductMember syncMember(MemberDto member) {
 		return productSyncMemberUseCase.syncMember(member);
+	}
+
+	public void deleteProduct(String publicId, Long productId) {
+		productDeleteProductUseCase.deleteProduct(publicId, productId);
 	}
 }

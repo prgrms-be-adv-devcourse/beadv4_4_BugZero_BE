@@ -1,5 +1,6 @@
 package com.bugzero.rarego.boundedContext.product.in;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 @Tag(name = "Product", description = "상품 관련 API")
 public class ProductController {
 
-	private final ProductFacade  productFacade;
+	private final ProductFacade productFacade;
 
 	@Operation(summary = "상품 등록", description = "새로운 상품을 등록합니다")
 	@PostMapping
@@ -47,6 +48,16 @@ public class ProductController {
 	) {
 		return SuccessResponseDto.from(SuccessType.OK,
 			productFacade.updateProduct(publicId, productId, productUpdateDto));
+	}
+
+	@Operation(summary = "상품 삭제", description = "상품 정보를 삭제합니다.")
+	@DeleteMapping("/{productId}")
+	public SuccessResponseDto<Void> deleteProduct(
+		@RequestParam String publicId,
+		@PathVariable Long productId
+	) {
+		productFacade.deleteProduct(publicId, productId);
+		return SuccessResponseDto.from(SuccessType.OK);
 	}
 
 }
