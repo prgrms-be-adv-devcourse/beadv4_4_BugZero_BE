@@ -1,8 +1,5 @@
 package com.bugzero.rarego.boundedContext.product.in;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
-
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -11,7 +8,6 @@ import com.bugzero.rarego.boundedContext.product.domain.Category;
 import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductCondition;
-import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
 import com.bugzero.rarego.boundedContext.product.out.ProductMemberRepository;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 
@@ -28,26 +24,6 @@ public class ProductDataInit implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		// ProductMember 초기 데이터
-		ProductMember admin = ProductMember.builder()
-			.id(1L)
-			.publicId(UUID.randomUUID().toString())
-			.email("test1@bugzero.com")
-			.nickname("테스트유저")
-			.createdAt(LocalDateTime.now())
-			.updatedAt(LocalDateTime.now())
-			.build();
-		productMemberRepository.save(admin);
-
-		ProductMember member = ProductMember.builder()
-			.id(2L)
-			.publicId(UUID.randomUUID().toString())
-			.email("test2@bugzero.com")
-			.nickname("일반회원")
-			.createdAt(LocalDateTime.now())
-			.updatedAt(LocalDateTime.now())
-			.build();
-		productMemberRepository.save(member);
 
 		//ProductMember 초기 데이터
 		createProduct(1L, "다크나이트");
