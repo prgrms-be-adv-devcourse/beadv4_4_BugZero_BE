@@ -94,7 +94,6 @@ class AuctionReadUseCaseTest {
 			.productId(50L)
 			.sellerId(20L)
 			.startPrice(1000)
-			.tickSize(100)
 			.durationDays(3)
 			.endTime(LocalDateTime.now().plusDays(1))
 			.build();
@@ -150,7 +149,7 @@ class AuctionReadUseCaseTest {
 		ReflectionTestUtils.setField(order, "status", AuctionOrderStatus.PROCESSING);
 
 		// 3. 경매 정보
-		Auction auction = Auction.builder().productId(50L).startPrice(1000).tickSize(100).durationDays(3).build();
+		Auction auction = Auction.builder().productId(50L).startPrice(1000).durationDays(3).build();
 		ReflectionTestUtils.setField(auction, "id", auctionId);
 
 		// 4. 상품 정보
@@ -200,7 +199,7 @@ class AuctionReadUseCaseTest {
 		ReflectionTestUtils.setField(order, "id", 777L);
 
 		// 3. 경매
-		Auction auction = Auction.builder().productId(50L).startPrice(1000).tickSize(100).durationDays(3).build();
+		Auction auction = Auction.builder().productId(50L).startPrice(1000).durationDays(3).build();
 
 		// [변경] Support Mocking
 		given(support.getMember(strangerPublicId)).willReturn(stranger);
@@ -224,7 +223,7 @@ class AuctionReadUseCaseTest {
 		Long auctionId1 = 1L;
 		Long productId1 = 100L;
 		Auction auction1 = Auction.builder()
-			.productId(productId1).startPrice(1000).tickSize(100).durationDays(3).build();
+			.productId(productId1).startPrice(1000).durationDays(3).build();
 		ReflectionTestUtils.setField(auction1, "id", auctionId1);
 		ReflectionTestUtils.setField(auction1, "currentPrice", 2000);
 		ReflectionTestUtils.setField(auction1, "status", AuctionStatus.IN_PROGRESS);
@@ -298,7 +297,7 @@ class AuctionReadUseCaseTest {
 		Page<AuctionOrder> orderPage = new PageImpl<>(List.of(order), pageable, 1);
 
 		// 3. Auction Mock
-		Auction auction = Auction.builder().productId(50L).startPrice(1000).tickSize(100).durationDays(3).build();
+		Auction auction = Auction.builder().productId(50L).startPrice(1000).durationDays(3).build();
 		ReflectionTestUtils.setField(auction, "id", 1L);
 
 		// 4. Product Mock
