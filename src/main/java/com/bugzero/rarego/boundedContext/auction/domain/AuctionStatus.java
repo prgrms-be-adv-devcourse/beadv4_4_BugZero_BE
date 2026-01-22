@@ -7,6 +7,6 @@ public enum AuctionStatus {
     IN_PROGRESS,
     // 종료됨 (시간 만료)
     ENDED,
-    // 거래 파기
+    // 회수/판매 포기
     WITHDRAWN,
 }
