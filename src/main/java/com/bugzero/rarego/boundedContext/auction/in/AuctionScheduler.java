@@ -41,8 +41,9 @@ public class AuctionScheduler {
         try {
             cancelSchedule(auctionId);
 
-            Instant executionTime = endTime.atZone(ZoneId.of("Asia/Seoul")).toInstant();
-            Instant now = Instant.now();
+            ZoneId zone = ZoneId.of("Asia/Seoul");
+            Instant executionTime = endTime.atZone(zone).toInstant();
+            Instant now = java.time.ZonedDateTime.now(zone).toInstant();
 
             if (executionTime.isBefore(now)) {
                 log.warn("경매 {}의 종료 시간이 이미 지났습니다. 즉시 정산을 실행합니다.", auctionId);
@@ -52,8 +53,7 @@ public class AuctionScheduler {
 
             ScheduledFuture<?> future = taskScheduler.schedule(
                     () -> executeSettlement(auctionId),
-                    executionTime
-            );
+                    executionTime);
 
             scheduledTasks.put(auctionId, future);
 
