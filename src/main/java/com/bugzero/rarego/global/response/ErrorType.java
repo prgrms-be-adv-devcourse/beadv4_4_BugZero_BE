@@ -79,10 +79,11 @@ public enum ErrorType {
 	// Product (3000 ~ 3999)
 	PRODUCT_NOT_FOUND(404, 3001, "상품이 존재하지 않습니다."),
 	UNAUTHORIZED_SELLER(403, 3002, "해당 상품의 판매자가 아닙니다."),
-	IMAGE_NOT_FOUND(400, 3003, "해당 상품 이미지가 존재하지 않습니다."),
+	IMAGE_NOT_FOUND(404, 3003, "해당 상품 이미지가 존재하지 않습니다."),
 
     INSPECTION_REJECT_REASON_REQUIRED(400, 3501, "검수 반려시 사유가 있어야 합니다."),
     INSPECTION_ALREADY_COMPLETED(400, 3502, "검수가 이미 완료된 상품입니다."),
+	INSPECTION_NOT_FOUND(404,3503, "해당 상품에 해당하는 검수 정보가 없습니다."),
 
     // Payment (4000 ~ 4999)
     WALLET_NOT_FOUND(404, 4001, "회원의 지갑이 존재하지 않습니다."),
