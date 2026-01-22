@@ -1,13 +1,17 @@
 package com.bugzero.rarego.boundedContext.product.app;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
+import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.shared.member.domain.MemberDto;
 import com.bugzero.rarego.shared.product.dto.ProductInspectionRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductInspectionResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductRequestResponseDto;
+import com.bugzero.rarego.shared.product.dto.ProductResponseForInspectionDto;
+import com.bugzero.rarego.shared.product.dto.ProductSearchForInspectionCondition;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateDto;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateResponseDto;
 
@@ -22,6 +26,7 @@ public class ProductFacade {
 	private final ProductSyncMemberUseCase productSyncMemberUseCase;
 	private final ProductUpdateProductUseCase productUpdateProductUseCase;
 	private final ProductDeleteProductUseCase productDeleteProductUseCase;
+	private final ProductReadProductUseCase productReadProductUseCase;
 
 	public ProductRequestResponseDto createProduct(String memberUUID, ProductRequestDto dto) {
 		return productCreateProductUseCase.createProduct(memberUUID, dto);
@@ -41,5 +46,10 @@ public class ProductFacade {
 
 	public void deleteProduct(String publicId, Long productId) {
 		productDeleteProductUseCase.deleteProduct(publicId, productId);
+	}
+
+	public PagedResponseDto<ProductResponseForInspectionDto> readProductsForInspection(
+		ProductSearchForInspectionCondition condition, Pageable pageable) {
+		return productReadProductUseCase.readProducts(condition, pageable);
 	}
 }
