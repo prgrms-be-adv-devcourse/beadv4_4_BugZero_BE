@@ -1,6 +1,5 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
-import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
 
 import java.time.LocalDateTime;
@@ -38,33 +37,17 @@ import com.bugzero.rarego.shared.auction.dto.AuctionOrderResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionSearchCondition;
 import com.bugzero.rarego.shared.auction.dto.MyAuctionOrderListResponseDto;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
-
-import jakarta.persistence.criteria.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuctionReadUseCaseTest {
@@ -121,7 +104,7 @@ class AuctionReadUseCaseTest {
 		Bid myLastBid = Bid.builder().bidAmount(5000).bidderId(memberId).build();
 
 		// [변경] Repository -> Support로 Mocking 대상 변경
-		given(support.getMember(memberPublicId)).willReturn(member);
+		given(support.getPublicMember(memberPublicId)).willReturn(member);
 		given(support.findAuctionById(auctionId)).willReturn(auction);
 
 		// [유지] BidRepository는 UseCase가 직접 사용함
@@ -181,7 +164,7 @@ class AuctionReadUseCaseTest {
 		AuctionMember sellerMember = AuctionMember.builder().id(sellerId).publicId("seller_pub_id").nickname("sellerNick").build();
 
 		// [변경] Repository -> Support Mocking
-		given(support.getMember(buyerPublicId)).willReturn(buyer);   // 1. 요청자 조회
+		given(support.getPublicMember(buyerPublicId)).willReturn(buyer);   // 1. 요청자 조회
 		given(support.getOrder(auctionId)).willReturn(order);        // 2. 주문 조회
 		given(support.findAuctionById(auctionId)).willReturn(auction);    // 3. 경매 조회
 		given(support.getProduct(50L)).willReturn(product);          // 4. 상품 조회
@@ -225,7 +208,7 @@ class AuctionReadUseCaseTest {
 			.build();
 
 		// [변경] Support Mocking
-		given(support.getMember(strangerPublicId)).willReturn(stranger);
+		given(support.getPublicMember(strangerPublicId)).willReturn(stranger);
 		given(support.getOrder(auctionId)).willReturn(order);
 		given(support.findAuctionById(auctionId)).willReturn(auction);
 
@@ -333,7 +316,7 @@ class AuctionReadUseCaseTest {
 		ReflectionTestUtils.setField(img1, "product", product);
 
 		// Mocking Behavior
-		given(support.getMember(memberPublicId)).willReturn(member);
+		given(support.getPublicMember(memberPublicId)).willReturn(member);
 
 		// [핵심] 레포지토리 호출
 		given(auctionOrderRepository.findAllByBidderIdAndStatus(eq(10L), eq(status), any(Pageable.class)))
@@ -374,7 +357,7 @@ class AuctionReadUseCaseTest {
 		// 빈 페이지 생성
 		Page<AuctionOrder> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
 
-		given(support.getMember(memberPublicId)).willReturn(member);
+		given(support.getPublicMember(memberPublicId)).willReturn(member);
 
 		// status가 null인 경우로 테스트
 		given(auctionOrderRepository.findAllByBidderIdAndStatus(eq(10L), isNull(), any(Pageable.class)))

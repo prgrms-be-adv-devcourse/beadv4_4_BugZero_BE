@@ -43,7 +43,7 @@ public class AuctionSupport {
 			.orElseThrow(() -> new CustomException(ErrorType.AUCTION_NOT_FOUND));
 	}
 
-	public AuctionMember getMember(String publicId) {
+	public AuctionMember getPublicMember(String publicId) {
 		return auctionMemberRepository.findByPublicId(publicId)
 			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
 	}
@@ -65,7 +65,20 @@ public class AuctionSupport {
 
 	public Optional<AuctionOrder> findOrder(Long auctionId) {
 		return auctionOrderRepository.findByAuctionId(auctionId);
+	}
 
+	// 판매자 권한 검증
+	public void validateSeller(Auction auction, Long memberId) {
+		if (!auction.getSellerId().equals(memberId)) {
+			throw new CustomException(ErrorType.UNAUTHORIZED_AUCTION_SELLER);
+		}
+	}
+
+	// 경매 종료 상태 검증
+	public void validateAuctionEnded(Auction auction) {
+		if (auction.getStatus() != AuctionStatus.ENDED) {
+			throw new CustomException(ErrorType.AUCTION_NOT_ENDED);
+		}
 	}
 
 }
