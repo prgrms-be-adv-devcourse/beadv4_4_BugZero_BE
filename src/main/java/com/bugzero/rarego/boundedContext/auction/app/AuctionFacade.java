@@ -3,6 +3,7 @@ package com.bugzero.rarego.boundedContext.auction.app;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
+import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistListResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.global.exception.CustomException;
@@ -73,10 +74,21 @@ public class AuctionFacade {
         return auctionBookmarkUseCase.addBookmark(member.getId(), auctionId);
     }
 
+    // 경매 상태/현재가 요약 조회
+    public PagedResponseDto<AuctionListResponseDto> getAuctions(AuctionSearchCondition condition, Pageable pageable) {
+        return auctionReadUseCase.getAuctions(condition, pageable);
+    }
+
     // 관심 경매 해제
     @Transactional
     public WishlistRemoveResponseDto removeBookmark(String publicId, Long bookmarkId) {
         return auctionBookmarkUseCase.removeBookmark(publicId, bookmarkId);
+    }
+
+    // 내 관심 경매 목록 조회
+    @Transactional(readOnly = true)
+    public PagedResponseDto<WishlistListResponseDto> getMyBookmarks(String publicId, Pageable pageable) {
+        return auctionReadUseCase.getMyBookmarks(publicId, pageable);
     }
 
     @Transactional

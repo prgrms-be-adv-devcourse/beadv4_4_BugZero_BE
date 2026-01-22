@@ -7,6 +7,7 @@ import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionBookmarkRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ public class AuctionBookmarkUseCase {
     private final AuctionBookmarkRepository auctionBookmarkRepository;
     private final AuctionSupport auctionSupport;
     private final AuctionMemberRepository auctionMemberRepository;
+    private final AuctionRepository auctionRepository;
 
     @Transactional
     public WishlistAddResponseDto addBookmark(Long memberId, Long auctionId) {
@@ -58,4 +60,5 @@ public class AuctionBookmarkUseCase {
 
         return WishlistRemoveResponseDto.of(true, bookmarkId);
     }
+
 }
