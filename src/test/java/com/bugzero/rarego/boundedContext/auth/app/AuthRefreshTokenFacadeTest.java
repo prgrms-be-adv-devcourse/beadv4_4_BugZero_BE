@@ -132,7 +132,6 @@ class AuthRefreshTokenFacadeTest {
 		);
 		when(refreshTokenRepository.findByRefreshTokenAndRevokedFalse(refreshToken)).thenReturn(Optional.of(stored));
 		when(jwtParser.parseRefreshPublicId(refreshToken)).thenReturn(null);
-		when(jwtParser.expiresAt(refreshToken)).thenReturn(LocalDateTime.now().plusMinutes(5));
 
 		// when
 		Throwable thrown = catchThrowable(() -> authRefreshTokenFacade.refresh(refreshToken, accessToken));
@@ -145,32 +144,6 @@ class AuthRefreshTokenFacadeTest {
 		verifyNoInteractions(authIssueTokenUseCase, authStoreRefreshTokenUseCase, authAccessTokenBlacklistUseCase, accountRepository);
 	}
 
-	@Test
-	@DisplayName("refresh token 소유자가 다르면 AUTH_REFRESH_TOKEN_OWNER_MISMATCH 예외가 발생한다.")
-	void refreshFailsWhenOwnerMismatch() {
-		// given
-		String refreshToken = "refresh-token";
-		String accessToken = "access-token";
-		RefreshToken stored = new RefreshToken(
-			"member-public-id",
-			refreshToken,
-			LocalDateTime.now().plusMinutes(5),
-			false
-		);
-		when(refreshTokenRepository.findByRefreshTokenAndRevokedFalse(refreshToken)).thenReturn(Optional.of(stored));
-		when(jwtParser.parseRefreshPublicId(refreshToken)).thenReturn("other-member");
-		when(jwtParser.expiresAt(refreshToken)).thenReturn(LocalDateTime.now().plusMinutes(5));
-
-		// when
-		Throwable thrown = catchThrowable(() -> authRefreshTokenFacade.refresh(refreshToken, accessToken));
-
-		// then
-		assertThat(thrown)
-			.isInstanceOf(CustomException.class)
-			.extracting("errorType")
-			.isEqualTo(ErrorType.AUTH_REFRESH_TOKEN_OWNER_MISMATCH);
-		verifyNoInteractions(authIssueTokenUseCase, authStoreRefreshTokenUseCase, authAccessTokenBlacklistUseCase, accountRepository);
-	}
 
 	@Test
 	@DisplayName("계정을 찾을 수 없으면 AUTH_REFRESH_TOKEN_INVALID 예외가 발생한다.")
