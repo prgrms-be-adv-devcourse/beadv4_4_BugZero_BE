@@ -107,6 +107,7 @@ class AuctionReadUseCaseTest {
 		// 2. 경매 Mock
 		Auction auction = Auction.builder()
 			.productId(50L)
+			.sellerId(100L)
 			.startPrice(1000)   // 필수
 			.durationDays(3)    // [수정] NPE 원인 해결
 			.endTime(LocalDateTime.now().plusDays(1))
