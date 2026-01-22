@@ -31,7 +31,7 @@ public class AuthWithdrawAccountUseCase {
 		Account account = authSupport.findByPublicId(publicId);
 		// 삭제된 계정 404
 		if (account.isDeleted()) {
-			throw new CustomException(ErrorType.AUTH_ACCOUNT_NOT_FOUND);
+			throw new CustomException(ErrorType.AUTH_ACCOUNT_DELETED);
 		}
 
 		/**

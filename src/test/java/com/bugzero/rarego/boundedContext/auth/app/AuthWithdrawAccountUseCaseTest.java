@@ -78,7 +78,7 @@ class AuthWithdrawAccountUseCaseTest {
 		String accessToken = "access-token";
 		String publicId = "member-public-id";
 		when(jwtParser.parsePrincipal(accessToken)).thenReturn(new MemberPrincipal(publicId, "USER"));
-		when(authSupport.findByMemberPublicId(publicId))
+		when(authSupport.findByPublicId(publicId))
 			.thenThrow(new CustomException(ErrorType.AUTH_ACCOUNT_NOT_FOUND));
 
 		assertThatThrownBy(() -> authWithdrawAccountUseCase.withdraw(accessToken))
@@ -86,7 +86,7 @@ class AuthWithdrawAccountUseCaseTest {
 			.extracting("errorType")
 			.isEqualTo(ErrorType.AUTH_ACCOUNT_NOT_FOUND);
 
-		verify(authSupport).findByMemberPublicId(publicId);
+		verify(authSupport).findByPublicId(publicId);
 		verifyNoInteractions(memberApiClient, refreshTokenRepository, authAccessTokenBlacklistUseCase);
 	}
 
@@ -104,14 +104,14 @@ class AuthWithdrawAccountUseCaseTest {
 		account.softDelete();
 
 		when(jwtParser.parsePrincipal(accessToken)).thenReturn(new MemberPrincipal(publicId, "USER"));
-		when(authSupport.findByMemberPublicId(publicId)).thenReturn(account);
+		when(authSupport.findByPublicId(publicId)).thenReturn(account);
 
 		assertThatThrownBy(() -> authWithdrawAccountUseCase.withdraw(accessToken))
 			.isInstanceOf(CustomException.class)
 			.extracting("errorType")
 			.isEqualTo(ErrorType.AUTH_ACCOUNT_DELETED);
 
-		verify(authSupport).findByMemberPublicId(publicId);
+		verify(authSupport).findByPublicId(publicId);
 		verifyNoInteractions(memberApiClient, refreshTokenRepository, authAccessTokenBlacklistUseCase);
 	}
 
@@ -128,7 +128,7 @@ class AuthWithdrawAccountUseCaseTest {
 			.build();
 
 		when(jwtParser.parsePrincipal(accessToken)).thenReturn(new MemberPrincipal(publicId, "USER"));
-		when(authSupport.findByMemberPublicId(publicId)).thenReturn(account);
+		when(authSupport.findByPublicId(publicId)).thenReturn(account);
 
 		authWithdrawAccountUseCase.withdraw(accessToken);
 
