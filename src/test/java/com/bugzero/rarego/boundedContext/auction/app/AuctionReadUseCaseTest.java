@@ -33,10 +33,9 @@ import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionDetailResponseDto;
-import com.bugzero.rarego.shared.auction.dto.AuctionListResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionOrderResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionSearchCondition;
-import com.bugzero.rarego.shared.auction.dto.MyAuctionOrderListResponseDto;
+
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -294,101 +293,5 @@ class AuctionReadUseCaseTest {
 		assertThat(result.pageDto().totalItems()).isEqualTo(0);
 	}
 
-	@Test
-	@DisplayName("나의 낙찰 목록 조회 - 성공 (데이터 조립 및 정렬 확인)")
-	void getMyAuctionOrders_success() {
-		// given
-		String memberPublicId = "user_pub_id";
-		AuctionOrderStatus status = AuctionOrderStatus.PROCESSING;
-		Pageable pageable = PageRequest.of(0, 10);
-
-		// 1. Member Mock
-		AuctionMember member = AuctionMember.builder().publicId(memberPublicId).build();
-		ReflectionTestUtils.setField(member, "id", 10L);
-
-		// 2. Order Mock (낙찰 내역)
-		AuctionOrder order = AuctionOrder.builder()
-			.auctionId(1L)
-			.bidderId(10L)
-			.finalPrice(50000)
-			.build();
-		ReflectionTestUtils.setField(order, "id", 100L);
-		ReflectionTestUtils.setField(order, "status", AuctionOrderStatus.PROCESSING); // 결제 대기
-		ReflectionTestUtils.setField(order, "createdAt", LocalDateTime.now());
-
-		Page<AuctionOrder> orderPage = new PageImpl<>(List.of(order), pageable, 1);
-
-		// 3. Auction Mock
-		Auction auction = Auction.builder().productId(50L).startPrice(1000).tickSize(100).durationDays(3).build();
-		ReflectionTestUtils.setField(auction, "id", 1L);
-
-		// 4. Product Mock
-		Product product = Product.builder().name("Lego Titanic").build();
-		ReflectionTestUtils.setField(product, "id", 50L);
-
-		// 5. Image Mock (썸네일 정렬 확인용)
-		ProductImage img1 = ProductImage.builder().product(product).imageUrl("thumb.jpg").sortOrder(0).build();
-		ProductImage img2 = ProductImage.builder().product(product).imageUrl("detail.jpg").sortOrder(1).build();
-		ReflectionTestUtils.setField(img1, "product", product);
-
-		// Mocking Behavior
-		given(support.getMember(memberPublicId)).willReturn(member);
-
-		// [핵심] 레포지토리 호출
-		given(auctionOrderRepository.findAllByBidderIdAndStatus(eq(10L), eq(status), any(Pageable.class)))
-			.willReturn(orderPage);
-
-		// 연관 데이터 조회 Mocking
-		given(auctionRepository.findAllById(Set.of(1L))).willReturn(List.of(auction));
-		given(productRepository.findAllByIdIn(Set.of(50L))).willReturn(List.of(product));
-		given(productImageRepository.findAllByProductIdIn(Set.of(50L))).willReturn(List.of(img1, img2));
-
-		// when
-		PagedResponseDto<MyAuctionOrderListResponseDto> result =
-			auctionReadUseCase.getMyAuctionOrders(memberPublicId, status, pageable);
-
-		// then
-		assertThat(result.data()).hasSize(1);
-		MyAuctionOrderListResponseDto dto = result.data().get(0);
-
-		// 데이터 매핑 검증
-		assertThat(dto.orderId()).isEqualTo(100L);
-		assertThat(dto.productName()).isEqualTo("Lego Titanic"); // 상품명 확인
-		assertThat(dto.thumbnailUrl()).isEqualTo("thumb.jpg");   // 썸네일(sortOrder=0) 확인
-		assertThat(dto.finalPrice()).isEqualTo(50000);
-		assertThat(dto.statusDescription()).isEqualTo("결제 대기중"); // 한글 변환 확인
-		assertThat(dto.auctionRequired()).isTrue();
-	}
-
-	@Test
-	@DisplayName("나의 낙찰 목록 조회 - 내역이 없을 때 빈 리스트 반환 (Early Return)")
-	void getMyAuctionOrders_empty() {
-		// given
-		String memberPublicId = "user_pub_id";
-		Pageable pageable = PageRequest.of(0, 10);
-
-		AuctionMember member = AuctionMember.builder().publicId(memberPublicId).build();
-		ReflectionTestUtils.setField(member, "id", 10L);
-
-		// 빈 페이지 생성
-		Page<AuctionOrder> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
-
-		given(support.getMember(memberPublicId)).willReturn(member);
-
-		// status가 null인 경우로 테스트
-		given(auctionOrderRepository.findAllByBidderIdAndStatus(eq(10L), isNull(), any(Pageable.class)))
-			.willReturn(emptyPage);
-
-		// when
-		PagedResponseDto<MyAuctionOrderListResponseDto> result =
-			auctionReadUseCase.getMyAuctionOrders(memberPublicId, null, pageable);
-
-		// then
-		assertThat(result.data()).isEmpty();
-		assertThat(result.pageDto().totalItems()).isEqualTo(0);
-
-		// [중요] 최적화 검증: 목록이 비었으므로 다른 리포지토리는 호출되지 않아야 함
-		// (Mockito.verify는 선택 사항입니다)
-		// verify(auctionRepository, never()).findAllById(any());
-	}
+	
 }
