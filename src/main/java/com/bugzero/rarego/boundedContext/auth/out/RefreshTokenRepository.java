@@ -8,4 +8,6 @@ import com.bugzero.rarego.boundedContext.auth.domain.RefreshToken;
 
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
 	Optional<RefreshToken> findByRefreshToken(String refreshTokenHash);
+
+	long deleteByMemberPublicId(String memberPublicId);
 }

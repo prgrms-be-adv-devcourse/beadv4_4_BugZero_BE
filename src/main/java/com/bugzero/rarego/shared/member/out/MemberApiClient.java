@@ -5,6 +5,8 @@ import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.shared.member.domain.MemberJoinRequestDto;
 import com.bugzero.rarego.shared.member.domain.MemberJoinResponseDto;
+import com.bugzero.rarego.shared.member.domain.MemberWithdrawRequestDto;
+import com.bugzero.rarego.shared.member.domain.MemberWithdrawResponseDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
@@ -13,10 +15,14 @@ import org.springframework.web.client.RestClient;
 @Service
 public class MemberApiClient {
     private final RestClient restClient;
+    private final RestClient internalRestClient;
 
     public MemberApiClient(@Value("${custom.global.internalBackUrl}") String internalBackUrl) {
         this.restClient = RestClient.builder()
                 .baseUrl(internalBackUrl + "/api/v1/members")
+                .build();
+        this.internalRestClient = RestClient.builder()
+                .baseUrl(internalBackUrl + "/api/v1/internal/members")
                 .build();
     }
 
@@ -51,5 +57,19 @@ public class MemberApiClient {
         } catch (Exception e) {
             throw new CustomException(ErrorType.MEMBER_NOT_FOUND);
         }
+    }
+
+    public String withdraw(String publicId) {
+        MemberWithdrawRequestDto request = new MemberWithdrawRequestDto(publicId);
+        SuccessResponseDto<MemberWithdrawResponseDto> response = internalRestClient.post()
+                .uri("/withdraw")
+                .body(request)
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {
+                });
+        if (response == null || response.data() == null) {
+            throw new CustomException(ErrorType.INTERNAL_SERVER_ERROR);
+        }
+        return response.data().publicId();
     }
 }
