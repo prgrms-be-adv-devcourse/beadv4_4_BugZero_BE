@@ -16,7 +16,6 @@ import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.shared.auction.dto.*;
 import com.bugzero.rarego.shared.member.domain.MemberDto;
 
@@ -37,6 +36,7 @@ public class AuctionFacade {
     private final AuctionMemberRepository auctionMemberRepository;
     private final AuctionSyncMemberUseCase auctionSyncMemberUseCase;
     private final AuctionBookmarkUseCase auctionBookmarkUseCase;
+    private final AuctionRelistUseCase auctionRelistUseCase;
 
     // 쓰기 작업 (입찰 생성)
     @Transactional
@@ -104,5 +104,12 @@ public class AuctionFacade {
     @Transactional
     public WishlistRemoveResponseDto removeBookmark(String publicId, Long bookmarkId) {
         return auctionBookmarkUseCase.removeBookmark(publicId, bookmarkId);
+    }
+
+    // 재경매 생성
+    @Transactional
+    public SuccessResponseDto<AuctionRelistResponseDto> relistAuction(Long auctionId, String memberPublicId, AuctionRelistRequestDto request) {
+        AuctionRelistResponseDto result = auctionRelistUseCase.relistAuction(auctionId, memberPublicId, request);
+        return SuccessResponseDto.from(SuccessType.OK, result);
     }
 }

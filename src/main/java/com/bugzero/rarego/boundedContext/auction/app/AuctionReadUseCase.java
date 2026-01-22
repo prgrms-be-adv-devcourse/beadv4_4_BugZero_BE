@@ -33,8 +33,6 @@ import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
-import com.bugzero.rarego.boundedContext.product.domain.Inspection;
-import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductImage;
 import com.bugzero.rarego.boundedContext.product.out.ProductImageRepository;
@@ -53,8 +51,6 @@ import com.bugzero.rarego.shared.auction.dto.MyAuctionOrderListResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
 
-import jakarta.persistence.criteria.Root;
-import jakarta.persistence.criteria.Subquery;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -94,7 +90,7 @@ public class AuctionReadUseCase {
 
 	// 나의 입찰 내역 조회
 	public PagedResponseDto<MyBidResponseDto> getMyBids(String memberPublicId, AuctionStatus status, Pageable pageable) {
-		AuctionMember member = support.getMember(memberPublicId);
+		AuctionMember member = support.getPublicMember(memberPublicId);
 
 		// 1. Bid 목록 조회
 		Page<Bid> bidPage = bidRepository.findAllByBidderIdAndAuctionStatus(member.getId(), status, pageable);
@@ -120,7 +116,7 @@ public class AuctionReadUseCase {
 	// 나의 판매 내역 조회
 	public PagedResponseDto<MySaleResponseDto> getMySales(String memberPublicId, AuctionFilterType auctionFilterType, Pageable pageable) {
 		// 회원 ID 조회
-		AuctionMember member = support.getMember(memberPublicId);
+		AuctionMember member = support.getPublicMember(memberPublicId);
 
 		// 상품 Id 목록 조회
 		List<Long> myProductIds = productRepository.findAllIdsBySellerId(member.getId());
@@ -168,7 +164,7 @@ public class AuctionReadUseCase {
 		// 로그인한 경우에만 조회, 비로그인이면 null 처리
 		AuctionMember member = null;
 		if (memberPublicId != null) {
-			member = support.getMember(memberPublicId);
+			member = support.getPublicMember(memberPublicId);
 		}
 
 		// 1. 경매 조회
@@ -194,7 +190,7 @@ public class AuctionReadUseCase {
 	// 낙찰 기록 상세 조회
 	public AuctionOrderResponseDto getAuctionOrder(Long auctionId, String memberPublicId) {
 		// 회원 ID 조회
-		AuctionMember member = support.getMember(memberPublicId);
+		AuctionMember member = support.getPublicMember(memberPublicId);
 		Long memberId = member.getId();
 
 		AuctionOrder order = support.getOrder(auctionId);
@@ -302,7 +298,7 @@ public class AuctionReadUseCase {
 	}
 
 	public PagedResponseDto<MyAuctionOrderListResponseDto> getMyAuctionOrders(String memberPublicId, AuctionOrderStatus status, Pageable pageable) {
-		AuctionMember member = support.getMember(memberPublicId);
+		AuctionMember member = support.getPublicMember(memberPublicId);
 
 		// status가 null이면 전체, 있으면 필터링해서 가져옴
 		Page<AuctionOrder> orderPage = auctionOrderRepository.findAllByBidderIdAndStatus(
