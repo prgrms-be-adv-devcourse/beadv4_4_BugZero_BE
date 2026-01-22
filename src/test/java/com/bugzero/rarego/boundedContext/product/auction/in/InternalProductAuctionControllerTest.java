@@ -2,6 +2,7 @@ package com.bugzero.rarego.boundedContext.product.auction.in;
 
 import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +17,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.bugzero.rarego.boundedContext.product.auction.app.AuctionCreateAuctionUseCase;
+import com.bugzero.rarego.boundedContext.product.auction.app.AuctionDeleteAuctionUseCase;
 import com.bugzero.rarego.boundedContext.product.auction.app.AuctionUpdateAuctionUseCase;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionRequestDto;
@@ -35,7 +37,10 @@ class InternalProductAuctionControllerTest {
 	private AuctionCreateAuctionUseCase auctionCreateAuctionUseCase;
 
 	@MockitoBean
-	AuctionUpdateAuctionUseCase auctionUpdateAuctionUseCase;
+	private AuctionUpdateAuctionUseCase auctionUpdateAuctionUseCase;
+
+	@MockitoBean
+	private AuctionDeleteAuctionUseCase auctionDeleteAuctionUseCase;
 
 	@Autowired
 	private ObjectMapper objectMapper;
@@ -120,5 +125,26 @@ class InternalProductAuctionControllerTest {
 				.content(objectMapper.writeValueAsString(updateDto)))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.data").value(10));
+	}
+
+	@Test
+	@DisplayName("성공 - 경매 삭제 요청 시 200 OK를 반환한다")
+	void deleteAuction_Success() throws Exception {
+		// given
+		String publicId = "seller-uuid";
+		Long productId = 100L;
+
+		// void 메서드이므로 doNothing 설정
+		doNothing().when(auctionDeleteAuctionUseCase).deleteAuction(eq(publicId), eq(productId));
+
+		// when & then
+		mockMvc.perform(delete("/api/v1/internal/auctions/{productId}/{publicId}", productId, publicId)
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value(200))
+			.andDo(print());
+
+		// UseCase 호출 여부 최종 확인
+		verify(auctionDeleteAuctionUseCase).deleteAuction(eq(publicId), eq(productId));
 	}
 }
