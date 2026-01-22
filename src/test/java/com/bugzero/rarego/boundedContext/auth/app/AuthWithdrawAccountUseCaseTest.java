@@ -107,7 +107,7 @@ class AuthWithdrawAccountUseCaseTest {
                 .memberPublicId(publicId)
                 .provider(Provider.GOOGLE)
                 .providerId("google-123")
-                .role(AuthRole.USER)
+                .role(AuthRole.SELLER)
                 .build();
         account.softDelete();
 
@@ -140,7 +140,6 @@ class AuthWithdrawAccountUseCaseTest {
 
         // 탈퇴 검증 Mock 추가
         when(auctionApiClient.hasActiveBids(publicId)).thenReturn(false);
-        when(auctionApiClient.hasActiveSales(publicId)).thenReturn(false);
         when(paymentApiClient.hasProcessingOrders(publicId)).thenReturn(false);
 
         authWithdrawAccountUseCase.withdraw(accessToken);
@@ -161,7 +160,7 @@ class AuthWithdrawAccountUseCaseTest {
                 .memberPublicId(publicId)
                 .provider(Provider.GOOGLE)
                 .providerId("google-123")
-                .role(AuthRole.USER)
+                .role(AuthRole.SELLER)
                 .build();
 
         when(jwtParser.parsePrincipal(accessToken)).thenReturn(new MemberPrincipal(publicId, "USER"));
@@ -183,7 +182,7 @@ class AuthWithdrawAccountUseCaseTest {
                 .memberPublicId(publicId)
                 .provider(Provider.GOOGLE)
                 .providerId("google-123")
-                .role(AuthRole.USER)
+                .role(AuthRole.SELLER)
                 .build();
 
         when(jwtParser.parsePrincipal(accessToken)).thenReturn(new MemberPrincipal(publicId, "USER"));
@@ -212,7 +211,6 @@ class AuthWithdrawAccountUseCaseTest {
         when(jwtParser.parsePrincipal(accessToken)).thenReturn(new MemberPrincipal(publicId, "USER"));
         when(authSupport.findByPublicId(publicId)).thenReturn(account);
         when(auctionApiClient.hasActiveBids(publicId)).thenReturn(false);
-        when(auctionApiClient.hasActiveSales(publicId)).thenReturn(false);
         when(paymentApiClient.hasProcessingOrders(publicId)).thenReturn(true);
 
         assertThatThrownBy(() -> authWithdrawAccountUseCase.withdraw(accessToken))
