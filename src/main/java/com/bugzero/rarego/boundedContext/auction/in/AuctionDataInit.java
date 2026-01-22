@@ -64,7 +64,7 @@ public class AuctionDataInit implements CommandLineRunner {
         // 1. [진행중] 입찰이 있는 경매
         Product product1 = createProduct(seller.getId(), "[1-1] 레고 밀레니엄 팔콘", 10_000);
         // 시작: 1시간 전, 종료: 24시간 후 (분 단위)
-        Auction auction1 = createAuction(product1.getId(), seller.getId(), -60, 1440, 10_000 );
+        Auction auction1 = createAuction(product1.getId(), seller.getId(), -60, 1440, 10_000);
 
         createBid(auction1, competitor, 15_000);
         createBid(auction1, me, 20_000);
@@ -166,14 +166,14 @@ public class AuctionDataInit implements CommandLineRunner {
 
         // 4-1. 유찰된 경매 (포기 가능) - ENDED + 주문 없음
         Product withdrawProduct1 = createProduct(seller.getId(), "[포기 가능] 유찰된 레고", 100_000);
-        Auction withdrawAuction1 = createAuction(withdrawProduct1.getId(), seller.getId(), -180, -120, 100_000, 10_000);
+        Auction withdrawAuction1 = createAuction(withdrawProduct1.getId(), seller.getId(), -180, -120, 100_000);
         withdrawAuction1.end();
         auctionRepository.save(withdrawAuction1);
         log.info("유찰 경매 생성 - auctionId: {} (ENDED + 주문 없음, 포기 가능)", withdrawAuction1.getId());
 
         // 4-2. 결제 실패 경매 (포기 가능) - ENDED + FAILED
         Product withdrawProduct2 = createProduct(seller.getId(), "[포기 가능] 결제 실패 레고", 200_000);
-        Auction withdrawAuction2 = createAuction(withdrawProduct2.getId(), seller.getId(), -180, -120, 200_000, 20_000);
+        Auction withdrawAuction2 = createAuction(withdrawProduct2.getId(), seller.getId(), -180, -120, 200_000);
         withdrawAuction2.end();
         auctionRepository.save(withdrawAuction2);
 
@@ -189,7 +189,7 @@ public class AuctionDataInit implements CommandLineRunner {
 
         // 4-3. 결제 완료 경매 (포기 불가) - ENDED + SUCCESS
         Product withdrawProduct3 = createProduct(seller.getId(), "[포기 불가] 결제 완료 레고", 300_000);
-        Auction withdrawAuction3 = createAuction(withdrawProduct3.getId(), seller.getId(), -180, -120, 300_000, 30_000);
+        Auction withdrawAuction3 = createAuction(withdrawProduct3.getId(), seller.getId(), -180, -120, 300_000);
         withdrawAuction3.end();
         auctionRepository.save(withdrawAuction3);
 
@@ -205,7 +205,7 @@ public class AuctionDataInit implements CommandLineRunner {
 
         // 4-4. 결제 진행 중 경매 (포기 불가) - ENDED + PROCESSING
         Product withdrawProduct4 = createProduct(seller.getId(), "[포기 불가] 결제 대기 레고", 400_000);
-        Auction withdrawAuction4 = createAuction(withdrawProduct4.getId(), seller.getId(), -180, -120, 400_000, 40_000);
+        Auction withdrawAuction4 = createAuction(withdrawProduct4.getId(), seller.getId(), -180, -120, 400_000);
         withdrawAuction4.end();
         auctionRepository.save(withdrawAuction4);
 
@@ -221,7 +221,7 @@ public class AuctionDataInit implements CommandLineRunner {
 
         // 4-5. 진행 중 경매 (포기 불가) - IN_PROGRESS
         Product withdrawProduct5 = createProduct(seller.getId(), "[포기 불가] 진행 중 레고", 500_000);
-        Auction withdrawAuction5 = createAuction(withdrawProduct5.getId(), seller.getId(), -60, 1440, 500_000, 50_000);
+        Auction withdrawAuction5 = createAuction(withdrawProduct5.getId(), seller.getId(), -60, 1440, 500_000);
         // end() 호출 안 함 → IN_PROGRESS 상태 유지
         log.info("진행 중 경매 생성 - auctionId: {} (IN_PROGRESS, 포기 불가 - 2510)", withdrawAuction5.getId());
 
@@ -233,7 +233,6 @@ public class AuctionDataInit implements CommandLineRunner {
                 .startTime(null)  // 검수 전
                 .endTime(null)
                 .startPrice(600_000)
-                .tickSize(60_000)
                 .durationDays(7)
                 .build();
         auctionRepository.save(withdrawAuction6);
@@ -270,24 +269,24 @@ public class AuctionDataInit implements CommandLineRunner {
     // startMinutesOffset: 현재 시간 기준 시작 시간 (분)
     // endMinutesOffset: 현재 시간 기준 종료 시간 (분)
     private Auction createAuction(
-        Long productId,
-        Long sellerId,
-        int startMinutesOffset,
-        int endMinutesOffset,
-        int startPrice
+            Long productId,
+            Long sellerId,
+            int startMinutesOffset,
+            int endMinutesOffset,
+            int startPrice
     ) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startTime = now.plusMinutes(startMinutesOffset);
         LocalDateTime endTime = now.plusMinutes(endMinutesOffset);
 
         Auction auction = Auction.builder()
-            .productId(productId)
-            .sellerId(sellerId)
-            .startTime(startTime)
-            .endTime(endTime)
-            .startPrice(startPrice)
-            .durationDays(7)
-            .build();
+                .productId(productId)
+                .sellerId(sellerId)
+                .startTime(startTime)
+                .endTime(endTime)
+                .startPrice(startPrice)
+                .durationDays(7)
+                .build();
 
         auction.forceStartForTest();
         return auctionRepository.save(auction);
