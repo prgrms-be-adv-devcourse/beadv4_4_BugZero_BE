@@ -14,6 +14,7 @@ import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.shared.product.dto.ProductRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateDto;
+import com.bugzero.rarego.shared.product.dto.ProductUpdateResponseDto;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,7 +40,7 @@ public class ProductController {
 
 	@Operation(summary = "상품 수정", description = "상품 정보를 수정합니다.")
 	@PatchMapping("/{productId}")
-	public SuccessResponseDto<Long> updateProduct(
+	public SuccessResponseDto<ProductUpdateResponseDto> updateProduct(
 		@RequestParam String publicId,
 		@PathVariable Long productId,
 		@Valid @RequestBody ProductUpdateDto productUpdateDto
