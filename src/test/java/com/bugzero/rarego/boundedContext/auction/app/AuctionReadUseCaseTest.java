@@ -1,10 +1,8 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
 import com.bugzero.rarego.boundedContext.auction.domain.*;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
-import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
+import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistListResponseDto;
+import com.bugzero.rarego.boundedContext.auction.out.*;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductImage;
 import com.bugzero.rarego.boundedContext.product.out.ProductImageRepository;
@@ -32,10 +30,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -48,11 +43,9 @@ class AuctionReadUseCaseTest {
     @InjectMocks
     private AuctionReadUseCase auctionReadUseCase;
 
-    // [추가] 리팩토링으로 추가된 Support Mock
     @Mock
     private AuctionSupport support;
 
-    // [유지] Bulk 조회 등에 여전히 쓰이는 Mock들
     @Mock
     private AuctionRepository auctionRepository;
     @Mock
@@ -65,6 +58,8 @@ class AuctionReadUseCaseTest {
     private AuctionMemberRepository auctionMemberRepository;
     @Mock
     private ProductImageRepository productImageRepository;
+    @Mock
+    private AuctionBookmarkRepository auctionBookmarkRepository;
 
     // --- 1. 경매 상세 조회 (getAuctionDetail) 테스트 ---
 
@@ -206,45 +201,46 @@ class AuctionReadUseCaseTest {
 
     // --- 3. 경매 목록 조회 테스트 (변경 없음, Repository 직접 사용) ---
     @Test
-    @DisplayName("경매 목록 조회 - 썸네일 정렬(sortOrder) 및 데이터 조립 확인")
+    @DisplayName("경매 목록 조회 - 썸네일 정렬 및 데이터 조립 확인")
     void getAuctions_success() {
-        // ... (기존 코드 유지)
-        // getAuctions는 아직 Repository를 직접 사용하므로 기존 코드가 정상 동작합니다.
-
         // given
         AuctionSearchCondition condition = new AuctionSearchCondition();
         Pageable pageable = PageRequest.of(0, 10);
 
-        Long auctionId1 = 1L;
-        Long productId1 = 100L;
-        Auction auction1 = Auction.builder()
-                .productId(productId1).startPrice(1000).durationDays(3).build();
-        ReflectionTestUtils.setField(auction1, "id", auctionId1);
-        ReflectionTestUtils.setField(auction1, "currentPrice", 2000);
-        ReflectionTestUtils.setField(auction1, "status", AuctionStatus.IN_PROGRESS);
+        Long auctionId = 1L;
+        Long productId = 100L;
+        Auction auction = Auction.builder()
+                .productId(productId)
+                .startPrice(1000)
+                .durationDays(3)
+                .build();
+        ReflectionTestUtils.setField(auction, "id", auctionId);
+        ReflectionTestUtils.setField(auction, "status", AuctionStatus.IN_PROGRESS);
 
-        Page<Auction> auctionPage = new PageImpl<>(List.of(auction1), pageable, 1);
-        Product product1 = Product.builder().name("Test Product").build();
-        ReflectionTestUtils.setField(product1, "id", productId1);
-        List<Object[]> bidCounts = List.<Object[]>of(new Object[]{auctionId1, 5L});
+        Page<Auction> auctionPage = new PageImpl<>(List.of(auction), pageable, 1);
+        Product product = Product.builder().name("Test Product").build();
+        ReflectionTestUtils.setField(product, "id", productId);
 
-        ProductImage img1 = ProductImage.builder().product(product1).imageUrl("url_2.jpg").sortOrder(2).build();
-        ProductImage img2 = ProductImage.builder().product(product1).imageUrl("url_0.jpg").sortOrder(0).build();
-        ProductImage img3 = ProductImage.builder().product(product1).imageUrl("url_1.jpg").sortOrder(1).build();
+        List<Object[]> bidCounts = new ArrayList<>();
+        bidCounts.add(new Object[]{auctionId, 5L});
 
-        // Mocking Behavior (Repository 직접 사용)
+        ProductImage img1 = ProductImage.builder().product(product).imageUrl("url_2.jpg").sortOrder(2).build();
+        ProductImage img2 = ProductImage.builder().product(product).imageUrl("url_0.jpg").sortOrder(0).build();
+        ProductImage img3 = ProductImage.builder().product(product).imageUrl("url_1.jpg").sortOrder(1).build();
+
+        // Mocking (private 메서드 내부에서 호출되는 Repository들)
         given(auctionRepository.findAll(any(Specification.class), any(Pageable.class))).willReturn(auctionPage);
-        given(productRepository.findAllById(Set.of(productId1))).willReturn(List.of(product1));
-        given(bidRepository.countByAuctionIdIn(Set.of(auctionId1))).willReturn(bidCounts);
-        given(productImageRepository.findAllByProductIdIn(Set.of(productId1))).willReturn(List.of(img1, img2, img3));
+        given(productRepository.findAllById(Set.of(productId))).willReturn(List.of(product));
+        given(bidRepository.countByAuctionIdIn(Set.of(auctionId))).willReturn(bidCounts);
+        given(productImageRepository.findAllByProductIdIn(Set.of(productId))).willReturn(List.of(img1, img2, img3));
 
         // when
         PagedResponseDto<AuctionListResponseDto> result = auctionReadUseCase.getAuctions(condition, pageable);
 
         // then
         assertThat(result.data()).hasSize(1);
-        AuctionListResponseDto dto = result.data().get(0);
-        assertThat(dto.thumbnailUrl()).isEqualTo("url_0.jpg");
+        // convertToAuctionListDtos가 sortOrder가 낮은(0) img2를 잘 선택했는지 검증
+        assertThat(result.data().get(0).thumbnailUrl()).isEqualTo("url_0.jpg");
     }
 
     @Test
@@ -326,7 +322,57 @@ class AuctionReadUseCaseTest {
         // 강제 실행! -> 이때 내부의 productRepository.findIdsBySearchCondition()이 호출됨
         capturedSpec.toPredicate(root, query, cb);
 
-        // 이제 검증하면 성공함
         verify(productRepository).findIdsBySearchCondition(eq("Galaxy"), isNull());
+    }
+
+    @Test
+    @DisplayName("관심 경매 조회 - 북마크된 경매 정보와 상품 정보를 조립하여 반환")
+    void getMyBookmarks_success() {
+        // given
+        String publicId = "user-123";
+        Long memberId = 1L;
+        Pageable pageable = PageRequest.of(0, 10);
+
+        // 1. 회원 및 북마크 설정
+        AuctionMember member = AuctionMember.builder().publicId(publicId).build();
+        ReflectionTestUtils.setField(member, "id", memberId);
+
+        AuctionBookmark bookmark = AuctionBookmark.builder().memberId(memberId).auctionId(100L).build();
+        ReflectionTestUtils.setField(bookmark, "id", 1L);
+        Page<AuctionBookmark> bookmarkPage = new PageImpl<>(List.of(bookmark), pageable, 1);
+
+        // 2. 경매 및 상품 데이터 설정
+        Auction auction = Auction.builder()
+                .productId(50L)
+                .startPrice(1000)
+                .durationDays(3)
+                .build();
+        ReflectionTestUtils.setField(auction, "id", 100L);
+        ReflectionTestUtils.setField(auction, "status", AuctionStatus.IN_PROGRESS);
+
+        Product product = Product.builder().name("관심 상품").build();
+        ReflectionTestUtils.setField(product, "id", 50L);
+
+        // 3. Mocking
+        given(support.getMember(publicId)).willReturn(member);
+        given(auctionBookmarkRepository.findAllByMemberId(memberId, pageable)).willReturn(bookmarkPage);
+        given(auctionRepository.findAllById(List.of(100L))).willReturn(List.of(auction));
+
+        // 공통 변환 로직(convertToAuctionListDtos) 내부에서 호출하는 Mock들
+        given(productRepository.findAllById(Set.of(50L))).willReturn(List.of(product));
+        given(bidRepository.countByAuctionIdIn(Set.of(100L))).willReturn(Arrays.asList(new Object[][]{{100L, 3L}}));
+        given(productImageRepository.findAllByProductIdIn(Set.of(50L))).willReturn(Collections.emptyList());
+
+        // when
+        PagedResponseDto<WishlistListResponseDto> result = auctionReadUseCase.getMyBookmarks(publicId, pageable);
+
+        // then
+        assertThat(result.data()).hasSize(1);
+        assertThat(result.data().get(0).bookmarkId()).isEqualTo(1L);
+        assertThat(result.data().get(0).auctionInfo().productName()).isEqualTo("관심 상품");
+        assertThat(result.data().get(0).auctionInfo().auctionId()).isEqualTo(100L);
+
+        verify(auctionBookmarkRepository).findAllByMemberId(memberId, pageable);
+        verify(auctionRepository).findAllById(anyCollection());
     }
 }

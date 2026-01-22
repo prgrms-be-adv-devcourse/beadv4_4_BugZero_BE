@@ -9,6 +9,7 @@ import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.PageDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.security.MemberPrincipal;
+import com.bugzero.rarego.shared.auction.dto.AuctionListResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,8 +31,7 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -103,25 +103,36 @@ class AuctionMemberControllerTest {
     }
 
     @Test
-    @DisplayName("성공: 내 관심 경매 목록 조회 시 HTTP 200과 목록을 반환한다")
+    @DisplayName("성공: 내 관심 경매 목록 조회 시 200 OK와 중첩된 경매 정보를 반환한다")
     void getMyBookmarks_success() throws Exception {
         // given
-        WishlistListResponseDto item = WishlistListResponseDto.of(
-                10L,
-                1L,
-                50L,
+        // 1. 공통 경매 정보 (내부 객체) 생성
+        AuctionListResponseDto auctionInfo = new AuctionListResponseDto(
+                100L,                   // auctionId
+                500L,                   // productId
+                "레고 밀레니엄 팔콘",      // productName
+                "https://image.com/1",  // thumbnailUrl
+                "STAR_WARS",            // category
+                850000,                 // currentPrice
+                800000,                 // startPrice
+                15,                     // bidsCount
                 AuctionStatus.IN_PROGRESS,
-                15000,
-                LocalDateTime.now(),
-                LocalDateTime.now().plusDays(1)
+                LocalDateTime.of(2026, 1, 30, 23, 59) // endTime
+        );
+
+        // 2. 관심 목록 DTO (외부 객체) 생성 - Composition 구조
+        WishlistListResponseDto wishlistDto = WishlistListResponseDto.of(
+                1L,          // bookmarkId
+                auctionInfo  // 중첩된 경매 정보
         );
 
         PagedResponseDto<WishlistListResponseDto> response = new PagedResponseDto<>(
-                List.of(item),
+                List.of(wishlistDto),
                 new PageDto(1, 10, 1, 1, false, false)
         );
 
-        given(auctionFacade.getMyBookmarks(any(String.class), any(Pageable.class)))
+        // Mocking: publicId와 상관없이 응답하도록 설정
+        given(auctionFacade.getMyBookmarks(anyString(), any(Pageable.class)))
                 .willReturn(response);
 
         // when & then
@@ -130,11 +141,16 @@ class AuctionMemberControllerTest {
                         .param("size", "10"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].bookmarkId").value(10L))
-                .andExpect(jsonPath("$.data[0].auctionId").value(1L))
-                .andExpect(jsonPath("$.data[0].productId").value(50L))
-                .andExpect(jsonPath("$.data[0].auctionStatus").value("IN_PROGRESS"))
-                .andExpect(jsonPath("$.data[0].currentPrice").value(15000));
+                // 최상위 bookmarkId 검증
+                .andExpect(jsonPath("$.data[0].bookmarkId").value(1L))
+
+                // auctionInfo 내부 계층 검증 (도연님의 record 필드명과 일치시켜야 함)
+                .andExpect(jsonPath("$.data[0].auctionInfo.auctionId").value(100L))
+                .andExpect(jsonPath("$.data[0].auctionInfo.productId").value(500L))
+                .andExpect(jsonPath("$.data[0].auctionInfo.productName").value("레고 밀레니엄 팔콘"))
+                .andExpect(jsonPath("$.data[0].auctionInfo.currentPrice").value(850000))
+                .andExpect(jsonPath("$.data[0].auctionInfo.bidsCount").value(15))
+                .andExpect(jsonPath("$.data[0].auctionInfo.auctionStatus").value("IN_PROGRESS"));
     }
 
     @Test
