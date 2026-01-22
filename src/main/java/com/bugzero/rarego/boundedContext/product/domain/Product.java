@@ -16,6 +16,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -31,7 +34,9 @@ import lombok.NoArgsConstructor;
 @Builder
 public class Product extends BaseIdAndTime {
 	//TODO 복제 멤버 엔티티 생성 후 변경
-	private Long sellerId;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "seller_id",  nullable = false)
+	private ProductMember seller;
 	@Enumerated(EnumType.STRING)
 	private Category category;
 	@Enumerated(EnumType.STRING)
@@ -61,7 +66,7 @@ public class Product extends BaseIdAndTime {
 
 	//해당 상품이 로그인한 회원의 것이 맞는지 확인
 	public boolean isSeller(Long memberId) {
-		return Objects.equals(this.sellerId, memberId);
+		return Objects.equals(this.seller.getId(), memberId);
 	}
 
 	public boolean isPending() {
