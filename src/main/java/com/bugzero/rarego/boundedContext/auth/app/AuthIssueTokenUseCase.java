@@ -9,6 +9,7 @@ import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.security.JwtProvider;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -24,6 +25,16 @@ public class AuthIssueTokenUseCase {
 	@Value("${jwt.refresh-token-expire-seconds}")
 	private int refreshTokenExpireSeconds;
 
+	@PostConstruct
+	void validate() {
+		if (accessTokenExpireSeconds <= 0) {
+			throw new CustomException(ErrorType.JWT_EXPIRE_SECONDS_INVALID);
+		}
+		if (refreshTokenExpireSeconds <= 0) {
+			throw new CustomException(ErrorType.JWT_EXPIRE_SECONDS_INVALID);
+		}
+	}
+
 	private int getTokenExpireSeconds(boolean isAccessToken) {
 		return isAccessToken ? accessTokenExpireSeconds : refreshTokenExpireSeconds;
 	}
@@ -33,9 +44,6 @@ public class AuthIssueTokenUseCase {
 		validateDto(memberPublicId, role, isAccessToken);
 
 		int expireSeconds = getTokenExpireSeconds(isAccessToken);
-		if (expireSeconds <= 0) {
-			throw new CustomException(ErrorType.JWT_EXPIRE_SECONDS_INVALID);
-		}
 
 		// 내용 분기
 		Map<String, Object> claims = isAccessToken
