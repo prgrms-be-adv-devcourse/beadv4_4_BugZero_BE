@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,7 +18,7 @@ import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 
 import jakarta.persistence.LockModeType;
 
-public interface AuctionRepository extends JpaRepository<Auction, Long> {
+public interface AuctionRepository extends JpaRepository<Auction, Long>, JpaSpecificationExecutor<Auction> {
     // 비관적 락 처리
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select a from Auction a where a.id = :id")
@@ -34,6 +35,9 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
             Pageable pageable
     );
 
+    //삭제가 되지 않은 경매 정보만 반환
+    Optional<Auction> findByIdAndDeletedIsFalse(Long auctionId);
+
     // 필터링 없는 조건
     Page<Auction> findAllByProductIdIn(Collection<Long> productIds, Pageable pageable);
 
@@ -44,5 +48,4 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
         Pageable pageable
     );
 
-    Optional<Auction> findByIdAndDeletedIsFalse(Long auctionId);
 }

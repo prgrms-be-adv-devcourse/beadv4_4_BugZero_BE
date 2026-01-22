@@ -111,12 +111,8 @@ jobs:
             echo "AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}" >> .env.deploy
             echo "INTERNAL_BACK_URL=${{ secrets.INTERNAL_BACK_URL }}" >> .env.deploy
             
-            # 브랜치에 따른 프로필 설정 (main -> prod, dev -> dev)
-            if [ "${{ github.ref_name }}" == "main" ]; then
-              echo "SPRING_PROFILES_ACTIVE=prod" >> .env.deploy
-            else
-              echo "SPRING_PROFILES_ACTIVE=dev" >> .env.deploy
-            fi
+            # GitHub Secret에서 프로필 설정
+            echo "SPRING_PROFILES_ACTIVE=${{ secrets.SPRING_PROFILES_ACTIVE }}" >> .env.deploy
             
             # 소셜 로그인 키 추가
             echo "GOOGLE_CLIENT=${{ secrets.GOOGLE_CLIENT }}" >> .env.deploy
