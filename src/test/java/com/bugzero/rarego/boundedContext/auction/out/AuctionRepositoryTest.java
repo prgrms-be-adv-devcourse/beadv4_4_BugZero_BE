@@ -86,7 +86,6 @@ class AuctionRepositoryTest {
 			.startTime(LocalDateTime.now())
 			.endTime(LocalDateTime.now().plusDays(3))
 			.startPrice(10000)
-			.tickSize(1000)
 			.durationDays(3)
 			.build();
 		// status 설정 (빌더에 없으면 Reflection 사용)
@@ -100,7 +99,6 @@ class AuctionRepositoryTest {
 			.startTime(LocalDateTime.now())
 			.endTime(LocalDateTime.now().plusDays(3))
 			.startPrice(20000)
-			.tickSize(1000)
 			.durationDays(3)
 			.build();
 		ReflectionTestUtils.setField(hidden1, "status", AuctionStatus.IN_PROGRESS);
@@ -112,7 +110,6 @@ class AuctionRepositoryTest {
 			.productId(approvedProduct.getId())
 			.startTime(null).endTime(null) // 시간 없음
 			.startPrice(30000)
-			.tickSize(1000)
 			.durationDays(3)
 			.build();
 		ReflectionTestUtils.setField(hidden2, "status", AuctionStatus.SCHEDULED);
