@@ -43,6 +43,7 @@ public class AuctionReadUseCase {
 	private final ProductRepository productRepository;
 	private final AuctionOrderRepository auctionOrderRepository;
 	private final ProductImageRepository productImageRepository;
+	private final AuctionBookmarkRepository auctionBookmarkRepository;
 
 	// 경매 입찰 기록 조회
 	public PagedResponseDto<BidLogResponseDto> getBidLogs(Long auctionId, Pageable pageable) {
@@ -165,12 +166,22 @@ public class AuctionReadUseCase {
 
     // 낙찰 기록 상세 조회
     public AuctionOrderResponseDto getAuctionOrder(Long auctionId, String memberPublicId) {
-        // 회원 ID 조회
-        AuctionMember member = support.getMember(memberPublicId);
-        Long memberId = member.getId();
+		// 회원 ID 조회
+		AuctionMember member = support.getPublicMember(memberPublicId);
+		Long memberId = member.getId();
 
-        AuctionOrder order = support.getOrder(auctionId);
-        Auction auction = support.findAuctionById(auctionId);
+		AuctionOrder order = support.getOrder(auctionId);
+		Auction auction = support.findAuctionById(auctionId);
+
+		AuctionViewerRoleStatus viewerRole = determineViewerRole(order, memberId);
+
+		if (viewerRole == GUEST) {
+			throw new CustomException(ErrorType.AUCTION_ORDER_ACCESS_DENIED);
+		}
+
+		Product product = support.getProduct(auction.getProductId());
+
+		List<ProductImage> productImages = productImageRepository.findAllByProductId(product.getId());
 
 		String thumbnailUrl = productImages.stream()
 			.findFirst()
@@ -326,7 +337,7 @@ public class AuctionReadUseCase {
   
   // 내 관심 경매 목록 조회
     public PagedResponseDto<WishlistListResponseDto> getMyBookmarks(String memberPublicId, Pageable pageable) {
-        AuctionMember member = support.getMember(memberPublicId);
+        AuctionMember member = support.getPublicMember(memberPublicId);
 
         // 북마크 페이징 조회 (TODO: MSA 분리 시 BookmarkUsecase쪽으로 분리 예상됨, WishlistFacde 생성 필요)
         Page<AuctionBookmark> bookmarkPage = auctionBookmarkRepository.findAllByMemberId(member.getId(), pageable);
@@ -361,6 +372,33 @@ public class AuctionReadUseCase {
 	// =========================================================================
 	//  Helper Methods (Private)
 	// =========================================================================
+
+	private List<AuctionListResponseDto> convertToAuctionListDtos(List<Auction> auctions) {
+		if (auctions.isEmpty()) return Collections.emptyList();
+
+		Set<Long> auctionIds = auctions.stream().map(Auction::getId).collect(Collectors.toSet());
+		Set<Long> productIds = auctions.stream().map(Auction::getProductId).collect(Collectors.toSet());
+
+		Map<Long, Product> productMap = productRepository.findAllById(productIds).stream()
+			.collect(Collectors.toMap(Product::getId, Function.identity()));
+
+		Map<Long, Integer> bidCountMap = bidRepository.countByAuctionIdIn(auctionIds).stream()
+			.collect(Collectors.toMap(row -> (Long) row[0], row -> ((Long) row[1]).intValue()));
+
+		List<ProductImage> images = productImageRepository.findAllByProductIdIn(productIds);
+		Map<Long, String> thumbnailMap = images.stream()
+			.sorted(Comparator.comparingInt(ProductImage::getSortOrder))
+			.collect(Collectors.toMap(img -> img.getProduct().getId(), ProductImage::getImageUrl, (e, r) -> e));
+
+		return auctions.stream()
+			.map(auction -> AuctionListResponseDto.from(
+				auction,
+				productMap.get(auction.getProductId()),
+				thumbnailMap.get(auction.getProductId()),
+				bidCountMap.getOrDefault(auction.getId(), 0)
+			))
+			.toList();
+	}
 
 	private Map<Long, String> getBidderPublicIdMap(List<Bid> bids) {
 		if (bids.isEmpty()) return Collections.emptyMap();
