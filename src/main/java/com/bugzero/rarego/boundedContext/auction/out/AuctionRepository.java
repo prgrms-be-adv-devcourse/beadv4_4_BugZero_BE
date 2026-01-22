@@ -34,6 +34,9 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
             Pageable pageable
     );
 
+    //삭제가 되지 않은 경매 정보만 반환
+    Optional<Auction> findByIdAndDeletedIsFalse(Long auctionId);
+
     // 필터링 없는 조건
     Page<Auction> findAllByProductIdIn(Collection<Long> productIds, Pageable pageable);
 
@@ -44,5 +47,4 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
         Pageable pageable
     );
 
-    Optional<Auction> findByIdAndDeletedIsFalse(Long auctionId);
 }

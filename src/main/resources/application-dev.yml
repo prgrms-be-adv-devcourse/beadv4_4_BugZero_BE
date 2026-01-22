@@ -36,6 +36,8 @@ jwt:
   refresh-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:86400}
 
 custom:
+  global:
+    frontUrl: http://localhost:3000
   payment:
     settlement:
       holdDays: 0

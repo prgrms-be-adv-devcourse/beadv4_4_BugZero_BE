@@ -1,5 +1,20 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.BDDMockito.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
@@ -18,21 +33,6 @@ import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.shared.auction.dto.AuctionDetailResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionOrderResponseDto;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
 class AuctionReadUseCaseTest {
@@ -73,7 +73,6 @@ class AuctionReadUseCaseTest {
 		Auction auction = Auction.builder()
 			.productId(50L)
 			.startPrice(1000)   // 필수
-			.tickSize(100)      // 필수
 			.durationDays(3)    // [수정] NPE 원인 해결
 			.endTime(LocalDateTime.now().plusDays(1))
 			.build();
@@ -133,7 +132,6 @@ class AuctionReadUseCaseTest {
 		Auction auction = Auction.builder()
 			.productId(50L)
 			.startPrice(1000)  // [수정] 필수
-			.tickSize(100)     // [수정] 필수
 			.durationDays(3)   // [수정] NPE 원인 해결
 			.build();
 		ReflectionTestUtils.setField(auction, "id", auctionId);
@@ -193,7 +191,6 @@ class AuctionReadUseCaseTest {
 		Auction auction = Auction.builder()
 			.productId(50L)
 			.startPrice(1000) // [수정]
-			.tickSize(100)    // [수정]
 			.durationDays(3)  // [수정] NPE 원인 해결
 			.build();
 
