@@ -93,9 +93,6 @@ public class Auction extends BaseIdAndTime {
     }
 
     public void withdraw() {
-        if (this.status != AuctionStatus.ENDED) {
-            throw new CustomException(ErrorType.AUCTION_WITHDRAW_NOT_ENDED);
-        }
         this.status = AuctionStatus.WITHDRAWN;
     }
 }
