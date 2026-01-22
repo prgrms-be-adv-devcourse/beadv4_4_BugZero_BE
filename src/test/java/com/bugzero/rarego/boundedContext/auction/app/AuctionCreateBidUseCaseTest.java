@@ -22,7 +22,6 @@ import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.Bid;
 import com.bugzero.rarego.boundedContext.auction.domain.event.AuctionBidCreatedEvent;
 import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
-import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
@@ -109,9 +108,6 @@ class AuctionCreateBidUseCaseTest {
 			.publicId(SELLER_PUBLICID)
 			.build();
 		ReflectionTestUtils.setField(seller, "id", SELLER_ID);
-
-		Product product = Product.builder().sellerId(SELLER_ID).build();
-		ReflectionTestUtils.setField(product, "id", PRODUCT_ID);
 
 		Auction auction = Auction.builder()
 			.productId(PRODUCT_ID)
