@@ -5,6 +5,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,16 +14,21 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.bugzero.rarego.boundedContext.product.app.ProductFacade;
+import com.bugzero.rarego.boundedContext.product.domain.Category;
 import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.boundedContext.product.domain.ProductCondition;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
+import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductInspectionRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductInspectionResponseDto;
+import com.bugzero.rarego.shared.product.dto.ProductResponseForInspectionDto;
 
 import tools.jackson.databind.ObjectMapper;
 
@@ -63,7 +70,7 @@ class ProductInspectionControllerTest {
 			.willReturn(responseDto);
 
 		// when & then
-		mockMvc.perform(post("/api/v1/inspections")
+		mockMvc.perform(post("/api/v1/products/inspections")
 				.param("inspectorId", inspectorId) // RequestParam 처리
 				.contentType(MediaType.APPLICATION_JSON) // JSON 요청임을 명시
 				.content(objectMapper.writeValueAsString(requestDto))) // Body를 JSON으로 변환
@@ -87,12 +94,43 @@ class ProductInspectionControllerTest {
 		);
 
 		// when & then
-		mockMvc.perform(post("/api/v1/inspections")
+		mockMvc.perform(post("/api/v1/products/inspections")
 				.param("inspectorId", "admin-1")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(invalidDto)))
 			.andExpect(status().isBadRequest()) // 400 검증
 			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("관리자 상품 목록 조회 - 쿼리 파라미터가 DTO 및 Pageable로 잘 매핑되어야 한다")
+	void getAdminProducts_Success() throws Exception {
+		// given
+		// 1. 가짜 응답 데이터 준비
+		ProductResponseForInspectionDto productDto = new ProductResponseForInspectionDto(
+			1L, "레고 스타워즈", "seller@test.com", Category.스타워즈, InspectionStatus.PENDING, "url0");
+
+		Page<ProductResponseForInspectionDto> pageResponse = new PageImpl<>(List.of(productDto));
+		PagedResponseDto<ProductResponseForInspectionDto> pagedResponse = PagedResponseDto.from(pageResponse);
+
+		// 2. Mock 객체의 행동 정의 (어떤 파라미터가 들어오든 위 데이터를 반환해라)
+		given(productFacade.readProductsForInspection(any(), any()))
+			.willReturn(pagedResponse);
+
+		// when & then
+		mockMvc.perform(get("/api/v1/products/inspections")
+				.param("name", "레고")
+				.param("category", "스타워즈")
+				.param("status", "PENDING")
+				.param("page", "0")
+				.param("size", "10")
+				.param("sort", "createdAt,desc") // 클라이언트가 정렬 결정
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value(200)) // SuccessResponseDto 구조 확인
+			.andExpect(jsonPath("$.data.data[0].name").value("레고 스타워즈"))
+			.andExpect(jsonPath("$.data.data[0].thumbnail").value("url0"))
+			.andDo(print()); // 전체 응답 로그 출력
 	}
 
 }
