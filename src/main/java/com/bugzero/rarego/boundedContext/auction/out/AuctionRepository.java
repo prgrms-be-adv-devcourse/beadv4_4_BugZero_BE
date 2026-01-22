@@ -48,8 +48,6 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, JpaSpec
         Pageable pageable
     );
 
-    Optional<Auction> findByIdAndDeletedIsFalse(Long auctionId);
-
     @Query("""
         SELECT a FROM Auction a
         WHERE (:status IS NULL OR a.status = :status)
