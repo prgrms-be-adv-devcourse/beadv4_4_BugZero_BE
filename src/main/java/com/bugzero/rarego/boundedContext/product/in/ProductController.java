@@ -13,7 +13,7 @@ import com.bugzero.rarego.boundedContext.product.app.ProductFacade;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.shared.product.dto.ProductRequestDto;
-import com.bugzero.rarego.shared.product.dto.ProductResponseDto;
+import com.bugzero.rarego.shared.product.dto.ProductRequestResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateDto;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateResponseDto;
 
@@ -32,7 +32,7 @@ public class ProductController {
 
 	@Operation(summary = "상품 등록", description = "새로운 상품을 등록합니다")
 	@PostMapping
-	public SuccessResponseDto<ProductResponseDto> createProduct(
+	public SuccessResponseDto<ProductRequestResponseDto> createProduct(
 		@RequestParam String publicId,
 		@Valid @RequestBody ProductRequestDto productRequestDto) {
 		return SuccessResponseDto.from(SuccessType.CREATED,

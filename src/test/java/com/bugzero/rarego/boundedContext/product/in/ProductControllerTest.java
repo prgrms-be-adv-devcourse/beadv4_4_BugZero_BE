@@ -28,7 +28,7 @@ import com.bugzero.rarego.shared.product.dto.ProductAuctionUpdateDto;
 import com.bugzero.rarego.shared.product.dto.ProductImageRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductImageUpdateDto;
 import com.bugzero.rarego.shared.product.dto.ProductRequestDto;
-import com.bugzero.rarego.shared.product.dto.ProductResponseDto;
+import com.bugzero.rarego.shared.product.dto.ProductRequestResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateDto;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateResponseDto;
 
@@ -54,13 +54,13 @@ class ProductControllerTest {
 	private final Long PRODUCT_ID = 100L;
 	private final Long AUCTION_ID = 200L;
 
-	private ProductResponseDto defaultResponse;
+	private ProductRequestResponseDto defaultResponse;
 	private ProductUpdateResponseDto defaultUpdateResponse;
 
 	@BeforeEach
 	void setUp() {
 		// 성공 케이스에서 공통으로 사용할 응답 객체 미리 준비
-		defaultResponse = ProductResponseDto.builder()
+		defaultResponse = ProductRequestResponseDto.builder()
 			.productId(PRODUCT_ID)
 			.auctionId(1)
 			.inspectionStatus(InspectionStatus.PENDING)

@@ -11,7 +11,7 @@ import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.shared.auction.out.AuctionApiClient;
 import com.bugzero.rarego.shared.product.dto.ProductImageRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductRequestDto;
-import com.bugzero.rarego.shared.product.dto.ProductResponseDto;
+import com.bugzero.rarego.shared.product.dto.ProductRequestResponseDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,7 +23,7 @@ public class ProductCreateProductUseCase {
 	private final ProductSupport productSupport;
 
     @Transactional
-    public ProductResponseDto createProduct(String memberUUID, ProductRequestDto productRequestDto) {
+    public ProductRequestResponseDto createProduct(String memberUUID, ProductRequestDto productRequestDto) {
 
 		ProductMember seller = productSupport.verifyValidateMember(memberUUID);
 
@@ -44,7 +44,7 @@ public class ProductCreateProductUseCase {
         Long auctionId = auctionApiClient.createAuction(savedProduct.getId(), memberUUID,
                 productRequestDto.productAuctionRequestDto());
 
-		return ProductResponseDto.builder()
+		return ProductRequestResponseDto.builder()
 			.productId(savedProduct.getId())
 			.auctionId(auctionId)
 			.inspectionStatus(savedProduct.getInspectionStatus())

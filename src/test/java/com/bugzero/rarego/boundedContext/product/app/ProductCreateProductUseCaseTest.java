@@ -24,7 +24,7 @@ import com.bugzero.rarego.shared.auction.out.AuctionApiClient;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductImageRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductRequestDto;
-import com.bugzero.rarego.shared.product.dto.ProductResponseDto;
+import com.bugzero.rarego.shared.product.dto.ProductRequestResponseDto;
 
 @ExtendWith(MockitoExtension.class)
 class ProductCreateProductUseCaseTest {
@@ -76,7 +76,7 @@ class ProductCreateProductUseCaseTest {
 			.willReturn(expectedAuctionId);
 
 		// when
-		ProductResponseDto response = useCase.createProduct(memberId, request);
+		ProductRequestResponseDto response = useCase.createProduct(memberId, request);
 		ArgumentCaptor<Product> productCaptor = ArgumentCaptor.forClass(Product.class);
 
 		verify(productRepository, times(1)).save(productCaptor.capture());
