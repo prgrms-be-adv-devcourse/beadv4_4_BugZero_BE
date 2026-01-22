@@ -53,16 +53,22 @@ public enum ErrorType {
     AUCTION_BID_AMOUNT_TOO_LOW(400, 2006, "입찰 금액이 현재가 또는 시작가보다 낮습니다."),
     ORDER_NOT_FOUND(404, 2007, "낙찰 기록 정보를 찾을 수 없습니다."),
     AUCTION_ORDER_ACCESS_DENIED(403, 2008, "낙찰 기록 정보에 접근 권한이 없습니다."),
+    AUCTION_ALREADY_HAS_START_TIME(400, 2009, "이미 시작이 예정된 경매입니다."),
+	UNAUTHORIZED_AUCTION_SELLER(403, 20010, "해당 경매의 판매자가 아닙니다."),
+	AUCTION_ALREADY_IN_PROGRESS(400, 2011, "경매 시작 전에만 수정 가능합니다."),
+	AUCTION_UPDATE_FAILED(500, 2012, "경매 정보 수정에 실패했습니다.."),
     BID_NOT_FOUND(404, 2501, "입찰가를 찾을 수 없습니다."),
     AUCTION_NOT_SCHEDULED(400, 2503, "예정된 경매가 아닙니다."),
     AUCTION_SCHEDULE_FAILED(500, 2504, "경매 정산 예약에 실패했습니다."),
     SCHEDULER_CAPACITY_EXCEEDED(503, 2505, "스케줄러 용량이 초과되었습니다."),
     SERVICE_SUBSCRIBER_LIMIT_EXCEEDED(503, 2506, "구독자 수 한도를 초과했습니다."),
     BOOKMARK_ALREADY_EXISTS(409, 2507, "이미 관심 경매로 등록된 경매입니다."),
+    BOOKMARK_NOT_FOUND(404, 2508, "관심 경매로 등록되지 않은 경매입니다."),
+    BOOKMARK_UNAUTHORIZED_ACCESS(403, 2511, "요청한 사용자가 북마크의 memberId와 일치하지 않습니다."),
 
 	// Product (3000 ~ 3999)
 	PRODUCT_NOT_FOUND(404, 3001, "상품이 존재하지 않습니다."),
-	UNAUTHORIZED_SELLER(400, 3002, "해당 상품의 판매자가 아닙니다."),
+	UNAUTHORIZED_SELLER(403, 3002, "해당 상품의 판매자가 아닙니다."),
 	IMAGE_NOT_FOUND(400, 3003, "해당 상품 이미지가 존재하지 않습니다."),
 
     INSPECTION_REJECT_REASON_REQUIRED(400, 3501, "검수 반려시 사유가 있어야 합니다."),

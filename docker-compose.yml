@@ -34,6 +34,8 @@ services:
     # 데이터 영속성 설정 (컨테이너 삭제돼도 데이터 보존)
     volumes:
       - db_data:/var/lib/mysql
+    networks:
+      - rarego-network
 
     # 컨테이너 상태 체크 (Spring Boot의 depends_on 조건 등으로 활용 가능)
     # DB가 완전히 부팅되어 쿼리를 받을 수 있는지 주기적으로 확인
@@ -61,6 +63,7 @@ services:
       AWS_SECRET_KEY: ${AWS_SECRET_KEY}
       INTERNAL_BACK_URL: ${INTERNAL_BACK_URL}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      TZ: Asia/Seoul
 
       # Social Login (OAuth2)
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT}
@@ -72,7 +75,14 @@ services:
       db:
         condition: service_healthy
     restart: always
+    networks:
+      - rarego-network
 
 # 도커 볼륨 생성 (최상위 레벨 정의)
 volumes:
   db_data:
+
+
+networks:
+  rarego-network:
+    external: true

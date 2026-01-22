@@ -35,29 +35,30 @@ public class PaymentProcessSettlementUseCase {
 		}
 
 		int successCount = 0;
+		int totalFeeAmount = 0;
 
 		for (Settlement settlement : settlements) {
-			if (processOne(settlement)) {
-				successCount++;
+			try {
+				if (paymentSettlementProcessor.processSellerDeposit(settlement.getId())) {
+					totalFeeAmount += settlement.getFeeAmount();
+					successCount++;
+				}
+			} catch (Exception e) {
+				log.error("정산 실패 ID: {} - {}", settlement.getId(), e.getMessage(), e);
+				markAsFailed(settlement); // 실패 처리 메서드 호출
+			}
+		}
+
+		if (successCount > 0 && totalFeeAmount > 0) {
+			try {
+				paymentSettlementProcessor.processSystemDeposit(totalFeeAmount);
+			} catch (Exception e) {
+				// TODO: 시스템 지갑 입금 실패 대응 처리
+				log.error("시스템 수수료 입금 실패 - 누락 금액: {}", totalFeeAmount, e);
 			}
 		}
 
 		return successCount;
-	}
-
-	/**
-	 * 단건 처리 및 예외 핸들링을 전담
-	 * 성공 여부 반환
-	 */
-	private boolean processOne(Settlement settlement) {
-		try {
-			paymentSettlementProcessor.process(settlement.getId());
-			return true;
-		} catch (Exception e) {
-			log.error("정산 실패 ID: {} - {}", settlement.getId(), e.getMessage(), e);
-			markAsFailed(settlement); // 실패 처리 메서드 호출
-			return false;
-		}
 	}
 
 	/**
