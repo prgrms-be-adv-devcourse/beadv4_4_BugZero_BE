@@ -41,7 +41,7 @@ public class AuctionScheduler {
         try {
             cancelSchedule(auctionId);
 
-            Instant executionTime = endTime.atZone(ZoneId.systemDefault()).toInstant();
+            Instant executionTime = endTime.atZone(ZoneId.of("Asia/Seoul")).toInstant();
             Instant now = Instant.now();
 
             if (executionTime.isBefore(now)) {
