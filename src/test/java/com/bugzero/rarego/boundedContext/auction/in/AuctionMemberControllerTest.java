@@ -52,7 +52,7 @@ class AuctionMemberControllerTest {
 
     private MockMvc mockMvc;
 
-  @BeforeEach
+ @BeforeEach
 	void setUp() {
 		mockMvc = MockMvcBuilders.standaloneSetup(auctionMemberController)
 			.setControllerAdvice(new GlobalExceptionHandler()) // 전역 예외 처리기 등록
@@ -75,38 +75,38 @@ class AuctionMemberControllerTest {
 			.build();
 	}
 
-    @Test
-    @DisplayName("성공: 내 입찰 목록을 조회하면 페이징 결과를 반환한다")
-    void getMyBids_success() throws Exception {
-        // given
-        MyBidResponseDto bid = new MyBidResponseDto(
-                10L,
-                20L,
-                30L,
-                4000L,
-                LocalDateTime.of(2024, 1, 1, 10, 0),
-                AuctionStatus.IN_PROGRESS,
-                5000L,
-                LocalDateTime.of(2024, 1, 2, 10, 0)
-        );
-        PagedResponseDto<MyBidResponseDto> response = new PagedResponseDto<>(
-                List.of(bid),
-                new PageDto(1, 20, 1, 1, false, false)
-        );
+	@Test
+	@DisplayName("성공: 내 입찰 목록을 조회하면 페이징 결과를 반환한다")
+	void getMyBids_success() throws Exception {
+		// given
+		MyBidResponseDto bid = new MyBidResponseDto(
+			10L,
+			20L,
+			30L,
+			4000L,
+			LocalDateTime.of(2024, 1, 1, 10, 0),
+			AuctionStatus.IN_PROGRESS,
+			5000L,
+			LocalDateTime.of(2024, 1, 2, 10, 0)
+		);
+		PagedResponseDto<MyBidResponseDto> response = new PagedResponseDto<>(
+			List.of(bid),
+			new PageDto(1, 20, 1, 1, false, false)
+		);
 
-        given(auctionFacade.getMyBids(eq("test-public-id"), eq(AuctionStatus.IN_PROGRESS), any(Pageable.class)))
-                .willReturn(response);
+		given(auctionFacade.getMyBids(eq("2"), eq(AuctionStatus.IN_PROGRESS), any(Pageable.class)))
+			.willReturn(response);
 
-        // when & then
-        mockMvc.perform(get("/api/v1/members/me/bids")
-                        .param("auctionStatus", "IN_PROGRESS"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].auctionId").value(20L))
-                .andExpect(jsonPath("$.pageDto.totalItems").value(1));
-    }
-    
-    @Test
+		// when & then
+		mockMvc.perform(get("/api/v1/members/me/bids")
+				.param("auctionStatus", "IN_PROGRESS"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data[0].auctionId").value(20L))
+			// PageDto 구조에 따라 jsonPath 수정 (totalElements 등)
+			.andExpect(jsonPath("$.pageDto.totalItems").value(1));
+	}
+
+	@Test
 	@DisplayName("성공: 내 낙찰(주문) 목록 조회 - 상태 필터링 포함")
 	void getMyAuctionOrders_success() throws Exception {
 		// given
