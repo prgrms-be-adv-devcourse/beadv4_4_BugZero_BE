@@ -72,4 +72,11 @@ public class MemberController {
 		);
 	}
 
+	@SecurityRequirement(name = "bearerAuth")
+	@Operation(summary = "회원 판매자 인증", description = "저장된 정보를 기반으로 SELLER로 업데이트 합니다")
+	@PostMapping("/me/seller")
+	public SuccessResponseDto<Void> promoteSeller(@AuthenticationPrincipal MemberPrincipal memberPrincipal) {
+		memberFacade.promoteSeller(memberPrincipal.publicId(), memberPrincipal.role());
+		return SuccessResponseDto.from(SuccessType.OK);
+	}
 }
