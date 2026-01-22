@@ -1,5 +1,20 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.BDDMockito.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
@@ -151,6 +166,7 @@ class AuctionReadUseCaseTest {
 
 		// 3. 경매 정보
 		Auction auction = Auction.builder().productId(50L).startPrice(1000).tickSize(100).durationDays(3).build();
+
 		ReflectionTestUtils.setField(auction, "id", auctionId);
 
 		// 4. 상품 정보

@@ -3,6 +3,7 @@ package com.bugzero.rarego.boundedContext.auction.app;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
+import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
@@ -83,5 +84,16 @@ public class AuctionFacade {
 	public AuctionMember syncMember(MemberDto member) {
 		return auctionSyncMemberUseCase.syncMember(member);
 	}
+
+    // 관심 경매 해제
+    @Transactional
+    public WishlistRemoveResponseDto removeBookmark(String publicId, Long bookmarkId) {
+        return auctionBookmarkUseCase.removeBookmark(publicId, bookmarkId);
+    }
+
+    @Transactional
+    public AuctionMember syncMember(MemberDto member) {
+        return auctionSyncMemberUseCase.syncMember(member);
+    }
 
 }
