@@ -1,6 +1,9 @@
 package com.bugzero.rarego.global.security;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.Map;
 
 import javax.crypto.SecretKey;
@@ -8,6 +11,7 @@ import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -34,6 +38,19 @@ public class JwtParser {
 		return jwt.substring(0, 10) + "..." + jwt.substring(len - 6);
 	}
 
+	private static String toRoleString(Object value) {
+		if (value == null) {
+			return null;
+		}
+		if (value instanceof String stringValue) {
+			if (stringValue.startsWith("ROLE_"))
+				return stringValue.substring("ROLE_".length());
+			return stringValue;
+		}
+		return value.toString();
+	}
+
+	// 유효한지 판별
 	public boolean isValid(String jwtStr) {
 		try {
 			Jwts.parser()
@@ -70,8 +87,48 @@ public class JwtParser {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	public Map<String, Object> payload(String jwtStr) {
+	// MemberPrincipal 형태로 전환
+	public MemberPrincipal parsePrincipal(String jwtStr) {
+		Claims claims = claimsOrNull(jwtStr, "principal");
+		if (claims == null)
+			return null;
+
+		String publicId = extractPublicId(claims);
+		String role = toRoleString(claims.get("role"));
+		if (publicId == null || role == null || role.isBlank())
+			return null;
+
+		return new MemberPrincipal(publicId, role);
+	}
+
+	// Refresh token에서 publicId만 파싱
+	public String parseRefreshPublicId(String jwtStr) {
+		Claims claims = claimsOrNull(jwtStr, "refresh-publicId");
+		if (claims == null)
+			return null;
+
+		String type = claims.get("typ", String.class);
+		if (type == null || !"REFRESH".equals(type))
+			return null;
+
+		return extractPublicId(claims);
+	}
+
+	// 만료시간 가져오기
+	public LocalDateTime expiresAt(String jwtStr) {
+		Claims claims = claimsOrNull(jwtStr, "expiresAt");
+		if (claims == null)
+			return null;
+
+		Date exp = claims.getExpiration(); // 표준 exp
+		if (exp == null)
+			return null;
+
+		return LocalDateTime.ofInstant(exp.toInstant(), ZoneId.systemDefault());
+	}
+
+	// 본문을 가져오거나 문제가 생기면 null로 반환
+	private Claims claimsOrNull(String jwtStr, String purpose) {
 		try {
 			Object payload = Jwts.parser()
 				.verifyWith(jwtSecretKey)
@@ -79,69 +136,53 @@ public class JwtParser {
 				.parse(jwtStr)
 				.getPayload();
 
-			if (!(payload instanceof Map<?, ?> map)) {
-				log.debug("JWT payload type is not Map. payloadType={}",
-					payload == null ? "null" : payload.getClass().getName());
-				return null;
+			if (payload instanceof Claims claims)
+				return claims;
+
+			// Map으로 들어오는 경우도 고려
+			if (payload instanceof Map<?, ?> map) {
+				@SuppressWarnings("unchecked")
+				Map<String, Object> m = (Map<String, Object>)map;
+				return Jwts.claims().add(m).build(); // Map -> Claims로 래핑
 			}
 
-			return (Map<String, Object>)map;
-
+			log.debug("JWT payload type is not supported. purpose={}, payloadType={}",
+				purpose, payload == null ? "null" : payload.getClass().getName());
+			return null;
+		// 만료됨
 		} catch (ExpiredJwtException e) {
-			log.debug("JWT expired while reading payload: {}", e.getMessage());
+			log.debug("JWT expired. purpose={}, token={}, msg={}", purpose, mask(jwtStr), e.getMessage());
 			return null;
-
+		// 서명 불일치
 		} catch (SecurityException e) {
-			log.debug("JWT signature/security error while reading payload: {}", e.getMessage());
+			log.debug("JWT signature/security error. purpose={}, token={}, msg={}", purpose, mask(jwtStr),
+				e.getMessage());
 			return null;
-
+		// 형식 오류, claim 오류 등 JJWT 계열 전반
 		} catch (JwtException e) {
-			log.debug("JWT invalid while reading payload. ex={}, msg={}",
-				e.getClass().getSimpleName(), e.getMessage());
+			log.debug("JWT invalid. purpose={}, token={}, ex={}, msg={}",
+				purpose, mask(jwtStr), e.getClass().getSimpleName(), e.getMessage());
 			return null;
-
+		// null, blank
 		} catch (IllegalArgumentException e) {
-			log.debug("JWT illegal argument while reading payload: {}", e.getMessage());
+			log.debug("JWT illegal argument. purpose={}, token={}, msg={}", purpose, mask(jwtStr), e.getMessage());
 			return null;
-
+		// 그 외 예외 오류
 		} catch (Exception e) {
-			log.warn("JWT unexpected error while reading payload. ex={}", e.getClass().getName(), e);
+			log.warn("JWT unexpected error. purpose={}, token={}, ex={}",
+				purpose, mask(jwtStr), e.getClass().getName(), e);
 			return null;
 		}
 	}
 
-	public MemberPrincipal parsePrincipal(String jwtStr) {
-		Map<String, Object> payload = payload(jwtStr);
-		if (payload == null)
+	private static String extractPublicId(Claims claims) {
+		if (claims == null)
 			return null;
-
-		String publicId = toStringValue(payload.get("publicId"));
-		if (publicId == null) {
-			publicId = toStringValue(payload.get("id"));
-		}
-		String role = toRoleString(payload.get("role"));
-		if (publicId == null || publicId.isBlank() || role == null || role.isBlank()) {
+		String publicId = claims.get("publicId", String.class);
+		if (publicId == null)
+			publicId = claims.get("id", String.class);
+		if (publicId == null || publicId.isBlank())
 			return null;
-		}
-
-		return new MemberPrincipal(publicId, role);
-	}
-
-	private static String toStringValue(Object value) {
-		if (value == null)
-			return null;
-		return value.toString();
-	}
-
-	private static String toRoleString(Object value) {
-		if (value == null) {
-			return null;
-		}
-		if (value instanceof String stringValue) {
-			if (stringValue.startsWith("ROLE_"))
-				return stringValue.substring("ROLE_".length());
-			return stringValue;
-		}
-		return value.toString();
+		return publicId;
 	}
 }

@@ -1,5 +1,6 @@
 package com.bugzero.rarego.boundedContext.member.in;
 
+import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -30,7 +31,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MemberController {
 
-    private final MemberFacade memberFacade;
+  private final MemberFacade memberFacade;
+  private final AuctionFacade auctionFacade;
 
 	@SecurityRequirement(name = "bearerAuth")
 	@Operation(summary = "소셜 로그인 이후 Member 생성(회원 가입)", description = "소셜 로그인 결과(email/provider)를 받아 회원가입 처리합니다.")
