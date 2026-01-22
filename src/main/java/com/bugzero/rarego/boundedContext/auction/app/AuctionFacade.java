@@ -1,12 +1,14 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionWithdrawResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistListResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.PagedResponseDto;
@@ -29,6 +31,7 @@ public class AuctionFacade {
     private final AuctionCreateBidUseCase auctionCreateBidUseCase;
     private final AuctionReadUseCase auctionReadUseCase;
     private final AuctionMemberRepository auctionMemberRepository;
+    private final AuctionOrderRepository auctionOrderRepository;
     private final AuctionSyncMemberUseCase auctionSyncMemberUseCase;
     private final AuctionBookmarkUseCase auctionBookmarkUseCase;
     private final AuctionWithdrawUseCase auctionWithdrawUseCase;
@@ -113,6 +116,7 @@ public class AuctionFacade {
     }
 
     public boolean hasProcessingOrders(String publicId) {
-        return auctionWithdrawUseCase.hasProcessingOrders(publicId);
+        return auctionOrderRepository.existsByBuyerPublicIdAndStatus(publicId, AuctionOrderStatus.PROCESSING)
+                || auctionOrderRepository.existsBySellerPublicIdAndStatus(publicId, AuctionOrderStatus.PROCESSING);
     }
 }

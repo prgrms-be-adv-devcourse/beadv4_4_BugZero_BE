@@ -50,4 +50,16 @@ public interface AuctionOrderRepository extends JpaRepository<AuctionOrder, Long
             @Param("publicId") String publicId,
             @Param("status") AuctionOrderStatus status
     );
+
+    @Query("""
+                SELECT CASE WHEN COUNT(o) > 0 THEN true ELSE false END
+                FROM AuctionOrder o
+                JOIN AuctionMember m ON o.sellerId = m.id
+                WHERE m.publicId = :publicId
+                AND o.status = :status
+            """)
+    boolean existsBySellerPublicIdAndStatus(
+            @Param("publicId") String publicId,
+            @Param("status") AuctionOrderStatus status
+    );
 }
