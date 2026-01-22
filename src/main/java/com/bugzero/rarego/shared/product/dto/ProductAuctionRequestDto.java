@@ -16,12 +16,11 @@ public record ProductAuctionRequestDto(
 	@Max(value = 30, message = "경매기간은 최대 30일까지만 가능합니다.")
 	Integer durationDays
 ) {
-	public Auction toEntity(Long productId, Long sellerId, int tickSize) {
+	public Auction toEntity(Long productId, Long sellerId) {
 		return Auction.builder()
 			.productId(productId)
 			.sellerId(sellerId)
 			.startPrice(startPrice)
-			.tickSize(tickSize)
 			.durationDays(durationDays)
 			.build();
 	}

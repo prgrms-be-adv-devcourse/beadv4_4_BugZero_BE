@@ -1,5 +1,7 @@
 server:
   port: 8080
+  forward-headers-strategy: native
+
 
 spring:
   application:
@@ -84,7 +86,7 @@ custom:
     settlement:
       chunkSize: 10
       holdDays: 7
-    systemMemberId: 2
+    systemMemberId: 1
 
 
 springdoc:

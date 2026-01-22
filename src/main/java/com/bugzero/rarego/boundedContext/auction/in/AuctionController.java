@@ -28,6 +28,16 @@ public class AuctionController {
 
     private final AuctionFacade auctionFacade;
 
+	// 경매 상태/현재가 Bulk 조회
+	@Operation(summary = "경매 목록 조회", description = "검색 조건(키워드, 카테고리, 상태)과 정렬 조건에 따라 경매 목록을 조회합니다.")
+	@GetMapping
+	public PagedResponseDto<AuctionListResponseDto> getAuctions(
+		@ModelAttribute AuctionSearchCondition condition,
+		@PageableDefault(size = 10) Pageable pageable
+	) {
+		return auctionFacade.getAuctions(condition, pageable);
+	}
+
     @Operation(summary = "경매 상세 조회", description = "경매의 상세 정보를 조회합니다. (로그인 시 내 입찰 내역 포함)")
     @GetMapping("/{auctionId}")
     public SuccessResponseDto<AuctionDetailResponseDto> getAuctionDetail(

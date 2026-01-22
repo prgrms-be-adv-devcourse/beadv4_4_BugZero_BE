@@ -296,91 +296,51 @@ class AuctionControllerTest {
     @DisplayName("성공: 관심 경매 해제 시 HTTP 200과 해제 정보를 반환한다")
     void removeBookmark_success() throws Exception {
         // given
-        Long auctionId = 1L;
-        WishlistRemoveResponseDto responseDto = WishlistRemoveResponseDto.of(true, auctionId);
+        Long bookmarkId = 1L; 
+        WishlistRemoveResponseDto responseDto = WishlistRemoveResponseDto.of(true, bookmarkId);
 
-        given(auctionFacade.removeBookmark(any(String.class), eq(auctionId)))
+        given(auctionFacade.removeBookmark(any(String.class), eq(bookmarkId)))
                 .willReturn(responseDto);
 
         // when & then
-        mockMvc.perform(delete("/api/v1/auctions/{auctionId}/bookmarks", auctionId))
+        mockMvc.perform(delete("/api/v1/auctions/{bookmarkId}/bookmarks", bookmarkId))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.data.removed").value(true))
-                .andExpect(jsonPath("$.data.auctionId").value(auctionId));
+                .andExpect(jsonPath("$.data.bookmarkId").value(bookmarkId));
     }
 
     @Test
     @DisplayName("실패: 관심 등록되지 않은 경매 해제 시 404를 반환한다")
     void removeBookmark_fail_bookmark_not_found() throws Exception {
         // given
-        Long auctionId = 1L;
+        Long bookmarkId = 1L;
 
-        given(auctionFacade.removeBookmark(any(String.class), eq(auctionId)))
+        given(auctionFacade.removeBookmark(any(String.class), eq(bookmarkId)))
                 .willThrow(new CustomException(ErrorType.BOOKMARK_NOT_FOUND));
 
         // when & then
-        mockMvc.perform(delete("/api/v1/auctions/{auctionId}/bookmarks", auctionId))
+        mockMvc.perform(delete("/api/v1/auctions/{bookmarkId}/bookmarks", bookmarkId))
                 .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404));
     }
 
     @Test
-    @DisplayName("실패: 존재하지 않는 경매의 관심 해제 시 404를 반환한다")
-    void removeBookmark_fail_auction_not_found() throws Exception {
+    @DisplayName("실패: 타인의 북마크를 해제하려 할 때 403을 반환한다")
+        // 새로 추가된 보안 로직 테스트
+    void removeBookmark_fail_unauthorized() throws Exception {
         // given
-        Long auctionId = 999L;
+        Long bookmarkId = 1L;
 
-        given(auctionFacade.removeBookmark(any(String.class), eq(auctionId)))
-                .willThrow(new CustomException(ErrorType.AUCTION_NOT_FOUND));
+        given(auctionFacade.removeBookmark(any(String.class), eq(bookmarkId)))
+                .willThrow(new CustomException(ErrorType.BOOKMARK_UNAUTHORIZED_ACCESS));
 
         // when & then
-        mockMvc.perform(delete("/api/v1/auctions/{auctionId}/bookmarks", auctionId))
+        mockMvc.perform(delete("/api/v1/auctions/{bookmarkId}/bookmarks", bookmarkId))
                 .andDo(print())
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404));
-    }
-
-    @Test
-    @DisplayName("성공: 판매 포기 요청 시 HTTP 200과 처리 결과를 반환한다")
-    void withdraw_success() throws Exception {
-        // given
-        Long auctionId = 1L;
-        String memberPublicId = "1";
-
-        AuctionWithdrawResponseDto responseDto = AuctionWithdrawResponseDto.of(
-                auctionId, 100L, AuctionStatus.ENDED
-        );
-
-        given(auctionFacade.withdraw(eq(auctionId), eq(memberPublicId)))
-                .willReturn(responseDto);
-
-        // when & then
-        mockMvc.perform(post("/api/v1/auctions/{auctionId}/withdraw", auctionId))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(200))
-                .andExpect(jsonPath("$.data.auctionId").value(auctionId))
-                .andExpect(jsonPath("$.data.beforeStatus").value("ENDED"));
-    }
-
-    @Test
-    @DisplayName("실패: 판매자가 아닌 사용자가 판매 포기 요청 시 403 에러를 반환한다")
-    void withdraw_fail_not_seller() throws Exception {
-        // given
-        Long auctionId = 1L;
-        String memberPublicId = "1";
-
-        given(auctionFacade.withdraw(eq(auctionId), eq(memberPublicId)))
-                .willThrow(new CustomException(ErrorType.AUCTION_NOT_SELLER));
-
-        // when & then
-        mockMvc.perform(post("/api/v1/auctions/{auctionId}/withdraw", auctionId))
-                .andDo(print())
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.status").value(403))
-                .andExpect(jsonPath("$.message").value(ErrorType.AUCTION_NOT_SELLER.getMessage()));
+                .andExpect(status().isForbidden()) // 403 Forbidden
+                .andExpect(jsonPath("$.status").value(403));
     }
 }

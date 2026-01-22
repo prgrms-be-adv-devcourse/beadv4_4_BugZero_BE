@@ -76,16 +76,21 @@ public class AuctionFacade {
         return auctionBookmarkUseCase.addBookmark(member.getId(), auctionId);
     }
 
+    // 경매 상태/현재가 요약 조회
+    public PagedResponseDto<AuctionListResponseDto> getAuctions(AuctionSearchCondition condition, Pageable pageable) {
+        return auctionReadUseCase.getAuctions(condition, pageable);
+    }
+
     // 관심 경매 해제
     @Transactional
-    public WishlistRemoveResponseDto removeBookmark(String publicId, Long auctionId) {
-        return auctionBookmarkUseCase.removeBookmark(publicId, auctionId);
+    public WishlistRemoveResponseDto removeBookmark(String publicId, Long bookmarkId) {
+        return auctionBookmarkUseCase.removeBookmark(publicId, bookmarkId);
     }
 
     // 내 관심 경매 목록 조회
     @Transactional(readOnly = true)
     public PagedResponseDto<WishlistListResponseDto> getMyBookmarks(String publicId, Pageable pageable) {
-        return auctionBookmarkUseCase.getMyBookmarks(publicId, pageable);
+        return auctionReadUseCase.getMyBookmarks(publicId, pageable);
     }
 
     // 판매 포기

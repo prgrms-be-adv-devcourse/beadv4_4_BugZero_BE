@@ -4,12 +4,12 @@ import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
 import com.bugzero.rarego.boundedContext.auction.domain.Bid;
+
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
-import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
-import com.bugzero.rarego.boundedContext.member.domain.Member;
-import com.bugzero.rarego.boundedContext.member.out.MemberRepository;
+import com.bugzero.rarego.boundedContext.product.domain.Product;
+import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -29,35 +29,40 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class AuctionSupport {
 
-    private final AuctionRepository auctionRepository;
-    ;
-    private final AuctionOrderRepository auctionOrderRepository;
-    private final AuctionMemberRepository auctionMemberRepository;
-    private final BidRepository bidRepository;
-    private final MemberRepository memberRepository;
+	private final AuctionRepository auctionRepository;
+	private final AuctionMemberRepository auctionMemberRepository;
+	private final ProductRepository productRepository;
+	private final AuctionOrderRepository auctionOrderRepository;
 
-    public Auction findAuctionById(Long auctionId) {
-        return auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new CustomException(ErrorType.AUCTION_NOT_FOUND));
-    }
+	public Auction findAuctionById(Long auctionId) {
+		return auctionRepository.findById(auctionId)
+			.orElseThrow(() -> new CustomException(ErrorType.AUCTION_NOT_FOUND));
+	}
 
-    public Page<Bid> findBidsByAuctionId(Long auctionId, Pageable pageable) {
-        return bidRepository.findAllByAuctionIdOrderByBidTimeDesc(auctionId, pageable);
-    }
+	@Transactional
+	public Auction getAuctionWithLock(Long auctionId) {
+		return auctionRepository.findByIdWithLock(auctionId)
+			.orElseThrow(() -> new CustomException(ErrorType.AUCTION_NOT_FOUND));
+	}
 
-    // 차후의 N+1 문제 방지를 위한 bulk 조회
-    public Map<Long, String> findPublicIdsByMemberIds(Set<Long> memberIds) {
-        List<Member> members = memberRepository.findAllById(memberIds);
-        return members.stream()
-                .collect(Collectors.toMap(Member::getId, Member::getPublicId));
-    }
+	public AuctionMember getMember(String publicId) {
+		return auctionMemberRepository.findByPublicId(publicId)
+			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
+	}
 
-    public AuctionMember findMemberByPublicId(String publicId) {
-        return auctionMemberRepository.findByPublicId(publicId)
-                .orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
-    }
+	public AuctionMember getMember(Long memberId) {
+		return auctionMemberRepository.findById(memberId)
+			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
+	}
 
-    public Optional<AuctionOrder> findOrderByAuctionId(Long auctionId) {
-        return auctionOrderRepository.findByAuctionId(auctionId);
-    }
+	public Product getProduct(Long productId) {
+		return productRepository.findById(productId)
+			.orElseThrow(() -> new CustomException(ErrorType.PRODUCT_NOT_FOUND));
+	}
+
+	public AuctionOrder getOrder(Long auctionId) {
+		return auctionOrderRepository.findByAuctionId(auctionId)
+			.orElseThrow(() -> new CustomException(ErrorType.ORDER_NOT_FOUND));
+	}
+
 }

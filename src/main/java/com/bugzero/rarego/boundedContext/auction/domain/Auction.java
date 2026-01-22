@@ -1,5 +1,8 @@
 package com.bugzero.rarego.boundedContext.auction.domain;
 
+import java.time.LocalDateTime;
+import java.util.Objects;
+
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
 import com.bugzero.rarego.global.response.ErrorType;
@@ -46,14 +49,14 @@ public class Auction extends BaseIdAndTime {
 
     // 입찰 가격 갱신
     @Builder
-    public Auction(Long productId, Long sellerId, LocalDateTime startTime, Integer durationDays, LocalDateTime endTime, int startPrice, int tickSize) {
+    public Auction(Long productId, Long sellerId, LocalDateTime startTime,  Integer durationDays, LocalDateTime endTime, int startPrice) {
         this.productId = productId;
         this.sellerId = sellerId;
         this.startTime = startTime;
         this.durationDays = durationDays;
         this.endTime = endTime;
         this.startPrice = startPrice;
-        this.tickSize = tickSize;
+        this.tickSize = determineTickSize(startPrice);
         this.status = AuctionStatus.SCHEDULED;
     }
 
@@ -92,7 +95,50 @@ public class Auction extends BaseIdAndTime {
         this.status = AuctionStatus.IN_PROGRESS;
     }
 
+    public boolean hasStartTime() {
+        return this.startTime != null;
+    }
+
+    public void determineStart(LocalDateTime startTime) {
+        this.startTime = startTime;
+        this.endTime = startTime.plusDays(this.durationDays);
+    }
+
+    // 접근 회원이 경매 판매자인지 확인
+    public boolean isSeller(Long sellerId) {
+        return Objects.equals(this.sellerId, sellerId);
+    }
+
+    // 경매 시작 전인지 확인
+    public boolean isPending() {
+        return status == AuctionStatus.SCHEDULED;
+    }
+
+    public void update(int durationDays, int startPrice) {
+        this.durationDays = durationDays;
+        this.startPrice = startPrice;
+        this.tickSize = determineTickSize(startPrice);
+    }
+  
     public void withdraw() {
         this.status = AuctionStatus.WITHDRAWN;
     }
+
+    //호가단위 결정
+    private int determineTickSize(int startPrice) {
+        if (startPrice < 10000) {
+            return 500;
+        } else if (startPrice < 50000) {
+            return 1000;
+        } else if (startPrice < 100000) {
+            return 2000;
+        } else if (startPrice < 300000) {
+            return 5000;
+        } else if (startPrice < 1000000) {
+            return 10000;
+        } else {
+            return 30000; // 100만 원 이상
+        }
+    }
+
 }

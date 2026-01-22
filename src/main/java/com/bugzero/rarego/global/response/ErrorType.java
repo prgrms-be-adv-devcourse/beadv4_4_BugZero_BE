@@ -10,18 +10,38 @@ public enum ErrorType {
     INTERNAL_SERVER_ERROR(500, 9000, "서버 오류가 발생했습니다."),
     INVALID_INPUT(400, 9001, "잘못된 입력값입니다."),
 
-    // Member (1000 ~ 1499)
-    MEMBER_NOT_FOUND(404, 1001, "존재하지 않는 회원입니다."),
-    MEMBER_EMAIL_EMPTY(400, 1003, "이메일은 필수 입력값입니다."),
-    MEMBER_JOIN_FAILED(500, 1004, "회원 가입에 실패했습니다."),
-    // Auth/JWT (1500 ~ 1999)
-    AUTH_MEMBER_REQUIRED(400, 1501, "회원 정보가 필요합니다."),
-    JWT_EXPIRE_SECONDS_INVALID(500, 1504, "토큰 만료 설정이 올바르지 않습니다."),
-    JWT_ISSUE_FAILED(500, 1505, "토큰 발급에 실패했습니다."),
-    AUTH_UNAUTHORIZED(401, 1506, "인증이 필요합니다."),
-    AUTH_FORBIDDEN(403, 1507, "권한이 없습니다."),
-    AUTH_OAUTH2_INVALID_RESPONSE(400, 1508, "유효하지 않은 소셜 로그인입니다."),
-    AUTH_JOIN_FAILED(500, 1509, "회원 가입에 실패했습니다."),
+	// Member (1000 ~ 1499)
+	MEMBER_NOT_FOUND(404, 1001, "존재하지 않는 회원입니다."),
+	MEMBER_EMAIL_EMPTY(400, 1003, "이메일은 필수 입력값입니다."),
+	MEMBER_JOIN_FAILED(500, 1004, "회원 가입에 실패했습니다."),
+	MEMBER_INVALID_NICKNAME(400, 1005, "닉네임이 공백이거나 50자 이상입니다."),
+	MEMBER_INVALID_INTRO(400, 1006, "자기소개 형식이 올바르지 않습니다."),
+	MEMBER_INVALID_ZIPCODE(400, 1007, "우편번호 형식이 올바르지 않습니다."),
+	MEMBER_INVALID_ADDRESS(400, 1008, "주소 형식이 올바르지 않습니다."),
+	MEMBER_INVALID_ADDRESS_DETAIL(400, 1009, "상세주소 형식이 올바르지 않습니다."),
+	MEMBER_INVALID_REALNAME(400, 1010, "이름은 한국어/영어로 이루어진 1~10자여야 합니다."),
+	MEMBER_INVALID_PHONE_NUMBER(400, 1011, "연락처 형식이 올바르지 않습니다."),
+	MEMBER_IDENTITY_REQUIRED(400, 1012, "이름과 연락처를 입력해주세요"),
+		// Member - checking
+	MEMBER_ZIPCODE_REQUIRED(400, 1014, "우편번호는 필수 입력값입니다."),
+	MEMBER_ADDRESS_REQUIRED(400, 1015, "주소는 필수 입력값입니다."),
+	MEMBER_ADDRESS_DETAIL_REQUIRED(400, 1016, "상세주소는 필수 입력값입니다."),
+	MEMBER_PHONE_REQUIRED(400, 1017, "연락처는 필수 입력값입니다."),
+	MEMBER_REALNAME_REQUIRED(400, 1018, "실명은 필수 입력값입니다."),
+	MEMBER_UPDATED_FAILED(400, 1020, "삭제 요청된 항목에 값이 함께 전달되었습니다."),
+	MEMBER_IDENTITY_ALREADY_VERIFIED(409, 1021, "이미 본인인증이 완료되었습니다."),
+	MEMBER_NICKNAME_ALREADY_EXISTS(409, 1022, "이미 존재하는 닉네임입니다."),
+	MEMBER_NOT_ELIGIBLE_SELLER(400, 1020, "판매자 정보의 필수 항목이 작성되지 않았습니다."),
+
+	// Auth/JWT (1500 ~ 1999)
+	AUTH_MEMBER_REQUIRED(400, 1501, "회원 정보가 필요합니다."),
+	JWT_EXPIRE_SECONDS_INVALID(500, 1504, "토큰 만료 설정이 올바르지 않습니다."),
+	JWT_ISSUE_FAILED(500, 1505, "토큰 발급에 실패했습니다."),
+	AUTH_UNAUTHORIZED(401, 1506, "인증이 필요합니다."),
+	AUTH_FORBIDDEN(403, 1507, "권한이 없습니다."),
+	AUTH_OAUTH2_INVALID_RESPONSE(400, 1508, "유효하지 않은 소셜 로그인입니다."),
+	AUTH_JOIN_FAILED(500, 1509, "회원 가입에 실패했습니다."),
+	AUTH_ACCOUNT_NOT_FOUND(404, 1510, "회원 정보를 찾을 수 없습니다."),
 
     // Auction (2000 ~ 2999)
     AUCTION_CREATE_FAILED(500, 2000, "경매 생성에 실패했습니다."),
@@ -33,6 +53,10 @@ public enum ErrorType {
     AUCTION_BID_AMOUNT_TOO_LOW(400, 2006, "입찰 금액이 현재가 또는 시작가보다 낮습니다."),
     ORDER_NOT_FOUND(404, 2007, "낙찰 기록 정보를 찾을 수 없습니다."),
     AUCTION_ORDER_ACCESS_DENIED(403, 2008, "낙찰 기록 정보에 접근 권한이 없습니다."),
+    AUCTION_ALREADY_HAS_START_TIME(400, 2009, "이미 시작이 예정된 경매입니다."),
+	UNAUTHORIZED_AUCTION_SELLER(403, 20010, "해당 경매의 판매자가 아닙니다."),
+	AUCTION_ALREADY_IN_PROGRESS(400, 2011, "경매 시작 전에만 수정 가능합니다."),
+	AUCTION_UPDATE_FAILED(500, 2012, "경매 정보 수정에 실패했습니다.."),
     BID_NOT_FOUND(404, 2501, "입찰가를 찾을 수 없습니다."),
     AUCTION_NOT_SCHEDULED(400, 2503, "예정된 경매가 아닙니다."),
     AUCTION_SCHEDULE_FAILED(500, 2504, "경매 정산 예약에 실패했습니다."),
@@ -45,9 +69,12 @@ public enum ErrorType {
     AUCTION_WITHDRAW_ALREADY_PAID(400, 2511, "결제 완료된 경매는 판매 포기할 수 없습니다."),
     AUCTION_WITHDRAW_PAYMENT_IN_PROGRESS(400, 2512, "결제 진행 중인 경매는 판매 포기할 수 없습니다."),
     AUCTION_WITHDRAW_NOT_INSPECTED(400, 2513, "검수 전 경매는 판매 포기할 수 없습니다."),
+    BOOKMARK_UNAUTHORIZED_ACCESS(403, 2514, "요청한 사용자가 북마크의 memberId와 일치하지 않습니다."),
 
-    // Product (3000 ~ 3999)
-    PRODUCT_NOT_FOUND(404, 3001, "상품이 존재하지 않습니다."),
+	// Product (3000 ~ 3999)
+	PRODUCT_NOT_FOUND(404, 3001, "상품이 존재하지 않습니다."),
+	UNAUTHORIZED_SELLER(403, 3002, "해당 상품의 판매자가 아닙니다."),
+	IMAGE_NOT_FOUND(400, 3003, "해당 상품 이미지가 존재하지 않습니다."),
 
     INSPECTION_REJECT_REASON_REQUIRED(400, 3501, "검수 반려시 사유가 있어야 합니다."),
     INSPECTION_ALREADY_COMPLETED(400, 3502, "검수가 이미 완료된 상품입니다."),
