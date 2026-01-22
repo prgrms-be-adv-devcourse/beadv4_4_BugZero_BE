@@ -104,4 +104,15 @@ public class AuctionFacade {
         return auctionSyncMemberUseCase.syncMember(member);
     }
 
+    public boolean hasActiveBids(String publicId) {
+        return auctionWithdrawUseCase.hasActiveBids(publicId);
+    }
+
+    public boolean hasActiveSales(String publicId) {
+        return auctionWithdrawUseCase.hasActiveSales(publicId);
+    }
+
+    public boolean hasProcessingOrders(String publicId) {
+        return auctionWithdrawUseCase.hasProcessingOrders(publicId);
+    }
 }
