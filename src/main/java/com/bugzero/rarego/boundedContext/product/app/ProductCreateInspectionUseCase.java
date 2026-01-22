@@ -28,8 +28,11 @@ public class ProductCreateInspectionUseCase {
 		checkedReason(dto);
 		//유효한 상품인지 확인
 		Product product = productSupport.verifyValidateProduct(dto.productId());
-		//유효한 판매자인지 확인(TODO추후 아래 verifyValidateSeller 메서드로 변경예정)
-		ProductMember seller = productSupport.verifyValidateMember(product.getSellerId());
+		//유효한 판매자인지 확인 (탈퇴한 회원이거나 데이터가 없으면 예외처리)
+		ProductMember seller = product.getSeller();
+		if (seller.isDeleted()) {
+			throw new CustomException(ErrorType.MEMBER_NOT_FOUND);
+		}
 		//이미 검수가 끝난 상품인지 확인
 		checkedProductStatus(product);
 		//유효한 관리자인지 확인
@@ -64,21 +67,4 @@ public class ProductCreateInspectionUseCase {
 			throw new CustomException(ErrorType.INSPECTION_ALREADY_COMPLETED);
 		}
 	}
-
-	//TODO 추후 Product에서 Long sellerId -> ProductMember seller 변경 시 연관관계 매핑을 통해 seller 객체를 가지고 올 수 있도록 변경.
-	// 그렇게 seller 객체를 가져올 때 만약 seller데이터가 삭제되었다면 Null 값을 반환하게 됨. 따라서 굳이  verifyValidateMember(Long memberId)
-	// 를 통해 멤버 존재 여부를 따로 확인할 필요 없어짐. 따라서 추후 아래 코드로 변경
-
-	// private Product verifyValidateSeller(Long productId) {
-	// 	//유효한 상품인지 확인
-	// 	Product product = productSupport.verifyValidateProduct(productId);
-	//
-	// 	//
-	// 	ProductMember seller = product.getSeller();
-	// 	if (seller == null || seller.isDeleted) {
-	// 		throw new CustomException(ErrorType.MEMBER_NOT_FOUND);
-	// 	}
-	//
-	// 	return product;
-	// }
 }
