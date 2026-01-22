@@ -27,7 +27,7 @@ public class PaymentTimeoutScheduler {
     @Value("${auction.payment-timeout-days:3}")
     private int paymentTimeoutDays;
 
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
     public void checkPaymentTimeout() {
         log.info("결제 타임아웃 체크 시작");
 

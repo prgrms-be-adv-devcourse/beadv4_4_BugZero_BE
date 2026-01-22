@@ -14,6 +14,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
@@ -47,7 +48,7 @@ class AuctionSchedulerTest {
     @DisplayName("auctionId가 null이면 예외 발생")
     void scheduleSettlement_NullAuctionId() {
         // when & then
-        assertThatThrownBy(() -> scheduler.scheduleSettlement(null, LocalDateTime.now()))
+        assertThatThrownBy(() -> scheduler.scheduleSettlement(null, LocalDateTime.now(ZoneId.of("Asia/Seoul"))))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorType", ErrorType.INVALID_INPUT);
     }
@@ -69,7 +70,7 @@ class AuctionSchedulerTest {
         doReturn(mockFuture).when(taskScheduler).schedule(any(Runnable.class), any(Instant.class));
 
         // when
-        scheduler.scheduleSettlement(1L, LocalDateTime.now().plusMinutes(10));
+        scheduler.scheduleSettlement(1L, LocalDateTime.now(ZoneId.of("Asia/Seoul")).plusMinutes(10));
 
         // then
         verify(taskScheduler).schedule(any(Runnable.class), any(Instant.class));
@@ -80,7 +81,7 @@ class AuctionSchedulerTest {
     @DisplayName("과거 시간이면 즉시 실행")
     void scheduleSettlement_PastTime() {
         // when
-        scheduler.scheduleSettlement(1L, LocalDateTime.now().minusMinutes(10));
+        scheduler.scheduleSettlement(1L, LocalDateTime.now(ZoneId.of("Asia/Seoul")).minusMinutes(10));
 
         // then
         verify(facade).settleOne(1L);
@@ -100,7 +101,7 @@ class AuctionSchedulerTest {
         scheduledTasks.put(1L, existingFuture);
 
         // when
-        scheduler.scheduleSettlement(1L, LocalDateTime.now().plusMinutes(10));
+        scheduler.scheduleSettlement(1L, LocalDateTime.now(ZoneId.of("Asia/Seoul")).plusMinutes(10));
 
         // then
         verify(existingFuture).cancel(false);
