@@ -244,15 +244,6 @@ class AuctionControllerTest {
 	@DisplayName("GET /auctions - 경매 목록 검색 (조건 매핑 확인)")
 	void getAuctions_success() throws Exception {
 		// given
-		// Mock 응답 데이터
-		// (AuctionListResponseDto는 기존에 정의된 것을 사용한다고 가정)
-        /* AuctionListResponseDto dto = ...;
-           PagedResponseDto<AuctionListResponseDto> response = ...;
-           given(auctionFacade.getAuctions(any(AuctionSearchCondition.class), any(Pageable.class)))
-               .willReturn(response);
-        */
-
-		// *참고: DTO 객체 생성이 번거로우면 verify로 호출 여부만 검증해도 컨트롤러 테스트로는 충분합니다.
 
 		// when
 		mockMvc.perform(get("/api/v1/auctions")
