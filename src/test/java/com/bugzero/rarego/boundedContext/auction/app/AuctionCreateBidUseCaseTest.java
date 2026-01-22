@@ -21,8 +21,6 @@ import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.Bid;
 import com.bugzero.rarego.boundedContext.auction.domain.event.AuctionBidCreatedEvent;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.global.exception.CustomException;
@@ -36,16 +34,20 @@ class AuctionCreateBidUseCaseTest {
 	@InjectMocks
 	private AuctionCreateBidUseCase auctionCreateBidUseCase;
 
+	// [핵심] Repository 대신 Support를 Mocking
 	@Mock
-	private AuctionRepository auctionRepository;
+	private AuctionSupport support;
+
+	// 입찰 저장 및 검증용 Repository는 유지
 	@Mock
 	private BidRepository bidRepository;
-	@Mock
-	private AuctionMemberRepository auctionMemberRepository;
+
 	@Mock
 	private PaymentApiClient paymentApiClient;
 	@Mock
 	private ApplicationEventPublisher eventPublisher;
+
+	// UseCase가 직접 쓰지 않는 Repository Mock들은 제거함 (AuctionRepository, AuctionMemberRepository)
 
 	private final Long AUCTION_ID = 1L;
 	private final Long BIDDER_ID = 100L;
@@ -77,12 +79,14 @@ class AuctionCreateBidUseCaseTest {
 		ReflectionTestUtils.setField(auction, "status", AuctionStatus.IN_PROGRESS);
 		ReflectionTestUtils.setField(auction, "currentPrice", 5000);
 
-		auction.startAuction();
+		// 3. Mocking (Support 사용)
+		// Repository와 달리 Support는 Entity를 직접 반환하므로 Optional.of() 제거
+		given(support.getMember(BIDDER_PUBLICID)).willReturn(bidder);
 
-		// 3. Mocking (회원 조회, 경매 조회 필수!)
-		given(auctionMemberRepository.findByPublicId(BIDDER_PUBLICID)).willReturn(Optional.of(bidder));
-		given(auctionRepository.findById(AUCTION_ID)).willReturn(Optional.of(auction));
-		// 연속 입찰 아님
+		// [중요] UseCase에서 getAuctionWithLock을 호출하므로 맞춰줌
+		given(support.getAuctionWithLock(AUCTION_ID)).willReturn(auction);
+
+		// 연속 입찰 검증 (Repository 직접 호출 유지)
 		given(bidRepository.findTopByAuctionIdOrderByBidTimeDesc(AUCTION_ID)).willReturn(Optional.empty());
 
 		// when
@@ -94,14 +98,13 @@ class AuctionCreateBidUseCaseTest {
 
 		// Verify
 		verify(bidRepository).save(any(Bid.class));
-		verify(eventPublisher).publishEvent(any(AuctionBidCreatedEvent.class)); // 이벤트 발행 검증 유지
+		verify(eventPublisher).publishEvent(any(AuctionBidCreatedEvent.class));
 	}
 
 	@Test
 	@DisplayName("입찰 실패: 판매자가 본인 경매에 입찰 시도")
 	void createBid_fail_seller_bid() {
 		// given
-		// 판매자(Seller)가 로그인한 상황 가정
 		AuctionMember seller = AuctionMember.builder()
 			.publicId(SELLER_PUBLICID)
 			.build();
@@ -119,12 +122,11 @@ class AuctionCreateBidUseCaseTest {
 			.durationDays(1)
 			.build();
 		ReflectionTestUtils.setField(auction, "id", AUCTION_ID);
-
 		ReflectionTestUtils.setField(auction, "status", AuctionStatus.IN_PROGRESS);
 
-		// [수정] 판매자 ID로 회원 조회 시 반환되도록 설정
-		given(auctionMemberRepository.findByPublicId(SELLER_PUBLICID)).willReturn(Optional.of(seller));
-		given(auctionRepository.findById(AUCTION_ID)).willReturn(Optional.of(auction));
+		// [수정] Support Mocking
+		given(support.getMember(SELLER_PUBLICID)).willReturn(seller);
+		given(support.getAuctionWithLock(AUCTION_ID)).willReturn(auction);
 
 		// when & then
 		assertThatThrownBy(() ->
@@ -158,13 +160,14 @@ class AuctionCreateBidUseCaseTest {
 		ReflectionTestUtils.setField(auction, "tickSize", 1000);
 		// 현재가 10,000 -> 호가단위 1,000 -> 최소입찰가 11,000
 
-		// [수정] 입찰자 조회 Mocking 추가
-		given(auctionMemberRepository.findByPublicId(BIDDER_PUBLICID)).willReturn(Optional.of(bidder));
-		given(auctionRepository.findById(AUCTION_ID)).willReturn(Optional.of(auction));
+		// [수정] Support Mocking
+		given(support.getMember(BIDDER_PUBLICID)).willReturn(bidder);
+		given(support.getAuctionWithLock(AUCTION_ID)).willReturn(auction);
+
 		// 연속 입찰 아님
 		given(bidRepository.findTopByAuctionIdOrderByBidTimeDesc(AUCTION_ID)).willReturn(Optional.empty());
 
-		// when & then (10500원 입찰 시도 -> 실패해야 함)
+		// when & then
 		assertThatThrownBy(() ->
 			auctionCreateBidUseCase.createBid(AUCTION_ID, BIDDER_PUBLICID, 10500)
 		)
