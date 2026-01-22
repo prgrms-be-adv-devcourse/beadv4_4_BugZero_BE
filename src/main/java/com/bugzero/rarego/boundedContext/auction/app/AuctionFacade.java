@@ -90,10 +90,4 @@ public class AuctionFacade {
     public WishlistRemoveResponseDto removeBookmark(String publicId, Long bookmarkId) {
         return auctionBookmarkUseCase.removeBookmark(publicId, bookmarkId);
     }
-
-    @Transactional
-    public AuctionMember syncMember(MemberDto member) {
-        return auctionSyncMemberUseCase.syncMember(member);
-    }
-
 }
