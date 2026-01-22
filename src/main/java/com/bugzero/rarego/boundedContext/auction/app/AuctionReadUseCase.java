@@ -234,6 +234,7 @@ public class AuctionReadUseCase {
 	// 경매 목록 조회 (Bulk + 검색)
 	public PagedResponseDto<AuctionListResponseDto> getAuctions(AuctionSearchCondition condition, Pageable pageable) {
 
+    
 		// 1. 정렬 조건 적용
 		Pageable sortedPageable = applySorting(pageable, condition.getSort());
 
@@ -299,7 +300,6 @@ public class AuctionReadUseCase {
 
 		return new PagedResponseDto<>(dtos, PageDto.from(auctionPage));
 	}
-
 
 	public PagedResponseDto<MyAuctionOrderListResponseDto> getMyAuctionOrders(String memberPublicId, AuctionOrderStatus status, Pageable pageable) {
 		AuctionMember member = support.getMember(memberPublicId);
@@ -420,12 +420,18 @@ public class AuctionReadUseCase {
 
 	private Pageable applySorting(Pageable pageable, String sortStr) {
 		if (sortStr == null) return pageable;
+
 		Sort sort = Sort.unsorted();
+		// 마감 임박한 순서
 		if ("CLOSING_SOON".equalsIgnoreCase(sortStr)) {
 			sort = Sort.by(Sort.Direction.ASC, "endTime");
+		// 최신 순서
 		} else if ("NEWEST".equalsIgnoreCase(sortStr)) {
 			sort = Sort.by(Sort.Direction.DESC, "createdAt");
-		} else {
+		}
+		// TODO: 인기순(MOST_BIDS)은 입찰 수 정렬이므로 DB 컬럼이 없으면 복잡함.
+		// 현재는 ID 역순(최신 등록순) 등을 기본으로 처리
+		else {
 			sort = Sort.by(Sort.Direction.DESC, "id");
 		}
 		return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
