@@ -93,7 +93,7 @@ public class AuctionReadUseCase {
 
     // 나의 입찰 내역 조회
     public PagedResponseDto<MyBidResponseDto> getMyBids(String memberPublicId, AuctionStatus status, Pageable pageable) {
-        AuctionMember member = support.getMember(memberPublicId);
+        AuctionMember member = support.getPublicMember(memberPublicId);
 
         // 1. Bid 목록 조회
         Page<Bid> bidPage = bidRepository.findAllByBidderIdAndAuctionStatus(member.getId(), status, pageable);
@@ -119,7 +119,7 @@ public class AuctionReadUseCase {
     // 나의 판매 내역 조회
     public PagedResponseDto<MySaleResponseDto> getMySales(String memberPublicId, AuctionFilterType auctionFilterType, Pageable pageable) {
         // 회원 ID 조회
-        AuctionMember member = support.getMember(memberPublicId);
+        AuctionMember member = support.getPublicMember(memberPublicId);
 
         // 상품 Id 목록 조회
         List<Long> myProductIds = productRepository.findAllIdsBySellerId(member.getId());
@@ -167,7 +167,7 @@ public class AuctionReadUseCase {
         // 로그인한 경우에만 조회, 비로그인이면 null 처리
         AuctionMember member = null;
         if (memberPublicId != null) {
-            member = support.getMember(memberPublicId);
+            member = support.getPublicMember(memberPublicId);
         }
 
         // 1. 경매 조회
@@ -193,7 +193,7 @@ public class AuctionReadUseCase {
     // 낙찰 기록 상세 조회
     public AuctionOrderResponseDto getAuctionOrder(Long auctionId, String memberPublicId) {
         // 회원 ID 조회
-        AuctionMember member = support.getMember(memberPublicId);
+        AuctionMember member = support.getPublicMember(memberPublicId);
         Long memberId = member.getId();
 
         AuctionOrder order = support.getOrder(auctionId);
@@ -302,7 +302,7 @@ public class AuctionReadUseCase {
 
   // 나의 낙찰 목록 조회
 	public PagedResponseDto<MyAuctionOrderListResponseDto> getMyAuctionOrders(String memberPublicId, AuctionOrderStatus status, Pageable pageable) {
-		AuctionMember member = support.getMember(memberPublicId);
+		AuctionMember member = support.getPublicMember(memberPublicId);
 
 		// status가 null이면 전체, 있으면 필터링해서 가져옴
 		Page<AuctionOrder> orderPage = auctionOrderRepository.findAllByBidderIdAndStatus(
@@ -363,7 +363,7 @@ public class AuctionReadUseCase {
   
   // 내 관심 경매 목록 조회
     public PagedResponseDto<WishlistListResponseDto> getMyBookmarks(String memberPublicId, Pageable pageable) {
-        AuctionMember member = support.getMember(memberPublicId);
+        AuctionMember member = support.getPublicMember(memberPublicId);
 
         // 북마크 페이징 조회 (TODO: MSA 분리 시 BookmarkUsecase쪽으로 분리 예상됨, WishlistFacde 생성 필요)
         Page<AuctionBookmark> bookmarkPage = auctionBookmarkRepository.findAllByMemberId(member.getId(), pageable);
