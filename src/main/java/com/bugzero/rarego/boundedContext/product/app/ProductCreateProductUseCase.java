@@ -27,7 +27,7 @@ public class ProductCreateProductUseCase {
 
 		ProductMember seller = productSupport.verifyValidateMember(memberUUID);
 
-		Product product = productRequestDto.toEntity(seller.getId());
+		Product product = productRequestDto.toEntity(seller);
 
 		//상품 이미지 순서 보장 정렬 후 저장
 		List<ProductImageRequestDto> images = productSupport.normalizeCreateImageOrder(

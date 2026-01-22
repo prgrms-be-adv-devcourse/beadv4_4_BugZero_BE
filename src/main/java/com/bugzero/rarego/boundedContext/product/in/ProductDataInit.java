@@ -1,5 +1,7 @@
 package com.bugzero.rarego.boundedContext.product.in;
 
+import java.util.UUID;
+
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -8,6 +10,7 @@ import com.bugzero.rarego.boundedContext.product.domain.Category;
 import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductCondition;
+import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
 import com.bugzero.rarego.boundedContext.product.out.ProductMemberRepository;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 
@@ -24,16 +27,22 @@ public class ProductDataInit implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
+		ProductMember seller = ProductMember.builder()
+			.id(1L)
+			.publicId(UUID.randomUUID().toString())
+			.email("email")
+			.nickname("nickname")
+			.build();
 
 		//ProductMember 초기 데이터
-		createProduct(1L, "다크나이트");
-		createProduct(1L, "화이트 졸병");
+		createProduct(seller, "다크나이트");
+		createProduct(seller, "화이트 졸병");
 
 	}
 
-	private Product createProduct(Long sellerId, String name) {
+	private Product createProduct(ProductMember seller, String name) {
 		return productRepository.save(Product.builder()
-			.sellerId(sellerId)
+			.seller(seller)
 			.name(name)
 			.description("테스트용 상품 설명")
 			.category(Category.스타워즈)
