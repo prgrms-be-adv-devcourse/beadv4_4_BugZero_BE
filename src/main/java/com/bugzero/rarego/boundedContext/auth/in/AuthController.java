@@ -114,4 +114,26 @@ public class AuthController {
 			Map.of("accessToken", tokenPair.accessToken())
 		);
 	}
+
+	@SecurityRequirement(name = "bearerAuth")
+	@Operation(summary = "로그아웃", description = "리프레시 토큰을 폐기하고 액세스 토큰을 블랙리스트 처리합니다")
+	@PostMapping("/logout")
+	public SuccessResponseDto<Void> logout(
+		@CookieValue(value = REFRESH_TOKEN_ATTRIBUTE, required = false) String refreshToken,
+		@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
+		HttpServletResponse response) {
+		String accessToken = resolveToken(authorization);
+		authFacade.logout(refreshToken, accessToken);
+
+		ResponseCookie refreshTokenCookie = ResponseCookie.from(REFRESH_TOKEN_ATTRIBUTE, "")
+			.httpOnly(true)
+			.secure(refreshTokenCookieSecure)
+			.path("/")
+			.maxAge(Duration.ZERO)
+			.sameSite(refreshTokenCookieSameSite)
+			.build();
+		response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
+
+		return SuccessResponseDto.from(SuccessType.OK);
+	}
 }
