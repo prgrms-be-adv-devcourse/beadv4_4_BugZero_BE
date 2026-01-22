@@ -19,6 +19,7 @@ public class MemberFacade {
 	private final MemberUpdateMemberUseCase memberUpdateMemberUseCase;
 	private final MemberUpdateIdentityUseCase memberUpdateIdentityUseCase;
 	private final MemberPromoteSellerUseCase memberPromoteSellerUseCase;
+	private final MemberVerifyParticipationUseCase memberVerifyParticipationUseCase;
 
 	@Transactional
 	public MemberJoinResponseDto join(String email) {
@@ -42,5 +43,9 @@ public class MemberFacade {
 	@Transactional
 	public void promoteSeller(String publicId, String role) {
 		memberPromoteSellerUseCase.promoteSeller(publicId, role);
+	}
+
+	public void verifyParticipation(String publicId) {
+		memberVerifyParticipationUseCase.verifyParticipation(publicId);
 	}
 }
