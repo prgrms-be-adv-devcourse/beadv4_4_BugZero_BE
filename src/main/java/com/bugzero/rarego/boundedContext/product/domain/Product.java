@@ -68,6 +68,11 @@ public class Product extends BaseIdAndTime {
 		return this.inspectionStatus == InspectionStatus.PENDING;
 	}
 
+	//검수가 이미 승인되었는지 확인
+	public boolean isApproved() {
+		return this.inspectionStatus == InspectionStatus.APPROVED;
+	}
+
 	public void update(String name, Category category, String description,
 		List<ProductImageUpdateDto> imageDtos) {
 		this.name = name;

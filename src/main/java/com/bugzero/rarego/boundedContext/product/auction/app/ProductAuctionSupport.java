@@ -28,11 +28,16 @@ public class ProductAuctionSupport {
 			.orElseThrow(() -> new CustomException(ErrorType.AUCTION_NOT_FOUND));
 	}
 
+	public Auction getAuctionByProductId(Long productId) {
+		return auctionRepository.findByProductId(productId)
+			.orElseThrow(() -> new CustomException(ErrorType.AUCTION_NOT_FOUND));
+	}
+
 	public void isAbleToChange(AuctionMember auctionMember, Auction auction) {
 		if (!auction.isSeller(auctionMember.getId())) {
 			throw new CustomException(ErrorType.UNAUTHORIZED_AUCTION_SELLER);
 		}
-		if (!auction.isPending()) {
+		if (auction.hasStartTime()) {
 			throw new CustomException(ErrorType.AUCTION_ALREADY_IN_PROGRESS);
 		}
 	}

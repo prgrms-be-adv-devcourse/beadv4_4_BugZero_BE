@@ -60,7 +60,6 @@ class AuctionUpdateAuctionUseCaseTest {
 	void updateAuction_success() {
 		// given
 		ProductAuctionUpdateDto updateDto = createUpdateDto(20000, 14);
-		int expectedTickSize = 500;
 
 		given(productAuctionSupport.getAuctionMember(PUBLIC_ID)).willReturn(commonSeller);
 		given(productAuctionSupport.getAuction(AUCTION_ID)).willReturn(spyAuction);
