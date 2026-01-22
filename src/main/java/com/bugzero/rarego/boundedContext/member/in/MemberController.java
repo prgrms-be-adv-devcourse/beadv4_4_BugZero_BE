@@ -81,4 +81,12 @@ public class MemberController {
 		memberFacade.promoteSeller(memberPrincipal.publicId(), memberPrincipal.role());
 		return SuccessResponseDto.from(SuccessType.OK);
 	}
+
+	@SecurityRequirement(name = "bearerAuth")
+	@Operation(summary = "회원 입찰시 필수 정보 존재 확인", description = "회원 입찰시 필요 정보(주소, 본인인증) 존재 확인")
+	@GetMapping("/participation")
+	public SuccessResponseDto<Void> verifyParticipation(@AuthenticationPrincipal MemberPrincipal memberPrincipal) {
+		memberFacade.verifyParticipation(memberPrincipal.publicId());
+		return SuccessResponseDto.from(SuccessType.OK);
+	}
 }
