@@ -62,17 +62,6 @@ public class AuctionMemberController {
 		return auctionFacade.getMyAuctionOrders(principal.publicId(), status, pageable);
 	}
 
-    @Operation(summary = "나의 판매 내역 조회", description = "내가 등록한 경매 물품 목록을 필터(진행중/종료 등)에 따라 조회합니다. (판매자 권한 필요)")
-    @GetMapping("/me/sales")
-    @PreAuthorize("hasRole('SELLER')")
-    public PagedResponseDto<MySaleResponseDto> getMySales(
-            @AuthenticationPrincipal MemberPrincipal principal,
-            @RequestParam(required = false) AuctionFilterType filter,
-            @PageableDefault(size = 20) Pageable pageable
-    ) {
-        return auctionFacade.getMySales(principal.publicId(), filter, pageable);
-    }
-
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "내 관심 경매 목록 조회", description = "내가 찜한 경매 목록을 조회합니다")
     @GetMapping("/me/bookmarks")
