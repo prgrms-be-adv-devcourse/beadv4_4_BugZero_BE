@@ -70,13 +70,14 @@ public class AuctionSupport {
 		return auctionOrderRepository.findByAuctionId(auctionId);
 	}
   
-  public AuctionMember findMemberByPublicId(String publicId) {
+  	public AuctionMember findMemberByPublicId(String publicId) {
         return auctionMemberRepository.findByPublicId(publicId)
                 .orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
     }
 
-    public Optional<AuctionOrder> findOrderByAuctionId(Long auctionId) {
-        return 
+  	public Optional<AuctionOrder> findOrderByAuctionId(Long auctionId) {
+        return auctionOrderRepository.findByAuctionId(auctionId);
+    }
 
 	// 판매자 권한 검증
 	public void validateSeller(Auction auction, Long memberId) {
