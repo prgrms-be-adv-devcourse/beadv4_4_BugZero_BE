@@ -16,6 +16,7 @@ import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.RefundResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.SettlementResponseDto;
+import com.bugzero.rarego.boundedContext.payment.in.dto.WalletResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.WalletTransactionResponseDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.shared.member.domain.MemberDto;
@@ -37,6 +38,7 @@ public class PaymentFacade {
 	private final PaymentRefundUseCase paymentRefundUseCase;
 	private final PaymentGetSettlementsUseCase paymentGetSettlementsUseCase;
 	private final PaymentSyncMemberUseCase paymentSyncMemberUseCase;
+	private final PaymentGetMyWalletUseCase paymentGetMyWalletUseCase;
 
 	/**
 	 * 보증금 홀딩
@@ -115,4 +117,10 @@ public class PaymentFacade {
 		return paymentSyncMemberUseCase.syncMember(member);
 	}
 
+	/**
+	 * 내 지갑 조회
+	 */
+	public WalletResponseDto getMyWallet(String memberPublicId) {
+		return paymentGetMyWalletUseCase.getMyWallet(memberPublicId);
+	}
 }
