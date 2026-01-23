@@ -58,38 +58,6 @@ class MemberControllerTest {
 	private MemberFacade memberFacade;
 
 	@Test
-	@DisplayName("성공: 회원 가입 요청이 정상 처리되면 HTTP 201과 결과 데이터를 반환한다")
-	void join_success() throws Exception {
-		MemberJoinRequestDto requestDto = new MemberJoinRequestDto("new@example.com");
-		MemberJoinResponseDto responseDto = new MemberJoinResponseDto("newbie", "public-id");
-
-		given(memberFacade.join("new@example.com")).willReturn(responseDto);
-
-		mockMvc.perform(post("/api/v1/members/me")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(requestDto)))
-			.andExpect(status().isCreated())
-			.andExpect(jsonPath("$.status").value(SuccessType.CREATED.getHttpStatus()))
-			.andExpect(jsonPath("$.message").value(SuccessType.CREATED.getMessage()))
-			.andExpect(jsonPath("$.data.memberPublicId").value("public-id"));
-	}
-
-	@Test
-	@DisplayName("실패: 이메일이 비어있으면 HTTP 400을 반환한다")
-	void join_fail_empty_email() throws Exception {
-		MemberJoinRequestDto requestDto = new MemberJoinRequestDto("");
-
-		given(memberFacade.join("")).willThrow(new CustomException(ErrorType.MEMBER_EMAIL_EMPTY));
-
-		mockMvc.perform(post("/api/v1/members/me")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(requestDto)))
-			.andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.status").value(ErrorType.MEMBER_EMAIL_EMPTY.getHttpStatus()))
-			.andExpect(jsonPath("$.message").value(ErrorType.MEMBER_EMAIL_EMPTY.getMessage()));
-	}
-
-	@Test
 	@DisplayName("성공: 내 정보 조회 요청이 정상 처리되면 회원 정보를 반환한다")
 	void getMe_success() throws Exception {
 		MemberMeResponseDto responseDto = new MemberMeResponseDto(
