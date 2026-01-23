@@ -41,14 +41,17 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, JpaSpec
     //삭제가 되지 않은 경매 정보만 반환
     Optional<Auction> findByIdAndDeletedIsFalse(Long auctionId);
 
+    //경매일정이 확정되지 않은 경매 정보만 반환
+    Optional<Auction> findByProductIdAndStartTimeIsNull(Long productId);
+
     // 필터링 없는 조건
     Page<Auction> findAllByProductIdIn(Collection<Long> productIds, Pageable pageable);
 
     // 상태 필터링이 있을 때
     Page<Auction> findAllByProductIdInAndStatusIn(
-        Collection<Long> productIds,
-        Collection<AuctionStatus> statuses,
-        Pageable pageable
+            Collection<Long> productIds,
+            Collection<AuctionStatus> statuses,
+            Pageable pageable
     );
 
     @Query("""
@@ -71,4 +74,15 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, JpaSpec
         @Param("productIds") List<Long> productIds,
         Pageable pageable
     );
+    /**
+     * 해당 회원이 진행 중인 판매가 있는지 확인
+     */
+    @Query("""
+                SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END
+                FROM Auction a
+                JOIN AuctionMember m ON a.sellerId = m.id
+                WHERE m.publicId = :publicId
+                AND a.status <> 'ENDED'
+            """)
+    boolean existsActiveSaleByPublicId(@Param("publicId") String publicId);
 }

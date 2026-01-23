@@ -33,7 +33,6 @@ import lombok.NoArgsConstructor;
 @Table(name = "PRODUCT_PRODUCT")
 @Builder
 public class Product extends BaseIdAndTime {
-	//TODO 복제 멤버 엔티티 생성 후 변경
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "seller_id",  nullable = false)
 	private ProductMember seller;
@@ -51,7 +50,6 @@ public class Product extends BaseIdAndTime {
 	@Column(columnDefinition = "TEXT")
 	private String description;
 
-	//TODO 추후 상품이미지 등록 로직에 따라 파라미터 값 변경 예정
 	public void addImage(ProductImage image) {
 		this.images.add(image);
 	}

@@ -15,20 +15,29 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.bind.support.WebDataBinderFactory;
+import org.springframework.web.context.request.NativeWebRequest;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.method.support.ModelAndViewContainer;
 
 import com.bugzero.rarego.boundedContext.product.app.ProductFacade;
 import com.bugzero.rarego.boundedContext.product.domain.Category;
 import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
+import com.bugzero.rarego.global.exception.GlobalExceptionHandler;
+import com.bugzero.rarego.global.security.MemberPrincipal;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionUpdateDto;
+import com.bugzero.rarego.shared.product.dto.ProductCreateRequestDto;
+import com.bugzero.rarego.shared.product.dto.ProductCreateResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductImageRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductImageUpdateDto;
-import com.bugzero.rarego.shared.product.dto.ProductRequestDto;
-import com.bugzero.rarego.shared.product.dto.ProductResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateDto;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateResponseDto;
 
@@ -37,11 +46,14 @@ import tools.jackson.databind.ObjectMapper;
 @WebMvcTest(ProductController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @EnableAspectJAutoProxy
+@WithMockUser
 @Import(ResponseAspect.class)
 class ProductControllerTest {
 
+	private MockMvc mockMvc; // Autowired 대신 수동 초기화
+
 	@Autowired
-	private MockMvc mockMvc;
+	private ProductController productController; // 테스트 대상 주입
 
 	@MockitoBean
 	private ProductFacade productFacade;
@@ -49,26 +61,45 @@ class ProductControllerTest {
 	@Autowired
 	private ObjectMapper objectMapper;
 
-	// 공통 상수 정의
+	// 공통 상수
 	private final String PUBLIC_ID = "seller-uuid";
 	private final Long PRODUCT_ID = 100L;
-	private final Long AUCTION_ID = 200L;
-
-	private ProductResponseDto defaultResponse;
+	private ProductCreateResponseDto defaultResponse;
 	private ProductUpdateResponseDto defaultUpdateResponse;
 
 	@BeforeEach
 	void setUp() {
-		// 성공 케이스에서 공통으로 사용할 응답 객체 미리 준비
-		defaultResponse = ProductResponseDto.builder()
+		// 1. ArgumentResolver 설정
+		HandlerMethodArgumentResolver mockPrincipalResolver = new HandlerMethodArgumentResolver() {
+			@Override
+			public boolean supportsParameter(MethodParameter parameter) {
+				// MemberPrincipal 타입이 인자에 보이면 여기서 처리
+				return MemberPrincipal.class.isAssignableFrom(parameter.getParameterType());
+			}
+
+			@Override
+			public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
+				NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
+				// 컨트롤러에 넣어줄 가짜 Record 객체 반환
+				return new MemberPrincipal(PUBLIC_ID, "SELLER");
+			}
+		};
+
+		// 2. MockMvc 수동 빌드 (standaloneSetup)
+		mockMvc = MockMvcBuilders.standaloneSetup(productController)
+			.setCustomArgumentResolvers(mockPrincipalResolver) // 리졸버 장착
+			.setControllerAdvice(new GlobalExceptionHandler()) // 에러 처리기 연결
+			.build();
+
+		// 3. Fixture 준비
+		defaultResponse = ProductCreateResponseDto.builder()
 			.productId(PRODUCT_ID)
-			.auctionId(1)
 			.inspectionStatus(InspectionStatus.PENDING)
 			.build();
 
 		defaultUpdateResponse = ProductUpdateResponseDto.builder()
 			.productId(PRODUCT_ID)
-			.auctionId(AUCTION_ID)
+			.auctionId(2L)
 			.build();
 	}
 
@@ -78,12 +109,10 @@ class ProductControllerTest {
 	@DisplayName("성공 - 올바른 상품 정보와 memberId가 전달되면 201 응답을 반환한다")
 	void createProduct_success() throws Exception {
 		// given
-		ProductRequestDto requestDto = createProductRequest("스타워즈 레고", 10000, 7);
+		ProductCreateRequestDto requestDto = createProductRequest("스타워즈 레고", 10000, 7);
 		given(productFacade.createProduct(PUBLIC_ID, requestDto)).willReturn(defaultResponse);
 
-		// when & then
 		mockMvc.perform(post("/api/v1/products")
-				.param("publicId", PUBLIC_ID)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(requestDto)))
 			.andExpect(status().isCreated())
@@ -96,11 +125,10 @@ class ProductControllerTest {
 	@DisplayName("실패 - 상품명이 비어있거나 경매 기간이 범위를 벗어나면 400 에러를 반환한다")
 	void createProduct_fail_validation() throws Exception {
 		// given: 상품명이 비어있는 잘못된 요청
-		ProductRequestDto invalidRequest = createProductRequest("", 1000, 31); // @NotBlank, @Max 위반
+		ProductCreateRequestDto invalidRequest = createProductRequest("", 1000, 31); // @NotBlank, @Max 위반
 
 		// when & then
 		mockMvc.perform(post("/api/v1/products")
-				.param("publicId", PUBLIC_ID)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(invalidRequest)))
 			.andExpect(status().isBadRequest())
@@ -119,7 +147,6 @@ class ProductControllerTest {
 
 		// when & then
 		mockMvc.perform(patch("/api/v1/products/{productId}", PRODUCT_ID)
-				.param("publicId", PUBLIC_ID)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(updateDto)))
 			.andExpect(status().isOk())
@@ -141,7 +168,6 @@ class ProductControllerTest {
 
 		// when & then
 		mockMvc.perform(delete("/api/v1/products/{productId}", productId)
-				.param("publicId", publicId)
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.status").value(200))
@@ -152,24 +178,10 @@ class ProductControllerTest {
 		verify(productFacade).deleteProduct(eq(publicId), eq(productId));
 	}
 
-	@Test
-	@DisplayName("실패 - 필수 파라미터(publicId)가 누락되면 400 에러를 반환한다")
-	void deleteProduct_Fail_MissingParam() throws Exception {
-		// given
-		Long productId = 100L;
-
-		// when & then
-		mockMvc.perform(delete("/api/v1/products/{productId}", productId)
-				// .param("publicId", ...) 누락
-				.contentType(MediaType.APPLICATION_JSON))
-			.andExpect(status().isBadRequest())
-			.andDo(print());
-	}
-
 	// --- Helper Methods (Fixture Factory) ---
 
-	private ProductRequestDto createProductRequest(String name, int price, int duration) {
-		return new ProductRequestDto(
+	private ProductCreateRequestDto createProductRequest(String name, int price, int duration) {
+		return new ProductCreateRequestDto(
 			name,
 			Category.스타워즈,
 			"설명",

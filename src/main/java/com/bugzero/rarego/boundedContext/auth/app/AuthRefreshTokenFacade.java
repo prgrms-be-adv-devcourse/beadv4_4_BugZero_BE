@@ -54,6 +54,10 @@ public class AuthRefreshTokenFacade {
 
 		Account account = accountRepository.findByMemberPublicId(refreshPublicId)
 			.orElseThrow(() -> new CustomException(ErrorType.AUTH_REFRESH_TOKEN_INVALID));
+		if (account.isDeleted()) {
+			refreshTokenRepository.delete(storedRefreshToken);
+			throw new CustomException(ErrorType.AUTH_FORBIDDEN);
+		}
 
 		refreshTokenRepository.delete(storedRefreshToken);
 
