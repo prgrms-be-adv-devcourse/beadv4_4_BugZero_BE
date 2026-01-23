@@ -18,8 +18,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.global.response.PageDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
@@ -58,8 +56,8 @@ class AuctionFacadeTest {
     @Mock
     private AuctionMemberRepository auctionMemberRepository;
 
-	@Mock
-	private AuctionRelistUseCase auctionRelistUseCase;
+	  @Mock
+	  private AuctionRelistUseCase auctionRelistUseCase;
 
 	@Test
 	@DisplayName("입찰 생성 요청 시 UseCase를 호출하고 결과를 반환한다")
@@ -340,5 +338,4 @@ class AuctionFacadeTest {
 
 		verify(auctionRelistUseCase).relistAuction(auctionId, memberPublicId, request);
 	}
-
 }

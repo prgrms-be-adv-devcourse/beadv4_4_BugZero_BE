@@ -1,6 +1,5 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
-
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -20,10 +19,7 @@ import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor

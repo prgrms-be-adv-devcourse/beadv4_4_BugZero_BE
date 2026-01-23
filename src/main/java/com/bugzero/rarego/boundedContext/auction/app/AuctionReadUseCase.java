@@ -1,5 +1,25 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
+
+import static com.bugzero.rarego.boundedContext.auction.domain.AuctionViewerRoleStatus.*;
+
+
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.bugzero.rarego.boundedContext.auction.domain.*;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistListResponseDto;
 import com.bugzero.rarego.boundedContext.auction.out.*;
@@ -12,23 +32,11 @@ import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.PageDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.shared.auction.dto.*;
-import jakarta.persistence.criteria.Predicate;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import static com.bugzero.rarego.boundedContext.auction.domain.AuctionViewerRoleStatus.*;
 
 @Slf4j
 @Service
@@ -372,33 +380,33 @@ public class AuctionReadUseCase {
 	//  Helper Methods (Private)
 	// =========================================================================
 
-	private List<AuctionListResponseDto> convertToAuctionListDtos(List<Auction> auctions) {
-		if (auctions.isEmpty()) return Collections.emptyList();
+  private List<AuctionListResponseDto> convertToAuctionListDtos(List<Auction> auctions) {
+        if (auctions.isEmpty()) return Collections.emptyList();
 
-		Set<Long> auctionIds = auctions.stream().map(Auction::getId).collect(Collectors.toSet());
-		Set<Long> productIds = auctions.stream().map(Auction::getProductId).collect(Collectors.toSet());
+        Set<Long> auctionIds = auctions.stream().map(Auction::getId).collect(Collectors.toSet());
+        Set<Long> productIds = auctions.stream().map(Auction::getProductId).collect(Collectors.toSet());
 
-		Map<Long, Product> productMap = productRepository.findAllById(productIds).stream()
-			.collect(Collectors.toMap(Product::getId, Function.identity()));
+        Map<Long, Product> productMap = productRepository.findAllById(productIds).stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity()));
 
-		Map<Long, Integer> bidCountMap = bidRepository.countByAuctionIdIn(auctionIds).stream()
-			.collect(Collectors.toMap(row -> (Long) row[0], row -> ((Long) row[1]).intValue()));
+        Map<Long, Integer> bidCountMap = bidRepository.countByAuctionIdIn(auctionIds).stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> ((Long) row[1]).intValue()));
 
-		List<ProductImage> images = productImageRepository.findAllByProductIdIn(productIds);
-		Map<Long, String> thumbnailMap = images.stream()
-			.sorted(Comparator.comparingInt(ProductImage::getSortOrder))
-			.collect(Collectors.toMap(img -> img.getProduct().getId(), ProductImage::getImageUrl, (e, r) -> e));
+        List<ProductImage> images = productImageRepository.findAllByProductIdIn(productIds);
+        Map<Long, String> thumbnailMap = images.stream()
+                .sorted(Comparator.comparingInt(ProductImage::getSortOrder))
+                .collect(Collectors.toMap(img -> img.getProduct().getId(), ProductImage::getImageUrl, (e, r) -> e));
 
-		return auctions.stream()
-			.map(auction -> AuctionListResponseDto.from(
-				auction,
-				productMap.get(auction.getProductId()),
-				thumbnailMap.get(auction.getProductId()),
-				bidCountMap.getOrDefault(auction.getId(), 0)
-			))
-			.toList();
-	}
-
+        return auctions.stream()
+                .map(auction -> AuctionListResponseDto.from(
+                        auction,
+                        productMap.get(auction.getProductId()),
+                        thumbnailMap.get(auction.getProductId()),
+                        bidCountMap.getOrDefault(auction.getId(), 0)
+                ))
+                .toList();
+    }
+  
 	private Map<Long, String> getBidderPublicIdMap(List<Bid> bids) {
 		if (bids.isEmpty()) return Collections.emptyMap();
 

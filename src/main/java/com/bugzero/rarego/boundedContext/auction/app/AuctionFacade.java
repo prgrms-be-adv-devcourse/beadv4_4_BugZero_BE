@@ -22,9 +22,6 @@ import com.bugzero.rarego.shared.auction.dto.*;
 import com.bugzero.rarego.shared.member.domain.MemberDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -46,8 +43,8 @@ public class AuctionFacade {
         BidResponseDto result = auctionCreateBidUseCase.createBid(auctionId, memberPublicId, bidAmount);
         return SuccessResponseDto.from(SuccessType.CREATED, result);
     }
-  
-    // 재경매 생성
+
+  // 재경매 생성
     @Transactional
     public SuccessResponseDto<AuctionRelistResponseDto> relistAuction(Long auctionId, String memberPublicId, AuctionRelistRequestDto request) {
         AuctionRelistResponseDto result = auctionRelistUseCase.relistAuction(auctionId, memberPublicId, request);
@@ -102,6 +99,11 @@ public class AuctionFacade {
       return auctionReadUseCase.getMyAuctionOrders(memberPublicId, status, pageable);
     }
 
+    @Transactional
+    public AuctionMember syncMember(MemberDto member) {
+      return auctionSyncMemberUseCase.syncMember(member);
+    }
+
     // 관심 경매 해제
     @Transactional
     public WishlistRemoveResponseDto removeBookmark(String publicId, Long bookmarkId) {
@@ -120,8 +122,4 @@ public class AuctionFacade {
         return auctionWithdrawUseCase.execute(auctionId, memberPublicId);
     }
 
-    @Transactional
-    public AuctionMember syncMember(MemberDto member) {
-        return auctionSyncMemberUseCase.syncMember(member);
-    }
 }
