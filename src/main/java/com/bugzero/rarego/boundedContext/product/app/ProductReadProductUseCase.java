@@ -3,6 +3,7 @@ package com.bugzero.rarego.boundedContext.product.app;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.global.response.PagedResponseDto;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 public class ProductReadProductUseCase {
 	private final ProductRepository productRepository;
 
+	@Transactional(readOnly = true)
 	public PagedResponseDto<ProductResponseForInspectionDto> readProducts(
 		ProductSearchForInspectionCondition condition, Pageable pageable
 	) {
