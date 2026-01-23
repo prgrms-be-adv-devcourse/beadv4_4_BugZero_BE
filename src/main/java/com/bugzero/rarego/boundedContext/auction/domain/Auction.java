@@ -90,11 +90,6 @@ public class Auction extends BaseIdAndTime {
         }
     }
 
-    // 경매 시작 상태로 전이
-    public void startAuction() {
-        this.status = AuctionStatus.IN_PROGRESS;
-    }
-
     //시작 시간 유무에 따라 경매예정이 확정되었는지 확인
     public boolean hasStartTime() {
         return this.startTime != null;
