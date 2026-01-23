@@ -44,15 +44,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 class AuctionMemberControllerTest {
 
-    @InjectMocks
-    private AuctionMemberController auctionMemberController;
+	@InjectMocks
+	private AuctionMemberController auctionMemberController;
 
-    @Mock
-    private AuctionFacade auctionFacade;
+	@Mock
+	private AuctionFacade auctionFacade;
 
-    private MockMvc mockMvc;
+	private MockMvc mockMvc;
 
- @BeforeEach
+	@BeforeEach
 	void setUp() {
 		mockMvc = MockMvcBuilders.standaloneSetup(auctionMemberController)
 			.setControllerAdvice(new GlobalExceptionHandler()) // 전역 예외 처리기 등록
@@ -137,6 +137,7 @@ class AuctionMemberControllerTest {
 			.andExpect(jsonPath("$.data[0].statusDescription").value("결제 대기중"));
 	}
 
+  
     @Test
     @DisplayName("성공: 내 관심 경매 목록 조회 시 200 OK와 중첩된 경매 정보를 반환한다")
     void getMyBookmarks_success() throws Exception {

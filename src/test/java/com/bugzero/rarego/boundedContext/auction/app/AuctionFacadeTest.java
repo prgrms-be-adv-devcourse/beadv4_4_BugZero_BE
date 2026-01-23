@@ -18,8 +18,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.global.response.PageDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
@@ -57,6 +55,9 @@ class AuctionFacadeTest {
 
     @Mock
     private AuctionMemberRepository auctionMemberRepository;
+
+	  @Mock
+	  private AuctionRelistUseCase auctionRelistUseCase;
 
 	@Test
 	@DisplayName("입찰 생성 요청 시 UseCase를 호출하고 결과를 반환한다")
@@ -308,4 +309,33 @@ class AuctionFacadeTest {
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorType", ErrorType.AUCTION_NOT_FOUND);
     }
+
+	@Test
+	@DisplayName("재경매 요청 시 RelistUseCase를 호출하고 성공 응답을 반환한다")
+	void relistAuction_Success() {
+		// given
+		Long auctionId = 1L;
+		String memberPublicId = "seller_uuid";
+		AuctionRelistRequestDto request = new AuctionRelistRequestDto(20000L, 1000L, 3);
+
+		AuctionRelistResponseDto responseDto = AuctionRelistResponseDto.builder()
+			.newAuctionId(2L)
+			.productId(50L)
+			.status(AuctionStatus.SCHEDULED)
+			.message("재경매 성공")
+			.build();
+
+		given(auctionRelistUseCase.relistAuction(auctionId, memberPublicId, request))
+			.willReturn(responseDto);
+
+		// when
+		SuccessResponseDto<AuctionRelistResponseDto> result =
+			auctionFacade.relistAuction(auctionId, memberPublicId, request);
+
+		// then
+		assertThat(result.status()).isEqualTo(SuccessType.OK.getHttpStatus());
+		assertThat(result.data().newAuctionId()).isEqualTo(2L);
+
+		verify(auctionRelistUseCase).relistAuction(auctionId, memberPublicId, request);
+	}
 }

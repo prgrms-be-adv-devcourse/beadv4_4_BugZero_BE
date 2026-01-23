@@ -1,5 +1,18 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
+import static org.mockito.BDDMockito.*;
+
+import java.time.LocalDateTime;
+import java.util.*;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import com.bugzero.rarego.boundedContext.auction.domain.*;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistListResponseDto;
 import com.bugzero.rarego.boundedContext.auction.out.*;
@@ -17,28 +30,13 @@ import com.bugzero.rarego.shared.auction.dto.AuctionOrderResponseDto;
 import com.bugzero.rarego.shared.auction.dto.AuctionSearchCondition;
 import com.bugzero.rarego.shared.auction.dto.MyAuctionOrderListResponseDto;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import java.time.LocalDateTime;
-import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.BDDMockito.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 import jakarta.persistence.criteria.*;
 
@@ -65,8 +63,8 @@ class AuctionReadUseCaseTest {
 	private AuctionMemberRepository auctionMemberRepository;
 	@Mock
 	private ProductImageRepository productImageRepository;
-  	@Mock
-  	private AuctionBookmarkRepository auctionBookmarkRepository;
+  @Mock
+  private AuctionBookmarkRepository auctionBookmarkRepository;
 
 	// --- 1. 경매 상세 조회 (getAuctionDetail) 테스트 ---
 
@@ -151,7 +149,7 @@ class AuctionReadUseCaseTest {
 
 		ProductMember productSeller = ProductMember.builder().build();
 		ReflectionTestUtils.setField(productSeller, "id", sellerId);
-		
+
 		// 4. 상품 정보
 		Product product = Product.builder().seller(productSeller).name("Test Item").build();
 		ReflectionTestUtils.setField(product, "id", 50L);
@@ -197,7 +195,7 @@ class AuctionReadUseCaseTest {
 		// 2. 주문
 		AuctionOrder order = AuctionOrder.builder().auctionId(auctionId).bidderId(buyerId).sellerId(sellerId).finalPrice(10000).build();
 		ReflectionTestUtils.setField(order, "id", 777L);
-    
+
 		// 3. 경매 정보 (NPE 방지)
 		Auction auction = Auction.builder()
 			.productId(50L)
@@ -275,8 +273,8 @@ class AuctionReadUseCaseTest {
 		assertThat(result.data()).isEmpty();
 		assertThat(result.pageDto().totalItems()).isEqualTo(0);
 	}
-  
-   	@Test
+
+	@Test
 	@DisplayName("경매 목록 조회 - 검색 조건(키워드+상태)이 있을 때 상품 검색 후 경매 조회 수행")
 	void getAuctions_with_search_condition() {
 		// given

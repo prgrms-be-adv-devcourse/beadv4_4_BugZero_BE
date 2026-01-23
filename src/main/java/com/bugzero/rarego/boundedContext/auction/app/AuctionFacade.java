@@ -22,9 +22,6 @@ import com.bugzero.rarego.shared.auction.dto.*;
 import com.bugzero.rarego.shared.member.domain.MemberDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -37,6 +34,7 @@ public class AuctionFacade {
     private final AuctionMemberRepository auctionMemberRepository;
     private final AuctionSyncMemberUseCase auctionSyncMemberUseCase;
     private final AuctionBookmarkUseCase auctionBookmarkUseCase;
+    private final AuctionRelistUseCase auctionRelistUseCase;
     private final AuctionWithdrawUseCase auctionWithdrawUseCase;
 
     // 쓰기 작업 (입찰 생성)
@@ -44,6 +42,13 @@ public class AuctionFacade {
     public SuccessResponseDto<BidResponseDto> createBid(Long auctionId, String memberPublicId, int bidAmount) {
         BidResponseDto result = auctionCreateBidUseCase.createBid(auctionId, memberPublicId, bidAmount);
         return SuccessResponseDto.from(SuccessType.CREATED, result);
+    }
+
+  // 재경매 생성
+    @Transactional
+    public SuccessResponseDto<AuctionRelistResponseDto> relistAuction(Long auctionId, String memberPublicId, AuctionRelistRequestDto request) {
+        AuctionRelistResponseDto result = auctionRelistUseCase.relistAuction(auctionId, memberPublicId, request);
+        return SuccessResponseDto.from(SuccessType.OK, result);
     }
 
 	  // 읽기 작업

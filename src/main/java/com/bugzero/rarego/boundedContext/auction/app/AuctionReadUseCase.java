@@ -3,9 +3,7 @@ package com.bugzero.rarego.boundedContext.auction.app;
 
 import static com.bugzero.rarego.boundedContext.auction.domain.AuctionViewerRoleStatus.*;
 
-import jakarta.persistence.criteria.Predicate;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -19,7 +17,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,25 +33,10 @@ import com.bugzero.rarego.global.response.PageDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.shared.auction.dto.*;
 
-import jakarta.persistence.criteria.Root;
-import jakarta.persistence.criteria.Subquery;
-import jakarta.persistence.criteria.Predicate;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import static com.bugzero.rarego.boundedContext.auction.domain.AuctionViewerRoleStatus.*;
 
 @Slf4j
 @Service
@@ -62,178 +44,177 @@ import static com.bugzero.rarego.boundedContext.auction.domain.AuctionViewerRole
 @Transactional(readOnly = true)
 public class AuctionReadUseCase {
 
-    private final AuctionSupport support;
-    private final BidRepository bidRepository;
-    private final AuctionMemberRepository auctionMemberRepository;
-    private final AuctionRepository auctionRepository;
-    private final ProductRepository productRepository;
-    private final AuctionOrderRepository auctionOrderRepository;
-    private final ProductImageRepository productImageRepository;
-    private final AuctionBookmarkRepository auctionBookmarkRepository;
+	private final AuctionSupport support;
+	private final BidRepository bidRepository;
+	private final AuctionMemberRepository auctionMemberRepository;
+	private final AuctionRepository auctionRepository;
+	private final ProductRepository productRepository;
+	private final AuctionOrderRepository auctionOrderRepository;
+	private final ProductImageRepository productImageRepository;
+	private final AuctionBookmarkRepository auctionBookmarkRepository;
 
-    // 경매 입찰 기록 조회
-    public PagedResponseDto<BidLogResponseDto> getBidLogs(Long auctionId, Pageable pageable) {
-        Page<Bid> bidPage = bidRepository.findAllByAuctionIdOrderByBidTimeDesc(auctionId, pageable);
+	// 경매 입찰 기록 조회
+	public PagedResponseDto<BidLogResponseDto> getBidLogs(Long auctionId, Pageable pageable) {
+		Page<Bid> bidPage = bidRepository.findAllByAuctionIdOrderByBidTimeDesc(auctionId, pageable);
 
-        // 1. 입찰자 정보 Map 생성 (Helper 사용)
-        Map<Long, String> bidderMap = getBidderPublicIdMap(bidPage.getContent());
+		// 1. 입찰자 정보 Map 생성 (Helper 사용)
+		Map<Long, String> bidderMap = getBidderPublicIdMap(bidPage.getContent());
 
-        // 2. DTO 변환
-        Page<BidLogResponseDto> dtoPage = bidPage.map(bid -> {
-            String publicId = bidderMap.get(bid.getBidderId());
-            if (publicId == null) {
-                log.warn("입찰자 정보 없음: bidderId={}", bid.getBidderId());
-                publicId = "unknown";
-            }
-            return BidLogResponseDto.from(bid, publicId);
-        });
+		// 2. DTO 변환
+		Page<BidLogResponseDto> dtoPage = bidPage.map(bid -> {
+			String publicId = bidderMap.get(bid.getBidderId());
+			if (publicId == null) {
+				log.warn("입찰자 정보 없음: bidderId={}", bid.getBidderId());
+				publicId = "unknown";
+			}
+			return BidLogResponseDto.from(bid, publicId);
+		});
 
-        return new PagedResponseDto<>(dtoPage.getContent(), PageDto.from(dtoPage));
-    }
+		return new PagedResponseDto<>(dtoPage.getContent(), PageDto.from(dtoPage));
+	}
 
-    // 나의 입찰 내역 조회
-    public PagedResponseDto<MyBidResponseDto> getMyBids(String memberPublicId, AuctionStatus status, Pageable pageable) {
-        AuctionMember member = support.getPublicMember(memberPublicId);
+	// 나의 입찰 내역 조회
+	public PagedResponseDto<MyBidResponseDto> getMyBids(String memberPublicId, AuctionStatus status, Pageable pageable) {
+		AuctionMember member = support.getPublicMember(memberPublicId);
 
-        // 1. Bid 목록 조회
-        Page<Bid> bidPage = bidRepository.findAllByBidderIdAndAuctionStatus(member.getId(), status, pageable);
-        List<Bid> bids = bidPage.getContent();
+		// 1. Bid 목록 조회
+		Page<Bid> bidPage = bidRepository.findAllByBidderIdAndAuctionStatus(member.getId(), status, pageable);
+		List<Bid> bids = bidPage.getContent();
 
-        // 2. Auction Map 생성 (Helper 메서드 재사용)
-        Map<Long, Auction> auctionMap = getAuctionMap(bids);
+		// 2. Auction Map 생성 (Helper 메서드 재사용)
+		Map<Long, Auction> auctionMap = getAuctionMap(bids);
 
-        // 3. DTO 변환
-        Page<MyBidResponseDto> dtoPage = bidPage.map(bid -> {
-            Auction auction = auctionMap.get(bid.getAuctionId());
+		// 3. DTO 변환
+		Page<MyBidResponseDto> dtoPage = bidPage.map(bid -> {
+			Auction auction = auctionMap.get(bid.getAuctionId());
 
-            if (auction == null) {
-                throw new CustomException(ErrorType.AUCTION_NOT_FOUND);
-            }
+			if (auction == null) {
+				throw new CustomException(ErrorType.AUCTION_NOT_FOUND);
+			}
 
-            return MyBidResponseDto.from(bid, auction);
-        });
+			return MyBidResponseDto.from(bid, auction);
+		});
 
-        return new PagedResponseDto<>(dtoPage.getContent(), PageDto.from(dtoPage));
-    }
+		return new PagedResponseDto<>(dtoPage.getContent(), PageDto.from(dtoPage));
+	}
 
-    // 나의 판매 내역 조회
-    public PagedResponseDto<MySaleResponseDto> getMySales(String memberPublicId, AuctionFilterType auctionFilterType, Pageable pageable) {
-        // 회원 ID 조회
-        AuctionMember member = support.getPublicMember(memberPublicId);
+	// 나의 판매 내역 조회
+	public PagedResponseDto<MySaleResponseDto> getMySales(String memberPublicId, AuctionFilterType auctionFilterType, Pageable pageable) {
+		// 회원 ID 조회
+		AuctionMember member = support.getPublicMember(memberPublicId);
 
-        // 상품 Id 목록 조회
-        List<Long> myProductIds = productRepository.findAllIdsBySellerId(member.getId());
+		// 상품 Id 목록 조회
+		List<Long> myProductIds = productRepository.findAllIdsBySellerId(member.getId());
 
-        // 경매 목록 조회
-        Page<Auction> auctionPage = fetchAuctionsByFilter(myProductIds, auctionFilterType, pageable);
-        List<Auction> auctions = auctionPage.getContent();
+		// 경매 목록 조회
+		Page<Auction> auctionPage = fetchAuctionsByFilter(myProductIds, auctionFilterType, pageable);
+		List<Auction> auctions = auctionPage.getContent();
 
-        if (auctions.isEmpty()) {
-            return new PagedResponseDto<>(List.of(), PageDto.from(auctionPage));
-        }
+		if (auctions.isEmpty()) {
+			return new PagedResponseDto<>(List.of(), PageDto.from(auctionPage));
+		}
 
-        // 연관 데이터 일괄적으로 조회
-        Set<Long> productIds = auctions.stream().map(Auction::getProductId).collect(Collectors.toSet());
-        Set<Long> auctionIds = auctions.stream().map(Auction::getId).collect(Collectors.toSet());
+		// 연관 데이터 일괄적으로 조회
+		Set<Long> productIds = auctions.stream().map(Auction::getProductId).collect(Collectors.toSet());
+		Set<Long> auctionIds = auctions.stream().map(Auction::getId).collect(Collectors.toSet());
 
-        // 상품 정보
-        Map<Long, Product> productMap = productRepository.findAllByIdIn(productIds).stream()
-                .collect(Collectors.toMap(Product::getId, p -> p));
+		// 상품 정보
+		Map<Long, Product> productMap = productRepository.findAllByIdIn(productIds).stream()
+			.collect(Collectors.toMap(Product::getId, p -> p));
 
-        // 주문 정보 (거래 상태)
-        Map<Long, AuctionOrder> orderMap = auctionOrderRepository.findAllByAuctionIdIn(auctionIds).stream()
-                .collect(Collectors.toMap(AuctionOrder::getAuctionId, Function.identity()));
+		// 주문 정보 (거래 상태)
+		Map<Long, AuctionOrder> orderMap = auctionOrderRepository.findAllByAuctionIdIn(auctionIds).stream()
+			.collect(Collectors.toMap(AuctionOrder::getAuctionId, Function.identity()));
 
-        // 입찰 횟수 정보
-        Map<Long, Integer> bidCountMap = bidRepository.countByAuctionIdIn(auctionIds).stream()
-                .collect(Collectors.toMap(row -> (Long) row[0], row -> ((Long) row[1]).intValue()));
+		// 입찰 횟수 정보
+		Map<Long, Integer> bidCountMap = bidRepository.countByAuctionIdIn(auctionIds).stream()
+			.collect(Collectors.toMap(row -> (Long) row[0], row -> ((Long) row[1]).intValue()));
 
-        // DTO 변환
-        List<MySaleResponseDto> dtoList = auctions.stream()
-                .map(auction -> MySaleResponseDto.from(
-                        auction,
-                        productMap.get(auction.getProductId()),
-                        orderMap.get(auction.getId()),
-                        bidCountMap.getOrDefault(auction.getId(), 0)
-                ))
-                .toList();
+		// DTO 변환
+		List<MySaleResponseDto> dtoList = auctions.stream()
+			.map(auction -> MySaleResponseDto.from(
+				auction,
+				productMap.get(auction.getProductId()),
+				orderMap.get(auction.getId()),
+				bidCountMap.getOrDefault(auction.getId(), 0)
+			))
+			.toList();
 
-        return new PagedResponseDto<>(dtoList, PageDto.from(auctionPage));
-    }
+		return new PagedResponseDto<>(dtoList, PageDto.from(auctionPage));
+	}
 
-    // 경매 상세 조회
-    public AuctionDetailResponseDto getAuctionDetail(Long auctionId, String memberPublicId) {
-        // 회원 ID 조회
-        // 로그인한 경우에만 조회, 비로그인이면 null 처리
-        AuctionMember member = null;
-        if (memberPublicId != null) {
-            member = support.getPublicMember(memberPublicId);
-        }
+	// 경매 상세 조회
+	public AuctionDetailResponseDto getAuctionDetail(Long auctionId, String memberPublicId) {
+		// 회원 ID 조회
+		// 로그인한 경우에만 조회, 비로그인이면 null 처리
+		AuctionMember member = null;
+		if (memberPublicId != null) {
+			member = support.getPublicMember(memberPublicId);
+		}
 
-        // 1. 경매 조회
-        Auction auction = support.findAuctionById(auctionId);
+		// 1. 경매 조회
+		Auction auction = support.findAuctionById(auctionId);
 
-        // 2. 전체 최고가 입찰 조회
-        Bid highestBid = bidRepository.findTopByAuctionIdOrderByBidAmountDesc(auctionId)
-                .orElse(null);
+		// 2. 전체 최고가 입찰 조회
+		Bid highestBid = bidRepository.findTopByAuctionIdOrderByBidAmountDesc(auctionId)
+			.orElse(null);
 
-        // 3. 나의 마지막 입찰 조회 (로그인 시에만)
-        Bid myLastBid = null;
-        if (member != null) {
-            myLastBid = bidRepository.findTopByAuctionIdAndBidderIdOrderByBidAmountDesc(auctionId, member.getId())
-                    .orElse(null);
-        }
+		// 3. 나의 마지막 입찰 조회 (로그인 시에만)
+		Bid myLastBid = null;
+		if (member != null) {
+			myLastBid = bidRepository.findTopByAuctionIdAndBidderIdOrderByBidAmountDesc(auctionId, member.getId())
+				.orElse(null);
+		}
 
-        Long memberId = (member != null) ? member.getId() : null;
+		Long memberId = (member != null) ? member.getId() : null;
 
-        // 4. DTO 변환 (memberId가 null이면 DTO 내부에서 기본값 false/null 처리)
-        return AuctionDetailResponseDto.from(auction, highestBid, myLastBid, memberId);
-    }
+		// 4. DTO 변환 (memberId가 null이면 DTO 내부에서 기본값 false/null 처리)
+		return AuctionDetailResponseDto.from(auction, highestBid, myLastBid, memberId);
+	}
 
     // 낙찰 기록 상세 조회
     public AuctionOrderResponseDto getAuctionOrder(Long auctionId, String memberPublicId) {
-        // 회원 ID 조회
-        AuctionMember member = support.getPublicMember(memberPublicId);
-        Long memberId = member.getId();
+		// 회원 ID 조회
+		AuctionMember member = support.getPublicMember(memberPublicId);
+		Long memberId = member.getId();
 
-        AuctionOrder order = support.getOrder(auctionId);
-        Auction auction = support.findAuctionById(auctionId);
-  
-        AuctionViewerRoleStatus viewerRole = determineViewerRole(order, memberId);
+		AuctionOrder order = support.getOrder(auctionId);
+		Auction auction = support.findAuctionById(auctionId);
 
-        if (viewerRole == GUEST) {
-            throw new CustomException(ErrorType.AUCTION_ORDER_ACCESS_DENIED);
-        }
+		AuctionViewerRoleStatus viewerRole = determineViewerRole(order, memberId);
 
-        Product product = support.getProduct(auction.getProductId());
+		if (viewerRole == GUEST) {
+			throw new CustomException(ErrorType.AUCTION_ORDER_ACCESS_DENIED);
+		}
 
-        List<ProductImage> productImages = productImageRepository.findAllByProductId(product.getId());
+		Product product = support.getProduct(auction.getProductId());
 
-        String thumbnailUrl = productImages.stream()
-                .findFirst()
-                .map(ProductImage::getImageUrl)
-                .orElse(null);
+		List<ProductImage> productImages = productImageRepository.findAllByProductId(product.getId());
 
-        Long traderId = viewerRole == BUYER ? order.getSellerId() : order.getBidderId();
-        AuctionMember trader = support.getMember(traderId);
+		String thumbnailUrl = productImages.stream()
+			.findFirst()
+			.map(ProductImage::getImageUrl)
+			.orElse(null);
 
-        String statusDescription = convertStatusDescription(order.getStatus(), viewerRole);
+		Long traderId = viewerRole == BUYER ? order.getSellerId() : order.getBidderId();
+		AuctionMember trader = support.getMember(traderId);
 
-        return AuctionOrderResponseDto.from(
-                order,
-                viewerRole.name(),
-                statusDescription,
-                product.getName(),
-                thumbnailUrl,
-                trader.getPublicId(),
-                trader.getContactPhone()
-        );
-    }
+		String statusDescription = convertStatusDescription(order.getStatus(), viewerRole);
+
+		return AuctionOrderResponseDto.from(
+			order,
+			viewerRole.name(),
+			statusDescription,
+			product.getName(),
+			thumbnailUrl,
+			trader.getPublicId(),
+			trader.getContactPhone()
+		);
+	}
 
 	// 경매 목록 조회 (Bulk + 검색)
 	public PagedResponseDto<AuctionListResponseDto> getAuctions(AuctionSearchCondition condition, Pageable pageable) {
 
-    
 		// 1. 정렬 조건 적용
 		Pageable sortedPageable = applySorting(pageable, condition.getSort());
 
@@ -495,38 +476,5 @@ public class AuctionReadUseCase {
 			sort = Sort.by(Sort.Direction.DESC, "id");
 		}
 		return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
-	}
-
-	private Specification<Auction> createSearchSpec(AuctionSearchCondition condition) {
-		return (root, query, cb) -> {
-			List<Predicate> predicates = new ArrayList<>();
-
-			// 특정 IDs 필터
-			if (condition.getIds() != null && !condition.getIds().isEmpty()) {
-				predicates.add(root.get("id").in(condition.getIds()));
-			}
-
-			// 상태 필터 (기본: 예정된 경매 제외)
-			if (condition.getStatus() != null) {
-				predicates.add(cb.equal(root.get("status"), condition.getStatus()));
-			} else {
-				predicates.add(cb.notEqual(root.get("status"), AuctionStatus.SCHEDULED));
-			}
-
-			// 키워드/카테고리 검색 (Product 테이블 조회 필요)
-			if (condition.getKeyword() != null || condition.getCategory() != null) {
-				List<Long> matchedProductIds = productRepository.findIdsBySearchCondition(
-					condition.getKeyword(), condition.getCategory()
-				);
-
-				if (matchedProductIds.isEmpty()) {
-					predicates.add(cb.disjunction());
-				} else {
-					predicates.add(root.get("productId").in(matchedProductIds));
-				}
-			}
-
-			return cb.and(predicates.toArray(new Predicate[0]));
-		};
 	}
 }

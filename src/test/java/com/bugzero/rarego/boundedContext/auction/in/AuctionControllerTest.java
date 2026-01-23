@@ -3,7 +3,6 @@ package com.bugzero.rarego.boundedContext.auction.in;
 import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
-import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionWithdrawResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
 import com.bugzero.rarego.global.exception.CustomException;
@@ -371,5 +370,54 @@ class AuctionControllerTest {
                 .andExpect(status().isForbidden()) // 403 Forbidden
                 .andExpect(jsonPath("$.status").value(403));
     }
-}
 
+	@Test
+	@DisplayName("POST /auctions/{id}/relist - 재경매 등록 성공")
+	void relistAuction_success() throws Exception {
+		// given
+		Long auctionId = 1L;
+		String memberPublicId = "1"; // MockUser
+		AuctionRelistRequestDto request = new AuctionRelistRequestDto(20000L, 1000L, 7);
+
+		AuctionRelistResponseDto responseDto = AuctionRelistResponseDto.builder()
+			.newAuctionId(2L)
+			.productId(50L)
+			.status(AuctionStatus.SCHEDULED)
+			.message("성공")
+			.build();
+
+		given(auctionFacade.relistAuction(eq(auctionId), eq(memberPublicId), any(AuctionRelistRequestDto.class)))
+			.willReturn(SuccessResponseDto.from(SuccessType.OK, responseDto));
+
+		// when & then
+		mockMvc.perform(post("/api/v1/auctions/{auctionId}/relist", auctionId)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andDo(print())
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.newAuctionId").value(2L))
+			.andExpect(jsonPath("$.data.status").value("SCHEDULED"));
+	}
+
+	@Test
+	@DisplayName("실패: 이미 판매된 경매 재등록 시 409 Conflict 반환")
+	void relistAuction_fail_conflict() throws Exception {
+		// given
+		Long auctionId = 1L;
+		AuctionRelistRequestDto request = new AuctionRelistRequestDto(20000L, 1000L, 7);
+
+		// Facade가 예외를 던지도록 설정
+		given(auctionFacade.relistAuction(anyLong(), anyString(), any()))
+			.willThrow(new CustomException(ErrorType.AUCTION_ALREADY_SOLD));
+
+		// when & then
+		mockMvc.perform(post("/api/v1/auctions/{auctionId}/relist", auctionId)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andDo(print())
+			.andExpect(status().isConflict()) // 409
+			.andExpect(jsonPath("$.status").value(409))
+			.andExpect(jsonPath("$.message").value(ErrorType.AUCTION_ALREADY_SOLD.getMessage()));
+	}
+
+}
