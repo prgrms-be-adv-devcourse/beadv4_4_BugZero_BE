@@ -57,8 +57,11 @@ class AuctionFacadeTest {
     @Mock
     private AuctionMemberRepository auctionMemberRepository;
 
-	  @Mock
-	  private AuctionRelistUseCase auctionRelistUseCase;
+    @Mock
+    private AuctionOrderRepository auctionOrderRepository;
+
+    @Mock
+    private AuctionRelistUseCase auctionRelistUseCase;
 
 	@Test
 	@DisplayName("입찰 생성 요청 시 UseCase를 호출하고 결과를 반환한다")
