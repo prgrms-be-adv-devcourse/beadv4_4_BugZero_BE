@@ -146,7 +146,6 @@ class AuthWithdrawAccountUseCaseTest {
 
         assertThat(account.isDeleted()).isTrue();
         verify(memberApiClient).withdraw(publicId);
-        verify(accountRepository).save(account);
         verify(refreshTokenRepository).deleteByMemberPublicId(publicId);
         verify(authAccessTokenBlacklistUseCase).blacklist(accessToken);
     }
