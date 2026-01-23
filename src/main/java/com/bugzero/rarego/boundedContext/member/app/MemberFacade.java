@@ -20,6 +20,7 @@ public class MemberFacade {
 	private final MemberUpdateIdentityUseCase memberUpdateIdentityUseCase;
 	private final MemberPromoteSellerUseCase memberPromoteSellerUseCase;
 	private final MemberVerifyParticipationUseCase memberVerifyParticipationUseCase;
+	private final MemberWithdrawMemberUseCase memberWithdrawMemberUseCase;
 
 	@Transactional
 	public MemberJoinResponseDto join(String email) {
@@ -47,5 +48,10 @@ public class MemberFacade {
 
 	public void verifyParticipation(String publicId) {
 		memberVerifyParticipationUseCase.verifyParticipation(publicId);
+	}
+
+	@Transactional
+	public String withdraw(String publicId) {
+		return memberWithdrawMemberUseCase.withdraw(publicId);
 	}
 }

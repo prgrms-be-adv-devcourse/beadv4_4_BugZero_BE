@@ -2,6 +2,9 @@ package com.bugzero.rarego.boundedContext.auction.app;
 
 import com.bugzero.rarego.boundedContext.auction.domain.*;
 import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionWithdrawResponseDto;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
+import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +21,9 @@ import java.util.Optional;
 public class AuctionWithdrawUseCase {
 
     private final AuctionSupport auctionSupport;
+    private final BidRepository bidRepository;
+    private final AuctionRepository auctionRepository;
+    private final AuctionOrderRepository auctionOrderRepository;
 
     @Transactional
     public AuctionWithdrawResponseDto execute(Long auctionId, String memberPublicId) {
@@ -61,5 +67,19 @@ public class AuctionWithdrawUseCase {
         log.info("판매 포기 처리 완료 - auctionId: {}, sellerId: {}", auctionId, member.getId());
 
         return AuctionWithdrawResponseDto.of(auctionId, auction.getProductId(), beforeStatus);
+    }
+
+    public boolean hasActiveBids(String publicId) {
+        return bidRepository.existsActiveBidByPublicId(publicId);
+    }
+
+    public boolean hasActiveSales(String publicId) {
+        return auctionRepository.existsActiveSaleByPublicId(publicId);
+    }
+
+    public boolean hasProcessingOrders(String publicId) {
+        return auctionOrderRepository.existsByBuyerPublicIdAndStatus(
+                publicId, AuctionOrderStatus.PROCESSING
+        );
     }
 }
