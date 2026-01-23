@@ -27,6 +27,7 @@ import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmResponseDt
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.SettlementResponseDto;
+import com.bugzero.rarego.boundedContext.payment.in.dto.WalletResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.WalletTransactionResponseDto;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
@@ -117,6 +118,13 @@ public class PaymentController {
 
 		return SuccessResponseDto.from(SuccessType.OK,
 			paymentFacade.getSettlements(principal.publicId(), page, size, status, from, to));
+	}
+
+	@Operation(summary = "내 지갑 조회", description = "내 지갑 정보를 조회합니다.")
+	@GetMapping("/me/wallet")
+	public SuccessResponseDto<WalletResponseDto> getMyWallet(@AuthenticationPrincipal MemberPrincipal principal) {
+		WalletResponseDto response = paymentFacade.getMyWallet(principal.publicId());
+		return SuccessResponseDto.from(SuccessType.OK, response);
 	}
 
 	// 정산 배치 실행 api
