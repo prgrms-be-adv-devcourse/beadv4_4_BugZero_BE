@@ -26,7 +26,7 @@ public class ProductFacade {
 	private final ProductSyncMemberUseCase productSyncMemberUseCase;
 	private final ProductUpdateProductUseCase productUpdateProductUseCase;
 	private final ProductDeleteProductUseCase productDeleteProductUseCase;
-	private final ProductReadProductForInspectionUseCase productReadProductForInspectionUseCase;
+	private final ProductReadProductsForInspectionUseCase productReadProductsForInspectionUseCase;
 	private final ProductReadInspectionUseCase productReadInspectionUseCase;
 
 	//판매자용
@@ -53,7 +53,7 @@ public class ProductFacade {
 
 	public PagedResponseDto<ProductResponseForInspectionDto> readProductsForInspection(
 		ProductSearchForInspectionCondition condition, Pageable pageable) {
-		return productReadProductForInspectionUseCase.readProducts(condition, pageable);
+		return productReadProductsForInspectionUseCase.readProducts(condition, pageable);
 	}
 
 	//멤버 동기화

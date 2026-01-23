@@ -22,7 +22,7 @@ import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.shared.product.dto.ProductResponseForInspectionDto;
 
 @DataJpaTest
-class ProductReadProductForInspectionUseCaseTest {
+class ProductReadProductsForInspectionUseCaseTest {
 	@Autowired
 	private ProductRepository productRepository;
 
@@ -81,7 +81,7 @@ class ProductReadProductForInspectionUseCaseTest {
 	}
 
 	@Test
-	@DisplayName("관리자 목록 조회 - 검수 상탸 필터가 적용되어야 한다.")
+	@DisplayName("관리자 목록 조회 - 검수 상태 필터가 적용되어야 한다.")
 	void readProductsForAdmin_NoImage_Success() {
 		// given
 		Product noImgProduct = Product.builder()
