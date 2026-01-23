@@ -19,6 +19,7 @@ import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistListResponseDto;
 import com.bugzero.rarego.boundedContext.auction.out.*;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductImage;
+import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
 import com.bugzero.rarego.boundedContext.product.out.ProductImageRepository;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.global.exception.CustomException;
@@ -158,8 +159,11 @@ class AuctionReadUseCaseTest {
 			.build();
 		ReflectionTestUtils.setField(auction, "id", auctionId);
 
+		ProductMember productSeller = ProductMember.builder().build();
+		ReflectionTestUtils.setField(productSeller, "id", sellerId);
+
 		// 4. 상품 정보
-		Product product = Product.builder().sellerId(sellerId).name("Test Item").build();
+		Product product = Product.builder().seller(productSeller).name("Test Item").build();
 		ReflectionTestUtils.setField(product, "id", 50L);
 
 		ProductImage image = ProductImage.builder().product(product).imageUrl("thumb.jpg").build();
@@ -203,7 +207,7 @@ class AuctionReadUseCaseTest {
 		// 2. 주문
 		AuctionOrder order = AuctionOrder.builder().auctionId(auctionId).bidderId(buyerId).sellerId(sellerId).finalPrice(10000).build();
 		ReflectionTestUtils.setField(order, "id", 777L);
-    
+
 		// 3. 경매 정보 (NPE 방지)
 		Auction auction = Auction.builder()
 			.productId(50L)
@@ -483,3 +487,4 @@ class AuctionReadUseCaseTest {
 		// verify(auctionRepository, never()).findAllById(any());
 	}
 }
+

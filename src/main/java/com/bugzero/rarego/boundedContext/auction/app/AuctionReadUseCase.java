@@ -207,7 +207,6 @@ public class AuctionReadUseCase {
 	// 경매 목록 조회 (Bulk + 검색)
 	public PagedResponseDto<AuctionListResponseDto> getAuctions(AuctionSearchCondition condition, Pageable pageable) {
 
-    
 		// 1. 정렬 조건 적용
 		Pageable sortedPageable = applySorting(pageable, condition.getSort());
 
@@ -469,38 +468,5 @@ public class AuctionReadUseCase {
 			sort = Sort.by(Sort.Direction.DESC, "id");
 		}
 		return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
-	}
-
-	private Specification<Auction> createSearchSpec(AuctionSearchCondition condition) {
-		return (root, query, cb) -> {
-			List<Predicate> predicates = new ArrayList<>();
-
-			// 특정 IDs 필터
-			if (condition.getIds() != null && !condition.getIds().isEmpty()) {
-				predicates.add(root.get("id").in(condition.getIds()));
-			}
-
-			// 상태 필터 (기본: 예정된 경매 제외)
-			if (condition.getStatus() != null) {
-				predicates.add(cb.equal(root.get("status"), condition.getStatus()));
-			} else {
-				predicates.add(cb.notEqual(root.get("status"), AuctionStatus.SCHEDULED));
-			}
-
-			// 키워드/카테고리 검색 (Product 테이블 조회 필요)
-			if (condition.getKeyword() != null || condition.getCategory() != null) {
-				List<Long> matchedProductIds = productRepository.findIdsBySearchCondition(
-					condition.getKeyword(), condition.getCategory()
-				);
-
-				if (matchedProductIds.isEmpty()) {
-					predicates.add(cb.disjunction());
-				} else {
-					predicates.add(root.get("productId").in(matchedProductIds));
-				}
-			}
-
-			return cb.and(predicates.toArray(new Predicate[0]));
-		};
 	}
 }
