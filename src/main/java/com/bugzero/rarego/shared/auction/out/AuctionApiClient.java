@@ -35,7 +35,7 @@ public class AuctionApiClient {
                 .body(productAuctionRequestDto)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError,
-                    (req, res) -> errorHandler.handleWithDefault(req, res, ErrorType.AUCTION_CREATE_FAILED))
+                    (httpRequest, httpResponse) -> errorHandler.handleWithDefault(httpRequest, httpResponse, ErrorType.AUCTION_CREATE_FAILED))
                 .body(new ParameterizedTypeReference<>() {
                 });
 

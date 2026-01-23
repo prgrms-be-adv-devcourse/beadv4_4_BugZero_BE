@@ -50,7 +50,7 @@ public class MemberApiClient {
                     .header("X-Public-Id", publicId)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError,
-                            (req, res) -> errorHandler.handleWithDefault(req, res, ErrorType.MEMBER_NOT_FOUND))
+                            (httpRequest, httpResponse) -> errorHandler.handleWithDefault(httpRequest, httpResponse, ErrorType.MEMBER_NOT_FOUND))
                     .body(new ParameterizedTypeReference<>() {
                     });
 
