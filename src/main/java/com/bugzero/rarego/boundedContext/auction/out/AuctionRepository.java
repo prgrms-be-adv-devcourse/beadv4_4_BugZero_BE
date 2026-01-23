@@ -53,18 +53,20 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, JpaSpec
 
     @Query("""
         SELECT a FROM Auction a
-        WHERE (:status IS NULL OR a.status = :status)
+        WHERE (:auctionIds IS NULL OR a.id IN :auctionIds)      
+        AND (:status IS NULL OR a.status = :status)
         AND (:productIds IS NULL OR a.productId IN :productIds)
-        AND a.status != 'SCHEDULED'
+        AND a.status != 'SCHEDULED'                             
         AND a.startTime IS NOT NULL
         AND a.endTime IS NOT NULL
-        AND EXISTS (
+        AND EXISTS (                                            
             SELECT i FROM Inspection i
             WHERE i.product.id = a.productId
             AND i.inspectionStatus = 'APPROVED'
         )
     """)
-    Page<Auction> findAllApproved(
+    Page<Auction> findAllBySearchConditions(
+        @Param("auctionIds") List<Long> auctionIds,
         @Param("status") AuctionStatus status,
         @Param("productIds") List<Long> productIds,
         Pageable pageable
