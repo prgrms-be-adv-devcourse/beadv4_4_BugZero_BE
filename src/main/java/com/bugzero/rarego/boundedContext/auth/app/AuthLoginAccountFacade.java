@@ -21,6 +21,7 @@ public class AuthLoginAccountFacade {
 	//
 	public Account loginOrSignup(String providerId, String email, Provider provider) {
 		return findByProviderAndProviderId(provider, providerId)
+			.map(this::ensureNotDeleted)
 			.orElseGet(() -> authJoinAccountUseCase.join(provider, providerId, email));
 	}
 
@@ -29,5 +30,12 @@ public class AuthLoginAccountFacade {
 			throw new CustomException(ErrorType.AUTH_MEMBER_REQUIRED);
 		}
 		return accountRepository.findByProviderAndProviderId(provider, providerId);
+	}
+
+	private Account ensureNotDeleted(Account account) {
+		if (account.isDeleted()) {
+			throw new CustomException(ErrorType.AUTH_FORBIDDEN);
+		}
+		return account;
 	}
 }

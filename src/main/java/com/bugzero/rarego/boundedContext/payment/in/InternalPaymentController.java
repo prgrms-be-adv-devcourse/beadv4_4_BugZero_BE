@@ -1,23 +1,17 @@
 package com.bugzero.rarego.boundedContext.payment.in;
 
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.bugzero.rarego.boundedContext.payment.app.PaymentFacade;
 import com.bugzero.rarego.boundedContext.payment.in.dto.RefundResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldRequestDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
-
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/internal/payments")
@@ -39,5 +33,11 @@ public class InternalPaymentController {
     public SuccessResponseDto<RefundResponseDto> processRefund(
             @PathVariable Long auctionId) {
         return SuccessResponseDto.from(SuccessType.OK, paymentFacade.processRefund(auctionId));
+    }
+
+    @Operation(summary = "처리 중인 주문이 있는지 확인", description = "사용자가 처리 중인 주문이 있는지 확인합니다")
+    @GetMapping("/members/{publicId}/orders/processing")
+    public SuccessResponseDto<Boolean> hasProcessingOrders(@PathVariable String publicId) {
+        return SuccessResponseDto.from(SuccessType.OK, paymentFacade.hasProcessingOrders(publicId));
     }
 }
