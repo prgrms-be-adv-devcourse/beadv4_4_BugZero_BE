@@ -148,8 +148,11 @@ class AuctionReadUseCaseTest {
 			.build();
 		ReflectionTestUtils.setField(auction, "id", auctionId);
 
+		ProductMember productSeller = ProductMember.builder().build();
+		ReflectionTestUtils.setField(productSeller, "id", sellerId);
+		
 		// 4. 상품 정보
-		Product product = Product.builder().sellerId(sellerId).name("Test Item").build();
+		Product product = Product.builder().seller(productSeller).name("Test Item").build();
 		ReflectionTestUtils.setField(product, "id", 50L);
 
 		ProductImage image = ProductImage.builder().product(product).imageUrl("thumb.jpg").build();
