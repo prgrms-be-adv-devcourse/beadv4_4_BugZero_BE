@@ -1,5 +1,8 @@
 package com.bugzero.rarego.global.response;
 
+import java.util.Arrays;
+import java.util.Optional;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -117,4 +120,10 @@ public enum ErrorType {
     private final Integer httpStatus;
     private final int code;
     private final String message;
+
+    public static Optional<ErrorType> findByCode(int code) {
+        return Arrays.stream(values())
+                .filter(type -> type.code == code)
+                .findFirst();
+    }
 }

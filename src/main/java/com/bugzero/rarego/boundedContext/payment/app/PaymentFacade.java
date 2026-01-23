@@ -3,7 +3,16 @@ package com.bugzero.rarego.boundedContext.payment.app;
 import com.bugzero.rarego.boundedContext.payment.domain.PaymentMember;
 import com.bugzero.rarego.boundedContext.payment.domain.SettlementStatus;
 import com.bugzero.rarego.boundedContext.payment.domain.WalletTransactionType;
-import com.bugzero.rarego.boundedContext.payment.in.dto.*;
+import com.bugzero.rarego.boundedContext.payment.in.dto.AuctionFinalPaymentRequestDto;
+import com.bugzero.rarego.boundedContext.payment.in.dto.AuctionFinalPaymentResponseDto;
+import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmRequestDto;
+import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmResponseDto;
+import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestDto;
+import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestResponseDto;
+import com.bugzero.rarego.boundedContext.payment.in.dto.RefundResponseDto;
+import com.bugzero.rarego.boundedContext.payment.in.dto.SettlementResponseDto;
+import com.bugzero.rarego.boundedContext.payment.in.dto.WalletResponseDto;
+import com.bugzero.rarego.boundedContext.payment.in.dto.WalletTransactionResponseDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.shared.member.domain.MemberDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldRequestDto;
@@ -17,16 +26,17 @@ import java.time.LocalDate;
 @Service
 @RequiredArgsConstructor
 public class PaymentFacade {
-    private final PaymentHoldDepositUseCase paymentHoldDepositUseCase;
-    private final PaymentReleaseDepositUseCase paymentReleaseDepositUseCase;
-    private final PaymentRequestPaymentUseCase paymentRequestPaymentUseCase;
-    private final PaymentConfirmPaymentUseCase paymentConfirmPaymentUseCase;
-    private final PaymentProcessSettlementUseCase paymentProcessSettlementUseCase;
-    private final PaymentAuctionFinalUseCase paymentAuctionFinalUseCase;
-    private final PaymentGetWalletTransactionsUseCase paymentGetWalletTransactionsUseCase;
-    private final PaymentRefundUseCase paymentRefundUseCase;
-    private final PaymentGetSettlementsUseCase paymentGetSettlementsUseCase;
-    private final PaymentSyncMemberUseCase paymentSyncMemberUseCase;
+	private final PaymentHoldDepositUseCase paymentHoldDepositUseCase;
+	private final PaymentReleaseDepositUseCase paymentReleaseDepositUseCase;
+	private final PaymentRequestPaymentUseCase paymentRequestPaymentUseCase;
+	private final PaymentConfirmPaymentUseCase paymentConfirmPaymentUseCase;
+	private final PaymentProcessSettlementUseCase paymentProcessSettlementUseCase;
+	private final PaymentAuctionFinalUseCase paymentAuctionFinalUseCase;
+	private final PaymentGetWalletTransactionsUseCase paymentGetWalletTransactionsUseCase;
+	private final PaymentRefundUseCase paymentRefundUseCase;
+	private final PaymentGetSettlementsUseCase paymentGetSettlementsUseCase;
+	private final PaymentSyncMemberUseCase paymentSyncMemberUseCase;
+	private final PaymentGetMyWalletUseCase paymentGetMyWalletUseCase;
     private final PaymentWithdrawUseCase paymentWithdrawUseCase;
 
     /**
@@ -109,4 +119,10 @@ public class PaymentFacade {
     public boolean hasProcessingOrders(String publicId) {
         return paymentWithdrawUseCase.hasProcessingOrders(publicId);
     }
+	/**
+	 * 내 지갑 조회
+	 */
+	public WalletResponseDto getMyWallet(String memberPublicId) {
+		return paymentGetMyWalletUseCase.getMyWallet(memberPublicId);
+	}
 }
