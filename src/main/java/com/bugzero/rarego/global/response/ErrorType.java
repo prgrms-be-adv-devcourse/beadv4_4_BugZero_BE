@@ -60,7 +60,7 @@ public enum ErrorType {
     AUCTION_ALREADY_HAS_START_TIME(400, 2009, "이미 시작이 예정된 경매입니다."),
     UNAUTHORIZED_AUCTION_SELLER(403, 2010, "해당 경매의 판매자가 아닙니다."),
     AUCTION_ALREADY_IN_PROGRESS(400, 2011, "경매 시작 전에만 수정 가능합니다."),
-    AUCTION_UPDATE_FAILED(500, 2012, "경매 정보 수정에 실패했습니다.."),
+    AUCTION_UPDATE_FAILED(500, 2012, "경매 정보 수정에 실패했습니다."),
     AUCTION_NOT_ENDED(400, 2013, "종료된 경매만 재등록할 수 있습니다."),
     AUCTION_ALREADY_SOLD(409, 2014, "이미 판매가 완료되거나 진행 중인 상품입니다."),
     AUCTION_DELETE_FAILED(500, 2015, "경매 정보 삭제에 실패했습니다."),

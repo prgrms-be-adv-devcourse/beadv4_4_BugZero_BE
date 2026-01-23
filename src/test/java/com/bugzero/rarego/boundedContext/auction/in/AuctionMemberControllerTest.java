@@ -136,8 +136,9 @@ public class AuctionMemberControllerTest {
 			.andExpect(jsonPath("$.data[0].productName").value("Lego Titanic"))
 			.andExpect(jsonPath("$.data[0].statusDescription").value("결제 대기중"));
 	}
+
   
-  @Test
+    @Test
     @DisplayName("성공: 내 관심 경매 목록 조회 시 200 OK와 중첩된 경매 정보를 반환한다")
     void getMyBookmarks_success() throws Exception {
         // given

@@ -1,6 +1,5 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
-
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
