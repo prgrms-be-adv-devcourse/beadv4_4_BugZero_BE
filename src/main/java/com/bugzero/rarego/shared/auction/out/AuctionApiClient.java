@@ -5,10 +5,12 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.exception.InternalApiErrorHandler;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionRequestDto;
@@ -17,8 +19,10 @@ import com.bugzero.rarego.shared.product.dto.ProductAuctionUpdateDto;
 @Service
 public class AuctionApiClient {
     private final RestClient restClient;
+    private final InternalApiErrorHandler errorHandler;
 
-    public AuctionApiClient(@Value("${custom.global.internalBackUrl}") String internalBackUrl) {
+    public AuctionApiClient(@Value("${custom.global.internalBackUrl}") String internalBackUrl, InternalApiErrorHandler errorHandler) {
+        this.errorHandler = errorHandler;
         this.restClient = RestClient.builder()
                 .baseUrl(internalBackUrl + "/api/v1/internal/auctions")
                 .build();
@@ -27,34 +31,32 @@ public class AuctionApiClient {
     public Long createAuction(Long productId, String publicId, ProductAuctionRequestDto productAuctionRequestDto) {
         SuccessResponseDto<Long> response = restClient.post()
                 .uri("/{productId}/{publicId}", productId, publicId)
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(productAuctionRequestDto)
                 .retrieve()
-                .onStatus(HttpStatusCode::isError, (httpRequest, httpResponse) -> {
-                    throw new CustomException(ErrorType.AUCTION_CREATE_FAILED);
-                })
+                .onStatus(HttpStatusCode::isError,
+                    (httpRequest, httpResponse) -> errorHandler.handleWithDefault(httpRequest, httpResponse, ErrorType.AUCTION_CREATE_FAILED))
                 .body(new ParameterizedTypeReference<>() {
                 });
 
-        Long result = (response != null) ? response.data() : null;
-
-        //result값이 null 인경우 경매정보 생성 실패 인식
-        return Optional.ofNullable(result)
+        return Optional.ofNullable(response)
+                .map(SuccessResponseDto::data)
                 .orElseThrow(() -> new CustomException(ErrorType.AUCTION_CREATE_FAILED));
     }
 
     public Long updateAuction(String publicId, ProductAuctionUpdateDto productAuctionUpdateDto) {
         SuccessResponseDto<Long> response = restClient.patch()
             .uri("/{publicId}", publicId)
+            .contentType(MediaType.APPLICATION_JSON)
             .body(productAuctionUpdateDto)
             .retrieve()
-            .onStatus(HttpStatusCode::isError, (httpRequest, httpResponse) -> {
-                throw new CustomException(ErrorType.AUCTION_UPDATE_FAILED);
-            })
-            .body(new ParameterizedTypeReference<>() {});
+            .onStatus(HttpStatusCode::isError, (httpRequest, httpResponse)
+                -> errorHandler.handleWithDefault(httpRequest, httpResponse, ErrorType.AUCTION_UPDATE_FAILED))
+            .body(new ParameterizedTypeReference<>() {
+            });
 
-        Long result = (response != null) ? response.data() : null;
-
-        return Optional.ofNullable(result)
+        return Optional.ofNullable(response)
+            .map(SuccessResponseDto::data)
             .orElseThrow(() -> new CustomException(ErrorType.AUCTION_UPDATE_FAILED));
     }
 
@@ -62,9 +64,8 @@ public class AuctionApiClient {
         restClient.delete()
             .uri("/{productId}/{publicId}", productId ,publicId)
             .retrieve()
-            .onStatus(HttpStatusCode::isError, (httpRequest, httpResponse) -> {
-                throw new CustomException(ErrorType.AUCTION_DELETE_FAILED);
-            })
+            .onStatus(HttpStatusCode::isError,
+                (httpRequest, httpResponse) -> errorHandler.handleWithDefault(httpRequest, httpResponse, ErrorType.AUCTION_DELETE_FAILED))
             .toBodilessEntity();
     }
 }
