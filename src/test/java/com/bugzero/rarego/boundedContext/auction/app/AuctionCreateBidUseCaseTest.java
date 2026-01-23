@@ -22,7 +22,6 @@ import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.Bid;
 import com.bugzero.rarego.boundedContext.auction.domain.event.AuctionBidCreatedEvent;
 import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
-import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
@@ -81,7 +80,7 @@ class AuctionCreateBidUseCaseTest {
 
 		// 3. Mocking (Support 사용)
 		// Repository와 달리 Support는 Entity를 직접 반환하므로 Optional.of() 제거
-		given(support.getMember(BIDDER_PUBLICID)).willReturn(bidder);
+		given(support.getPublicMember(BIDDER_PUBLICID)).willReturn(bidder);
 
 		// [중요] UseCase에서 getAuctionWithLock을 호출하므로 맞춰줌
 		given(support.getAuctionWithLock(AUCTION_ID)).willReturn(auction);
@@ -110,9 +109,6 @@ class AuctionCreateBidUseCaseTest {
 			.build();
 		ReflectionTestUtils.setField(seller, "id", SELLER_ID);
 
-		Product product = Product.builder().sellerId(SELLER_ID).build();
-		ReflectionTestUtils.setField(product, "id", PRODUCT_ID);
-
 		Auction auction = Auction.builder()
 			.productId(PRODUCT_ID)
 			.sellerId(SELLER_ID)
@@ -125,7 +121,7 @@ class AuctionCreateBidUseCaseTest {
 		ReflectionTestUtils.setField(auction, "status", AuctionStatus.IN_PROGRESS);
 
 		// [수정] Support Mocking
-		given(support.getMember(SELLER_PUBLICID)).willReturn(seller);
+		given(support.getPublicMember(SELLER_PUBLICID)).willReturn(seller);
 		given(support.getAuctionWithLock(AUCTION_ID)).willReturn(auction);
 
 		// when & then
@@ -161,7 +157,7 @@ class AuctionCreateBidUseCaseTest {
 		// 현재가 10,000 -> 호가단위 1,000 -> 최소입찰가 11,000
 
 		// [수정] Support Mocking
-		given(support.getMember(BIDDER_PUBLICID)).willReturn(bidder);
+		given(support.getPublicMember(BIDDER_PUBLICID)).willReturn(bidder);
 		given(support.getAuctionWithLock(AUCTION_ID)).willReturn(auction);
 
 		// 연속 입찰 아님
