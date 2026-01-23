@@ -1,6 +1,7 @@
 package com.bugzero.rarego.boundedContext.auth.app;
 
 import com.bugzero.rarego.boundedContext.auth.domain.Account;
+import com.bugzero.rarego.boundedContext.auth.domain.AuthRole;
 import com.bugzero.rarego.boundedContext.auth.out.AccountRepository;
 import com.bugzero.rarego.boundedContext.auth.out.RefreshTokenRepository;
 import com.bugzero.rarego.global.exception.CustomException;
@@ -45,7 +46,7 @@ public class AuthWithdrawAccountUseCase {
          */
 
         // 탈퇴 가능 여부 확인
-        validateNoActiveActivities(publicId);
+        validateNoActiveActivities(publicId, account.getRole());
 
         // 회원 정보 삭제
         memberApiClient.withdraw(publicId);
@@ -57,18 +58,18 @@ public class AuthWithdrawAccountUseCase {
         authAccessTokenBlacklistUseCase.blacklist(accessToken);
     }
 
-    private void validateNoActiveActivities(String publicId) {
+    private void validateNoActiveActivities(String publicId, AuthRole role) {
         // 1. 내 입찰 조회 - 입찰한 경매가 모두 ENDED여야 함
         if (auctionApiClient.hasActiveBids(publicId)) {
             throw new CustomException(ErrorType.WITHDRAWAL_ACTIVE_BID_EXISTS);
         }
 
         // 2. 내 판매 물품 조회 - 검수/경매가 모두 완료되어야 함
-        if (auctionApiClient.hasActiveSales(publicId)) {
+        if (role == AuthRole.SELLER && auctionApiClient.hasActiveSales(publicId)) {
             throw new CustomException(ErrorType.WITHDRAWAL_ACTIVE_SALE_EXISTS);
         }
 
-        // 3. 내 낙찰 주문 조회 - PROCESSING 상태가 아니어야 함
+        // 3. 내 낙찰/판매 주문 결제 현황 조회 - PROCESSING 상태가 아니어야 함
         if (paymentApiClient.hasProcessingOrders(publicId)) {
             throw new CustomException(ErrorType.WITHDRAWAL_PROCESSING_ORDER_EXISTS);
         }
