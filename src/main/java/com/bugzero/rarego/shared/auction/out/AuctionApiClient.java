@@ -1,5 +1,7 @@
 package com.bugzero.rarego.shared.auction.out;
 
+import java.util.Optional;
+
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
