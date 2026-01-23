@@ -2,6 +2,7 @@ package com.bugzero.rarego.boundedContext.auction.out;
 
 import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
+import com.bugzero.rarego.boundedContext.product.domain.Category;
 import com.bugzero.rarego.boundedContext.product.domain.Inspection;
 import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
@@ -29,11 +30,14 @@ class AuctionRepositoryTest {
 	@Autowired
 	private TestEntityManager em;
 
+	// AuctionRepositoryTest.java
+
 	@Test
-	@DisplayName("경매 조회 - 검수 승인됨(APPROVED) + 시간 확정된 경매만 조회된다")
-	void findAllApproved_success() {
-		// given
+	@DisplayName("경매 조회 - 검수 승인, 시간 유효, SCHEDULED 아님 조건 및 필터링 조회")
+	void findAllBySearchConditions() {
+		// 1. [Given] 데이터 준비 (기존 코드와 동일)
 		ProductMember seller = ProductMember.builder()
+			.id(1L) // ✅ [핵심] Reflection 대신 빌더에서 직접 ID 할당
 			.publicId("seller_123")
 			.email("test@example.com")
 			.nickname("판매자1")
@@ -42,87 +46,66 @@ class AuctionRepositoryTest {
 			.deleted(false)
 			.build();
 
-		// ID 수동 할당 (이전 해결책 유지)
-		ReflectionTestUtils.setField(seller, "id", 1L);
 		em.persist(seller);
 
-		// 1. 승인된 상품
+		// 상품 생성 (승인된 것, 승인 안 된 것)
 		Product approvedProduct = Product.builder()
-			.seller(seller)
-			.name("승인상품")
-			.build();
+			.seller(seller).name("승인상품").inspectionStatus(InspectionStatus.APPROVED)
+			.productCondition(ProductCondition.MISB).category(Category.스타워즈).build();
 		em.persist(approvedProduct);
 
-		Inspection approvedInspection = Inspection.builder()
-			.product(approvedProduct)
-			.inspectionStatus(InspectionStatus.APPROVED) // 승인!
-			.inspectorId(999L)
-			.seller(seller)
-			.productCondition(ProductCondition.MISB)
-			.build();
-		em.persist(approvedInspection);
-
-		// 2. 미승인 상품 (PENDING)
 		Product pendingProduct = Product.builder()
-			.seller(seller)
-			.name("대기상품")
-			.build();
+			.seller(seller).name("미승인상품").inspectionStatus(InspectionStatus.PENDING)
+			.productCondition(ProductCondition.MISB).category(Category.스타워즈).build();
 		em.persist(pendingProduct);
 
-		Inspection pendingInspection = Inspection.builder()
-			.product(pendingProduct)
-			.inspectionStatus(InspectionStatus.PENDING) // 대기
-			.inspectorId(999L)
-			.seller(seller)
-			.productCondition(ProductCondition.INSPECTION)
-			.build();
-		em.persist(pendingInspection);
+		// 검수 승인 데이터 (필수)
+		Inspection inspection = Inspection.builder()
+			.product(approvedProduct).seller(seller).inspectorId(999L)
+			.inspectionStatus(InspectionStatus.APPROVED).productCondition(ProductCondition.MISB).build();
+		em.persist(inspection);
 
-		// 3. 경매 생성
-		// A: 노출 대상 (승인됨 + 시간 있음)
+		// A: 조회 대상 (승인됨 + 시간 유효 + IN_PROGRESS)
 		Auction target = Auction.builder()
-			.sellerId(seller.getId())
-			.productId(approvedProduct.getId())
-			.startTime(LocalDateTime.now())
+			.sellerId(seller.getId()).productId(approvedProduct.getId())
+			.startTime(LocalDateTime.now().minusHours(1))
 			.endTime(LocalDateTime.now().plusDays(3))
-			.startPrice(10000)
-			.durationDays(3)
-			.build();
-		// status 설정 (빌더에 없으면 Reflection 사용)
+			.startPrice(10000).durationDays(3).build();
 		ReflectionTestUtils.setField(target, "status", AuctionStatus.IN_PROGRESS);
 		em.persist(target);
 
-		// B: 미노출 대상 (미승인 상품)
+		// B: 제외 대상 (검수 미승인)
 		Auction hidden1 = Auction.builder()
-			.sellerId(seller.getId())
-			.productId(pendingProduct.getId())
-			.startTime(LocalDateTime.now())
+			.sellerId(seller.getId()).productId(pendingProduct.getId())
+			.startTime(LocalDateTime.now().minusHours(1))
 			.endTime(LocalDateTime.now().plusDays(3))
-			.startPrice(20000)
-			.durationDays(3)
-			.build();
+			.startPrice(20000).durationDays(3).build();
 		ReflectionTestUtils.setField(hidden1, "status", AuctionStatus.IN_PROGRESS);
 		em.persist(hidden1);
 
-		// C: 미노출 대상 (시간 없음)
+		// C: 제외 대상 (SCHEDULED 상태)
 		Auction hidden2 = Auction.builder()
-			.sellerId(seller.getId())
-			.productId(approvedProduct.getId())
-			.startTime(null).endTime(null) // 시간 없음
-			.startPrice(30000)
-			.durationDays(3)
-			.build();
-		ReflectionTestUtils.setField(hidden2, "status", AuctionStatus.SCHEDULED);
+			.sellerId(seller.getId()).productId(approvedProduct.getId())
+			.startTime(LocalDateTime.now().plusHours(1)) // 미래 시작
+			.endTime(LocalDateTime.now().plusDays(3))
+			.startPrice(30000).durationDays(3).build();
+		// status 기본값은 SCHEDULED
 		em.persist(hidden2);
 
 		em.flush();
 		em.clear();
 
-		// when
-		Page<Auction> result = auctionRepository.findAllApproved(null, null, PageRequest.of(0, 10));
+		// 2. [When] 메서드 호출
+		// 조건 없이 조회 (모든 필터 null) -> 기본 안전장치만 작동해야 함
+		Page<Auction> result = auctionRepository.findAllBySearchConditions(
+			null, // auctionIds
+			null, // status
+			null, // productIds
+			PageRequest.of(0, 10)
+		);
 
-		// then
+		// 3. [Then] 검증
 		assertThat(result.getContent()).hasSize(1);
-		assertThat(result.getContent().get(0).getProductId()).isEqualTo(approvedProduct.getId());
+		assertThat(result.getContent().get(0).getId()).isEqualTo(target.getId());
 	}
 }

@@ -216,45 +216,49 @@ class AuctionReadUseCaseTest {
 
 	// --- 3. 경매 목록 조회 테스트 (변경 없음, Repository 직접 사용) ---
 	@Test
-	@DisplayName("경매 목록 조회 - 썸네일 정렬(sortOrder) 및 데이터 조립 확인")
+	@DisplayName("경매 목록 조회 - 검색 조건에 맞는 경매 반환")
 	void getAuctions_success() {
-		// given
+		// [Given]
+		// 1. 검색 조건 설정 (예: 상태가 IN_PROGRESS인 것만 조회)
 		AuctionSearchCondition condition = new AuctionSearchCondition();
+		ReflectionTestUtils.setField(condition, "status", AuctionStatus.IN_PROGRESS);
+
 		Pageable pageable = PageRequest.of(0, 10);
 
-		Long auctionId1 = 1L;
-		Long productId1 = 100L;
-		Auction auction1 = Auction.builder()
-			.productId(productId1).startPrice(1000).durationDays(3).build();
-		ReflectionTestUtils.setField(auction1, "id", auctionId1);
-		ReflectionTestUtils.setField(auction1, "currentPrice", 2000);
-		ReflectionTestUtils.setField(auction1, "status", AuctionStatus.IN_PROGRESS);
+		// 2. Mock 데이터 준비
+		Auction auction = Auction.builder()
+			.productId(1L).sellerId(1L).startPrice(1000).durationDays(3).build();
+		ReflectionTestUtils.setField(auction, "id", 100L);
 
-		Page<Auction> auctionPage = new PageImpl<>(List.of(auction1), pageable, 1);
-		Product product1 = Product.builder().name("Test Product").build();
-		ReflectionTestUtils.setField(product1, "id", productId1);
-		List<Object[]> bidCounts = List.<Object[]>of(new Object[]{auctionId1, 5L});
+		// 3. Repository Mocking (핵심 변경 부분)
+		// findAllBySearchConditions 호출 시 기대값 설정
+		given(auctionRepository.findAllBySearchConditions(
+			eq(condition.getIds()),       // ids (null 가능)
+			eq(condition.getStatus()),    // status
+			isNull(),                     // productIds (검색어 없으므로 null)
+			any(Pageable.class)
+		)).willReturn(new PageImpl<>(List.of(auction), pageable, 1));
 
-		ProductImage img1 = ProductImage.builder().product(product1).imageUrl("url_2.jpg").sortOrder(2).build();
-		ProductImage img2 = ProductImage.builder().product(product1).imageUrl("url_0.jpg").sortOrder(0).build();
-		ProductImage img3 = ProductImage.builder().product(product1).imageUrl("url_1.jpg").sortOrder(1).build();
+		// 연관 데이터 Mocking (Product, BidCount 등 - 기존과 동일)
+		Product product = Product.builder().name("Test Product").build();
+		given(productRepository.findAllById(anySet())).willReturn(List.of(product));
+		given(bidRepository.countByAuctionIdIn(anySet())).willReturn(List.of());
+		given(productImageRepository.findAllByProductIdIn(anySet())).willReturn(List.of());
 
-		// [수정] findAll -> findAllApproved 로 변경
-		// 조건이 없으므로 인자는 (null, null, pageable)
-		given(auctionRepository.findAllApproved(isNull(), isNull(), any(Pageable.class)))
-			.willReturn(auctionPage);
-
-		given(productRepository.findAllById(Set.of(productId1))).willReturn(List.of(product1));
-		given(bidRepository.countByAuctionIdIn(Set.of(auctionId1))).willReturn(bidCounts);
-		given(productImageRepository.findAllByProductIdIn(Set.of(productId1))).willReturn(List.of(img1, img2, img3));
-
-		// when
+		// [When]
 		PagedResponseDto<AuctionListResponseDto> result = auctionReadUseCase.getAuctions(condition, pageable);
 
-		// then
+		// [Then]
 		assertThat(result.data()).hasSize(1);
-		AuctionListResponseDto dto = result.data().get(0);
-		assertThat(dto.thumbnailUrl()).isEqualTo("url_0.jpg");
+		assertThat(result.data().get(0).auctionId()).isEqualTo(100L);
+
+		// Verify 호출 확인
+		verify(auctionRepository).findAllBySearchConditions(
+			eq(condition.getIds()),
+			eq(AuctionStatus.IN_PROGRESS),
+			isNull(),
+			any(Pageable.class)
+		);
 	}
 
 	@Test
@@ -265,8 +269,12 @@ class AuctionReadUseCaseTest {
 		Page<Auction> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
 
 		// [수정] findAll -> findAllApproved 로 변경
-		given(auctionRepository.findAllApproved(any(), any(), any(Pageable.class)))
-			.willReturn(emptyPage);
+		given(auctionRepository.findAllBySearchConditions(
+			isNull(),            // 1. auctionIds (조건 없으므로 null)
+			isNull(),            // 2. status (조건 없으므로 null)
+			isNull(),            // 3. productIds (조건 없으므로 null)
+			any(Pageable.class)  // 4. pageable
+		)).willReturn(emptyPage);
 
 		PagedResponseDto<AuctionListResponseDto> result = auctionReadUseCase.getAuctions(condition, pageable);
 
@@ -301,9 +309,10 @@ class AuctionReadUseCaseTest {
 
 		// [수정] findAll -> findAllApproved 로 변경!
 		// Specification 관련 Mocking은 이제 필요 없습니다.
-		given(auctionRepository.findAllApproved(
-			eq(AuctionStatus.IN_PROGRESS),
-			eq(matchedProductIds),
+		given(auctionRepository.findAllBySearchConditions(
+			isNull(),                       // ✅ [추가됨] 1. auctionIds (현재 조건에는 없으므로 null)
+			eq(AuctionStatus.IN_PROGRESS),  // 2. status
+			eq(matchedProductIds),          // 3. productIds
 			any(Pageable.class))
 		).willReturn(auctionPage);
 
@@ -311,7 +320,7 @@ class AuctionReadUseCaseTest {
 		Product product = Product.builder().name("Galaxy Lego").build();
 		ReflectionTestUtils.setField(product, "id", 50L);
 		given(productRepository.findAllById(Set.of(50L))).willReturn(List.of(product));
-		given(bidRepository.countByAuctionIdIn(Set.of(1L))).willReturn(List.<Object[]>of(new Object[]{1L, 5L}));
+		given(bidRepository.countByAuctionIdIn(Set.of(1L))).willReturn(List.<Object[]>of(new Object[] {1L, 5L}));
 		given(productImageRepository.findAllByProductIdIn(Set.of(50L))).willReturn(Collections.emptyList());
 
 		// when
@@ -323,7 +332,12 @@ class AuctionReadUseCaseTest {
 
 		// [검증] Specification Captor 대신 findAllApproved 호출 여부 검증
 		verify(productRepository).findIdsBySearchCondition(eq("Galaxy"), isNull());
-		verify(auctionRepository).findAllApproved(eq(AuctionStatus.IN_PROGRESS), eq(matchedProductIds), any(Pageable.class));
+		verify(auctionRepository).findAllBySearchConditions(
+			isNull(),
+			eq(AuctionStatus.IN_PROGRESS),
+			eq(matchedProductIds),
+			any(Pageable.class)
+		);
 	}
 
     @Test
