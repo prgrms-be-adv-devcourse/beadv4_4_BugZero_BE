@@ -5,9 +5,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import java.util.List;
-
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -124,7 +123,7 @@ class ProductInspectionControllerTest {
 		given(productFacade.readInspection(PRODUCT_ID)).willReturn(responseDto);
 
 		// when & then
-		mockMvc.perform(get("/api/v1/inspections/{productId}", PRODUCT_ID)
+		mockMvc.perform(get("/api/v1/products/inspections/{productId}", PRODUCT_ID)
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.status").value(200))
@@ -143,7 +142,7 @@ class ProductInspectionControllerTest {
 			.willThrow(new CustomException(ErrorType.INSPECTION_NOT_FOUND));
 
 		// when & then
-		mockMvc.perform(get("/api/v1/inspections/{productId}", PRODUCT_ID)
+		mockMvc.perform(get("/api/v1/products/inspections/{productId}", PRODUCT_ID)
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(status().isNotFound())
 			.andDo(print());
