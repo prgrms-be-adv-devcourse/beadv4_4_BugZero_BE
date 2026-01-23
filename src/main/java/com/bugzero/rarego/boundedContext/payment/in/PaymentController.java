@@ -120,6 +120,7 @@ public class PaymentController {
 	}
 
 	// 정산 배치 실행 api
+	@Operation(summary = "정산 배치 실행", description = "정산 배치를 실행합니다.")
 	@PostMapping("/settlement")
 	public SuccessResponseDto<Void> runSettlementJob() {
 		try {

@@ -30,4 +30,4 @@ custom:
     frontUrl: https://rarego.duckdns.org
   payment:
     settlement:
-      holdDays: 7
+      holdDays: 0
