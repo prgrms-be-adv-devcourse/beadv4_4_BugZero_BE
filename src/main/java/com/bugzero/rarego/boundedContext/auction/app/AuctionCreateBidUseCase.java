@@ -34,7 +34,7 @@ public class AuctionCreateBidUseCase {
 	@Transactional
 	public BidResponseDto createBid(Long auctionId, String memberPublicId, int bidAmount) {
 		// 1. 회원 조회
-		AuctionMember bidder = support.getMember(memberPublicId);
+		AuctionMember bidder = support.getPublicMember(memberPublicId);
 
 		// 2. 경매 조회 (비관적 락)
 		Auction auction = support.getAuctionWithLock(auctionId);

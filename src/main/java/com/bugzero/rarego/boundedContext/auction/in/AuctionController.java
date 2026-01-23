@@ -114,4 +114,15 @@ public class AuctionController {
         AuctionWithdrawResponseDto response = auctionFacade.withdraw(auctionId, principal.publicId());
         return SuccessResponseDto.from(SuccessType.OK, response);
     }
+
+	@Operation(summary = "재경매 등록", description = "유찰되거나 결제 실패한 경매 상품을 다시 등록합니다. (판매자 전용)")
+	@PostMapping("/{auctionId}/relist")
+	public SuccessResponseDto<AuctionRelistResponseDto> relistAuction(
+		@PathVariable Long auctionId,
+		@RequestBody AuctionRelistRequestDto request,
+		@AuthenticationPrincipal MemberPrincipal principal
+	) {
+		return auctionFacade.relistAuction(auctionId, principal.publicId(), request);
+	}
+
 }
