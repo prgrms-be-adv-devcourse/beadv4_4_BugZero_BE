@@ -35,7 +35,6 @@ import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.global.security.MemberPrincipal;
 
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -120,8 +119,7 @@ public class PaymentController {
 			paymentFacade.getSettlements(principal.publicId(), page, size, status, from, to));
 	}
 
-	// 로컬 정산 배치 테스트용 api
-	@Hidden
+	// 정산 배치 실행 api
 	@PostMapping("/settlement")
 	public SuccessResponseDto<Void> runSettlementJob() {
 		try {
