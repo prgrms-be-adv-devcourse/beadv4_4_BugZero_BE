@@ -25,10 +25,10 @@ import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionUpdateDto;
+import com.bugzero.rarego.shared.product.dto.ProductCreateRequestDto;
+import com.bugzero.rarego.shared.product.dto.ProductCreateResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductImageRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductImageUpdateDto;
-import com.bugzero.rarego.shared.product.dto.ProductRequestDto;
-import com.bugzero.rarego.shared.product.dto.ProductRequestResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateDto;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateResponseDto;
 
@@ -54,13 +54,13 @@ class ProductControllerTest {
 	private final Long PRODUCT_ID = 100L;
 	private final Long AUCTION_ID = 200L;
 
-	private ProductRequestResponseDto defaultResponse;
+	private ProductCreateResponseDto defaultResponse;
 	private ProductUpdateResponseDto defaultUpdateResponse;
 
 	@BeforeEach
 	void setUp() {
 		// 성공 케이스에서 공통으로 사용할 응답 객체 미리 준비
-		defaultResponse = ProductRequestResponseDto.builder()
+		defaultResponse = ProductCreateResponseDto.builder()
 			.productId(PRODUCT_ID)
 			.auctionId(1)
 			.inspectionStatus(InspectionStatus.PENDING)
@@ -78,7 +78,7 @@ class ProductControllerTest {
 	@DisplayName("성공 - 올바른 상품 정보와 memberId가 전달되면 201 응답을 반환한다")
 	void createProduct_success() throws Exception {
 		// given
-		ProductRequestDto requestDto = createProductRequest("스타워즈 레고", 10000, 7);
+		ProductCreateRequestDto requestDto = createProductRequest("스타워즈 레고", 10000, 7);
 		given(productFacade.createProduct(PUBLIC_ID, requestDto)).willReturn(defaultResponse);
 
 		// when & then
@@ -96,7 +96,7 @@ class ProductControllerTest {
 	@DisplayName("실패 - 상품명이 비어있거나 경매 기간이 범위를 벗어나면 400 에러를 반환한다")
 	void createProduct_fail_validation() throws Exception {
 		// given: 상품명이 비어있는 잘못된 요청
-		ProductRequestDto invalidRequest = createProductRequest("", 1000, 31); // @NotBlank, @Max 위반
+		ProductCreateRequestDto invalidRequest = createProductRequest("", 1000, 31); // @NotBlank, @Max 위반
 
 		// when & then
 		mockMvc.perform(post("/api/v1/products")
@@ -168,8 +168,8 @@ class ProductControllerTest {
 
 	// --- Helper Methods (Fixture Factory) ---
 
-	private ProductRequestDto createProductRequest(String name, int price, int duration) {
-		return new ProductRequestDto(
+	private ProductCreateRequestDto createProductRequest(String name, int price, int duration) {
+		return new ProductCreateRequestDto(
 			name,
 			Category.스타워즈,
 			"설명",
