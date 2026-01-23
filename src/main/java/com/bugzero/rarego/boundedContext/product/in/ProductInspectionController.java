@@ -1,5 +1,7 @@
 package com.bugzero.rarego.boundedContext.product.in;
 
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -37,6 +39,14 @@ public class ProductInspectionController {
 		@Valid @RequestBody ProductInspectionRequestDto productInspectionRequestDto) {
 		return SuccessResponseDto.from(SuccessType.CREATED,
 			productFacade.createInspection(inspectorId, productInspectionRequestDto));
+	}
+
+	@GetMapping("/{productId}")
+	public SuccessResponseDto<ProductInspectionResponseDto> readInspection(
+		@PathVariable Long productId
+	) {
+		return SuccessResponseDto.from(SuccessType.OK,
+			productFacade.readInspection(productId));
 	}
 
 
