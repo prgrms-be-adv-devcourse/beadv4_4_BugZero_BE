@@ -37,7 +37,10 @@ public class MemberApiClient {
 			.contentType(MediaType.APPLICATION_JSON)
 			.body(request)
 			.retrieve()
-			.onStatus(HttpStatusCode::isError, errorHandler::handle)
+			.onStatus(HttpStatusCode::isError,
+				(httpRequest, httpResponse) -> errorHandler.handleWithDefault(httpRequest, httpResponse,
+					ErrorType.MEMBER_JOIN_FAILED))
+
 			.body(new ParameterizedTypeReference<>() {
 			});
 		if (response == null || response.data() == null) {
@@ -52,6 +55,9 @@ public class MemberApiClient {
 			.uri("/withdraw")
 			.body(request)
 			.retrieve()
+			.onStatus(HttpStatusCode::isError,
+				(httpRequest, httpResponse) -> errorHandler.handleWithDefault(httpRequest, httpResponse,
+					ErrorType.MEMBER_WITHDRAW_FAILED))
 			.body(new ParameterizedTypeReference<>() {
 			});
 		if (response == null || response.data() == null) {
