@@ -19,16 +19,11 @@ public class AuctionDetermineStartAuctionUseCase {
 	private final AuctionRepository auctionRepository;
 
 	@Transactional
-	public Long determineStartAuction(Long AuctionId) {
+	public Long determineStartAuction(Long productId) {
 
-		//햔제 삭제되지 않은 경매만 가져올 수 있도록 함.
-		Auction auction = auctionRepository.findByIdAndDeletedIsFalse(AuctionId)
+		//현재 경매일정이 정해지지 않은 경매만 가져올 수 있도록 함.
+		Auction auction = auctionRepository.findByProductIdAndStartTimeIsNull(productId)
 			.orElseThrow(() -> new CustomException(ErrorType.AUCTION_NOT_FOUND));
-
-		//이미 시작시간이 정해진 경매라면 예외처리
-		if (auction.hasStartTime()) {
-			throw new CustomException(ErrorType.AUCTION_ALREADY_HAS_START_TIME);
-		}
 
 		auction.determineStart(determineStartTime());
 

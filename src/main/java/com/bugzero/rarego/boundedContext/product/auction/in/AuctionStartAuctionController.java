@@ -26,11 +26,11 @@ public class AuctionStartAuctionController {
 	@SecurityRequirement(name = "bearerAuth")
 	@Operation(summary = "검수승인 후 경매일정 확정", description = "관리자가 검수 승인 후 해당상품의 경매일정을 확정합니다.")
 	@PreAuthorize("hasRole('ADMIN')")
-	@PatchMapping("/{auctionId}/startTime")
+	@PatchMapping("/{productId}/startTime")
 	public SuccessResponseDto<Long> deterMineStartAuction(
-		@PathVariable Long auctionId
+		@PathVariable Long productId
 	) {
 		return SuccessResponseDto.from(SuccessType.OK,
-			auctionDetermineStartAuctionUseCase.determineStartAuction(auctionId));
+			auctionDetermineStartAuctionUseCase.determineStartAuction(productId));
 	}
 }
