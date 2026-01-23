@@ -36,6 +36,8 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, JpaSpec
     );
     Optional<Auction> findByProductId(Long productId);
 
+    List<Auction> findAllByStatusAndStartTimeBefore(AuctionStatus status, LocalDateTime now);
+
     //삭제가 되지 않은 경매 정보만 반환
     Optional<Auction> findByIdAndDeletedIsFalse(Long auctionId);
 
@@ -49,4 +51,22 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, JpaSpec
         Pageable pageable
     );
 
+    @Query("""
+        SELECT a FROM Auction a
+        WHERE (:status IS NULL OR a.status = :status)
+        AND (:productIds IS NULL OR a.productId IN :productIds)
+        AND a.status != 'SCHEDULED'
+        AND a.startTime IS NOT NULL
+        AND a.endTime IS NOT NULL
+        AND EXISTS (
+            SELECT i FROM Inspection i
+            WHERE i.product.id = a.productId
+            AND i.inspectionStatus = 'APPROVED'
+        )
+    """)
+    Page<Auction> findAllApproved(
+        @Param("status") AuctionStatus status,
+        @Param("productIds") List<Long> productIds,
+        Pageable pageable
+    );
 }

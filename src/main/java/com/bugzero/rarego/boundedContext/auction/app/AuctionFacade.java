@@ -1,5 +1,11 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionWithdrawResponseDto;
@@ -16,9 +22,6 @@ import com.bugzero.rarego.shared.auction.dto.*;
 import com.bugzero.rarego.shared.member.domain.MemberDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -31,6 +34,7 @@ public class AuctionFacade {
     private final AuctionMemberRepository auctionMemberRepository;
     private final AuctionSyncMemberUseCase auctionSyncMemberUseCase;
     private final AuctionBookmarkUseCase auctionBookmarkUseCase;
+    private final AuctionRelistUseCase auctionRelistUseCase;
     private final AuctionWithdrawUseCase auctionWithdrawUseCase;
 
     // 쓰기 작업 (입찰 생성)
@@ -40,11 +44,20 @@ public class AuctionFacade {
         return SuccessResponseDto.from(SuccessType.CREATED, result);
     }
 
-    // 읽기 작업 (입찰 기록)
-    public PagedResponseDto<BidLogResponseDto> getBidLogs(Long auctionId, Pageable pageable) {
-        return auctionReadUseCase.getBidLogs(auctionId, pageable);
+  // 재경매 생성
+    @Transactional
+    public SuccessResponseDto<AuctionRelistResponseDto> relistAuction(Long auctionId, String memberPublicId, AuctionRelistRequestDto request) {
+        AuctionRelistResponseDto result = auctionRelistUseCase.relistAuction(auctionId, memberPublicId, request);
+        return SuccessResponseDto.from(SuccessType.OK, result);
     }
 
+	  // 읽기 작업
+
+	  // 입찰 기록 조회
+	  public PagedResponseDto<BidLogResponseDto> getBidLogs(Long auctionId, Pageable pageable) {
+		    return auctionReadUseCase.getBidLogs(auctionId, pageable);
+	  }
+  
     // 내 입찰 내역
     public PagedResponseDto<MyBidResponseDto> getMyBids(String memberPublicId, AuctionStatus status, Pageable pageable) {
         return auctionReadUseCase.getMyBids(memberPublicId, status, pageable);
@@ -78,7 +91,17 @@ public class AuctionFacade {
 
     // 경매 상태/현재가 요약 조회
     public PagedResponseDto<AuctionListResponseDto> getAuctions(AuctionSearchCondition condition, Pageable pageable) {
-        return auctionReadUseCase.getAuctions(condition, pageable);
+      return auctionReadUseCase.getAuctions(condition, pageable);
+    }
+
+    // 나의 낙찰 목록 조회
+    public PagedResponseDto<MyAuctionOrderListResponseDto> getMyAuctionOrders(String memberPublicId, AuctionOrderStatus status, Pageable pageable) {
+      return auctionReadUseCase.getMyAuctionOrders(memberPublicId, status, pageable);
+    }
+
+    @Transactional
+    public AuctionMember syncMember(MemberDto member) {
+      return auctionSyncMemberUseCase.syncMember(member);
     }
 
     // 관심 경매 해제
@@ -97,11 +120,6 @@ public class AuctionFacade {
     @Transactional
     public AuctionWithdrawResponseDto withdraw(Long auctionId, String memberPublicId) {
         return auctionWithdrawUseCase.execute(auctionId, memberPublicId);
-    }
-
-    @Transactional
-    public AuctionMember syncMember(MemberDto member) {
-        return auctionSyncMemberUseCase.syncMember(member);
     }
 
 }
