@@ -22,24 +22,32 @@ public class ProductFacade {
 	private final ProductSyncMemberUseCase productSyncMemberUseCase;
 	private final ProductUpdateProductUseCase productUpdateProductUseCase;
 	private final ProductDeleteProductUseCase productDeleteProductUseCase;
+	private final ProductReadInspectionUseCase productReadInspectionUseCase;
 
+	//판매자용
 	public ProductResponseDto createProduct(String memberUUID, ProductRequestDto dto) {
 		return productCreateProductUseCase.createProduct(memberUUID, dto);
-	}
-
-	public ProductInspectionResponseDto createInspection(String memberUUID, ProductInspectionRequestDto dto) {
-		return productCreateInspectionUseCase.createInspection(memberUUID, dto);
 	}
 
 	public ProductUpdateResponseDto updateProduct(String publicId, Long productId, ProductUpdateDto productUpdateDto) {
 		return productUpdateProductUseCase.updateProduct(publicId, productId, productUpdateDto);
 	}
 
-	public ProductMember syncMember(MemberDto member) {
-		return productSyncMemberUseCase.syncMember(member);
-	}
-
 	public void deleteProduct(String publicId, Long productId) {
 		productDeleteProductUseCase.deleteProduct(publicId, productId);
+	}
+
+	//관리자용
+	public ProductInspectionResponseDto createInspection(String memberUUID, ProductInspectionRequestDto dto) {
+		return productCreateInspectionUseCase.createInspection(memberUUID, dto);
+	}
+
+	public ProductInspectionResponseDto readInspection(Long productId) {
+		return productReadInspectionUseCase.readInspection(productId);
+	}
+
+	//멤버 동기화
+	public ProductMember syncMember(MemberDto member) {
+		return productSyncMemberUseCase.syncMember(member);
 	}
 }

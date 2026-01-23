@@ -1,5 +1,7 @@
 package com.bugzero.rarego.shared.product.dto;
 
+import java.time.LocalDateTime;
+
 import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.boundedContext.product.domain.ProductCondition;
 
@@ -11,6 +13,8 @@ public record ProductInspectionResponseDto(
 	Long productId,
 	InspectionStatus newStatus,
 	ProductCondition productCondition,
-	String reason
+	String reason,
+	LocalDateTime updatedAt,
+	LocalDateTime createdAt
 ) {
 }
