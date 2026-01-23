@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,11 +16,17 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.MethodParameter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.bind.support.WebDataBinderFactory;
+import org.springframework.web.context.request.NativeWebRequest;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.method.support.ModelAndViewContainer;
 
 import com.bugzero.rarego.boundedContext.product.app.ProductFacade;
 import com.bugzero.rarego.boundedContext.product.domain.Category;
@@ -27,8 +34,10 @@ import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.boundedContext.product.domain.ProductCondition;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
 import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.exception.GlobalExceptionHandler;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.PagedResponseDto;
+import com.bugzero.rarego.global.security.MemberPrincipal;
 import com.bugzero.rarego.shared.product.dto.ProductInspectionRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductInspectionResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductResponseForInspectionDto;
@@ -41,8 +50,10 @@ import tools.jackson.databind.ObjectMapper;
 @Import(ResponseAspect.class)
 class ProductInspectionControllerTest {
 
-	@Autowired
 	private MockMvc mockMvc;
+
+	@Autowired
+	private ProductInspectionController controller;
 
 	@MockitoBean
 	private ProductFacade productFacade;
@@ -51,12 +62,38 @@ class ProductInspectionControllerTest {
 	private ObjectMapper objectMapper;
 
 	private final Long PRODUCT_ID = 1L;
+	private final String PUBLIC_ID = "2L";
+
+	@BeforeEach
+	void setUp() {
+		// 1. ArgumentResolver 설정 (이게 핵심입니다!)
+		HandlerMethodArgumentResolver mockPrincipalResolver = new HandlerMethodArgumentResolver() {
+			@Override
+			public boolean supportsParameter(MethodParameter parameter) {
+				// MemberPrincipal 타입이 인자에 보이면 내가 처리하겠다!
+				return MemberPrincipal.class.isAssignableFrom(parameter.getParameterType());
+			}
+
+			@Override
+			public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
+				NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
+				// 컨트롤러에 넣어줄 가짜 Record 객체 반환
+				return new MemberPrincipal(PUBLIC_ID, "SELLER");
+			}
+		};
+
+		// 2. MockMvc 수동 빌드 (standaloneSetup)
+		mockMvc = MockMvcBuilders.standaloneSetup(controller)
+			.setCustomArgumentResolvers(mockPrincipalResolver) // 리졸버 장착
+			.setControllerAdvice(new GlobalExceptionHandler()) // 에러 처리기 연결 (중요!)
+			.build();
+
+	}
 
 	@Test
 	@DisplayName("성공 - 상품 검수 생성 API가 정상적으로 호출되면 201 Created를 반환한다")
 	void createProductInspection_success() throws Exception {
 		// given
-		String inspectorId = "admin-1";
 		ProductInspectionRequestDto requestDto = new ProductInspectionRequestDto(
 			1L, InspectionStatus.APPROVED, ProductCondition.MISB,
 			"검수 승인 완료"
@@ -71,12 +108,11 @@ class ProductInspectionControllerTest {
 			.build();
 
 		// Facade의 동작을 Mocking (로직 검증은 UseCase 테스트에서 이미 했으므로 결과값만 정의)
-		given(productFacade.createInspection(eq(inspectorId), any(ProductInspectionRequestDto.class)))
+		given(productFacade.createInspection(eq(PUBLIC_ID), any(ProductInspectionRequestDto.class)))
 			.willReturn(responseDto);
 
 		// when & then
 		mockMvc.perform(post("/api/v1/products/inspections")
-				.param("inspectorId", inspectorId) // RequestParam 처리
 				.contentType(MediaType.APPLICATION_JSON) // JSON 요청임을 명시
 				.content(objectMapper.writeValueAsString(requestDto))) // Body를 JSON으로 변환
 			.andExpect(status().isCreated()) // SuccessResponseDto 구조상 HTTP 200 안에 SuccessType.CREATED 포함
@@ -100,7 +136,6 @@ class ProductInspectionControllerTest {
 
 		// when & then
 		mockMvc.perform(post("/api/v1/products/inspections")
-				.param("inspectorId", "admin-1")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(invalidDto)))
 			.andExpect(status().isBadRequest()) // 400 검증
