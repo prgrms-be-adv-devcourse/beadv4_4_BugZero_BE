@@ -48,7 +48,7 @@ class AuctionRepositoryTest {
 
 		// 1. 승인된 상품
 		Product approvedProduct = Product.builder()
-			.sellerId(seller.getId())
+			.seller(seller)
 			.name("승인상품")
 			.build();
 		em.persist(approvedProduct);
@@ -64,7 +64,7 @@ class AuctionRepositoryTest {
 
 		// 2. 미승인 상품 (PENDING)
 		Product pendingProduct = Product.builder()
-			.sellerId(seller.getId())
+			.seller(seller)
 			.name("대기상품")
 			.build();
 		em.persist(pendingProduct);
