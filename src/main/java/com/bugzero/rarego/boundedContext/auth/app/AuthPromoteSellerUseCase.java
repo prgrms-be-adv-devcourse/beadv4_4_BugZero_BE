@@ -1,6 +1,7 @@
 package com.bugzero.rarego.boundedContext.auth.app;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.boundedContext.auth.domain.Account;
@@ -17,7 +18,7 @@ public class AuthPromoteSellerUseCase {
 	private final AuthSupport authSupport;
 	private final AccountRepository accountRepository;
 
-	@Transactional
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public void promoteSeller(String memberPublicId) {
 		if (memberPublicId == null || memberPublicId.isBlank()) {
 			throw new CustomException(ErrorType.AUTH_MEMBER_REQUIRED);
