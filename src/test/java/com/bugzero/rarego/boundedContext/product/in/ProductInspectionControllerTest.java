@@ -5,6 +5,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.time.LocalDateTime;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,8 @@ import com.bugzero.rarego.boundedContext.product.app.ProductFacade;
 import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.boundedContext.product.domain.ProductCondition;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.shared.product.dto.ProductInspectionRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductInspectionResponseDto;
 
@@ -40,8 +44,10 @@ class ProductInspectionControllerTest {
 	@Autowired
 	private ObjectMapper objectMapper;
 
+	private final Long PRODUCT_ID = 1L;
+
 	@Test
-	@DisplayName("상품 검수 생성 API가 정상적으로 호출되면 201 Created를 반환한다")
+	@DisplayName("성공 - 상품 검수 생성 API가 정상적으로 호출되면 201 Created를 반환한다")
 	void createProductInspection_success() throws Exception {
 		// given
 		String inspectorId = "admin-1";
@@ -76,7 +82,7 @@ class ProductInspectionControllerTest {
 	}
 
 	@Test
-	@DisplayName("상품 ID가 누락된 요청은 400 에러를 반환한다")
+	@DisplayName("실패 - 상품 ID가 누락된 요청은 400 에러를 반환한다")
 	void createInspection_fail_invalidProductId() throws Exception {
 		// given
 		ProductInspectionRequestDto invalidDto = new ProductInspectionRequestDto(
@@ -92,6 +98,47 @@ class ProductInspectionControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(invalidDto)))
 			.andExpect(status().isBadRequest()) // 400 검증
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("성공 - 특정 상품의 검수 내역 조회 시 200 OK와 상세 정보를 반환한다")
+	void readInspection_Success() throws Exception {
+		// given
+		ProductInspectionResponseDto responseDto = ProductInspectionResponseDto.builder()
+			.inspectionId(500L)
+			.productId(PRODUCT_ID)
+			.newStatus(InspectionStatus.APPROVED)
+			.productCondition(ProductCondition.MISB)
+			.reason("검수 완료")
+			.createdAt(LocalDateTime.now())
+			.build();
+
+		given(productFacade.readInspection(PRODUCT_ID)).willReturn(responseDto);
+
+		// when & then
+		mockMvc.perform(get("/api/v1/inspections/{productId}", PRODUCT_ID)
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value(200))
+			.andExpect(jsonPath("$.data.inspectionId").value(500L))
+			.andExpect(jsonPath("$.data.productId").value(PRODUCT_ID))
+			.andExpect(jsonPath("$.data.newStatus").value("APPROVED"))
+			.andExpect(jsonPath("$.data.reason").value("검수 완료"))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("실패 - 해당 상품의 검수 내역이 없으면 404 Not Found를 반환한다")
+	void readInspection_Fail_NotFound() throws Exception {
+		// given
+		given(productFacade.readInspection(anyLong()))
+			.willThrow(new CustomException(ErrorType.INSPECTION_NOT_FOUND));
+
+		// when & then
+		mockMvc.perform(get("/api/v1/inspections/{productId}", PRODUCT_ID)
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isNotFound())
 			.andDo(print());
 	}
 
