@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class ProductReadProductUseCase {
+public class ProductReadProductForInspectionUseCase {
 	private final ProductRepository productRepository;
 
 	@Transactional(readOnly = true)

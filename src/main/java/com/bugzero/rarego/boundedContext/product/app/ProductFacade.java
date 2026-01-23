@@ -26,7 +26,9 @@ public class ProductFacade {
 	private final ProductSyncMemberUseCase productSyncMemberUseCase;
 	private final ProductUpdateProductUseCase productUpdateProductUseCase;
 	private final ProductDeleteProductUseCase productDeleteProductUseCase;
-	private final ProductReadProductUseCase productReadProductUseCase;
+	private final ProductReadProductForInspectionUseCase productReadProductForInspectionUseCase;
+	private final ProductReadInspectionUseCase productReadInspectionUseCase;
+
 	//판매자용
 	public ProductRequestResponseDto createProduct(String memberUUID, ProductRequestDto dto) {
 		return productCreateProductUseCase.createProduct(memberUUID, dto);
@@ -51,7 +53,7 @@ public class ProductFacade {
 
 	public PagedResponseDto<ProductResponseForInspectionDto> readProductsForInspection(
 		ProductSearchForInspectionCondition condition, Pageable pageable) {
-		return productReadProductUseCase.readProducts(condition, pageable);
+		return productReadProductForInspectionUseCase.readProducts(condition, pageable);
 	}
 
 	//멤버 동기화

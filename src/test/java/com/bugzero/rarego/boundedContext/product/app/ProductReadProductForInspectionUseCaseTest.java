@@ -22,7 +22,7 @@ import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.shared.product.dto.ProductResponseForInspectionDto;
 
 @DataJpaTest
-class ProductReadProductUseCaseTest {
+class ProductReadProductForInspectionUseCaseTest {
 	@Autowired
 	private ProductRepository productRepository;
 
