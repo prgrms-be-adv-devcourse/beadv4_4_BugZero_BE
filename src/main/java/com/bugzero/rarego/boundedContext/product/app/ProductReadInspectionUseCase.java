@@ -1,6 +1,7 @@
 package com.bugzero.rarego.boundedContext.product.app;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.boundedContext.product.domain.Inspection;
 import com.bugzero.rarego.boundedContext.product.out.InspectionRepository;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 public class ProductReadInspectionUseCase {
 	private final InspectionRepository inspectionRepository;
 
+	@Transactional(readOnly = true)
 	public ProductInspectionResponseDto readInspection(Long productId) {
 		Inspection inspection = inspectionRepository.findByProductId(productId)
 			.orElseThrow(() -> new CustomException(ErrorType.INSPECTION_NOT_FOUND));
