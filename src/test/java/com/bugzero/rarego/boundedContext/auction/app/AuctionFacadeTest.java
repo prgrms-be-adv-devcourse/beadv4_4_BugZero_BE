@@ -5,6 +5,7 @@ import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.*;
 import com.bugzero.rarego.shared.auction.dto.*;
@@ -56,8 +57,11 @@ class AuctionFacadeTest {
     @Mock
     private AuctionMemberRepository auctionMemberRepository;
 
-	  @Mock
-	  private AuctionRelistUseCase auctionRelistUseCase;
+    @Mock
+    private AuctionOrderRepository auctionOrderRepository;
+
+    @Mock
+    private AuctionRelistUseCase auctionRelistUseCase;
 
 	@Test
 	@DisplayName("입찰 생성 요청 시 UseCase를 호출하고 결과를 반환한다")
@@ -338,4 +342,23 @@ class AuctionFacadeTest {
 
 		verify(auctionRelistUseCase).relistAuction(auctionId, memberPublicId, request);
 	}
+
+    @Test
+    @DisplayName("processing 주문 여부: 구매/판매자 중 하나라도 있으면 true를 반환한다")
+    void hasProcessingOrders_ReturnsTrueWhenBuyerOrSellerHasProcessing() {
+        // given
+        String publicId = "member-public-id";
+        given(auctionOrderRepository.existsByBuyerPublicIdAndStatus(publicId, AuctionOrderStatus.PROCESSING))
+                .willReturn(false);
+        given(auctionOrderRepository.existsBySellerPublicIdAndStatus(publicId, AuctionOrderStatus.PROCESSING))
+                .willReturn(true);
+
+        // when
+        boolean result = auctionFacade.hasProcessingOrders(publicId);
+
+        // then
+        assertThat(result).isTrue();
+        verify(auctionOrderRepository).existsByBuyerPublicIdAndStatus(publicId, AuctionOrderStatus.PROCESSING);
+        verify(auctionOrderRepository).existsBySellerPublicIdAndStatus(publicId, AuctionOrderStatus.PROCESSING);
+    }
 }

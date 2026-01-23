@@ -136,4 +136,26 @@ public class AuthController {
 
 		return SuccessResponseDto.from(SuccessType.OK);
 	}
+
+	@SecurityRequirement(name = "bearerAuth")
+	@Operation(summary = "회원 탈퇴", description = "계정/회원/지갑을 소프트 삭제하고 토큰을 폐기합니다")
+	@PostMapping("/withdraw")
+	public SuccessResponseDto<Void> withdraw(
+		@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
+		HttpServletResponse response
+	) {
+		String accessToken = resolveToken(authorization);
+		authFacade.withdraw(accessToken);
+
+		ResponseCookie refreshTokenCookie = ResponseCookie.from(REFRESH_TOKEN_ATTRIBUTE, "")
+			.httpOnly(true)
+			.secure(refreshTokenCookieSecure)
+			.path("/")
+			.maxAge(Duration.ZERO)
+			.sameSite(refreshTokenCookieSameSite)
+			.build();
+		response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
+
+		return SuccessResponseDto.from(SuccessType.OK);
+	}
 }
