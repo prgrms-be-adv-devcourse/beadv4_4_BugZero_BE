@@ -29,7 +29,7 @@ class AuctionDetermineStartAuctionUseCaseTest {
 	@InjectMocks
 	AuctionDetermineStartAuctionUseCase useCase;
 
-	private final Long AUCTION_ID = 1L;
+	private final Long PRODUCT_ID = 1L;
 	private final int durationDays = 2;
 
 	@Test
@@ -41,17 +41,17 @@ class AuctionDetermineStartAuctionUseCaseTest {
 			.startTime(null)
 			.durationDays(durationDays)
 			.build();
-		ReflectionTestUtils.setField(auction, "id", AUCTION_ID);
+		ReflectionTestUtils.setField(auction, "id", PRODUCT_ID);
 
 		Auction spyAuction = spy(auction);
-		given(auctionRepository.findByIdAndDeletedIsFalse(AUCTION_ID))
+		given(auctionRepository.findByProductIdAndStartTimeIsNull(PRODUCT_ID))
 			.willReturn(Optional.of(spyAuction));
 
 		// when
-		Long resultId = useCase.determineStartAuction(AUCTION_ID);
+		Long resultId = useCase.determineStartAuction(PRODUCT_ID);
 
 		// then
-		assertThat(resultId).isEqualTo(AUCTION_ID);
+		assertThat(resultId).isEqualTo(PRODUCT_ID);
 
 		// 캡처를 통해 실제 계산된 시간을 검증
 		ArgumentCaptor<LocalDateTime> timeCaptor = ArgumentCaptor.forClass(LocalDateTime.class);
@@ -68,33 +68,16 @@ class AuctionDetermineStartAuctionUseCaseTest {
 		);
 	}
 
-	@Test
-	@DisplayName("실패: 이미 시작 시간이 정해진 경매라면 예외가 발생한다")
-	void determineStartAuction_fail_already_has_time() {
-		// given
-		Auction auctionWithTime = Auction.builder()
-			.startTime(LocalDateTime.now())
-			.durationDays(durationDays)
-			.build();
-
-		given(auctionRepository.findByIdAndDeletedIsFalse(AUCTION_ID))
-			.willReturn(Optional.of(auctionWithTime));
-
-		// when & then
-		assertThatThrownBy(() -> useCase.determineStartAuction(AUCTION_ID))
-			.isInstanceOf(CustomException.class)
-			.hasFieldOrPropertyWithValue("errorType", ErrorType.AUCTION_ALREADY_HAS_START_TIME);
-	}
 
 	@Test
-	@DisplayName("실패: 경매를 찾을 수 없으면 예외가 발생한다")
+	@DisplayName("실패: 경매 일정이 확정되지 않은 경매를 찾을 수 없으면 예외가 발생한다")
 	void determineStartAuction_fail_not_found() {
 		// given
-		given(auctionRepository.findByIdAndDeletedIsFalse(anyLong()))
+		given(auctionRepository.findByProductIdAndStartTimeIsNull(anyLong()))
 			.willReturn(Optional.empty());
 
 		// when & then
-		assertThatThrownBy(() -> useCase.determineStartAuction(AUCTION_ID))
+		assertThatThrownBy(() -> useCase.determineStartAuction(PRODUCT_ID))
 			.isInstanceOf(CustomException.class)
 			.hasFieldOrPropertyWithValue("errorType", ErrorType.AUCTION_NOT_FOUND);
 	}

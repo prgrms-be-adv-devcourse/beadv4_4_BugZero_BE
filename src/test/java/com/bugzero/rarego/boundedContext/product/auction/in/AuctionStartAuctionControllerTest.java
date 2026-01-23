@@ -40,17 +40,17 @@ class AuctionStartAuctionControllerTest {
 	@DisplayName("성공 - 시작 시간 확정 요청 시 200 OK와 경매 ID를 반환한다")
 	void createAuction_Success() throws Exception {
 		// given
-		Long auctionId = 1L;
+		Long productId = 1L;
 
-		given(auctionDetermineStartAuctionUseCase.determineStartAuction(eq(auctionId)))
-			.willReturn(auctionId);
+		given(auctionDetermineStartAuctionUseCase.determineStartAuction(eq(productId)))
+			.willReturn(productId);
 
 		// when & then
-		mockMvc.perform(patch("/api/v1/auctions/{auctionId}/startTime", auctionId) // 1. patch 사용 및 경로 수정
+		mockMvc.perform(patch("/api/v1/auctions/{auctionId}/startTime", productId) // 1. patch 사용 및 경로 수정
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(status().isOk()) // 2. isCreated() 대신 isOk() 사용
 			.andExpect(jsonPath("$.status").value(200)) // SuccessResponseDto 구조 검증
-			.andExpect(jsonPath("$.data").value(auctionId))
+			.andExpect(jsonPath("$.data").value(productId))
 			.andDo(print());
 	}
 

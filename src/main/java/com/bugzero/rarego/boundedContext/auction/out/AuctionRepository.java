@@ -1,8 +1,10 @@
 package com.bugzero.rarego.boundedContext.auction.out;
 
-import com.bugzero.rarego.boundedContext.auction.domain.Auction;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
-import jakarta.persistence.LockModeType;
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,10 +13,10 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import com.bugzero.rarego.boundedContext.auction.domain.Auction;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
+
+import jakarta.persistence.LockModeType;
 
 public interface AuctionRepository extends JpaRepository<Auction, Long>, JpaSpecificationExecutor<Auction> {
     // 비관적 락 처리
@@ -38,6 +40,9 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, JpaSpec
 
     //삭제가 되지 않은 경매 정보만 반환
     Optional<Auction> findByIdAndDeletedIsFalse(Long auctionId);
+
+    //경매일정이 확정되지 않은 경매 정보만 반환
+    Optional<Auction> findByProductIdAndStartTimeIsNull(Long productId);
 
     // 필터링 없는 조건
     Page<Auction> findAllByProductIdIn(Collection<Long> productIds, Pageable pageable);
