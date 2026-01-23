@@ -11,6 +11,7 @@ import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
+import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
 import com.bugzero.rarego.shared.payment.out.PaymentApiClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -42,14 +43,11 @@ public class AuctionCreateBidUseCase {
 		// 3. 유효성 검증
 		validateBid(auction, bidder, bidAmount);
 
-		// TODO: 보증금 정책이 확정되면 변경 예정
 		// 현재는 경매 시작 금액의 10%만 보증금으로 책정
 		int depositAmount = (int) (auction.getStartPrice() * 0.1);
 
 		// 보증금 Hold (유효성 검증 통과 후 보증금 Hold)
-		// TODO: 현재 holdDeposit 같은 경우 memberId를 받기 때문에 추후에 변경 예정
-
-		// DepositHoldResponseDto depositResponse = paymentApiClient.holdDeposit(depositAmount, memberId, auctionId);
+		paymentApiClient.holdDeposit(depositAmount, memberPublicId, auctionId);
 
 		// 4. 현재가 갱신
 		auction.updateCurrentPrice(bidAmount);
