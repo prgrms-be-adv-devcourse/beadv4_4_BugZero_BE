@@ -52,7 +52,6 @@ public class AuthWithdrawAccountUseCase {
         memberApiClient.withdraw(publicId);
 
         account.softDelete();
-        accountRepository.save(account);
 
         refreshTokenRepository.deleteByMemberPublicId(publicId);
         authAccessTokenBlacklistUseCase.blacklist(accessToken);
