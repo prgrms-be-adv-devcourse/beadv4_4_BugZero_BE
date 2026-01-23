@@ -58,8 +58,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, JpaSpec
         SELECT a FROM Auction a
         WHERE (:auctionIds IS NULL OR a.id IN :auctionIds)      
         AND (:status IS NULL OR a.status = :status)
-        AND (:productIds IS NULL OR a.productId IN :productIds)
-        AND a.status != 'SCHEDULED'                             
+        AND (:productIds IS NULL OR a.productId IN :productIds)                            
         AND a.startTime IS NOT NULL
         AND a.endTime IS NOT NULL
         AND EXISTS (                                            

@@ -275,8 +275,6 @@ public class AuctionDataInit implements CommandLineRunner {
             .productId(approvedProduct.getId())
             .sellerId(seller.getId())
             .startPrice(500000)
-            // .currentPrice(500000) ->
-            // .status(AuctionStatus.IN_PROGRESS) ->
             .startTime(LocalDateTime.now().minusHours(1))
             .endTime(LocalDateTime.now().plusDays(2))
             .durationDays(2)
