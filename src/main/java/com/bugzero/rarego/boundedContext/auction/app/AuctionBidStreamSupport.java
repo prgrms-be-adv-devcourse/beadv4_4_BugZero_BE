@@ -45,7 +45,7 @@ public class AuctionBidStreamSupport {
     public SseEmitter subscribe(Long auctionId, Integer currentPrice) {
         SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);
 
-        // 구독자 목록에 추가
+        // 경매방 번호가 없고 방이 처음 만들어졌다면 빈 리스트 생성해서 반환
         emitters.computeIfAbsent(auctionId, k -> new CopyOnWriteArrayList<>()).add(emitter);
 
         log.info("경매 {} 구독 시작 - 현재 구독자 수: {}", auctionId, emitters.get(auctionId).size());
@@ -246,7 +246,6 @@ public class AuctionBidStreamSupport {
                 emitters.forEach((auctionId, auctionEmitters) -> {
                     auctionEmitters.forEach(emitter -> {
                         try {
-                            // 미리 직렬화된 JSON 문자열 전달
                             sendToEmitter(
                                     emitter,
                                     "ping",

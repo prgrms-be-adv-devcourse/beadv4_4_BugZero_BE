@@ -34,20 +34,23 @@ public enum ErrorType {
     MEMBER_NICKNAME_ALREADY_EXISTS(409, 1022, "이미 존재하는 닉네임입니다."),
     MEMBER_MEMBER_DELETED(403, 1023, "탈퇴한 계정입니다."),
 
-	// Auth/JWT (1500 ~ 1999)
-	AUTH_MEMBER_REQUIRED(400, 1501, "회원 정보가 필요합니다."),
-	JWT_EXPIRE_SECONDS_INVALID(500, 1504, "토큰 만료 설정이 올바르지 않습니다."),
-	JWT_ISSUE_FAILED(500, 1505, "토큰 발급에 실패했습니다."),
-	AUTH_UNAUTHORIZED(401, 1506, "인증이 필요합니다."),
-	AUTH_FORBIDDEN(403, 1507, "권한이 없습니다."),
-	AUTH_OAUTH2_INVALID_RESPONSE(400, 1508, "유효하지 않은 소셜 로그인입니다."),
-	AUTH_JOIN_FAILED(500, 1509, "회원 가입에 실패했습니다."),
-	AUTH_REFRESH_TOKEN_REQUIRED(401, 1510, "리프레시 토큰이 필요합니다."),
-	AUTH_REFRESH_TOKEN_INVALID(401, 1511, "유효하지 않은 리프레시 토큰입니다."),
-	AUTH_REFRESH_TOKEN_EXPIRED(401, 1512, "리프레시 토큰이 만료되었습니다."),
-	AUTH_REFRESH_TOKEN_OWNER_MISMATCH(401, 1513, "리프레시 토큰 소유자가 일치하지 않습니다."),
+    // Auth/JWT (1500 ~ 1999)
+    AUTH_MEMBER_REQUIRED(400, 1501, "회원 정보가 필요합니다."),
+    JWT_EXPIRE_SECONDS_INVALID(500, 1504, "토큰 만료 설정이 올바르지 않습니다."),
+    JWT_ISSUE_FAILED(500, 1505, "토큰 발급에 실패했습니다."),
+    AUTH_UNAUTHORIZED(401, 1506, "인증이 필요합니다."),
+    AUTH_FORBIDDEN(403, 1507, "권한이 없습니다."),
+    AUTH_OAUTH2_INVALID_RESPONSE(400, 1508, "유효하지 않은 소셜 로그인입니다."),
+    AUTH_JOIN_FAILED(500, 1509, "회원 가입에 실패했습니다."),
+    AUTH_REFRESH_TOKEN_REQUIRED(401, 1510, "리프레시 토큰이 필요합니다."),
+    AUTH_REFRESH_TOKEN_INVALID(401, 1511, "유효하지 않은 리프레시 토큰입니다."),
+    AUTH_REFRESH_TOKEN_EXPIRED(401, 1512, "리프레시 토큰이 만료되었습니다."),
+    AUTH_REFRESH_TOKEN_OWNER_MISMATCH(401, 1513, "리프레시 토큰 소유자가 일치하지 않습니다."),
     AUTH_ACCOUNT_DELETED(403, 1514, "탈퇴한 계정입니다."),
     AUTH_ACCOUNT_NOT_FOUND(404, 1515, "회원 정보를 찾을 수 없습니다."),
+    WITHDRAWAL_ACTIVE_BID_EXISTS(409, 1516, "진행 중인 입찰이 있어 탈퇴할 수 없습니다."),
+    WITHDRAWAL_ACTIVE_SALE_EXISTS(409, 1517, "진행 중인 판매가 있어 탈퇴할 수 없습니다."),
+    WITHDRAWAL_PROCESSING_ORDER_EXISTS(409, 1518, "처리 중인 주문이 있어 탈퇴할 수 없습니다."),
 
     // Auction (2000 ~ 2999)
     AUCTION_CREATE_FAILED(500, 2000, "경매 생성에 실패했습니다."),
@@ -80,10 +83,10 @@ public enum ErrorType {
     AUCTION_WITHDRAW_NOT_INSPECTED(400, 2513, "검수 전 경매는 판매 포기할 수 없습니다."),
     BOOKMARK_UNAUTHORIZED_ACCESS(403, 2514, "요청한 사용자가 북마크의 memberId와 일치하지 않습니다."),
 
-	// Product (3000 ~ 3999)
-	PRODUCT_NOT_FOUND(404, 3001, "상품이 존재하지 않습니다."),
-	UNAUTHORIZED_SELLER(403, 3002, "해당 상품의 판매자가 아닙니다."),
-	IMAGE_NOT_FOUND(400, 3003, "해당 상품 이미지가 존재하지 않습니다."),
+    // Product (3000 ~ 3999)
+    PRODUCT_NOT_FOUND(404, 3001, "상품이 존재하지 않습니다."),
+    UNAUTHORIZED_SELLER(403, 3002, "해당 상품의 판매자가 아닙니다."),
+    IMAGE_NOT_FOUND(400, 3003, "해당 상품 이미지가 존재하지 않습니다."),
 
     INSPECTION_REJECT_REASON_REQUIRED(400, 3501, "검수 반려시 사유가 있어야 합니다."),
     INSPECTION_ALREADY_COMPLETED(400, 3502, "검수가 이미 완료된 상품입니다."),
