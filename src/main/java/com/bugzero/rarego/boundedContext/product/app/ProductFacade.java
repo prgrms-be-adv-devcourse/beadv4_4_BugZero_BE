@@ -1,13 +1,17 @@
 package com.bugzero.rarego.boundedContext.product.app;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
+import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.shared.member.domain.MemberDto;
+import com.bugzero.rarego.shared.product.dto.ProductCreateRequestDto;
+import com.bugzero.rarego.shared.product.dto.ProductCreateResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductInspectionRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductInspectionResponseDto;
-import com.bugzero.rarego.shared.product.dto.ProductRequestDto;
-import com.bugzero.rarego.shared.product.dto.ProductResponseDto;
+import com.bugzero.rarego.shared.product.dto.ProductResponseForInspectionDto;
+import com.bugzero.rarego.shared.product.dto.ProductSearchForInspectionCondition;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateDto;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateResponseDto;
 
@@ -22,10 +26,11 @@ public class ProductFacade {
 	private final ProductSyncMemberUseCase productSyncMemberUseCase;
 	private final ProductUpdateProductUseCase productUpdateProductUseCase;
 	private final ProductDeleteProductUseCase productDeleteProductUseCase;
+	private final ProductReadProductsForInspectionUseCase productReadProductsForInspectionUseCase;
 	private final ProductReadInspectionUseCase productReadInspectionUseCase;
 
 	//판매자용
-	public ProductResponseDto createProduct(String memberUUID, ProductRequestDto dto) {
+	public ProductCreateResponseDto createProduct(String memberUUID, ProductCreateRequestDto dto) {
 		return productCreateProductUseCase.createProduct(memberUUID, dto);
 	}
 
@@ -46,8 +51,15 @@ public class ProductFacade {
 		return productReadInspectionUseCase.readInspection(productId);
 	}
 
+	public PagedResponseDto<ProductResponseForInspectionDto> readProductsForInspection(
+		ProductSearchForInspectionCondition condition, Pageable pageable) {
+		return productReadProductsForInspectionUseCase.readProducts(condition, pageable);
+	}
+
 	//멤버 동기화
 	public ProductMember syncMember(MemberDto member) {
 		return productSyncMemberUseCase.syncMember(member);
 	}
+
+
 }
