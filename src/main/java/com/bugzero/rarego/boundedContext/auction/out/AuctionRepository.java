@@ -1,10 +1,8 @@
 package com.bugzero.rarego.boundedContext.auction.out;
 
-import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-
+import com.bugzero.rarego.boundedContext.auction.domain.Auction;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,10 +11,10 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.bugzero.rarego.boundedContext.auction.domain.Auction;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
-
-import jakarta.persistence.LockModeType;
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 public interface AuctionRepository extends JpaRepository<Auction, Long>, JpaSpecificationExecutor<Auction> {
     // 비관적 락 처리
@@ -46,9 +44,9 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, JpaSpec
 
     // 상태 필터링이 있을 때
     Page<Auction> findAllByProductIdInAndStatusIn(
-        Collection<Long> productIds,
-        Collection<AuctionStatus> statuses,
-        Pageable pageable
+            Collection<Long> productIds,
+            Collection<AuctionStatus> statuses,
+            Pageable pageable
     );
 
     @Query("""
@@ -69,4 +67,15 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, JpaSpec
         @Param("productIds") List<Long> productIds,
         Pageable pageable
     );
+    /**
+     * 해당 회원이 진행 중인 판매가 있는지 확인
+     */
+    @Query("""
+                SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END
+                FROM Auction a
+                JOIN AuctionMember m ON a.sellerId = m.id
+                WHERE m.publicId = :publicId
+                AND a.status <> 'ENDED'
+            """)
+    boolean existsActiveSaleByPublicId(@Param("publicId") String publicId);
 }

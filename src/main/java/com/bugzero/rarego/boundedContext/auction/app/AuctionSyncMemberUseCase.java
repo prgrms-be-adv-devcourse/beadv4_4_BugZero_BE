@@ -30,10 +30,16 @@ public class AuctionSyncMemberUseCase {
 		if (existedOpt.isPresent()) {
 			AuctionMember existed = existedOpt.get();
 
+			if (existed.isDeleted() && !member.deleted()) {
+				log.info("[SKIP] auctionMember sync 중 삭제된 회원은 복구하지 않음. id={}", member.id());
+				return existed;
+			}
+
 			// 지연된 이벤트 (현재 updatedAt과 비교 후 느리면) 무시됨
 			if (existed.getUpdatedAt() != null
 				&& member.updatedAt() != null
-				&& !member.updatedAt().isAfter(existed.getUpdatedAt())) {
+				&& !member.updatedAt().isAfter(existed.getUpdatedAt())
+				&& !(member.deleted() && !existed.isDeleted())) {
 
 				log.info("[SKIP] AuctionMember sync 중 이벤트 지연 무시됨. id={}, existedUpdatedAt={}, eventUpdatedAt={}",
 					member.id(), existed.getUpdatedAt(), member.updatedAt());

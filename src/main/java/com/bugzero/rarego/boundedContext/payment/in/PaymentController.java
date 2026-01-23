@@ -27,6 +27,7 @@ import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmResponseDt
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.SettlementResponseDto;
+import com.bugzero.rarego.boundedContext.payment.in.dto.WalletResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.WalletTransactionResponseDto;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
@@ -35,7 +36,6 @@ import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.global.security.MemberPrincipal;
 
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -120,8 +120,15 @@ public class PaymentController {
 			paymentFacade.getSettlements(principal.publicId(), page, size, status, from, to));
 	}
 
-	// 로컬 정산 배치 테스트용 api
-	@Hidden
+	@Operation(summary = "내 지갑 조회", description = "내 지갑 정보를 조회합니다.")
+	@GetMapping("/me/wallet")
+	public SuccessResponseDto<WalletResponseDto> getMyWallet(@AuthenticationPrincipal MemberPrincipal principal) {
+		WalletResponseDto response = paymentFacade.getMyWallet(principal.publicId());
+		return SuccessResponseDto.from(SuccessType.OK, response);
+	}
+
+	// 정산 배치 실행 api
+	@Operation(summary = "정산 배치 실행", description = "정산 배치를 실행합니다.")
 	@PostMapping("/settlement")
 	public SuccessResponseDto<Void> runSettlementJob() {
 		try {
