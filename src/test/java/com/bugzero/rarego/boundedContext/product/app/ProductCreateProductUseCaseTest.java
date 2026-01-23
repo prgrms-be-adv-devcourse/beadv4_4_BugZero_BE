@@ -22,9 +22,9 @@ import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.shared.auction.out.AuctionApiClient;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionRequestDto;
+import com.bugzero.rarego.shared.product.dto.ProductCreateRequestDto;
+import com.bugzero.rarego.shared.product.dto.ProductCreateResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductImageRequestDto;
-import com.bugzero.rarego.shared.product.dto.ProductRequestDto;
-import com.bugzero.rarego.shared.product.dto.ProductResponseDto;
 
 @ExtendWith(MockitoExtension.class)
 class ProductCreateProductUseCaseTest {
@@ -47,7 +47,7 @@ class ProductCreateProductUseCaseTest {
 		String memberId = "1L";
 		Long expectedAuctionId = 100L;
 
-		ProductRequestDto request = new ProductRequestDto(
+		ProductCreateRequestDto request = new ProductCreateRequestDto(
 			"스타워즈 시리즈",
 			Category.스타워즈,
 			"설명",
@@ -76,7 +76,7 @@ class ProductCreateProductUseCaseTest {
 			.willReturn(expectedAuctionId);
 
 		// when
-		ProductResponseDto response = useCase.createProduct(memberId, request);
+		ProductCreateResponseDto response = useCase.createProduct(memberId, request);
 		ArgumentCaptor<Product> productCaptor = ArgumentCaptor.forClass(Product.class);
 
 		verify(productRepository, times(1)).save(productCaptor.capture());
