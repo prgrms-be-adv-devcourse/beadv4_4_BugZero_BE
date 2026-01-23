@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.MethodParameter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -66,11 +67,11 @@ class ProductInspectionControllerTest {
 
 	@BeforeEach
 	void setUp() {
-		// 1. ArgumentResolver 설정 (이게 핵심입니다!)
+		// 1. ArgumentResolver 설정
 		HandlerMethodArgumentResolver mockPrincipalResolver = new HandlerMethodArgumentResolver() {
 			@Override
 			public boolean supportsParameter(MethodParameter parameter) {
-				// MemberPrincipal 타입이 인자에 보이면 내가 처리하겠다!
+				// MemberPrincipal 타입이 인자에 보이면 여기서 처리
 				return MemberPrincipal.class.isAssignableFrom(parameter.getParameterType());
 			}
 
@@ -84,7 +85,8 @@ class ProductInspectionControllerTest {
 
 		// 2. MockMvc 수동 빌드 (standaloneSetup)
 		mockMvc = MockMvcBuilders.standaloneSetup(controller)
-			.setCustomArgumentResolvers(mockPrincipalResolver) // 리졸버 장착
+			.setCustomArgumentResolvers(mockPrincipalResolver, // 리졸버 장착
+				new PageableHandlerMethodArgumentResolver())  //Pageable 인터페이스 기능 구현을 위한 설정
 			.setControllerAdvice(new GlobalExceptionHandler()) // 에러 처리기 연결 (중요!)
 			.build();
 

@@ -69,11 +69,11 @@ class ProductControllerTest {
 
 	@BeforeEach
 	void setUp() {
-		// 1. ArgumentResolver 설정 (이게 핵심입니다!)
+		// 1. ArgumentResolver 설정
 		HandlerMethodArgumentResolver mockPrincipalResolver = new HandlerMethodArgumentResolver() {
 			@Override
 			public boolean supportsParameter(MethodParameter parameter) {
-				// MemberPrincipal 타입이 인자에 보이면 내가 처리하겠다!
+				// MemberPrincipal 타입이 인자에 보이면 여기서 처리
 				return MemberPrincipal.class.isAssignableFrom(parameter.getParameterType());
 			}
 
@@ -88,7 +88,7 @@ class ProductControllerTest {
 		// 2. MockMvc 수동 빌드 (standaloneSetup)
 		mockMvc = MockMvcBuilders.standaloneSetup(productController)
 			.setCustomArgumentResolvers(mockPrincipalResolver) // 리졸버 장착
-			.setControllerAdvice(new GlobalExceptionHandler()) // 에러 처리기 연결 (중요!)
+			.setControllerAdvice(new GlobalExceptionHandler()) // 에러 처리기 연결
 			.build();
 
 		// 3. Fixture 준비
