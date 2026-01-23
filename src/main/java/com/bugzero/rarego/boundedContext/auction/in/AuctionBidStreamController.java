@@ -34,6 +34,7 @@ public class AuctionBidStreamController {
      * @param auctionId 경매 ID
      * @return SSE Emitter
      */
+    // TODO: 비즈니스 로직이 많아서 리팩토링 필요
     @GetMapping(value = "/{auctionId}/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe(@PathVariable Long auctionId) {
         log.info("경매 {} 스트림 구독 요청", auctionId);

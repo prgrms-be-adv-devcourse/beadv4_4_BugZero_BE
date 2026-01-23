@@ -32,6 +32,7 @@ import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmRequestDto
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentConfirmResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.PaymentRequestResponseDto;
+import com.bugzero.rarego.boundedContext.payment.in.dto.WalletResponseDto;
 import com.bugzero.rarego.boundedContext.payment.in.dto.WalletTransactionResponseDto;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
 import com.bugzero.rarego.global.exception.CustomException;
@@ -541,5 +542,54 @@ class PaymentControllerTest {
 				.contentType(MediaType.APPLICATION_JSON))
 			.andDo(print())
 			.andExpect(status().isBadRequest());
+	}
+
+	// ==================== 내 지갑 조회 API 테스트 ====================
+
+	@Test
+	@DisplayName("성공: 내 지갑 정보를 조회하면 HTTP 200과 지갑 상세 데이터를 반환한다")
+	void getMyWallet_success() throws Exception {
+		// given
+		String publicId = "member-uuid-123";
+		WalletResponseDto responseDto =
+			new WalletResponseDto(
+				1L,
+				publicId,
+				50000,   // balance
+				10000    // holdingAmount
+			);
+
+		given(paymentFacade.getMyWallet(eq(publicId))).willReturn(responseDto);
+
+		// when & then
+		mockMvc.perform(get("/api/v1/payments/me/wallet")
+				.with(authentication(createAuth(publicId, "USER"))) // 인증 주입
+				.with(csrf())
+				.contentType(MediaType.APPLICATION_JSON))
+			.andDo(print())
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value(SuccessType.OK.getHttpStatus()))
+			.andExpect(jsonPath("$.data.balance").value(50000))
+			.andExpect(jsonPath("$.data.holdingAmount").value(10000));
+	}
+
+	@Test
+	@DisplayName("실패: 지갑 정보가 존재하지 않는 경우(WALLET_NOT_FOUND) HTTP 404를 반환한다")
+	void getMyWallet_fail_not_found() throws Exception {
+		// given
+		String publicId = "ghost-id";
+
+		given(paymentFacade.getMyWallet(publicId))
+			.willThrow(new CustomException(ErrorType.WALLET_NOT_FOUND));
+
+		// when & then
+		mockMvc.perform(get("/api/v1/payments/me/wallet")
+				.with(authentication(createAuth(publicId, "USER")))
+				.with(csrf())
+				.contentType(MediaType.APPLICATION_JSON))
+			.andDo(print())
+			.andExpect(status().isNotFound())
+			.andExpect(jsonPath("$.status").value(ErrorType.WALLET_NOT_FOUND.getHttpStatus()))
+			.andExpect(jsonPath("$.message").value(ErrorType.WALLET_NOT_FOUND.getMessage()));
 	}
 }

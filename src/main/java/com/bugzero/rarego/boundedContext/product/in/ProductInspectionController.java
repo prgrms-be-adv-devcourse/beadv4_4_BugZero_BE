@@ -1,5 +1,7 @@
 package com.bugzero.rarego.boundedContext.product.in;
 
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,6 +32,14 @@ public class ProductInspectionController {
 		@Valid @RequestBody ProductInspectionRequestDto productInspectionRequestDto) {
 		return SuccessResponseDto.from(SuccessType.CREATED,
 			productFacade.createInspection(inspectorId, productInspectionRequestDto));
+	}
+
+	@GetMapping("/{productId}")
+	public SuccessResponseDto<ProductInspectionResponseDto> readInspection(
+		@PathVariable Long productId
+	) {
+		return SuccessResponseDto.from(SuccessType.OK,
+			productFacade.readInspection(productId));
 	}
 
 }
