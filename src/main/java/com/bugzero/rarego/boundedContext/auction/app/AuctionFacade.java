@@ -1,6 +1,5 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
-
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -109,8 +108,8 @@ public class AuctionFacade {
 
     // 관심 경매 해제
     @Transactional
-    public WishlistRemoveResponseDto removeBookmark(String publicId, Long bookmarkId) {
-        return auctionBookmarkUseCase.removeBookmark(publicId, bookmarkId);
+    public WishlistRemoveResponseDto removeBookmark(String publicId, Long auctionId) {
+        return auctionBookmarkUseCase.removeBookmark(publicId, auctionId);
     }
 
     // 내 관심 경매 목록 조회

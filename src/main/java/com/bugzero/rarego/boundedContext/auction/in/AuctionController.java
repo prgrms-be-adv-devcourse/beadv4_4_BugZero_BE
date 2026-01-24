@@ -95,12 +95,12 @@ public class AuctionController {
 
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "관심 경매 해제", description = "특정 경매를 관심 목록에서 제거합니다")
-    @DeleteMapping("/{bookmarkId}/bookmarks")
+    @DeleteMapping("/{auctionId}/bookmarks")
     public SuccessResponseDto<WishlistRemoveResponseDto> removeBookmark(
             @AuthenticationPrincipal MemberPrincipal memberPrincipal,
-            @PathVariable Long bookmarkId
+            @PathVariable Long auctionId
     ) {
-        WishlistRemoveResponseDto response = auctionFacade.removeBookmark(memberPrincipal.publicId(), bookmarkId);
+        WishlistRemoveResponseDto response = auctionFacade.removeBookmark(memberPrincipal.publicId(), auctionId);
         return SuccessResponseDto.from(SuccessType.OK, response);
     }
 
