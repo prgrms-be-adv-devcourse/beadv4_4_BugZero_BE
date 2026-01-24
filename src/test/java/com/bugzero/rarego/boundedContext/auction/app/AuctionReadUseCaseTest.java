@@ -16,6 +16,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.bugzero.rarego.boundedContext.auction.domain.*;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistListResponseDto;
 import com.bugzero.rarego.boundedContext.auction.out.*;
+import com.bugzero.rarego.boundedContext.product.app.ProductCreateS3PresignerUrlUseCase;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductImage;
 import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
@@ -37,8 +38,6 @@ import org.springframework.data.domain.Pageable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-import jakarta.persistence.criteria.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuctionReadUseCaseTest {
@@ -63,8 +62,10 @@ class AuctionReadUseCaseTest {
 	private AuctionMemberRepository auctionMemberRepository;
 	@Mock
 	private ProductImageRepository productImageRepository;
-  @Mock
-  private AuctionBookmarkRepository auctionBookmarkRepository;
+	@Mock
+	private AuctionBookmarkRepository auctionBookmarkRepository;
+	@Mock
+	private ProductCreateS3PresignerUrlUseCase s3PresignerUrlUseCase;
 
 	// --- 1. 경매 상세 조회 (getAuctionDetail) 테스트 ---
 
@@ -169,6 +170,10 @@ class AuctionReadUseCaseTest {
 		// [유지] ProductImage는 UseCase가 직접 조회
 		given(productImageRepository.findAllByProductId(50L)).willReturn(List.of(image));
 
+		// S3 Presigned URL 변환 Mocking
+		lenient().when(s3PresignerUrlUseCase.getPresignedGetUrl(anyString()))
+				.thenAnswer(invocation -> invocation.getArgument(0));
+
 		// when
 		AuctionOrderResponseDto result = auctionReadUseCase.getAuctionOrder(auctionId, buyerPublicId);
 
@@ -244,6 +249,10 @@ class AuctionReadUseCaseTest {
 		given(productRepository.findAllById(anySet())).willReturn(List.of(product));
 		given(bidRepository.countByAuctionIdIn(anySet())).willReturn(List.of());
 		given(productImageRepository.findAllByProductIdIn(anySet())).willReturn(List.of());
+
+		// S3 Presigned URL 변환 Mocking
+		lenient().when(s3PresignerUrlUseCase.getPresignedGetUrl(anyString()))
+				.thenAnswer(invocation -> invocation.getArgument(0));
 
 		// [When]
 		PagedResponseDto<AuctionListResponseDto> result = auctionReadUseCase.getAuctions(condition, pageable);
@@ -378,8 +387,12 @@ class AuctionReadUseCaseTest {
         given(bidRepository.countByAuctionIdIn(Set.of(100L))).willReturn(Arrays.asList(new Object[][]{{100L, 3L}}));
         given(productImageRepository.findAllByProductIdIn(Set.of(50L))).willReturn(Collections.emptyList());
 
-        // when
-        PagedResponseDto<WishlistListResponseDto> result = auctionReadUseCase.getMyBookmarks(publicId, pageable);
+		// S3 Presigned URL 변환 Mocking
+		lenient().when(s3PresignerUrlUseCase.getPresignedGetUrl(anyString()))
+				.thenAnswer(invocation -> invocation.getArgument(0));
+
+		// when
+		PagedResponseDto<WishlistListResponseDto> result = auctionReadUseCase.getMyBookmarks(publicId, pageable);
 
         // then
         assertThat(result.data()).hasSize(1);
@@ -439,6 +452,10 @@ class AuctionReadUseCaseTest {
 		given(auctionRepository.findAllById(Set.of(1L))).willReturn(List.of(auction));
 		given(productRepository.findAllByIdIn(Set.of(50L))).willReturn(List.of(product));
 		given(productImageRepository.findAllByProductIdIn(Set.of(50L))).willReturn(List.of(img1, img2));
+
+		// S3 Presigned URL 변환 Mocking
+		lenient().when(s3PresignerUrlUseCase.getPresignedGetUrl(anyString()))
+				.thenAnswer(invocation -> invocation.getArgument(0));
 
 		// when
 		PagedResponseDto<MyAuctionOrderListResponseDto> result =
