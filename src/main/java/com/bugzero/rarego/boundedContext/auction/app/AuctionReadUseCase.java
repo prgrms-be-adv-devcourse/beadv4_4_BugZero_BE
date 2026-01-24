@@ -154,6 +154,18 @@ public class AuctionReadUseCase {
 		// 1. 경매 조회
 		Auction auction = support.findAuctionById(auctionId);
 
+		// 1-2. 상품 정보 조회
+		Product product = productRepository.findById(auction.getProductId())
+				.orElseThrow(() -> new CustomException(ErrorType.PRODUCT_NOT_FOUND));
+
+		// 1-3. 썸네일 이미지 조회
+		List<ProductImage> productImages = productImageRepository.findAllByProductId(product.getId());
+		String thumbnail = productImages.stream()
+				.min(Comparator.comparingInt(ProductImage::getSortOrder))
+				.map(ProductImage::getImageUrl)
+				.map(s3PresignerUrlUseCase::getPresignedGetUrl)
+				.orElse(null);
+
 		// 2. 전체 최고가 입찰 조회
 		Bid highestBid = bidRepository.findTopByAuctionIdOrderByBidAmountDesc(auctionId)
 				.orElse(null);
@@ -168,7 +180,14 @@ public class AuctionReadUseCase {
 		Long memberId = (member != null) ? member.getId() : null;
 
 		// 4. DTO 변환 (memberId가 null이면 DTO 내부에서 기본값 false/null 처리)
-		return AuctionDetailResponseDto.from(auction, highestBid, myLastBid, memberId);
+		return AuctionDetailResponseDto.from(
+				auction,
+				product.getName(),
+				product.getDescription(),
+				thumbnail,
+				highestBid,
+				myLastBid,
+				memberId);
 	}
 
 	// 낙찰 기록 상세 조회

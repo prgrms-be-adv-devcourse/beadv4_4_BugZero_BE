@@ -9,6 +9,9 @@ import java.time.LocalDateTime;
 public record AuctionDetailResponseDto(
 	Long auctionId,
 	Long productId,
+	String productName,
+	String productDescription,
+	String imageUrl,
 	AuctionStatus status,
 	LocalDateTime startTime,
 	LocalDateTime endTime,
@@ -37,6 +40,9 @@ public record AuctionDetailResponseDto(
 
 	public static AuctionDetailResponseDto from(
 		Auction auction,
+		String productName,
+		String productDescription,
+		String imageUrl,
 		Bid highestBid,
 		Bid myLastBid,
 		Long currentMemberId
@@ -44,7 +50,7 @@ public record AuctionDetailResponseDto(
 		LocalDateTime now = LocalDateTime.now();
 
 		long remainingSeconds = 0;
-		if (auction.getEndTime().isAfter(now)) {
+		if (auction.getEndTime() != null && auction.getEndTime().isAfter(now)) {
 			remainingSeconds = Duration.between(now, auction.getEndTime()).getSeconds();
 		}
 
@@ -76,12 +82,13 @@ public record AuctionDetailResponseDto(
 		boolean isSeller = (currentMemberId != null) && auction.getSellerId().equals(currentMemberId);
 
 		boolean canBid = auction.getStatus() == AuctionStatus.IN_PROGRESS
+			&& auction.getEndTime() != null
 			&& auction.getEndTime().isAfter(now)
 			&& !isGuest
 			&& !isSeller
 			&& !isMyHighestBid;
 
-		int minBidPrice = auction.getCurrentPrice() + auction.getTickSize();
+		int minBidPrice = currentPrice + auction.getTickSize();
 		Long highestBidderId = (highestBid != null) ? highestBid.getBidderId() : null;
 
 		BidInfo bidInfo = new BidInfo(
@@ -99,6 +106,9 @@ public record AuctionDetailResponseDto(
 		return new AuctionDetailResponseDto(
 			auction.getId(),
 			auction.getProductId(),
+			productName,
+			productDescription,
+			imageUrl,
 			auction.getStatus(),
 			auction.getStartTime(),
 			auction.getEndTime(),
