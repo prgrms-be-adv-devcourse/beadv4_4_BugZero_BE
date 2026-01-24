@@ -185,13 +185,13 @@ class AuctionControllerTest {
 				50L,
 				"Lego Product",
 				"Description",
-				"thumbnail.jpg",
+				List.of("thumbnail.jpg"),
 				AuctionStatus.IN_PROGRESS,
 				LocalDateTime.now(),
 				LocalDateTime.now().plusDays(1),
 				3600L,
 				new AuctionDetailResponseDto.PriceInfo(10000, 20000, 1000),
-				new AuctionDetailResponseDto.BidInfo(true, 21000, null, false),
+				new AuctionDetailResponseDto.BidInfo(true, 21000, null, false, false),
 				new AuctionDetailResponseDto.MyParticipationInfo(false, null));
 
 		// [수정] memberId(Long) -> memberPublicId(String)
@@ -316,32 +316,32 @@ class AuctionControllerTest {
 	@DisplayName("성공: 관심 경매 해제 시 HTTP 200과 해제 정보를 반환한다")
 	void removeBookmark_success() throws Exception {
 		// given
-		Long bookmarkId = 1L;
-		WishlistRemoveResponseDto responseDto = WishlistRemoveResponseDto.of(true, bookmarkId);
+		Long auctionId = 1L;
+		WishlistRemoveResponseDto responseDto = WishlistRemoveResponseDto.of(true, auctionId);
 
-		given(auctionFacade.removeBookmark(any(String.class), eq(bookmarkId)))
+		given(auctionFacade.removeBookmark(any(String.class), eq(auctionId)))
 				.willReturn(responseDto);
 
 		// when & then
-		mockMvc.perform(delete("/api/v1/auctions/{bookmarkId}/bookmarks", bookmarkId))
+		mockMvc.perform(delete("/api/v1/auctions/{auctionId}/bookmarks", auctionId))
 				.andDo(print())
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value(200))
 				.andExpect(jsonPath("$.data.removed").value(true))
-				.andExpect(jsonPath("$.data.bookmarkId").value(bookmarkId));
+				.andExpect(jsonPath("$.data.auctionId").value(1L));
 	}
 
 	@Test
 	@DisplayName("실패: 관심 등록되지 않은 경매 해제 시 404를 반환한다")
 	void removeBookmark_fail_bookmark_not_found() throws Exception {
 		// given
-		Long bookmarkId = 1L;
+		Long auctionId = 1L;
 
-		given(auctionFacade.removeBookmark(any(String.class), eq(bookmarkId)))
+		given(auctionFacade.removeBookmark(any(String.class), eq(auctionId)))
 				.willThrow(new CustomException(ErrorType.BOOKMARK_NOT_FOUND));
 
 		// when & then
-		mockMvc.perform(delete("/api/v1/auctions/{bookmarkId}/bookmarks", bookmarkId))
+		mockMvc.perform(delete("/api/v1/auctions/{auctionId}/bookmarks", auctionId))
 				.andDo(print())
 				.andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.status").value(404));
@@ -352,13 +352,13 @@ class AuctionControllerTest {
 	// 새로 추가된 보안 로직 테스트
 	void removeBookmark_fail_unauthorized() throws Exception {
 		// given
-		Long bookmarkId = 1L;
+		Long auctionId = 1L;
 
-		given(auctionFacade.removeBookmark(any(String.class), eq(bookmarkId)))
+		given(auctionFacade.removeBookmark(any(String.class), eq(auctionId)))
 				.willThrow(new CustomException(ErrorType.BOOKMARK_UNAUTHORIZED_ACCESS));
 
 		// when & then
-		mockMvc.perform(delete("/api/v1/auctions/{bookmarkId}/bookmarks", bookmarkId))
+		mockMvc.perform(delete("/api/v1/auctions/{auctionId}/bookmarks", auctionId))
 				.andDo(print())
 				.andExpect(status().isForbidden()) // 403 Forbidden
 				.andExpect(jsonPath("$.status").value(403));
