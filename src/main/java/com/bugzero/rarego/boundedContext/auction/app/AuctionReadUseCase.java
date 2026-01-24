@@ -220,6 +220,8 @@ public class AuctionReadUseCase {
 
 		// 2. 키워드/카테고리 검색 (Product 테이블 조회)
 		List<Long> matchedProductIds = null;
+
+		// 키워드나 카테고리 조건이 하나라도 있으면 Product 조회
 		if (condition.getKeyword() != null || condition.getCategory() != null) {
 			matchedProductIds = productRepository.findIdsBySearchCondition(
 				condition.getKeyword(), condition.getCategory()
@@ -231,9 +233,10 @@ public class AuctionReadUseCase {
 			}
 		}
 
-		// 3. [핵심] 리포지토리 쿼리 메서드 호출 (@Query 사용)
-		// matchedProductIds가 null이면 조건 무시, 값이 있으면 해당 ID들 내에서만 조회
-		Page<Auction> auctionPage = auctionRepository.findAllApproved(
+		// 3. 리포지토리 쿼리 메서드 호출
+
+		Page<Auction> auctionPage = auctionRepository.findAllBySearchConditions(
+			condition.getIds(),
 			condition.getStatus(),
 			matchedProductIds,
 			sortedPageable
@@ -245,6 +248,7 @@ public class AuctionReadUseCase {
 			return new PagedResponseDto<>(Collections.emptyList(), PageDto.from(auctionPage));
 		}
 
+		// 4. Bulk Fetching & 매핑
 		Set<Long> auctionIds = auctions.stream().map(Auction::getId).collect(Collectors.toSet());
 		Set<Long> productIds = auctions.stream().map(Auction::getProductId).collect(Collectors.toSet());
 
@@ -257,10 +261,9 @@ public class AuctionReadUseCase {
 				row -> ((Long) row[1]).intValue()
 			));
 
-		// sortOrder가 가장 낮은 이미지를 썸네일로 선정
+		// 이미지 매핑 (기존 로직 유지)
 		List<ProductImage> images = productImageRepository.findAllByProductIdIn(productIds);
 		Map<Long, String> thumbnailMap = images.stream()
-			// sortOrder 오름차순 정렬 (0, 1, 2...)
 			.sorted(Comparator.comparingInt(ProductImage::getSortOrder))
 			.collect(Collectors.toMap(
 				img -> img.getProduct().getId(),
@@ -268,6 +271,7 @@ public class AuctionReadUseCase {
 				(existing, replacement) -> existing
 			));
 
+		// 5. DTO 변환 (기존 로직 유지)
 		List<AuctionListResponseDto> dtos = auctions.stream()
 			.map(auction -> {
 				Product product = productMap.get(auction.getProductId());
