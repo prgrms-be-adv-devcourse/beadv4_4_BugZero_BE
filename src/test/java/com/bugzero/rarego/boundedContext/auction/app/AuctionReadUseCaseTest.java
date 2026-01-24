@@ -76,6 +76,7 @@ class AuctionReadUseCaseTest {
 		Long auctionId = 1L;
 		String memberPublicId = "user_pub_id_1";
 		Long memberId = 10L;
+		Long sellerId = 20L;
 
 		// 1. 회원 Mock
 		AuctionMember member = AuctionMember.builder().publicId(memberPublicId).build();
@@ -105,6 +106,19 @@ class AuctionReadUseCaseTest {
 		given(bidRepository.findTopByAuctionIdOrderByBidAmountDesc(auctionId)).willReturn(Optional.of(highestBid));
 		given(bidRepository.findTopByAuctionIdAndBidderIdOrderByBidAmountDesc(auctionId, memberId))
 			.willReturn(Optional.of(myLastBid));
+
+		ProductMember productSeller = ProductMember.builder().build();
+		ReflectionTestUtils.setField(productSeller, "id", sellerId);
+
+		// 4. 상품 정보
+		Product product = Product.builder().seller(productSeller).name("Test Item").build();
+		ReflectionTestUtils.setField(product, "id", 50L);
+
+		ProductImage image = ProductImage.builder().product(product).imageUrl("thumb.jpg").build();
+
+		// given
+		given(productRepository.findById(50L)).willReturn(Optional.of(product));
+		given(productImageRepository.findAllByProductId(50L)).willReturn(List.of(image));
 
 		// when
 		AuctionDetailResponseDto result = auctionReadUseCase.getAuctionDetail(auctionId, memberPublicId);
