@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.Bid;
 import com.bugzero.rarego.boundedContext.auction.domain.event.AuctionCreatedEvent;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
@@ -19,10 +20,12 @@ import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
 import com.bugzero.rarego.boundedContext.product.domain.Category;
+import com.bugzero.rarego.boundedContext.product.domain.Inspection;
 import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductCondition;
 import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
+import com.bugzero.rarego.boundedContext.product.out.InspectionRepository;
 import com.bugzero.rarego.boundedContext.product.out.ProductMemberRepository;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 
@@ -40,6 +43,7 @@ public class AuctionDataInit implements CommandLineRunner {
     private final AuctionMemberRepository auctionMemberRepository;
     private final AuctionOrderRepository auctionOrderRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final InspectionRepository inspectionRepository;
 
 	private final ProductRepository productRepository;
 	private final ProductMemberRepository productMemberRepository;
@@ -78,7 +82,8 @@ public class AuctionDataInit implements CommandLineRunner {
 
         // 2. [진행중] 고가 경매 (입찰 경쟁)
         Product productForHighPrice = createProduct(seller, "[1-2] 맥북 프로 M3", 1_000_000);
-        Auction normalAuction = createAuction(productForHighPrice.getId(), seller.getId(), 0, 4320, 1_000_000); // 3일 후 종료
+        Auction normalAuction = createAuction(productForHighPrice.getId(), seller.getId(), 0, 4320,
+            1_000_000); // 3일 후 종료
 
         createBid(normalAuction, competitor, 1_050_000);
         createBid(normalAuction, me, 1_100_000);
@@ -87,7 +92,6 @@ public class AuctionDataInit implements CommandLineRunner {
         Product product3 = createProduct(seller, "[1-3] 아이폰 15 (패찰)", 2_000_000);
         // 시작: 3시간 전, 종료: 2시간 전 (이미 종료됨)
         createAuction(product3.getId(), seller.getId(), -180, -120, 2_000_000);
-
 
         // ==========================================
         // [Part 2] 상태별/스케줄링 테스트 데이터
@@ -119,9 +123,9 @@ public class AuctionDataInit implements CommandLineRunner {
         createBid(auctionSoonEnd1, buyer, 45_000);
 
         eventPublisher.publishEvent(
-                new AuctionCreatedEvent(
-                        auctionSoonEnd1.getId(),
-                        auctionSoonEnd1.getEndTime()));
+            new AuctionCreatedEvent(
+                auctionSoonEnd1.getId(),
+                auctionSoonEnd1.getEndTime()));
 
         // 3-5. 진행 중 + 5분 후 종료 (동적 스케줄링 테스트용)
         Product product8 = createProduct(seller, "테스트 상품 5 (5분후 종료)", 50_000);
@@ -129,9 +133,9 @@ public class AuctionDataInit implements CommandLineRunner {
         createBid(auctionSoonEnd5, buyer, 55_000);
 
         eventPublisher.publishEvent(
-                new AuctionCreatedEvent(
-                        auctionSoonEnd5.getId(),
-                        auctionSoonEnd5.getEndTime()));
+            new AuctionCreatedEvent(
+                auctionSoonEnd5.getId(),
+                auctionSoonEnd5.getEndTime()));
 
         log.info("=== 경매 테스트 데이터 초기화 완료 ===");
 
@@ -155,11 +159,11 @@ public class AuctionDataInit implements CommandLineRunner {
 
         // 5. 주문 정보(AuctionOrder) 생성 및 저장
         AuctionOrder order = AuctionOrder.builder()
-                .auctionId(endedAuction.getId())
-                .sellerId(seller.getId())
-                .bidderId(buyer.getId())
-                .finalPrice(600_000)
-                .build(); // status 기본값 PROCESSING
+            .auctionId(endedAuction.getId())
+            .sellerId(seller.getId())
+            .bidderId(buyer.getId())
+            .finalPrice(600_000)
+            .build(); // status 기본값 PROCESSING
 
         auctionOrderRepository.save(order); // DB에 저장
 
@@ -184,11 +188,11 @@ public class AuctionDataInit implements CommandLineRunner {
         auctionRepository.save(withdrawAuction2);
 
         AuctionOrder failedOrder = AuctionOrder.builder()
-                .auctionId(withdrawAuction2.getId())
-                .sellerId(seller.getId())
-                .bidderId(buyer.getId())
-                .finalPrice(250_000)
-                .build();
+            .auctionId(withdrawAuction2.getId())
+            .sellerId(seller.getId())
+            .bidderId(buyer.getId())
+            .finalPrice(250_000)
+            .build();
         failedOrder.fail();  // PROCESSING → FAILED
         auctionOrderRepository.save(failedOrder);
         log.info("결제 실패 경매 생성 - auctionId: {} (ENDED + FAILED, 포기 가능)", withdrawAuction2.getId());
@@ -200,11 +204,11 @@ public class AuctionDataInit implements CommandLineRunner {
         auctionRepository.save(withdrawAuction3);
 
         AuctionOrder successOrder = AuctionOrder.builder()
-                .auctionId(withdrawAuction3.getId())
-                .sellerId(seller.getId())
-                .bidderId(buyer.getId())
-                .finalPrice(350_000)
-                .build();
+            .auctionId(withdrawAuction3.getId())
+            .sellerId(seller.getId())
+            .bidderId(buyer.getId())
+            .finalPrice(350_000)
+            .build();
         successOrder.complete();  // PROCESSING → SUCCESS
         auctionOrderRepository.save(successOrder);
         log.info("결제 완료 경매 생성 - auctionId: {} (ENDED + SUCCESS, 포기 불가 - 2511)", withdrawAuction3.getId());
@@ -216,11 +220,11 @@ public class AuctionDataInit implements CommandLineRunner {
         auctionRepository.save(withdrawAuction4);
 
         AuctionOrder processingOrder = AuctionOrder.builder()
-                .auctionId(withdrawAuction4.getId())
-                .sellerId(seller.getId())
-                .bidderId(buyer.getId())
-                .finalPrice(450_000)
-                .build();
+            .auctionId(withdrawAuction4.getId())
+            .sellerId(seller.getId())
+            .bidderId(buyer.getId())
+            .finalPrice(450_000)
+            .build();
         // 상태 변경 안 함 → PROCESSING 유지
         auctionOrderRepository.save(processingOrder);
         log.info("결제 진행 중 경매 생성 - auctionId: {} (ENDED + PROCESSING, 포기 불가 - 2512)", withdrawAuction4.getId());
@@ -234,17 +238,55 @@ public class AuctionDataInit implements CommandLineRunner {
         // 4-6. 검수 전 경매 (포기 불가) - startTime = null
         Product withdrawProduct6 = createProduct(seller, "[포기 불가] 검수 전 레고", 600_000);
         Auction withdrawAuction6 = Auction.builder()
-                .productId(withdrawProduct6.getId())
-                .sellerId(seller.getId())
-                .startTime(null)  // 검수 전
-                .endTime(null)
-                .startPrice(600_000)
-                .durationDays(7)
-                .build();
+            .productId(withdrawProduct6.getId())
+            .sellerId(seller.getId())
+            .startTime(null)  // 검수 전
+            .endTime(null)
+            .startPrice(600_000)
+            .durationDays(7)
+            .build();
         auctionRepository.save(withdrawAuction6);
         log.info("검수 전 경매 생성 - auctionId: {} (startTime=null, 포기 불가 - 2513)", withdrawAuction6.getId());
 
         log.info("=== 판매 포기 테스트 데이터 생성 완료 ===");
+
+        // ==========================================
+        // [Part 5] 조회 테스트용 완벽한 데이터 (추가)
+        // ==========================================
+        log.info("--- [Part 5] 검수 승인된 진행 중 경매 데이터 생성 ---");
+
+        // 1. 상품 생성 (기존 코드 가정)
+        Product approvedProduct = createProduct(seller, "[조회테스트] 검수통과 레고", 500000);
+
+        // 2. [수정됨] 검수 승인 데이터 생성 (필수 필드 채움)
+        Inspection inspection = Inspection.builder()
+            .product(approvedProduct)
+            .seller(seller)                         // ✅ 필수: 판매자 정보
+            .inspectorId(999L)                      // ✅ 필수: 검수자 ID (관리자 등)
+            .productCondition(ProductCondition.MISB) // ✅ 필수: 상품 상태
+            .inspectionStatus(InspectionStatus.APPROVED)
+            .reason("테스트용 자동 승인")
+            .build();
+
+        inspectionRepository.save(inspection);
+
+        // 3. [수정됨] 경매 생성 (빌더 제한 사항 해결)
+        Auction ongoingAuction = Auction.builder()
+            .productId(approvedProduct.getId())
+            .sellerId(seller.getId())
+            .startPrice(500000)
+            .startTime(LocalDateTime.now().minusHours(1))
+            .endTime(LocalDateTime.now().plusDays(2))
+            .durationDays(2)
+            .build();
+
+        // 4. 상태 및 현재가 강제 변경 (엔티티 메서드 활용)
+        ongoingAuction.forceStartForTest();      // ✅ 상태를 IN_PROGRESS로 변경
+        ongoingAuction.updateCurrentPrice(500000); // ✅ 현재가 설정
+
+        auctionRepository.save(ongoingAuction);
+
+        log.info("테스트용 경매 생성 완료! ID: {}, 상품ID: {}", ongoingAuction.getId(), approvedProduct.getId());
     }
 
     // --- Helper Methods ---
