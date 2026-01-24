@@ -5,13 +5,14 @@ import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.Bid;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record AuctionDetailResponseDto(
 	Long auctionId,
 	Long productId,
 	String productName,
 	String productDescription,
-	String imageUrl,
+	List<String> imageUrls,
 	AuctionStatus status,
 	LocalDateTime startTime,
 	LocalDateTime endTime,
@@ -30,7 +31,8 @@ public record AuctionDetailResponseDto(
 		boolean canBid,
 		int minBidPrice,
 		Long highestBidderId,
-		boolean isMyHighestBid
+		boolean isMyHighestBid,
+		boolean isSeller
 	) {}
 
 	public record MyParticipationInfo(
@@ -42,7 +44,7 @@ public record AuctionDetailResponseDto(
 		Auction auction,
 		String productName,
 		String productDescription,
-		String imageUrl,
+		List<String> imageUrls,
 		Bid highestBid,
 		Bid myLastBid,
 		Long currentMemberId
@@ -88,15 +90,16 @@ public record AuctionDetailResponseDto(
 			&& !isSeller
 			&& !isMyHighestBid;
 
-		int minBidPrice = currentPrice + auction.getTickSize();
+		// 첫 입찰인 경우(highestBid == null) 시작가(currentPrice)로 입찰 가능
+		int minBidPrice = (highestBid == null) ? currentPrice : currentPrice + auction.getTickSize();
 		Long highestBidderId = (highestBid != null) ? highestBid.getBidderId() : null;
 
 		BidInfo bidInfo = new BidInfo(
 			canBid,
 			minBidPrice,
 			highestBidderId,
-			isMyHighestBid
-		);
+			isMyHighestBid,
+			isSeller);
 
 		MyParticipationInfo myParticipationInfo = new MyParticipationInfo(
 			hasBid,
@@ -108,7 +111,7 @@ public record AuctionDetailResponseDto(
 			auction.getProductId(),
 			productName,
 			productDescription,
-			imageUrl,
+			imageUrls,
 			auction.getStatus(),
 			auction.getStartTime(),
 			auction.getEndTime(),

@@ -158,13 +158,13 @@ public class AuctionReadUseCase {
 		Product product = productRepository.findById(auction.getProductId())
 				.orElseThrow(() -> new CustomException(ErrorType.PRODUCT_NOT_FOUND));
 
-		// 1-3. 썸네일 이미지 조회
+		// 1-3. 이미지 목록 조회 (전체)
 		List<ProductImage> productImages = productImageRepository.findAllByProductId(product.getId());
-		String thumbnail = productImages.stream()
-				.min(Comparator.comparingInt(ProductImage::getSortOrder))
+		List<String> imageUrls = productImages.stream()
+				.sorted(Comparator.comparingInt(ProductImage::getSortOrder))
 				.map(ProductImage::getImageUrl)
 				.map(s3PresignerUrlUseCase::getPresignedGetUrl)
-				.orElse(null);
+				.toList();
 
 		// 2. 전체 최고가 입찰 조회
 		Bid highestBid = bidRepository.findTopByAuctionIdOrderByBidAmountDesc(auctionId)
@@ -184,7 +184,7 @@ public class AuctionReadUseCase {
 				auction,
 				product.getName(),
 				product.getDescription(),
-				thumbnail,
+				imageUrls,
 				highestBid,
 				myLastBid,
 				memberId);
