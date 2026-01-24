@@ -48,11 +48,12 @@ public record AuctionDetailResponseDto(
 			remainingSeconds = Duration.between(now, auction.getEndTime()).getSeconds();
 		}
 
+		int currentPrice = auction.getCurrentPrice() != null ? auction.getCurrentPrice() : auction.getStartPrice();
+
 		PriceInfo priceInfo = new PriceInfo(
 			auction.getStartPrice(),
-			auction.getCurrentPrice(),
-			auction.getTickSize()
-		);
+			currentPrice,
+			auction.getTickSize());
 
 		boolean isMyHighestBid = false;
 		boolean hasBid = false;

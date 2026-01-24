@@ -56,6 +56,7 @@ public class Auction extends BaseIdAndTime {
         this.durationDays = durationDays;
         this.endTime = endTime;
         this.startPrice = startPrice;
+        this.currentPrice = startPrice; // 초기 현재가는 시작가와 동일하게 설정
         this.tickSize = determineTickSize(startPrice);
         this.status = AuctionStatus.SCHEDULED;
     }
@@ -90,7 +91,7 @@ public class Auction extends BaseIdAndTime {
         }
     }
 
-    //시작 시간 유무에 따라 경매예정이 확정되었는지 확인
+    // 시작 시간 유무에 따라 경매예정이 확정되었는지 확인
     public boolean hasStartTime() {
         return this.startTime != null;
     }
@@ -105,18 +106,17 @@ public class Auction extends BaseIdAndTime {
         return Objects.equals(this.sellerId, sellerId);
     }
 
-
     public void update(int durationDays, int startPrice) {
         this.durationDays = durationDays;
         this.startPrice = startPrice;
         this.tickSize = determineTickSize(startPrice);
     }
-  
+
     public void withdraw() {
         this.status = AuctionStatus.WITHDRAWN;
     }
 
-    //호가단위 결정
+    // 호가단위 결정
     private int determineTickSize(int startPrice) {
         if (startPrice < 10000) {
             return 500;
