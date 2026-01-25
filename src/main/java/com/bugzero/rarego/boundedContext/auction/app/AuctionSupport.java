@@ -69,11 +69,6 @@ public class AuctionSupport {
 	public Optional<AuctionOrder> findOrder(Long auctionId) {
 		return auctionOrderRepository.findByAuctionId(auctionId);
 	}
-  
-  	public AuctionMember findMemberByPublicId(String publicId) {
-        return auctionMemberRepository.findByPublicId(publicId)
-                .orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
-    }
 
   	public Optional<AuctionOrder> findOrderByAuctionId(Long auctionId) {
         return auctionOrderRepository.findByAuctionId(auctionId);
