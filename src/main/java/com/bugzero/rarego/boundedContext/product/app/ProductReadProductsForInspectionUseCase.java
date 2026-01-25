@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProductReadProductsForInspectionUseCase {
 	private final ProductRepository productRepository;
+	private final ProductCreateS3PresignerUrlUseCase s3PresignerUrlUseCase;
 
 	@Transactional(readOnly = true)
 	public PagedResponseDto<ProductResponseForInspectionDto> readProducts(
@@ -24,6 +25,17 @@ public class ProductReadProductsForInspectionUseCase {
 		Page<ProductResponseForInspectionDto> productDtos = productRepository.
 			readProductsForAdmin(condition.name(), condition.category(), condition.status(), pageable);
 
-		return PagedResponseDto.from(productDtos);
+		return PagedResponseDto.from(productDtos, this::toPresignedDto);
+	}
+
+	private ProductResponseForInspectionDto toPresignedDto(ProductResponseForInspectionDto dto) {
+		return new ProductResponseForInspectionDto(
+			dto.ProductId(),
+			dto.name(),
+			dto.sellerEmail(),
+			dto.category(),
+			dto.inspectionStatus(),
+			s3PresignerUrlUseCase.getPresignedGetUrl(dto.thumbnail())
+		);
 	}
 }
