@@ -1,4 +1,4 @@
-package com.bugzero.rarego.boundedContext.product.auction.app;
+package com.bugzero.rarego.boundedContext.auction.app;
 
 import static org.assertj.core.api.AssertionsForClassTypes.*;
 import static org.mockito.BDDMockito.*;
@@ -20,7 +20,7 @@ import com.bugzero.rarego.global.response.ErrorType;
 class AuctionDeleteAuctionUseCaseTest {
 
 	@Mock
-	private ProductAuctionSupport productAuctionSupport;
+	private AuctionSupport auctionSupport;
 
 	@InjectMocks
 	private AuctionDeleteAuctionUseCase useCase;
@@ -52,8 +52,8 @@ class AuctionDeleteAuctionUseCaseTest {
 	@DisplayName("성공: 유효한 권한을 가진 사용자가 삭제 요청 시 경매가 소프트 삭제된다")
 	void deleteAuction_Success() {
 		// given
-		given(productAuctionSupport.getAuctionMember(PUBLIC_ID)).willReturn(commonSeller);
-		given(productAuctionSupport.getAuctionByProductId(PRODUCT_ID)).willReturn(spyAuction);
+		given(auctionSupport.getPublicMember(PUBLIC_ID)).willReturn(commonSeller);
+		given(auctionSupport.getAuctionByProductId(PRODUCT_ID)).willReturn(spyAuction);
 
 		// isAbleToChange는 void이므로 문제 없으면 통과
 
@@ -62,7 +62,7 @@ class AuctionDeleteAuctionUseCaseTest {
 
 		// then
 		// 1. 권한 체크가 정상적으로 수행되었는가
-		verify(productAuctionSupport).isAbleToChange(commonSeller, spyAuction);
+		verify(auctionSupport).isAbleToChange(commonSeller, spyAuction);
 
 		// 2. 엔티티의 softDelete 로직이 호출되었는가 (핵심 비즈니스 로직)
 		verify(spyAuction).softDelete();
@@ -72,12 +72,12 @@ class AuctionDeleteAuctionUseCaseTest {
 	@DisplayName("실패: 삭제 가능한 상태가 아니면 예외가 발생하고 삭제 로직이 실행되지 않는다")
 	void deleteAuction_Fail_NotAbleToChange() {
 		// given
-		given(productAuctionSupport.getAuctionMember(PUBLIC_ID)).willReturn(commonSeller);
-		given(productAuctionSupport.getAuctionByProductId(PRODUCT_ID)).willReturn(spyAuction);
+		given(auctionSupport.getPublicMember(PUBLIC_ID)).willReturn(commonSeller);
+		given(auctionSupport.getAuctionByProductId(PRODUCT_ID)).willReturn(spyAuction);
 
 		// 삭제 불가 예외 시뮬레이션
 		willThrow(new CustomException(ErrorType.AUCTION_DELETE_FAILED))
-			.given(productAuctionSupport).isAbleToChange(any(), any());
+			.given(auctionSupport).isAbleToChange(any(), any());
 
 		// when & then
 		assertThatThrownBy(() -> useCase.deleteAuction(PUBLIC_ID, PRODUCT_ID))

@@ -1,4 +1,4 @@
-package com.bugzero.rarego.boundedContext.product.auction.app;
+package com.bugzero.rarego.boundedContext.auction.app;
 
 import static org.assertj.core.api.AssertionsForClassTypes.*;
 import static org.mockito.BDDMockito.*;
@@ -21,7 +21,7 @@ import com.bugzero.rarego.shared.product.dto.ProductAuctionUpdateDto;
 @ExtendWith(MockitoExtension.class)
 class AuctionUpdateAuctionUseCaseTest {
 	@Mock
-	private ProductAuctionSupport productAuctionSupport;
+	private AuctionSupport auctionSupport;
 
 	@InjectMocks
 	private AuctionUpdateAuctionUseCase useCase;
@@ -61,8 +61,8 @@ class AuctionUpdateAuctionUseCaseTest {
 		// given
 		ProductAuctionUpdateDto updateDto = createUpdateDto(20000, 14);
 
-		given(productAuctionSupport.getAuctionMember(PUBLIC_ID)).willReturn(commonSeller);
-		given(productAuctionSupport.getAuction(AUCTION_ID)).willReturn(spyAuction);
+		given(auctionSupport.getPublicMember(PUBLIC_ID)).willReturn(commonSeller);
+		given(auctionSupport.findAuctionById(AUCTION_ID)).willReturn(spyAuction);
 
 		// when
 		Long resultId = useCase.updateAuction(PUBLIC_ID, updateDto);
@@ -71,7 +71,7 @@ class AuctionUpdateAuctionUseCaseTest {
 		assertThat(resultId).isEqualTo(AUCTION_ID);
 		// 정책 반영 확인: 새로운 호가 단위(500)가 엔티티에 잘 전달되었는가
 		verify(spyAuction).update(eq(14), eq(20000));
-		verify(productAuctionSupport).isAbleToChange(commonSeller, spyAuction);
+		verify(auctionSupport).isAbleToChange(commonSeller, spyAuction);
 	}
 
 	@Test
@@ -80,12 +80,12 @@ class AuctionUpdateAuctionUseCaseTest {
 		// given
 		ProductAuctionUpdateDto updateDto = createUpdateDto(20000, 14);
 
-		given(productAuctionSupport.getAuctionMember(anyString())).willReturn(commonSeller);
-		given(productAuctionSupport.getAuction(anyLong())).willReturn(spyAuction);
+		given(auctionSupport.getPublicMember(anyString())).willReturn(commonSeller);
+		given(auctionSupport.findAuctionById(anyLong())).willReturn(spyAuction);
 
 		// 수정 불가 예외 설정
 		willThrow(new CustomException(ErrorType.AUCTION_ALREADY_IN_PROGRESS))
-			.given(productAuctionSupport).isAbleToChange(any(), any());
+			.given(auctionSupport).isAbleToChange(any(), any());
 
 		// when & then
 		assertThatThrownBy(() -> useCase.updateAuction(PUBLIC_ID, updateDto))
