@@ -9,8 +9,6 @@ import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
-
-
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
@@ -18,6 +16,7 @@ import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
+
 import lombok.RequiredArgsConstructor;
 
 
@@ -33,6 +32,11 @@ public class AuctionSupport {
 
 	public Auction findAuctionById(Long auctionId) {
 		return auctionRepository.findById(auctionId)
+			.orElseThrow(() -> new CustomException(ErrorType.AUCTION_NOT_FOUND));
+	}
+
+	public Auction getAuctionByProductId(Long productId) {
+		return auctionRepository.findByProductId(productId)
 			.orElseThrow(() -> new CustomException(ErrorType.AUCTION_NOT_FOUND));
 	}
 
@@ -86,6 +90,16 @@ public class AuctionSupport {
 	public void validateAuctionEnded(Auction auction) {
 		if (auction.getStatus() != AuctionStatus.ENDED) {
 			throw new CustomException(ErrorType.AUCTION_NOT_ENDED);
+		}
+	}
+
+	// 경매정보 수정 가능상태 확인
+	public void isAbleToChange(AuctionMember auctionMember, Auction auction) {
+		if (!auction.isSeller(auctionMember.getId())) {
+			throw new CustomException(ErrorType.UNAUTHORIZED_AUCTION_SELLER);
+		}
+		if (auction.hasStartTime()) {
+			throw new CustomException(ErrorType.AUCTION_ALREADY_IN_PROGRESS);
 		}
 	}
 }
