@@ -9,6 +9,7 @@ import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionBookmarkRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
@@ -29,6 +30,7 @@ public class AuctionSupport {
 	private final AuctionMemberRepository auctionMemberRepository;
 	private final ProductRepository productRepository;
 	private final AuctionOrderRepository auctionOrderRepository;
+	private final AuctionBookmarkRepository auctionBookmarkRepository;
 
 	public Auction findAuctionById(Long auctionId) {
 		return auctionRepository.findById(auctionId)
