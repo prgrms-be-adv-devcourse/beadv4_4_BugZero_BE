@@ -11,10 +11,7 @@ import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionWithdrawResponseD
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistListResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
-import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
@@ -45,7 +42,6 @@ public class AuctionFacade {
 
     private final AuctionCreateBidUseCase auctionCreateBidUseCase;
     private final AuctionReadUseCase auctionReadUseCase;
-    private final AuctionMemberRepository auctionMemberRepository;
     private final AuctionOrderRepository auctionOrderRepository;
     private final AuctionSyncMemberUseCase auctionSyncMemberUseCase;
     private final AuctionBookmarkUseCase auctionBookmarkUseCase;
@@ -102,10 +98,7 @@ public class AuctionFacade {
     // 관심 경매 등록
     @Transactional
     public WishlistAddResponseDto addBookmark(String publicId, Long auctionId) {
-        AuctionMember member = auctionMemberRepository.findByPublicId(publicId)
-                .orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
-
-        return auctionBookmarkUseCase.addBookmark(member.getId(), auctionId);
+        return auctionBookmarkUseCase.addBookmark(publicId, auctionId);
     }
 
     // 경매 상태/현재가 요약 조회
