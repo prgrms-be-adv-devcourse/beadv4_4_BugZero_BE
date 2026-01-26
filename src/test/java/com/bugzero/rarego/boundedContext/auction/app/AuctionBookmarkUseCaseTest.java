@@ -22,8 +22,6 @@ import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionBookmarkRepository;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 
@@ -38,12 +36,6 @@ class AuctionBookmarkUseCaseTest {
 
 	@InjectMocks
 	private AuctionBookmarkUseCase auctionBookmarkUseCase;
-
-	@Mock
-	private AuctionMemberRepository auctionMemberRepository;
-
-	@Mock
-	private AuctionRepository auctionRepository;
 
 	@Test
 	@DisplayName("관심 경매 등록 - 성공")
