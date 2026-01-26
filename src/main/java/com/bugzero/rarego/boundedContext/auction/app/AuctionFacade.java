@@ -11,7 +11,6 @@ import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionWithdrawResponseD
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistListResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
@@ -42,7 +41,6 @@ public class AuctionFacade {
 
     private final AuctionCreateBidUseCase auctionCreateBidUseCase;
     private final AuctionReadUseCase auctionReadUseCase;
-    private final AuctionOrderRepository auctionOrderRepository;
     private final AuctionSyncMemberUseCase auctionSyncMemberUseCase;
     private final AuctionBookmarkUseCase auctionBookmarkUseCase;
     private final AuctionRelistUseCase auctionRelistUseCase;
@@ -142,9 +140,9 @@ public class AuctionFacade {
         return auctionWithdrawUseCase.hasActiveSales(publicId);
     }
 
+    //경매 주문이 진행중인지 확인
     public boolean hasProcessingOrders(String publicId) {
-        return auctionOrderRepository.existsByBuyerPublicIdAndStatus(publicId, AuctionOrderStatus.PROCESSING)
-                || auctionOrderRepository.existsBySellerPublicIdAndStatus(publicId, AuctionOrderStatus.PROCESSING);
+        return auctionWithdrawUseCase.hasProcessingOrders(publicId);
     }
 
     // 경매 정보 생성
