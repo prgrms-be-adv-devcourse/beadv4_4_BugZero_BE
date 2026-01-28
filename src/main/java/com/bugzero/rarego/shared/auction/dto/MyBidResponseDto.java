@@ -24,7 +24,7 @@ public record MyBidResponseDto(
 			bid.getBidAmount(),
 			bid.getBidTime(),
 			auction.getStatus(),
-			auction.getCurrentPrice(),
+			auction.getCurrentPrice() != null ? auction.getCurrentPrice() : auction.getStartPrice(),
 			auction.getEndTime()
 		);
 	}

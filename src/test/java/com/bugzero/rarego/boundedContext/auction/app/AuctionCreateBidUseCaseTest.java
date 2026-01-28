@@ -46,7 +46,8 @@ class AuctionCreateBidUseCaseTest {
 	@Mock
 	private ApplicationEventPublisher eventPublisher;
 
-	// UseCase가 직접 쓰지 않는 Repository Mock들은 제거함 (AuctionRepository, AuctionMemberRepository)
+	// UseCase가 직접 쓰지 않는 Repository Mock들은 제거함 (AuctionRepository,
+	// AuctionMemberRepository)
 
 	private final Long AUCTION_ID = 1L;
 	private final Long BIDDER_ID = 100L;
@@ -160,8 +161,9 @@ class AuctionCreateBidUseCaseTest {
 		given(support.getPublicMember(BIDDER_PUBLICID)).willReturn(bidder);
 		given(support.getAuctionWithLock(AUCTION_ID)).willReturn(auction);
 
-		// 연속 입찰 아님
-		given(bidRepository.findTopByAuctionIdOrderByBidTimeDesc(AUCTION_ID)).willReturn(Optional.empty());
+		// 이전 입찰 기록이 있는 상태로 설정
+		Bid lastBid = Bid.builder().bidderId(999L).build();
+		given(bidRepository.findTopByAuctionIdOrderByBidTimeDesc(AUCTION_ID)).willReturn(Optional.of(lastBid));
 
 		// when & then
 		assertThatThrownBy(() ->

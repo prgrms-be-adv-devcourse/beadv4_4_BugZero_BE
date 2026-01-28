@@ -96,7 +96,10 @@ public class AuctionCreateBidUseCase {
 		}
 
 		// 입찰 금액 검증
-		if (bidAmount < auction.getCurrentPrice() + auction.getTickSize()) {
+		int minimumBid = lastBid.isEmpty() ? auction.getStartPrice()
+				: auction.getCurrentPrice() + auction.getTickSize();
+
+		if (bidAmount < minimumBid) {
 			throw new CustomException(ErrorType.AUCTION_BID_AMOUNT_TOO_LOW, "입찰 금액이 유효하지 않습니다.");
 		}
 	}

@@ -41,20 +41,20 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class AuctionBookmarkUseCaseTest {
 
-    @Mock
-    private AuctionBookmarkRepository auctionBookmarkRepository;
+        @Mock
+        private AuctionBookmarkRepository auctionBookmarkRepository;
 
-    @Mock
-    private AuctionSupport auctionSupport;
+        @Mock
+        private AuctionSupport auctionSupport;
 
-    @InjectMocks
-    private AuctionBookmarkUseCase auctionBookmarkUseCase;
+        @InjectMocks
+        private AuctionBookmarkUseCase auctionBookmarkUseCase;
 
-    @Mock
-    private AuctionMemberRepository auctionMemberRepository;
+        @Mock
+        private AuctionMemberRepository auctionMemberRepository;
 
-    @Mock
-    private AuctionRepository auctionRepository;
+        @Mock
+        private AuctionRepository auctionRepository;
 
     @Test
     @DisplayName("관심 경매 등록 - 성공")
@@ -63,158 +63,125 @@ class AuctionBookmarkUseCaseTest {
         Long memberId = 100L;
         Long auctionId = 1L;
 
-        Auction auction = Auction.builder()
-                .productId(50L)
-                .startPrice(1000)
-                .startTime(LocalDateTime.now())
-                .endTime(LocalDateTime.now().plusDays(1))
-                .durationDays(1)
-                .sellerId(1L)
-                .build();
-        ReflectionTestUtils.setField(auction, "id", auctionId);
+                Auction auction = Auction.builder()
+                                .productId(50L)
+                                .startPrice(1000)
+                                .startTime(LocalDateTime.now())
+                                .endTime(LocalDateTime.now().plusDays(1))
+                                .durationDays(1)
+                                .sellerId(1L)
+                                .build();
+                ReflectionTestUtils.setField(auction, "id", auctionId);
 
-        given(auctionSupport.findAuctionById(auctionId))
-                .willReturn(auction);
+                given(auctionSupport.findAuctionById(auctionId))
+                                .willReturn(auction);
 
-        given(auctionBookmarkRepository.existsByAuctionIdAndMemberId(auctionId, memberId))
-                .willReturn(false);
+                given(auctionBookmarkRepository.existsByAuctionIdAndMemberId(auctionId, memberId))
+                                .willReturn(false);
 
-        // when
-        WishlistAddResponseDto result = auctionBookmarkUseCase.addBookmark(memberId, auctionId);
+                // when
+                WishlistAddResponseDto result = auctionBookmarkUseCase.addBookmark(memberId, auctionId);
 
-        // then
-        assertThat(result.bookmarked()).isTrue();
-        assertThat(result.auctionId()).isEqualTo(auctionId);
+                // then
+                assertThat(result.bookmarked()).isTrue();
+                assertThat(result.auctionId()).isEqualTo(auctionId);
 
-        verify(auctionBookmarkRepository).save(argThat(bookmark ->
-                bookmark.getMemberId().equals(memberId) &&
-                        bookmark.getAuctionId().equals(auctionId) &&
-                        bookmark.getProductId().equals(50L)
-        ));
-    }
+                verify(auctionBookmarkRepository).save(argThat(bookmark -> bookmark.getMemberId().equals(memberId) &&
+                                bookmark.getAuctionId().equals(auctionId) &&
+                                bookmark.getProductId().equals(50L)));
+        }
 
-    @Test
-    @DisplayName("관심 경매 등록 - 이미 북마크된 경우 예외 발생")
-    void addBookmark_AlreadyBookmarked() {
-        // given
-        Long memberId = 100L;
-        Long auctionId = 1L;
+        @Test
+        @DisplayName("관심 경매 등록 - 이미 북마크된 경우 예외 발생")
+        void addBookmark_AlreadyBookmarked() {
+                // given
+                Long memberId = 100L;
+                Long auctionId = 1L;
 
-        Auction auction = Auction.builder()
-                .productId(50L)
-                .startPrice(1000)
-                .startTime(LocalDateTime.now())
-                .endTime(LocalDateTime.now().plusDays(1))
-                .durationDays(1)
-                .sellerId(1L)
-                .build();
-        ReflectionTestUtils.setField(auction, "id", auctionId);
+                Auction auction = Auction.builder()
+                                .productId(50L)
+                                .startPrice(1000)
+                                .startTime(LocalDateTime.now())
+                                .endTime(LocalDateTime.now().plusDays(1))
+                                .durationDays(1)
+                                .sellerId(1L)
+                                .build();
+                ReflectionTestUtils.setField(auction, "id", auctionId);
 
-        given(auctionSupport.findAuctionById(auctionId))
-                .willReturn(auction);
+                given(auctionSupport.findAuctionById(auctionId))
+                                .willReturn(auction);
 
-        given(auctionBookmarkRepository.existsByAuctionIdAndMemberId(auctionId, memberId))
-                .willReturn(true);
+                given(auctionBookmarkRepository.existsByAuctionIdAndMemberId(auctionId, memberId))
+                                .willReturn(true);
 
-        // when & then
-        assertThatThrownBy(() -> auctionBookmarkUseCase.addBookmark(memberId, auctionId))
-                .isInstanceOf(CustomException.class)
-                .satisfies(ex -> assertThat(((CustomException) ex).getErrorType())
-                        .isEqualTo(ErrorType.BOOKMARK_ALREADY_EXISTS));
+                // when & then
+                assertThatThrownBy(() -> auctionBookmarkUseCase.addBookmark(memberId, auctionId))
+                                .isInstanceOf(CustomException.class)
+                                .satisfies(ex -> assertThat(((CustomException) ex).getErrorType())
+                                                .isEqualTo(ErrorType.BOOKMARK_ALREADY_EXISTS));
 
-        verify(auctionBookmarkRepository, never()).save(any(AuctionBookmark.class));
-    }
+                verify(auctionBookmarkRepository, never()).save(any(AuctionBookmark.class));
+        }
 
-    @Test
-    @DisplayName("관심 경매 해제 - 성공")
-    void removeBookmark_Success() {
-        // given
-        String publicId = "test-public-id";
-        Long memberId = 100L;
-        Long bookmarkId = 1L;
+        @Test
+        @DisplayName("관심 경매 해제 - 성공")
+        void removeBookmark_Success() {
+                // given
+                String publicId = "test-public-id";
+                Long memberId = 100L;
+                Long auctionId = 500L;
 
-        AuctionMember member = AuctionMember.builder().publicId(publicId).build();
-        ReflectionTestUtils.setField(member, "id", memberId);
+                AuctionMember member = AuctionMember.builder().publicId(publicId).build();
+                ReflectionTestUtils.setField(member, "id", memberId);
 
-        AuctionBookmark bookmark = AuctionBookmark.builder()
-                .memberId(memberId)
-                .auctionId(500L)
-                .productId(50L)
-                .build();
-        ReflectionTestUtils.setField(bookmark, "id", bookmarkId);
+                AuctionBookmark bookmark = AuctionBookmark.builder()
+                                .memberId(memberId)
+                                .auctionId(500L)
+                                .productId(50L)
+                                .build();
+                ReflectionTestUtils.setField(bookmark, "id", 1L);
 
-        given(auctionMemberRepository.findByPublicId(publicId))
-                .willReturn(Optional.of(member));
+                given(auctionMemberRepository.findByPublicId(publicId))
+                                .willReturn(Optional.of(member));
 
-        given(auctionBookmarkRepository.findById(bookmarkId))
-                .willReturn(Optional.of(bookmark));
+                given(auctionBookmarkRepository.findByAuctionIdAndMemberId(auctionId, memberId))
+                                .willReturn(Optional.of(bookmark));
 
-        // when
-        WishlistRemoveResponseDto result = auctionBookmarkUseCase.removeBookmark(publicId, bookmarkId);
+                // when
+                WishlistRemoveResponseDto result = auctionBookmarkUseCase.removeBookmark(publicId, auctionId);
 
-        // then
-        assertThat(result.removed()).isTrue();
-        assertThat(result.bookmarkId()).isEqualTo(bookmarkId);
+                // then
+                assertThat(result.removed()).isTrue();
+                assertThat(result.auctionId()).isEqualTo(auctionId);
 
-        verify(auctionBookmarkRepository).delete(bookmark);
-    }
+                verify(auctionBookmarkRepository).delete(bookmark);
+        }
 
-    @Test
-    @DisplayName("관심 경매 해제 - 북마크를 찾을 수 없는 경우 예외 발생")
-    void removeBookmark_BookmarkNotFound() {
-        // given
-        String publicId = "test-public-id";
-        Long memberId = 100L;
-        Long bookmarkId = 1L;
+        @Test
+        @DisplayName("관심 경매 해제 - 북마크를 찾을 수 없는 경우 예외 발생")
+        void removeBookmark_BookmarkNotFound() {
+                // given
+                String publicId = "test-public-id";
+                Long memberId = 100L;
+                Long auctionId = 500L;
 
-        AuctionMember member = AuctionMember.builder().publicId(publicId).build();
-        ReflectionTestUtils.setField(member, "id", memberId);
+                AuctionMember member = AuctionMember.builder().publicId(publicId).build();
+                ReflectionTestUtils.setField(member, "id", memberId);
 
-        given(auctionMemberRepository.findByPublicId(publicId))
-                .willReturn(Optional.of(member));
+                given(auctionMemberRepository.findByPublicId(publicId))
+                                .willReturn(Optional.of(member));
 
-        // 존재하지 않는 북마크 ID 조회 시나리오
-        given(auctionBookmarkRepository.findById(bookmarkId))
-                .willReturn(Optional.empty());
+                // 존재하지 않는 북마크 ID 조회 시나리오
+                given(auctionBookmarkRepository.findByAuctionIdAndMemberId(auctionId, memberId))
+                                .willReturn(Optional.empty());
 
-        // when & then
-        assertThatThrownBy(() -> auctionBookmarkUseCase.removeBookmark(publicId, bookmarkId))
-                .isInstanceOf(CustomException.class)
-                .satisfies(ex -> assertThat(((CustomException) ex).getErrorType())
-                        .isEqualTo(ErrorType.BOOKMARK_NOT_FOUND));
+                // when & then
+                assertThatThrownBy(() -> auctionBookmarkUseCase.removeBookmark(publicId, auctionId))
+                                .isInstanceOf(CustomException.class)
+                                .satisfies(ex -> assertThat(((CustomException) ex).getErrorType())
+                                                .isEqualTo(ErrorType.BOOKMARK_NOT_FOUND));
 
-        verify(auctionBookmarkRepository, never()).delete(any(AuctionBookmark.class));
-    }
+                verify(auctionBookmarkRepository, never()).delete(any(AuctionBookmark.class));
+        }
 
-    @Test
-    @DisplayName("관심 경매 해제 - 소유자가 아닌 경우 예외 발생")
-    void removeBookmark_UnauthorizedAccess() {
-        // given
-        String publicId = "test-public-id";
-        Long requesterId = 100L; // 요청자
-        Long ownerId = 200L;     // 실제 북마크 주인 (다름)
-        Long bookmarkId = 1L;
-
-        AuctionMember member = AuctionMember.builder().publicId(publicId).build();
-        ReflectionTestUtils.setField(member, "id", requesterId);
-
-        AuctionBookmark bookmark = AuctionBookmark.builder()
-                .memberId(ownerId) // 주인을 다르게 설정
-                .build();
-        ReflectionTestUtils.setField(bookmark, "id", bookmarkId);
-
-        given(auctionMemberRepository.findByPublicId(publicId))
-                .willReturn(Optional.of(member));
-
-        given(auctionBookmarkRepository.findById(bookmarkId))
-                .willReturn(Optional.of(bookmark));
-
-        // when & then
-        assertThatThrownBy(() -> auctionBookmarkUseCase.removeBookmark(publicId, bookmarkId))
-                .isInstanceOf(CustomException.class)
-                .satisfies(ex -> assertThat(((CustomException) ex).getErrorType())
-                        .isEqualTo(ErrorType.BOOKMARK_UNAUTHORIZED_ACCESS));
-
-        verify(auctionBookmarkRepository, never()).delete(any(AuctionBookmark.class));
-    }
 }
