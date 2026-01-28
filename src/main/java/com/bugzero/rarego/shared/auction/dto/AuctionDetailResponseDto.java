@@ -5,10 +5,14 @@ import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.Bid;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record AuctionDetailResponseDto(
 	Long auctionId,
 	Long productId,
+	String productName,
+	String productDescription,
+	List<String> imageUrls,
 	AuctionStatus status,
 	LocalDateTime startTime,
 	LocalDateTime endTime,
@@ -27,7 +31,8 @@ public record AuctionDetailResponseDto(
 		boolean canBid,
 		int minBidPrice,
 		Long highestBidderId,
-		boolean isMyHighestBid
+		boolean isMyHighestBid,
+		boolean isSeller
 	) {}
 
 	public record MyParticipationInfo(
@@ -37,6 +42,9 @@ public record AuctionDetailResponseDto(
 
 	public static AuctionDetailResponseDto from(
 		Auction auction,
+		String productName,
+		String productDescription,
+		List<String> imageUrls,
 		Bid highestBid,
 		Bid myLastBid,
 		Long currentMemberId
@@ -44,15 +52,16 @@ public record AuctionDetailResponseDto(
 		LocalDateTime now = LocalDateTime.now();
 
 		long remainingSeconds = 0;
-		if (auction.getEndTime().isAfter(now)) {
+		if (auction.getEndTime() != null && auction.getEndTime().isAfter(now)) {
 			remainingSeconds = Duration.between(now, auction.getEndTime()).getSeconds();
 		}
 
+		int currentPrice = auction.getCurrentPrice() != null ? auction.getCurrentPrice() : auction.getStartPrice();
+
 		PriceInfo priceInfo = new PriceInfo(
 			auction.getStartPrice(),
-			auction.getCurrentPrice(),
-			auction.getTickSize()
-		);
+			currentPrice,
+			auction.getTickSize());
 
 		boolean isMyHighestBid = false;
 		boolean hasBid = false;
@@ -75,20 +84,22 @@ public record AuctionDetailResponseDto(
 		boolean isSeller = (currentMemberId != null) && auction.getSellerId().equals(currentMemberId);
 
 		boolean canBid = auction.getStatus() == AuctionStatus.IN_PROGRESS
+			&& auction.getEndTime() != null
 			&& auction.getEndTime().isAfter(now)
 			&& !isGuest
 			&& !isSeller
 			&& !isMyHighestBid;
 
-		int minBidPrice = auction.getCurrentPrice() + auction.getTickSize();
+		// 첫 입찰인 경우(highestBid == null) 시작가(currentPrice)로 입찰 가능
+		int minBidPrice = (highestBid == null) ? currentPrice : currentPrice + auction.getTickSize();
 		Long highestBidderId = (highestBid != null) ? highestBid.getBidderId() : null;
 
 		BidInfo bidInfo = new BidInfo(
 			canBid,
 			minBidPrice,
 			highestBidderId,
-			isMyHighestBid
-		);
+			isMyHighestBid,
+			isSeller);
 
 		MyParticipationInfo myParticipationInfo = new MyParticipationInfo(
 			hasBid,
@@ -98,6 +109,9 @@ public record AuctionDetailResponseDto(
 		return new AuctionDetailResponseDto(
 			auction.getId(),
 			auction.getProductId(),
+			productName,
+			productDescription,
+			imageUrls,
 			auction.getStatus(),
 			auction.getStartTime(),
 			auction.getEndTime(),

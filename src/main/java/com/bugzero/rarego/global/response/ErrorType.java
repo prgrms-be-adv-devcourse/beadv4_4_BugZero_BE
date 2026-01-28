@@ -36,6 +36,7 @@ public enum ErrorType {
     MEMBER_IDENTITY_ALREADY_VERIFIED(409, 1021, "이미 본인인증이 완료되었습니다."),
     MEMBER_NICKNAME_ALREADY_EXISTS(409, 1022, "이미 존재하는 닉네임입니다."),
     MEMBER_MEMBER_DELETED(403, 1023, "탈퇴한 계정입니다."),
+    MEMBER_WITHDRAW_FAILED(500, 1024, "회원 탈퇴에 실패했습니다."),
 
     // Auth/JWT (1500 ~ 1999)
     AUTH_MEMBER_REQUIRED(400, 1501, "회원 정보가 필요합니다."),

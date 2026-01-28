@@ -23,7 +23,7 @@ public record AuctionListResponseDto(
 		String thumbnailUrl,
 		int bidsCount
 	) {
-		int safeCurrentPrice = auction.getCurrentPrice() != null ? auction.getCurrentPrice() : 0;
+		int safeCurrentPrice = auction.getCurrentPrice() != null ? auction.getCurrentPrice() : auction.getStartPrice();
 
 		return new AuctionListResponseDto(
 			auction.getId(),
