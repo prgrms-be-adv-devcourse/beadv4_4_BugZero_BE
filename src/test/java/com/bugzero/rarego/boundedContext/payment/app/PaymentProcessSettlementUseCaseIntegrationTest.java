@@ -21,6 +21,7 @@ import com.bugzero.rarego.boundedContext.payment.domain.Wallet;
 import com.bugzero.rarego.boundedContext.payment.domain.WalletTransactionType;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentMemberRepository;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentTransactionRepository;
+import com.bugzero.rarego.boundedContext.payment.out.SettlementFeeRepository;
 import com.bugzero.rarego.boundedContext.payment.out.SettlementRepository;
 import com.bugzero.rarego.boundedContext.payment.out.WalletRepository;
 
@@ -41,10 +42,15 @@ class PaymentProcessSettlementUseCaseIntegrationTest {
 	@Autowired
 	private PaymentTransactionRepository paymentTransactionRepository;
 
+	@Autowired
+	private SettlementFeeRepository settlementFeeRepository; // [New] 추가
+
 	private final Long SYSTEM_ID = 2L;
 
 	@BeforeEach
 	void setUp() {
+		// [New] 수수료 대기열도 초기화 (FK 제약조건 때문에 자식 테이블인 수수료부터 삭제)
+		settlementFeeRepository.deleteAll();
 		paymentTransactionRepository.deleteAll();
 		settlementRepository.deleteAll();
 		walletRepository.deleteAll();
@@ -98,6 +104,9 @@ class PaymentProcessSettlementUseCaseIntegrationTest {
 
 		// 4. 트랜잭션 수 검증 (판매자 입금 1건 + 시스템 수수료 입금 1건 = 2건)
 		assertThat(paymentTransactionRepository.count()).isEqualTo(2);
+
+		// [New] 5. 수수료 대기열이 깨끗하게 비워졌는지 검증 (처리 후 삭제 로직 확인)
+		assertThat(settlementFeeRepository.findAll()).isEmpty();
 	}
 
 	@Test
@@ -111,6 +120,7 @@ class PaymentProcessSettlementUseCaseIntegrationTest {
 
 		// 2. 오류 판매자 (수수료 2000원 - 지갑이 없어 FAILED 유발)
 		PaymentMember errorSeller = createMember(300L, "error");
+		// 지갑을 생성하지 않음 -> processSellerDeposit 내부에서 에러 발생 유도
 		createSettlement(errorSeller, 20000, 2000);
 
 		// when
@@ -124,7 +134,7 @@ class PaymentProcessSettlementUseCaseIntegrationTest {
 		Wallet normalWallet = walletRepository.findByMemberId(200L).get();
 		assertThat(normalWallet.getBalance()).isEqualTo(10000);
 
-		// 오류 판매자 상태 확인
+		// 오류 판매자 상태 확인 (아직 재시도 로직 없으므로 FAILED)
 		Settlement errorSettlement = findSettlementBySellerId(300L);
 		assertThat(errorSettlement.getStatus()).isEqualTo(SettlementStatus.FAILED);
 
@@ -137,10 +147,12 @@ class PaymentProcessSettlementUseCaseIntegrationTest {
 			.anyMatch(tx -> tx.getTransactionType() == WalletTransactionType.SETTLEMENT_FEE
 				&& tx.getBalanceDelta() == 1000);
 		assertThat(hasSystemFeeTx).isTrue();
+
+		// [New] 수수료 대기열 검증: 처리된 것은 삭제되고 비워져야 함
+		assertThat(settlementFeeRepository.findAll()).isEmpty();
 	}
 
-	// --- Helper Methods ---
-
+	// --- Helper Methods (기존과 동일) ---
 	private PaymentMember createMember(Long id, String name) {
 		PaymentMember member = PaymentMember.builder()
 			.id(id)
