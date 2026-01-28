@@ -39,129 +39,133 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional(readOnly = true)
 public class AuctionFacade {
 
-    private final AuctionCreateBidUseCase auctionCreateBidUseCase;
-    private final AuctionReadUseCase auctionReadUseCase;
-    private final AuctionSyncMemberUseCase auctionSyncMemberUseCase;
-    private final AuctionBookmarkUseCase auctionBookmarkUseCase;
-    private final AuctionRelistUseCase auctionRelistUseCase;
-    private final AuctionWithdrawUseCase auctionWithdrawUseCase;
-    private final AuctionCreateAuctionUseCase auctionCreateAuctionUseCase;
-    private final AuctionUpdateAuctionUseCase auctionUpdateAuctionUseCase;
-    private final AuctionDeleteAuctionUseCase auctionDeleteAuctionUseCase;
-    private final AuctionDetermineStartAuctionUseCase auctionDetermineStartAuctionUseCase;
+	private final AuctionCreateBidUseCase auctionCreateBidUseCase;
+	private final AuctionReadUseCase auctionReadUseCase;
+	private final AuctionSyncMemberUseCase auctionSyncMemberUseCase;
+	private final AuctionBookmarkUseCase auctionBookmarkUseCase;
+	private final AuctionRelistUseCase auctionRelistUseCase;
+	private final AuctionWithdrawUseCase auctionWithdrawUseCase;
+	private final AuctionCreateAuctionUseCase auctionCreateAuctionUseCase;
+	private final AuctionUpdateAuctionUseCase auctionUpdateAuctionUseCase;
+	private final AuctionDeleteAuctionUseCase auctionDeleteAuctionUseCase;
+	private final AuctionDetermineStartAuctionUseCase auctionDetermineStartAuctionUseCase;
 
-    // 쓰기 작업 (입찰 생성)
-    @Transactional
-    public SuccessResponseDto<BidResponseDto> createBid(Long auctionId, String memberPublicId, int bidAmount) {
-        BidResponseDto result = auctionCreateBidUseCase.createBid(auctionId, memberPublicId, bidAmount);
-        return SuccessResponseDto.from(SuccessType.CREATED, result);
-    }
+	// 쓰기 작업 (입찰 생성)
+	@Transactional
+	public SuccessResponseDto<BidResponseDto> createBid(Long auctionId, String memberPublicId, int bidAmount) {
+		BidResponseDto result = auctionCreateBidUseCase.createBid(auctionId, memberPublicId, bidAmount);
+		return SuccessResponseDto.from(SuccessType.CREATED, result);
+	}
 
-    // 재경매 생성
-    @Transactional
-    public SuccessResponseDto<AuctionRelistResponseDto> relistAuction(Long auctionId, String memberPublicId, AuctionRelistRequestDto request) {
-        AuctionRelistResponseDto result = auctionRelistUseCase.relistAuction(auctionId, memberPublicId, request);
-        return SuccessResponseDto.from(SuccessType.OK, result);
-    }
+	// 재경매 생성
+	@Transactional
+	public SuccessResponseDto<AuctionRelistResponseDto> relistAuction(Long auctionId, String memberPublicId,
+		AuctionRelistRequestDto request) {
+		AuctionRelistResponseDto result = auctionRelistUseCase.relistAuction(auctionId, memberPublicId, request);
+		return SuccessResponseDto.from(SuccessType.OK, result);
+	}
 
-	  // 읽기 작업
+	// 읽기 작업
 
-	  // 입찰 기록 조회
-	  public PagedResponseDto<BidLogResponseDto> getBidLogs(Long auctionId, Pageable pageable) {
-		    return auctionReadUseCase.getBidLogs(auctionId, pageable);
-	  }
-  
-    // 내 입찰 내역
-    public PagedResponseDto<MyBidResponseDto> getMyBids(String memberPublicId, AuctionStatus status, Pageable pageable) {
-        return auctionReadUseCase.getMyBids(memberPublicId, status, pageable);
-    }
+	// 입찰 기록 조회
+	public PagedResponseDto<BidLogResponseDto> getBidLogs(Long auctionId, Pageable pageable) {
+		return auctionReadUseCase.getBidLogs(auctionId, pageable);
+	}
 
-    // 내 판매 내역
-    public PagedResponseDto<MySaleResponseDto> getMySales(String memberPublicId, AuctionFilterType auctionFilterType, Pageable pageable) {
-        return auctionReadUseCase.getMySales(memberPublicId, auctionFilterType, pageable);
-    }
+	// 내 입찰 내역
+	public PagedResponseDto<MyBidResponseDto> getMyBids(String memberPublicId, AuctionStatus status,
+		Pageable pageable) {
+		return auctionReadUseCase.getMyBids(memberPublicId, status, pageable);
+	}
 
-    // 경매 상세 조회
-    public SuccessResponseDto<AuctionDetailResponseDto> getAuctionDetail(Long auctionId, String memberPublicId) {
-        AuctionDetailResponseDto detail = auctionReadUseCase.getAuctionDetail(auctionId, memberPublicId);
-        return SuccessResponseDto.from(SuccessType.OK, detail);
-    }
+	// 내 판매 내역
+	public PagedResponseDto<MySaleResponseDto> getMySales(String memberPublicId, AuctionFilterType auctionFilterType,
+		Pageable pageable) {
+		return auctionReadUseCase.getMySales(memberPublicId, auctionFilterType, pageable);
+	}
 
-    // 낙찰 기록 상세 조회
-    public SuccessResponseDto<AuctionOrderResponseDto> getAuctionOrder(Long auctionId, String memberPublicId) {
-        AuctionOrderResponseDto response = auctionReadUseCase.getAuctionOrder(auctionId, memberPublicId);
-        return SuccessResponseDto.from(SuccessType.OK, response);
-    }
+	// 경매 상세 조회
+	public SuccessResponseDto<AuctionDetailResponseDto> getAuctionDetail(Long auctionId, String memberPublicId) {
+		AuctionDetailResponseDto detail = auctionReadUseCase.getAuctionDetail(auctionId, memberPublicId);
+		return SuccessResponseDto.from(SuccessType.OK, detail);
+	}
 
-    // 관심 경매 등록
-    @Transactional
-    public WishlistAddResponseDto addBookmark(String publicId, Long auctionId) {
-        return auctionBookmarkUseCase.addBookmark(publicId, auctionId);
-    }
+	// 낙찰 기록 상세 조회
+	public SuccessResponseDto<AuctionOrderResponseDto> getAuctionOrder(Long auctionId, String memberPublicId) {
+		AuctionOrderResponseDto response = auctionReadUseCase.getAuctionOrder(auctionId, memberPublicId);
+		return SuccessResponseDto.from(SuccessType.OK, response);
+	}
 
-    // 경매 상태/현재가 요약 조회
-    public PagedResponseDto<AuctionListResponseDto> getAuctions(AuctionSearchCondition condition, Pageable pageable) {
-      return auctionReadUseCase.getAuctions(condition, pageable);
-    }
+	// 관심 경매 등록
+	@Transactional
+	public WishlistAddResponseDto addBookmark(String publicId, Long auctionId) {
+		return auctionBookmarkUseCase.addBookmark(publicId, auctionId);
+	}
 
-    // 나의 낙찰 목록 조회
-    public PagedResponseDto<MyAuctionOrderListResponseDto> getMyAuctionOrders(String memberPublicId, AuctionOrderStatus status, Pageable pageable) {
-      return auctionReadUseCase.getMyAuctionOrders(memberPublicId, status, pageable);
-    }
+	// 경매 상태/현재가 요약 조회
+	public PagedResponseDto<AuctionListResponseDto> getAuctions(AuctionSearchCondition condition, Pageable pageable) {
+		return auctionReadUseCase.getAuctions(condition, pageable);
+	}
 
-    @Transactional
-    public AuctionMember syncMember(MemberDto member) {
-      return auctionSyncMemberUseCase.syncMember(member);
-    }
+	// 나의 낙찰 목록 조회
+	public PagedResponseDto<MyAuctionOrderListResponseDto> getMyAuctionOrders(String memberPublicId,
+		AuctionOrderStatus status, Pageable pageable) {
+		return auctionReadUseCase.getMyAuctionOrders(memberPublicId, status, pageable);
+	}
 
-    // 관심 경매 해제
-    @Transactional
-    public WishlistRemoveResponseDto removeBookmark(String publicId, Long auctionId) {
-        return auctionBookmarkUseCase.removeBookmark(publicId, auctionId);
-    }
+	@Transactional
+	public AuctionMember syncMember(MemberDto member) {
+		return auctionSyncMemberUseCase.syncMember(member);
+	}
 
-    // 내 관심 경매 목록 조회
-    @Transactional(readOnly = true)
-    public PagedResponseDto<WishlistListResponseDto> getMyBookmarks(String publicId, Pageable pageable) {
-        return auctionReadUseCase.getMyBookmarks(publicId, pageable);
-    }
+	// 관심 경매 해제
+	@Transactional
+	public WishlistRemoveResponseDto removeBookmark(String publicId, Long auctionId) {
+		return auctionBookmarkUseCase.removeBookmark(publicId, auctionId);
+	}
 
-    // 판매 포기
-    @Transactional
-    public AuctionWithdrawResponseDto withdraw(Long auctionId, String memberPublicId) {
-        return auctionWithdrawUseCase.execute(auctionId, memberPublicId);
-    }
+	// 내 관심 경매 목록 조회
+	@Transactional(readOnly = true)
+	public PagedResponseDto<WishlistListResponseDto> getMyBookmarks(String publicId, Pageable pageable) {
+		return auctionReadUseCase.getMyBookmarks(publicId, pageable);
+	}
 
-    public boolean hasActiveBids(String publicId) {
-        return auctionWithdrawUseCase.hasActiveBids(publicId);
-    }
+	// 판매 포기
+	@Transactional
+	public AuctionWithdrawResponseDto withdraw(Long auctionId, String memberPublicId) {
+		return auctionWithdrawUseCase.execute(auctionId, memberPublicId);
+	}
 
-    public boolean hasActiveSales(String publicId) {
-        return auctionWithdrawUseCase.hasActiveSales(publicId);
-    }
+	public boolean hasActiveBids(String publicId) {
+		return auctionWithdrawUseCase.hasActiveBids(publicId);
+	}
 
-    //경매 주문이 진행중인지 확인
-    public boolean hasProcessingOrders(String publicId) {
+	public boolean hasActiveSales(String publicId) {
+		return auctionWithdrawUseCase.hasActiveSales(publicId);
+	}
 
-        return auctionWithdrawUseCase.hasProcessingOrders(publicId);
-    }
+	//경매 주문이 진행중인지 확인
+	public boolean hasProcessingOrders(String publicId) {
 
-    // 경매 정보 생성
-    public Long createAuction(Long productId,String publicId, ProductAuctionRequestDto productAuctionRequestDto) {
-        return auctionCreateAuctionUseCase.createAuction(productId, publicId, productAuctionRequestDto);
-    }
+		return auctionWithdrawUseCase.hasProcessingOrders(publicId);
+	}
 
-    // 경매 정보 수정
-    public Long updateAuction(String publicId, ProductAuctionUpdateDto dto) {
-        return auctionUpdateAuctionUseCase.updateAuction(publicId, dto);
-    }
+	// 경매 정보 생성
+	public Long createAuction(Long productId, String publicId, ProductAuctionRequestDto productAuctionRequestDto) {
+		return auctionCreateAuctionUseCase.createAuction(productId, publicId, productAuctionRequestDto);
+	}
 
-    // 경매 정보 삭제
-    public void deleteAuction(String publicId, Long productId) {
-        auctionDeleteAuctionUseCase.deleteAuction(publicId, productId);
-    }
+	// 경매 정보 수정
+	public Long updateAuction(String publicId, ProductAuctionUpdateDto dto) {
+		return auctionUpdateAuctionUseCase.updateAuction(publicId, dto);
+	}
 
-    public Long determineStartAuction(Long productId) {
-        return auctionDetermineStartAuctionUseCase.determineStartAuction(productId);
-    }
+	// 경매 정보 삭제
+	public void deleteAuction(String publicId, Long productId) {
+		auctionDeleteAuctionUseCase.deleteAuction(publicId, productId);
+	}
+
+	public Long determineStartAuction(Long productId) {
+		return auctionDetermineStartAuctionUseCase.determineStartAuction(productId);
+	}
 }
