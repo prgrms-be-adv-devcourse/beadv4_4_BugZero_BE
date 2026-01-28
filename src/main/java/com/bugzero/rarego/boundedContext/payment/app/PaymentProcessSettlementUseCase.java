@@ -8,7 +8,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import com.bugzero.rarego.boundedContext.payment.domain.Settlement;
+import com.bugzero.rarego.boundedContext.payment.domain.SettlementFee;
 import com.bugzero.rarego.boundedContext.payment.domain.SettlementStatus;
+import com.bugzero.rarego.boundedContext.payment.out.SettlementFeeRepository;
 import com.bugzero.rarego.boundedContext.payment.out.SettlementRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentProcessSettlementUseCase {
 	private final SettlementRepository settlementRepository;
 	private final PaymentSettlementProcessor paymentSettlementProcessor;
+	private final SettlementFeeRepository settlementFeeRepository;
 
 	@Value("${custom.payment.settlement.holdDays:7}")
 	private int settlementHoldDays;
@@ -31,16 +34,16 @@ public class PaymentProcessSettlementUseCase {
 			SettlementStatus.READY, cutoffDate, PageRequest.of(0, limit));
 
 		if (settlements.isEmpty()) {
+			// 정산 대상이 없어도 처리되지 않은 수수료가 있을 수 있으므로 체크
+			collectFees();
 			return 0;
 		}
 
 		int successCount = 0;
-		int totalFeeAmount = 0;
 
 		for (Settlement settlement : settlements) {
 			try {
 				if (paymentSettlementProcessor.processSellerDeposit(settlement.getId())) {
-					totalFeeAmount += settlement.getFeeAmount();
 					successCount++;
 				}
 			} catch (Exception e) {
@@ -49,16 +52,35 @@ public class PaymentProcessSettlementUseCase {
 			}
 		}
 
-		if (successCount > 0 && totalFeeAmount > 0) {
-			try {
-				paymentSettlementProcessor.processSystemDeposit(totalFeeAmount);
-			} catch (Exception e) {
-				// TODO: 시스템 지갑 입금 실패 대응 처리
-				log.error("시스템 수수료 입금 실패 - 누락 금액: {}", totalFeeAmount, e);
-			}
-		}
+		collectFees();
 
 		return successCount;
+	}
+
+	/**
+	 * 미처리 수수료 일괄 처리
+	 */
+	private void collectFees() {
+		try {
+			// 1. 수수료 조회
+			List<SettlementFee> fees = settlementFeeRepository.findAllForBatch(PageRequest.of(0, 10000));
+
+			if (fees.isEmpty())
+				return;
+
+			// 2. 금액 합산
+			int totalFeeAmount = fees.stream()
+				.mapToInt(SettlementFee::getFeeAmount)
+				.sum();
+
+			if (totalFeeAmount > 0) {
+				// 3. 시스템 지갑 입금 및 데이터 삭제
+				paymentSettlementProcessor.processSystemDeposit(totalFeeAmount, fees);
+			}
+		} catch (Exception e) {
+			log.error("시스템 수수료 징수 실패", e);
+			// 실패해도 SettlementFee 데이터는 남아있으므로 다음 배치에서 재시도됨
+		}
 	}
 
 	/**
