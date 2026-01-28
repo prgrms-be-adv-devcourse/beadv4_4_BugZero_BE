@@ -3,6 +3,7 @@ package com.bugzero.rarego.boundedContext.payment.app;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,8 +63,19 @@ public class PaymentSettlementProcessor {
 	}
 
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
-	public void processSystemDeposit(int totalFeeAmount, List<SettlementFee> fees) {
-		// 1. 시스템 지갑 입금
+	public void processFees(int size) {
+		// 1. 수수료 조회
+		List<SettlementFee> fees = settlementFeeRepository.findAllForBatch(PageRequest.of(0, size));
+
+		if (fees.isEmpty()) {
+			return;
+		}
+
+		int totalFeeAmount = fees.stream()
+			.mapToInt(SettlementFee::getFeeAmount)
+			.sum();
+
+		// 2. 시스템 지갑 입금
 		Wallet systemWallet = paymentSupport.findWalletByMemberIdForUpdate(systemMemberId);
 		systemWallet.addBalance(totalFeeAmount);
 
@@ -74,7 +86,7 @@ public class PaymentSettlementProcessor {
 			0L
 		); // 합산 건이므로 referenceId는 고민
 
-		// 2. 처리된 수수료 데이터 삭제
+		// 3. 처리된 수수료 데이터 삭제
 		settlementFeeRepository.deleteAllInBatch(fees);
 	}
 

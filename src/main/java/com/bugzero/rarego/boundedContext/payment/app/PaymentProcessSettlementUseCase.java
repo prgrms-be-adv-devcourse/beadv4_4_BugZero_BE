@@ -8,7 +8,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import com.bugzero.rarego.boundedContext.payment.domain.Settlement;
-import com.bugzero.rarego.boundedContext.payment.domain.SettlementFee;
 import com.bugzero.rarego.boundedContext.payment.domain.SettlementStatus;
 import com.bugzero.rarego.boundedContext.payment.out.SettlementFeeRepository;
 import com.bugzero.rarego.boundedContext.payment.out.SettlementRepository;
@@ -62,21 +61,7 @@ public class PaymentProcessSettlementUseCase {
 	 */
 	private void collectFees() {
 		try {
-			// 1. 수수료 조회
-			List<SettlementFee> fees = settlementFeeRepository.findAllForBatch(PageRequest.of(0, 10000));
-
-			if (fees.isEmpty())
-				return;
-
-			// 2. 금액 합산
-			int totalFeeAmount = fees.stream()
-				.mapToInt(SettlementFee::getFeeAmount)
-				.sum();
-
-			if (totalFeeAmount > 0) {
-				// 3. 시스템 지갑 입금 및 데이터 삭제
-				paymentSettlementProcessor.processSystemDeposit(totalFeeAmount, fees);
-			}
+			paymentSettlementProcessor.processFees(1000);
 		} catch (Exception e) {
 			log.error("시스템 수수료 징수 실패", e);
 			// 실패해도 SettlementFee 데이터는 남아있으므로 다음 배치에서 재시도됨
