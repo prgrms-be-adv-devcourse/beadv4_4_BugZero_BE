@@ -11,7 +11,6 @@ import com.bugzero.rarego.boundedContext.payment.in.dto.TossPaymentsConfirmRespo
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
