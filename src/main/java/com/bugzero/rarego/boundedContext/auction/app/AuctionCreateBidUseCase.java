@@ -5,6 +5,7 @@ import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.Bid;
 import com.bugzero.rarego.boundedContext.auction.domain.event.AuctionBidCreatedEvent;
+import com.bugzero.rarego.boundedContext.auction.domain.event.AuctionUpdatedEvent;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
 import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -49,21 +51,37 @@ public class AuctionCreateBidUseCase {
 		// 보증금 Hold (유효성 검증 통과 후 보증금 Hold)
 		paymentApiClient.holdDeposit(depositAmount, memberPublicId, auctionId);
 
-		// 4. 현재가 갱신
-		auction.updateCurrentPrice(bidAmount);
+		// 마감 임박 연장 로직
+		LocalDateTime now = LocalDateTime.now();
+		LocalDateTime originalEndTime = auction.getEndTime(); // 연장 전 종료 시간 저장
+
+		boolean isExtended = auction.extendEndTimeIfClose(now);
 
 		// 5. 입찰 정보 저장 (bidder.getId() 사용)
 		Bid bid = Bid.builder()
 			.auctionId(auctionId)
 			.bidderId(bidder.getId())
 			.bidAmount(bidAmount)
+			.bidTime(now)
 			.build();
+
+		// 4. 현재가 갱신
+		auction.updateCurrentPrice(bidAmount);
 
 		bidRepository.save(bid);
 
+		// 입찰 생성 이벤트 발행
 		eventPublisher.publishEvent(
 			AuctionBidCreatedEvent.of(auctionId, bidder.getId(), bidAmount)
 		);
+
+		if (isExtended) {
+			eventPublisher.publishEvent(new AuctionUpdatedEvent(
+				auction.getId(),
+				originalEndTime,
+				auction.getEndTime()
+			));
+		}
 
 		return BidResponseDto.from(
 			bid,

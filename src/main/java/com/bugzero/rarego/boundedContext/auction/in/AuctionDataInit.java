@@ -287,7 +287,44 @@ public class AuctionDataInit implements CommandLineRunner {
         auctionRepository.save(ongoingAuction);
 
         log.info("테스트용 경매 생성 완료! ID: {}, 상품ID: {}", ongoingAuction.getId(), approvedProduct.getId());
+
+        log.info("--- [Part 6] 마감 연장 로직 검증 (API 호출 X, 내부 호출) ---");
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // 1. 정상 연장 케이스 (Count 0 -> 1)
+        Product extProduct1 = createProduct(seller, "[로직검증] 연장 O (0->1)", 10000);
+        Auction extAuction1 = createAuction(extProduct1.getId(), seller.getId(), -58, 2, 10000);
+
+        // 직접 메서드 호출!
+        boolean result1 = extAuction1.extendEndTimeIfClose(now);
+        log.info("검증1(연장성공): 결과={}, 변경된 종료시간={}", result1, extAuction1.getEndTime());
+        auctionRepository.save(extAuction1); // 변경된 시간 저장
+
+
+        // 2. 최대 횟수 도달 직전 케이스 (Count 4 -> 5)
+        Product extProduct2 = createProduct(seller, "[로직검증] 연장 O (4->5)", 20000);
+        Auction extAuction2 = createAuction(extProduct2.getId(), seller.getId(), -58, 2, 20000);
+        extAuction2.setExtensionCountForTest(4); // 4회로 설정
+
+        // 직접 메서드 호출!
+        boolean result2 = extAuction2.extendEndTimeIfClose(now);
+        log.info("검증2(연장성공): 결과={}, 변경된 종료시간={}", result2, extAuction2.getEndTime());
+        auctionRepository.save(extAuction2);
+
+
+        // 3. 연장 불가 케이스 (Count 5 -> 5)
+        Product extProduct3 = createProduct(seller, "[로직검증] 연장 X (5->5)", 30000);
+        Auction extAuction3 = createAuction(extProduct3.getId(), seller.getId(), -58, 2, 30000);
+        extAuction3.setExtensionCountForTest(5); // 5회로 설정
+
+        // 직접 메서드 호출!
+        boolean result3 = extAuction3.extendEndTimeIfClose(now);
+        log.info("검증3(연장실패): 결과={}, 종료시간 변동없음 확인={}", result3, extAuction3.getEndTime());
+        auctionRepository.save(extAuction3);
     }
+
+
 
     // --- Helper Methods ---
 
