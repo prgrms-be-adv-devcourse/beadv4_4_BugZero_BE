@@ -57,7 +57,7 @@ public class AuctionFacade {
         return SuccessResponseDto.from(SuccessType.CREATED, result);
     }
 
-  // 재경매 생성
+    // 재경매 생성
     @Transactional
     public SuccessResponseDto<AuctionRelistResponseDto> relistAuction(Long auctionId, String memberPublicId, AuctionRelistRequestDto request) {
         AuctionRelistResponseDto result = auctionRelistUseCase.relistAuction(auctionId, memberPublicId, request);
@@ -142,6 +142,7 @@ public class AuctionFacade {
 
     //경매 주문이 진행중인지 확인
     public boolean hasProcessingOrders(String publicId) {
+
         return auctionWithdrawUseCase.hasProcessingOrders(publicId);
     }
 
@@ -149,10 +150,12 @@ public class AuctionFacade {
     public Long createAuction(Long productId,String publicId, ProductAuctionRequestDto productAuctionRequestDto) {
         return auctionCreateAuctionUseCase.createAuction(productId, publicId, productAuctionRequestDto);
     }
+
     // 경매 정보 수정
     public Long updateAuction(String publicId, ProductAuctionUpdateDto dto) {
         return auctionUpdateAuctionUseCase.updateAuction(publicId, dto);
     }
+
     // 경매 정보 삭제
     public void deleteAuction(String publicId, Long productId) {
         auctionDeleteAuctionUseCase.deleteAuction(publicId, productId);
