@@ -40,7 +40,7 @@ public record MySaleResponseDto (
 			.auctionStatus(auction.getStatus())
 			.tradeStatus(order != null ? order.getStatus() : null)
 			.endTime(auction.getEndTime())
-			.actionRequired(resolveActionRequired(auction.getStatus()))
+			.actionRequired(resolveActionRequired(auction, order, bidCount))
 			.build();
 	}
 
@@ -64,8 +64,21 @@ public record MySaleResponseDto (
 		return auction.getCurrentPrice() != null ? auction.getCurrentPrice() : auction.getStartPrice();
 	}
 
-	private static boolean resolveActionRequired(AuctionStatus status) {
-		// 유찰(ENDED)된 경우 재등록 필요
-		return status == AuctionStatus.ENDED;
+	private static boolean resolveActionRequired(Auction auction, AuctionOrder order, int bidCount) {
+		// 경매가 종료(ENDED) 상태가 아니라면 조치 불필요
+		if (auction.getStatus() != AuctionStatus.ENDED) {
+			return false;
+		}
+
+		// 유찰: 입찰자가 단 한 명도 없는 경우
+		boolean isNoBids = (bidCount == 0);
+
+		// 미결제: 주문은 생성되었으나(낙찰), 결제 실패(FAILED) 상태인 경우
+		boolean isPaymentFailed = (order != null && order.getStatus() == AuctionOrderStatus.FAILED);
+
+		// 둘 중 하나라도 해당되면 재등록 등의 조치가 필요함
+		return isNoBids || isPaymentFailed;
 	}
+
+
 }
