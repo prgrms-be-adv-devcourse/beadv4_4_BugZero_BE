@@ -14,7 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.bugzero.rarego.boundedContext.product.app.ProductCreateS3PresignerUrlUseCase;
+import com.bugzero.rarego.boundedContext.product.app.ProductImageS3UseCase;
 import com.bugzero.rarego.boundedContext.product.domain.dto.PresignedUrlRequestDto;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
 
@@ -33,7 +33,7 @@ class ProductImageControllerTest {
 	private ObjectMapper objectMapper;
 
 	@MockitoBean
-	private ProductCreateS3PresignerUrlUseCase s3PresignerUrlUseCase;
+	private ProductImageS3UseCase s3PresignerUrlUseCase;
 
 	@Test
 	@DisplayName("성공 - 올바른 요청을 보내면 200 OK를 반환한다.")
