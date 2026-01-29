@@ -18,10 +18,21 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.bugzero.rarego.boundedContext.auction.domain.*;
+import com.bugzero.rarego.boundedContext.auction.domain.Auction;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionBookmark;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionViewerRoleStatus;
+import com.bugzero.rarego.boundedContext.auction.domain.Bid;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistListResponseDto;
-import com.bugzero.rarego.boundedContext.auction.out.*;
-import com.bugzero.rarego.boundedContext.product.app.ProductCreateS3PresignerUrlUseCase;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionBookmarkRepository;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
+import com.bugzero.rarego.boundedContext.auction.out.BidRepository;
+import com.bugzero.rarego.boundedContext.product.app.ProductImageS3UseCase;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductImage;
 import com.bugzero.rarego.boundedContext.product.out.ProductImageRepository;
@@ -30,7 +41,15 @@ import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.PageDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
-import com.bugzero.rarego.shared.auction.dto.*;
+import com.bugzero.rarego.shared.auction.dto.AuctionDetailResponseDto;
+import com.bugzero.rarego.shared.auction.dto.AuctionFilterType;
+import com.bugzero.rarego.shared.auction.dto.AuctionListResponseDto;
+import com.bugzero.rarego.shared.auction.dto.AuctionOrderResponseDto;
+import com.bugzero.rarego.shared.auction.dto.AuctionSearchCondition;
+import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
+import com.bugzero.rarego.shared.auction.dto.MyAuctionOrderListResponseDto;
+import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
+import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +68,7 @@ public class AuctionReadUseCase {
 	private final AuctionOrderRepository auctionOrderRepository;
 	private final ProductImageRepository productImageRepository;
 	private final AuctionBookmarkRepository auctionBookmarkRepository;
-	private final ProductCreateS3PresignerUrlUseCase s3PresignerUrlUseCase;
+	private final ProductImageS3UseCase s3PresignerUrlUseCase;
 
 	// 경매 입찰 기록 조회
 	public PagedResponseDto<BidLogResponseDto> getBidLogs(Long auctionId, Pageable pageable) {

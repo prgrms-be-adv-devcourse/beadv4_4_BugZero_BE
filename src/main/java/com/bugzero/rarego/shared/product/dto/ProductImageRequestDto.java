@@ -12,10 +12,10 @@ public record ProductImageRequestDto(
 	@PositiveOrZero(message = "사진 순서는 음수값을 사용하지 못합니다.")
 	int sortOrder
 ) {
-	public ProductImage toEntity(Product product) {
+	public ProductImage toEntity(Product product, String permanentPath) {
 		return ProductImage.builder()
 			.product(product)
-			.imageUrl(imgUrl)
+			.imageUrl(permanentPath)
 			.sortOrder(sortOrder)
 			.build();
 	}
