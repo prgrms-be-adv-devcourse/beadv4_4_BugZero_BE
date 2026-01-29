@@ -1,4 +1,4 @@
-package com.bugzero.rarego.boundedContext.product.auction.app;
+package com.bugzero.rarego.boundedContext.auction.app;
 
 import static org.assertj.core.api.AssertionsForClassTypes.*;
 import static org.junit.jupiter.api.Assertions.*;
