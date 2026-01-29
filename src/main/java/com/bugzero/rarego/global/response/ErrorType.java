@@ -109,6 +109,7 @@ public enum ErrorType {
     SETTLEMENT_BATCH_FAILED(500, 4106, "정산 배치 실행에 실패했습니다."),
     SETTLEMENT_NOT_FOUND(404, 4107, "정산 정보를 찾을 수 없습니다."),
     SYSTEM_WALLET_NOT_FOUND(404, 4108, "시스템 지갑을 찾을 수 없습니다."),
+    PAYMENT_CANCEL_FAILED(400, 4109, "토스 결제 취소에 실패했습니다."),
 
     AUCTION_ORDER_NOT_FOUND(404, 4201, "주문 정보를 찾을 수 없습니다."),
     NOT_AUCTION_WINNER(403, 4202, "낙찰자만 결제할 수 있습니다."),
