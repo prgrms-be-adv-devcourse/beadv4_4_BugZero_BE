@@ -31,10 +31,11 @@ public class Bid extends BaseIdAndTime {
 	private int bidAmount;
 
 	@Builder
-	public Bid(Long auctionId, Long bidderId, int bidAmount) {
+	public Bid(Long auctionId, Long bidderId, int bidAmount, LocalDateTime bidTime) {
 		this.auctionId = auctionId;
 		this.bidderId = bidderId;
 		this.bidAmount = bidAmount;
-		this.bidTime = LocalDateTime.now();
+		// 입찰시간을 인자로 받기 위해서 if문 처리
+		this.bidTime = bidTime != null ? bidTime : LocalDateTime.now();
 	}
 }
