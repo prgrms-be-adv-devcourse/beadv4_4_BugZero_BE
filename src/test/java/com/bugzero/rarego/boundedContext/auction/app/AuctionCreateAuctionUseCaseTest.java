@@ -1,4 +1,4 @@
-package com.bugzero.rarego.boundedContext.product.auction.app;
+package com.bugzero.rarego.boundedContext.auction.app;
 
 import static org.assertj.core.api.AssertionsForClassTypes.*;
 import static org.mockito.BDDMockito.*;
@@ -25,7 +25,7 @@ class AuctionCreateAuctionUseCaseTest {
 	private AuctionRepository auctionRepository;
 
 	@Mock
-	private ProductAuctionSupport productAuctionSupport;
+	private AuctionSupport auctionSupport;
 
 	@InjectMocks
 	private AuctionCreateAuctionUseCase auctionCreateAuctionUseCase;
@@ -54,10 +54,7 @@ class AuctionCreateAuctionUseCaseTest {
 		Auction mockAuction = requestDto.toEntity(productId, 1L);
 		ReflectionTestUtils.setField(mockAuction, "id", 100L);
 		when(auctionRepository.save(any(Auction.class))).thenReturn(mockAuction);
-		given(productAuctionSupport.getAuctionMember(PUBLIC_ID)).willReturn(commonSeller);
-		given(productAuctionSupport.determineTickSize(requestDto.startPrice())).willReturn(1000);
-
-
+		given(auctionSupport.getPublicMember(PUBLIC_ID)).willReturn(commonSeller);
 
 		// when
 		Long savedAuctionId = auctionCreateAuctionUseCase.createAuction(productId, PUBLIC_ID, requestDto);

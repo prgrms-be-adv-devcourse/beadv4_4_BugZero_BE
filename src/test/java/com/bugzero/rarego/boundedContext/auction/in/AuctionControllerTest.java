@@ -1,17 +1,19 @@
 package com.bugzero.rarego.boundedContext.auction.in;
 
-import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
-import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
-import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
-import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.exception.GlobalExceptionHandler;
-import com.bugzero.rarego.global.response.*;
-import com.bugzero.rarego.global.security.MemberPrincipal;
-import com.bugzero.rarego.shared.auction.dto.*;
-import com.bugzero.rarego.support.WithMockMemberPrincipal;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.*;
+import static org.mockito.BDDMockito.verify;
+import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.argThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,19 +32,28 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import static org.mockito.Mockito.*;
+import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
+import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
+import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.exception.GlobalExceptionHandler;
+import com.bugzero.rarego.global.response.ErrorType;
+import com.bugzero.rarego.global.response.PageDto;
+import com.bugzero.rarego.global.response.PagedResponseDto;
+import com.bugzero.rarego.global.response.SuccessResponseDto;
+import com.bugzero.rarego.global.response.SuccessType;
+import com.bugzero.rarego.global.security.MemberPrincipal;
+import com.bugzero.rarego.shared.auction.dto.AuctionDetailResponseDto;
+import com.bugzero.rarego.shared.auction.dto.AuctionOrderResponseDto;
+import com.bugzero.rarego.shared.auction.dto.AuctionRelistRequestDto;
+import com.bugzero.rarego.shared.auction.dto.AuctionRelistResponseDto;
+import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
+import com.bugzero.rarego.shared.auction.dto.BidRequestDto;
+import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
+import com.bugzero.rarego.support.WithMockMemberPrincipal;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
 class AuctionControllerTest {
@@ -411,6 +422,24 @@ class AuctionControllerTest {
 				.andExpect(status().isConflict()) // 409
 				.andExpect(jsonPath("$.status").value(409))
 				.andExpect(jsonPath("$.message").value(ErrorType.AUCTION_ALREADY_SOLD.getMessage()));
+	}
+
+	@Test
+	@DisplayName("성공 - 시작 시간 확정 요청 시 200 OK와 경매 ID를 반환한다")
+	void createAuction_Success() throws Exception {
+		// given
+		Long productId = 1L;
+
+		given(auctionFacade.determineStartAuction(eq(productId)))
+			.willReturn(productId);
+
+		// when & then
+		mockMvc.perform(patch("/api/v1/auctions/{auctionId}/startTime", productId) // 1. patch 사용 및 경로 수정
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk()) // 2. isCreated() 대신 isOk() 사용
+			.andExpect(jsonPath("$.status").value(200)) // SuccessResponseDto 구조 검증
+			.andExpect(jsonPath("$.data").value(productId))
+			.andDo(print());
 	}
 
 }

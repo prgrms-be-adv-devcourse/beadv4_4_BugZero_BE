@@ -1,0 +1,24 @@
+<type>(<scope>): <subject>
+# 예) feat(bid): 입찰 생성 API 구현
+
+# ---- Commit Convention ----
+# 형식: <type>(<scope>): <subject>
+# - scope는 domain 단위로 작성 (예: bid, auction, member, auth, payment, product, faq, global 등)
+# - subject는 명령형/간결하게: "~추가", "~수정", "~구현", "~개선" 등
+# - 복잡한 수정은 최대한 확인이 편하도록 커밋을 잘게 나누기
+
+# ---- Types ----
+# feat     : 새로운 기능 추가
+# fix      : 버그 수정
+# docs     : 문서 수정 (README.md 등)
+# style    : 코드 포맷팅/세미콜론/공백 등 (기능 변경 없음)
+# refactor : 코드 리팩토링 (기능 변경 없음)
+# test     : 테스트 코드 추가 또는 수정
+# chore    : 빌드/패키지 매니저 설정 등 유지보수 작업
+
+# ---- Body (Optional) ----
+# - 변경 이유/배경, 주요 변경사항, 영향 범위를 간단히 적기
+# - 예)
+#   - 왜: 동시 입찰 처리 안정화 필요
+#   - 무엇: pessimistic lock 적용, 예외 처리 보강
+#   - 영향: /api/v1/auctions/{id}/bids

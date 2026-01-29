@@ -1,12 +1,11 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
-import com.bugzero.rarego.boundedContext.auction.domain.Auction;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
-import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionWithdrawResponseDto;
-import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.response.ErrorType;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.BDDMockito.*;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,12 +13,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.BDDMockito.given;
+import com.bugzero.rarego.boundedContext.auction.domain.Auction;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionWithdrawResponseDto;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 
 @ExtendWith(MockitoExtension.class)
 class AuctionWithdrawUseCaseTest {
@@ -40,7 +40,7 @@ class AuctionWithdrawUseCaseTest {
         AuctionMember seller = createMember(MEMBER_ID);
         Auction auction = createAuction(MEMBER_ID, AuctionStatus.ENDED, true);
 
-        given(auctionSupport.findMemberByPublicId(PUBLIC_ID)).willReturn(seller);
+        given(auctionSupport.getPublicMember(PUBLIC_ID)).willReturn(seller);
         given(auctionSupport.findAuctionById(AUCTION_ID)).willReturn(auction);
         given(auctionSupport.findOrderByAuctionId(AUCTION_ID)).willReturn(Optional.empty());
 
@@ -59,8 +59,8 @@ class AuctionWithdrawUseCaseTest {
                 .finalPrice(0)
                 .build();
         failedOrder.fail();
-
-        given(auctionSupport.findMemberByPublicId(PUBLIC_ID)).willReturn(seller);
+        
+        given(auctionSupport.getPublicMember(PUBLIC_ID)).willReturn(seller);
         given(auctionSupport.findAuctionById(AUCTION_ID)).willReturn(auction);
         given(auctionSupport.findOrderByAuctionId(AUCTION_ID)).willReturn(Optional.of(failedOrder));
 
@@ -75,7 +75,7 @@ class AuctionWithdrawUseCaseTest {
         AuctionMember notSeller = createMember(2L);
         Auction auction = createAuction(MEMBER_ID, AuctionStatus.ENDED, true);
 
-        given(auctionSupport.findMemberByPublicId(PUBLIC_ID)).willReturn(notSeller);
+        given(auctionSupport.getPublicMember(PUBLIC_ID)).willReturn(notSeller);
         given(auctionSupport.findAuctionById(AUCTION_ID)).willReturn(auction);
 
         assertThatThrownBy(() -> auctionWithdrawUseCase.execute(AUCTION_ID, PUBLIC_ID))
@@ -89,7 +89,7 @@ class AuctionWithdrawUseCaseTest {
         AuctionMember seller = createMember(MEMBER_ID);
         Auction auction = createAuction(MEMBER_ID, AuctionStatus.SCHEDULED, false);
 
-        given(auctionSupport.findMemberByPublicId(PUBLIC_ID)).willReturn(seller);
+        given(auctionSupport.getPublicMember(PUBLIC_ID)).willReturn(seller);
         given(auctionSupport.findAuctionById(AUCTION_ID)).willReturn(auction);
 
         assertThatThrownBy(() -> auctionWithdrawUseCase.execute(AUCTION_ID, PUBLIC_ID))
@@ -108,7 +108,7 @@ class AuctionWithdrawUseCaseTest {
                 .build();
         successOrder.complete();
 
-        given(auctionSupport.findMemberByPublicId(PUBLIC_ID)).willReturn(seller);
+        given(auctionSupport.getPublicMember(PUBLIC_ID)).willReturn(seller);
         given(auctionSupport.findAuctionById(AUCTION_ID)).willReturn(auction);
         given(auctionSupport.findOrderByAuctionId(AUCTION_ID)).willReturn(Optional.of(successOrder));
 
@@ -127,7 +127,7 @@ class AuctionWithdrawUseCaseTest {
                 .finalPrice(0)
                 .build();
 
-        given(auctionSupport.findMemberByPublicId(PUBLIC_ID)).willReturn(seller);
+        given(auctionSupport.getPublicMember(PUBLIC_ID)).willReturn(seller);
         given(auctionSupport.findAuctionById(AUCTION_ID)).willReturn(auction);
         given(auctionSupport.findOrderByAuctionId(AUCTION_ID)).willReturn(Optional.of(processingOrder));
 
