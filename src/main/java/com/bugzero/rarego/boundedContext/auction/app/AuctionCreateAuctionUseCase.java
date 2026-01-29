@@ -1,4 +1,4 @@
-package com.bugzero.rarego.boundedContext.product.auction.app;
+package com.bugzero.rarego.boundedContext.auction.app;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,14 +13,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuctionCreateAuctionUseCase {
 	private final AuctionRepository auctionRepository;
-	private final ProductAuctionSupport productAuctionSupport;
+	private final AuctionSupport auctionSupport;
 
 	@Transactional
 	// 신규상품 경매 정보 생성
 	public long createAuction(Long productId,String publicId, ProductAuctionRequestDto productAuctionRequestDto) {
-		AuctionMember seller = productAuctionSupport.getAuctionMember(publicId);
-
-		int tickSize = productAuctionSupport.determineTickSize(productAuctionRequestDto.startPrice());
+		AuctionMember seller = auctionSupport.getPublicMember(publicId);
 
 		return auctionRepository
 			.save(productAuctionRequestDto.toEntity(productId, seller.getId()))
