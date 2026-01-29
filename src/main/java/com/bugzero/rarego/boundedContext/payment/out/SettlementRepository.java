@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.bugzero.rarego.boundedContext.payment.domain.Settlement;
 import com.bugzero.rarego.boundedContext.payment.domain.SettlementStatus;
@@ -41,12 +42,16 @@ public interface SettlementRepository extends JpaRepository<Settlement, Long> {
 	Page<Settlement> searchSettlements(Long sellerId, SettlementStatus status, LocalDateTime from,
 		LocalDateTime to, Pageable pageable);
 
-	@Query("""
-		SELECT s
-		FROM Settlement s
-		JOIN FETCH s.seller
-		WHERE s.status = :status AND s.createdAt < :cutoffDate
-		ORDER BY s.id ASC
-		""")
-	List<Settlement> findSettlementsForBatch(SettlementStatus status, LocalDateTime cutoffDate, Pageable pageable);
+	@Query(value = """
+		SELECT * FROM payment_settlement
+		WHERE status = :#{#status.name()}
+		AND created_at < :cutoffDate
+		ORDER BY id ASC
+		LIMIT :limit
+		FOR UPDATE SKIP LOCKED
+		""", nativeQuery = true)
+	List<Settlement> findSettlementsForBatch(
+		@Param("status") SettlementStatus status,
+		@Param("cutoffDate") LocalDateTime cutoffDate,
+		@Param("limit") int limit);
 }
