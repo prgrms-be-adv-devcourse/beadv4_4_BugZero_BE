@@ -1,9 +1,11 @@
 package com.bugzero.rarego.boundedContext.product.app;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.bugzero.rarego.boundedContext.product.domain.dto.PresignedUrlRequestDto;
@@ -11,6 +13,9 @@ import com.bugzero.rarego.boundedContext.product.domain.dto.PresignedUrlResponse
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
@@ -18,9 +23,11 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class ProductCreateS3PresignerUrlUseCase {
+public class ProductImageS3UseCase {
 
 	private final S3Presigner s3Presigner;
+
+	private final S3Client s3Client;
 
 	@Value("${aws.s3.bucket}")
 	private String bucketName;
@@ -31,9 +38,9 @@ public class ProductCreateS3PresignerUrlUseCase {
 	public PresignedUrlResponseDto createPresignerUrl(PresignedUrlRequestDto presignedUrlRequestDto) {
 		String uniqueFileName = createUniqueFileName(presignedUrlRequestDto.fileName());
 		String contentType = presignedUrlRequestDto.contentType();
-		String s3Path = "products/" + uniqueFileName;
+		String s3Path = "temp/" + uniqueFileName;
 
-		log.info("create Presigned URL for path: {}, contentType : {}", s3Path, contentType);
+		log.info("Presigned URL 발급: {}, contentType : {}", s3Path, contentType);
 
 		// S3에 어떤 파일을 올릴지에 대한 기본 요청 정보 (PutObjectRequest)
 		PutObjectRequest putObjectRequest = PutObjectRequest.builder()
@@ -58,7 +65,6 @@ public class ProductCreateS3PresignerUrlUseCase {
 			.build();
 	}
 
-
 	public String getPresignedGetUrl(String s3Path) {
 		if (s3Path == null || s3Path.isBlank())
 			return null;
@@ -80,6 +86,36 @@ public class ProductCreateS3PresignerUrlUseCase {
 				.build();
 
 		return s3Presigner.presignGetObject(presignRequest).url().toString();
+	}
+
+	// S3에 이미지를 등록하는 과정은 비동기로 처리
+	@Async
+	public void confirmImages(List<String> tempPaths) {
+		for (String tempPath : tempPaths) {
+			try {
+				String destinationPath = tempPath.replace("temp/","products/");
+
+				//1. S3 내부 복사
+				CopyObjectRequest copyObjectRequest = CopyObjectRequest.builder()
+					.sourceBucket(bucketName)
+					.sourceKey(tempPath)
+					.destinationBucket(bucketName)
+					.destinationKey(destinationPath)
+					.build();
+				s3Client.copyObject(copyObjectRequest);
+
+				//2. 기존 temp 파일 삭제
+				DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+					.bucket(bucketName)
+					.key(tempPath)
+					.build();
+				s3Client.deleteObject(deleteObjectRequest);
+
+				log.info("S3 이미지 확정 완료: {} -> {}", tempPath, destinationPath);
+			} catch (Exception e) {
+				log.error("S3 이미지 확정 중 오류 발생 (path: {}): {}", tempPath, e.getMessage());
+			}
+		}
 	}
 
 	// 파일명 앞에 UUID를 추가하여 고유한 파일명 생성 (DB 컬럼 길이를 고려하여 원본 파일명은 최대 100자로 제한)
