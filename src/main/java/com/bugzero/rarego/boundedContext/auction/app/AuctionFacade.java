@@ -151,16 +151,19 @@ public class AuctionFacade {
 	}
 
 	// 경매 정보 생성
+	@Transactional
 	public Long createAuction(Long productId, String publicId, ProductAuctionRequestDto productAuctionRequestDto) {
 		return auctionCreateAuctionUseCase.createAuction(productId, publicId, productAuctionRequestDto);
 	}
 
 	// 경매 정보 수정
+	@Transactional
 	public Long updateAuction(String publicId, ProductAuctionUpdateDto dto) {
 		return auctionUpdateAuctionUseCase.updateAuction(publicId, dto);
 	}
 
 	// 경매 정보 삭제
+	@Transactional
 	public void deleteAuction(String publicId, Long productId) {
 		auctionDeleteAuctionUseCase.deleteAuction(publicId, productId);
 	}
