@@ -23,6 +23,17 @@ logging:
     root: INFO
     com.bugzero.rarego: INFO
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: never
+    prometheus:
+      enabled: true
+
 jwt:
   secret: ${JWT_SECRET}
   access-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:3600}
