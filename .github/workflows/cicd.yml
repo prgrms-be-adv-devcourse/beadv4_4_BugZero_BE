@@ -129,6 +129,10 @@ jobs:
             echo "AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}" >> .env.deploy
             echo "INTERNAL_BACK_URL=${{ secrets.INTERNAL_BACK_URL }}" >> .env.deploy
             echo "FRONT_URL=${{ secrets.FRONT_URL }}" >> .env.deploy
+            echo "GRAFANA_ADMIN_USER=${{ secrets.GRAFANA_ADMIN_USER }}" >> .env.deploy
+            echo "GRAFANA_ADMIN_PASSWORD=${{ secrets.GRAFANA_ADMIN_PASSWORD }}" >> .env.deploy
+            echo "GF_SERVER_ROOT_URL=${{ secrets.GF_SERVER_ROOT_URL }}" >> .env.deploy
+            echo "GF_SERVER_SERVE_FROM_SUB_PATH=${{ secrets.GF_SERVER_SERVE_FROM_SUB_PATH }}" >> .env.deploy
             
             # GitHub Secret에서 프로필 설정
             echo "SPRING_PROFILES_ACTIVE=${{ secrets.SPRING_PROFILES_ACTIVE }}" >> .env.deploy
