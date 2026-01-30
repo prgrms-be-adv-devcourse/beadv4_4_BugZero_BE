@@ -10,6 +10,10 @@ permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: cicd-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   REGISTRY: ghcr.io
 
@@ -75,19 +79,33 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect infra changes
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            infra:
+              - 'docker-compose.yml'
+              - 'docker/**'
 
       - name: Copy docker-compose.yml to EC2
+        if: steps.changes.outputs.infra == 'true'
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
-          source: "docker-compose.yml"
+          source: "docker-compose.yml,docker"
           target: "~/app"
 
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          DEPLOY_INFRA: ${{ steps.changes.outputs.infra }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
@@ -110,6 +128,7 @@ jobs:
             echo "AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}" >> .env.deploy
             echo "AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}" >> .env.deploy
             echo "INTERNAL_BACK_URL=${{ secrets.INTERNAL_BACK_URL }}" >> .env.deploy
+            echo "FRONT_URL=${{ secrets.FRONT_URL }}" >> .env.deploy
             
             # GitHub Secret에서 프로필 설정
             echo "SPRING_PROFILES_ACTIVE=${{ secrets.SPRING_PROFILES_ACTIVE }}" >> .env.deploy
@@ -122,6 +141,11 @@ jobs:
             echo "NAVER_SECRET=${{ secrets.NAVER_SECRET }}" >> .env.deploy
 
             docker login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-            docker compose --env-file .env.deploy pull
-            docker compose --env-file .env.deploy up -d
+            if [ "$DEPLOY_INFRA" = "true" ]; then
+              docker compose --env-file .env.deploy pull
+              docker compose --env-file .env.deploy up -d
+            else
+              docker compose --env-file .env.deploy pull app
+              docker compose --env-file .env.deploy up -d --no-deps app
+            fi
             docker image prune -f
