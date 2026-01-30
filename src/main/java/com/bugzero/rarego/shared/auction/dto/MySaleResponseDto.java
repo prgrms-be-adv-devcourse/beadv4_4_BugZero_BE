@@ -6,7 +6,7 @@ import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
-import com.bugzero.rarego.boundedContext.product.domain.Product;
+import com.bugzero.rarego.shared.product.dto.ProductAuctionResponseDto;
 
 import lombok.Builder;
 
@@ -27,7 +27,7 @@ public record MySaleResponseDto (
 ) {
 	public static MySaleResponseDto from(
 		Auction auction,
-		Product product,
+		ProductAuctionResponseDto product,
 		AuctionOrder order,
 		int bidCount
 	) {
@@ -44,15 +44,12 @@ public record MySaleResponseDto (
 			.build();
 	}
 
-	private static String resolveTitle(Product product) {
+	private static String resolveTitle(ProductAuctionResponseDto product) {
 		return (product != null) ? product.getName() : "정보 없음";
 	}
 
-	private static String resolveThumbnail(Product product) {
-		if (product != null && product.getImages() != null && !product.getImages().isEmpty()) {
-			return product.getImages().get(0).getImageUrl();
-		}
-		return null; // 또는 기본 이미지 URL
+	private static String resolveThumbnail(ProductAuctionResponseDto product) {
+		return (product != null) ? product.getThumbnailUrl() : null;
 	}
 
 	private static long resolvePrice(Auction auction, AuctionOrder order) {

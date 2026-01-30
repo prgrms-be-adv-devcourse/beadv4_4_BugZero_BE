@@ -12,10 +12,10 @@ import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
-import com.bugzero.rarego.boundedContext.product.domain.Product;
-import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
+import com.bugzero.rarego.shared.product.dto.ProductAuctionResponseDto;
+import com.bugzero.rarego.shared.product.out.ProductApiClient;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,8 +27,8 @@ public class AuctionSupport {
 
 	private final AuctionRepository auctionRepository;
 	private final AuctionMemberRepository auctionMemberRepository;
-	private final ProductRepository productRepository;
 	private final AuctionOrderRepository auctionOrderRepository;
+	private final ProductApiClient productApiClient;
 
 	public Auction findAuctionById(Long auctionId) {
 		return auctionRepository.findById(auctionId)
@@ -56,8 +56,8 @@ public class AuctionSupport {
 			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
 	}
 
-	public Product getProduct(Long productId) {
-		return productRepository.findById(productId)
+	public ProductAuctionResponseDto getProduct(Long productId) {
+		return productApiClient.getProduct(productId)
 			.orElseThrow(() -> new CustomException(ErrorType.PRODUCT_NOT_FOUND));
 	}
 

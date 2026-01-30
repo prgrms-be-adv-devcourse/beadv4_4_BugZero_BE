@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
-import com.bugzero.rarego.boundedContext.product.domain.Product;
+import com.bugzero.rarego.shared.product.dto.ProductAuctionResponseDto;
 
 public record MyAuctionOrderListResponseDto(
 	Long orderId,
@@ -19,7 +19,7 @@ public record MyAuctionOrderListResponseDto(
 ) {
 	public static MyAuctionOrderListResponseDto from (
 		AuctionOrder order,
-		Product product,
+		ProductAuctionResponseDto product,
 		String thumbnailUrl
 	) {
 		String description = convertStatusToDescription(order.getStatus());
