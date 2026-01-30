@@ -1,5 +1,21 @@
 package com.bugzero.rarego.boundedContext.auction.in;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
 import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionWithdrawResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
@@ -8,17 +24,21 @@ import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.global.security.MemberPrincipal;
-import com.bugzero.rarego.shared.auction.dto.*;
+import com.bugzero.rarego.shared.auction.dto.AuctionDetailResponseDto;
+import com.bugzero.rarego.shared.auction.dto.AuctionListResponseDto;
+import com.bugzero.rarego.shared.auction.dto.AuctionOrderResponseDto;
+import com.bugzero.rarego.shared.auction.dto.AuctionRelistRequestDto;
+import com.bugzero.rarego.shared.auction.dto.AuctionRelistResponseDto;
+import com.bugzero.rarego.shared.auction.dto.AuctionSearchCondition;
+import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
+import com.bugzero.rarego.shared.auction.dto.BidRequestDto;
+import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Auction API", description = "경매 상품 조회 및 입찰 관련 API")
 @RestController
@@ -123,6 +143,17 @@ public class AuctionController {
 		@AuthenticationPrincipal MemberPrincipal principal
 	) {
 		return auctionFacade.relistAuction(auctionId, principal.publicId(), request);
+	}
+
+	@SecurityRequirement(name = "bearerAuth")
+	@Operation(summary = "검수승인 후 경매일정 확정", description = "관리자가 검수 승인 후 해당상품의 경매일정을 확정합니다.")
+	@PreAuthorize("hasRole('ADMIN')")
+	@PatchMapping("/{productId}/startTime")
+	public SuccessResponseDto<Long> deterMineStartAuction(
+		@PathVariable Long productId
+	) {
+		return SuccessResponseDto.from(SuccessType.OK,
+			auctionFacade.determineStartAuction(productId));
 	}
 
 }

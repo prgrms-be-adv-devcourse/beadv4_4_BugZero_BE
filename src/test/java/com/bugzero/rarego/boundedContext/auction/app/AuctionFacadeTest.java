@@ -1,14 +1,13 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
-import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
-import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.response.*;
-import com.bugzero.rarego.shared.auction.dto.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,25 +18,25 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
+import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.PageDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.shared.auction.dto.AuctionFilterType;
+import com.bugzero.rarego.shared.auction.dto.AuctionRelistRequestDto;
+import com.bugzero.rarego.shared.auction.dto.AuctionRelistResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
 import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MyAuctionOrderListResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MyBidResponseDto;
 import com.bugzero.rarego.shared.auction.dto.MySaleResponseDto;
-import java.time.LocalDateTime;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class AuctionFacadeTest {
@@ -55,13 +54,13 @@ class AuctionFacadeTest {
     private AuctionBookmarkUseCase auctionBookmarkUseCase;
 
     @Mock
-    private AuctionMemberRepository auctionMemberRepository;
-
-    @Mock
     private AuctionOrderRepository auctionOrderRepository;
 
     @Mock
     private AuctionRelistUseCase auctionRelistUseCase;
+
+	@Mock
+	private AuctionWithdrawUseCase auctionWithdrawUseCase;
 
 	@Test
 	@DisplayName("입찰 생성 요청 시 UseCase를 호출하고 결과를 반환한다")
@@ -235,15 +234,11 @@ class AuctionFacadeTest {
     void addBookmark_Success() {
         // given
         Long auctionId = 1L;
-        Long memberId = 999L;
         String publicId = "test-public-id";
 
-        AuctionMember member = AuctionMember.builder().publicId(publicId).build();
-        ReflectionTestUtils.setField(member, "id", memberId);
-        given(auctionMemberRepository.findByPublicId(publicId)).willReturn(java.util.Optional.of(member));
 
         WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(true, auctionId);
-        given(auctionBookmarkUseCase.addBookmark(memberId, auctionId))
+        given(auctionBookmarkUseCase.addBookmark(publicId, auctionId))
                 .willReturn(responseDto);
 
         // when
@@ -251,7 +246,7 @@ class AuctionFacadeTest {
 
         // then
         assertThat(result.bookmarked()).isTrue();
-        verify(auctionBookmarkUseCase).addBookmark(memberId, auctionId);
+        verify(auctionBookmarkUseCase).addBookmark(publicId, auctionId);
     }
 
     @Test
@@ -262,12 +257,8 @@ class AuctionFacadeTest {
         Long memberId = 999L;
         String publicId = "test-public-id";
 
-        AuctionMember member = AuctionMember.builder().publicId(publicId).build();
-        ReflectionTestUtils.setField(member, "id", memberId);
-        given(auctionMemberRepository.findByPublicId(publicId)).willReturn(java.util.Optional.of(member));
-
         WishlistAddResponseDto responseDto = WishlistAddResponseDto.of(false, auctionId);
-        given(auctionBookmarkUseCase.addBookmark(memberId, auctionId))
+        given(auctionBookmarkUseCase.addBookmark(publicId, auctionId))
                 .willReturn(responseDto);
 
         // when
@@ -275,22 +266,7 @@ class AuctionFacadeTest {
 
         // then
         assertThat(result.bookmarked()).isFalse();
-        verify(auctionBookmarkUseCase).addBookmark(memberId, auctionId);
-    }
-
-    @Test
-    @DisplayName("관심 경매 등록: 존재하지 않는 회원일 경우 예외가 발생한다")
-    void addBookmark_MemberNotFound() {
-        // given
-        Long auctionId = 1L;
-        String publicId = "non-existent-public-id";
-
-        given(auctionMemberRepository.findByPublicId(publicId)).willReturn(java.util.Optional.empty());
-
-        // when & then
-        assertThatThrownBy(() -> auctionFacade.addBookmark(publicId, auctionId))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorType", ErrorType.MEMBER_NOT_FOUND);
+        verify(auctionBookmarkUseCase).addBookmark(publicId, auctionId);
     }
 
     @Test
@@ -303,9 +279,8 @@ class AuctionFacadeTest {
 
         AuctionMember member = AuctionMember.builder().publicId(publicId).build();
         ReflectionTestUtils.setField(member, "id", memberId);
-        given(auctionMemberRepository.findByPublicId(publicId)).willReturn(java.util.Optional.of(member));
 
-        given(auctionBookmarkUseCase.addBookmark(memberId, auctionId))
+        given(auctionBookmarkUseCase.addBookmark(publicId, auctionId))
                 .willThrow(new CustomException(ErrorType.AUCTION_NOT_FOUND));
 
         // when & then
@@ -348,9 +323,7 @@ class AuctionFacadeTest {
     void hasProcessingOrders_ReturnsTrueWhenBuyerOrSellerHasProcessing() {
         // given
         String publicId = "member-public-id";
-        given(auctionOrderRepository.existsByBuyerPublicIdAndStatus(publicId, AuctionOrderStatus.PROCESSING))
-                .willReturn(false);
-        given(auctionOrderRepository.existsBySellerPublicIdAndStatus(publicId, AuctionOrderStatus.PROCESSING))
+        given(auctionWithdrawUseCase.hasProcessingOrders(publicId))
                 .willReturn(true);
 
         // when
@@ -358,7 +331,5 @@ class AuctionFacadeTest {
 
         // then
         assertThat(result).isTrue();
-        verify(auctionOrderRepository).existsByBuyerPublicIdAndStatus(publicId, AuctionOrderStatus.PROCESSING);
-        verify(auctionOrderRepository).existsBySellerPublicIdAndStatus(publicId, AuctionOrderStatus.PROCESSING);
     }
 }
