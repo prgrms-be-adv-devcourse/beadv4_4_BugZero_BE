@@ -1,4 +1,4 @@
-package com.bugzero.rarego.boundedContext.auction.domain.event;
+package com.bugzero.rarego.boundedContext.auction.event;
 
 import java.time.LocalDateTime;
 

@@ -1,44 +1,25 @@
 package com.bugzero.rarego.boundedContext.auction.in;
 
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.bugzero.rarego.boundedContext.auction.app.AuctionFacade;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionAddBookmarkResponseDto;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionRemoveBookmarkResponseDto;
 import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionWithdrawResponseDto;
-import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
-import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
 import com.bugzero.rarego.global.security.MemberPrincipal;
-import com.bugzero.rarego.shared.auction.dto.AuctionDetailResponseDto;
-import com.bugzero.rarego.shared.auction.dto.AuctionListResponseDto;
-import com.bugzero.rarego.shared.auction.dto.AuctionOrderResponseDto;
-import com.bugzero.rarego.shared.auction.dto.AuctionRelistRequestDto;
-import com.bugzero.rarego.shared.auction.dto.AuctionRelistResponseDto;
-import com.bugzero.rarego.shared.auction.dto.AuctionSearchCondition;
-import com.bugzero.rarego.shared.auction.dto.BidLogResponseDto;
-import com.bugzero.rarego.shared.auction.dto.BidRequestDto;
-import com.bugzero.rarego.shared.auction.dto.BidResponseDto;
-
+import com.bugzero.rarego.shared.auction.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Auction API", description = "경매 상품 조회 및 입찰 관련 API")
 @RestController
@@ -48,15 +29,15 @@ public class AuctionController {
 
     private final AuctionFacade auctionFacade;
 
-	// 경매 상태/현재가 Bulk 조회
-	@Operation(summary = "경매 목록 조회", description = "검색 조건(키워드, 카테고리, 상태)과 정렬 조건에 따라 경매 목록을 조회합니다.")
-	@GetMapping
-	public PagedResponseDto<AuctionListResponseDto> getAuctions(
-		@ModelAttribute AuctionSearchCondition condition,
-		@PageableDefault(size = 10) Pageable pageable
-	) {
-		return auctionFacade.getAuctions(condition, pageable);
-	}
+    // 경매 상태/현재가 Bulk 조회
+    @Operation(summary = "경매 목록 조회", description = "검색 조건(키워드, 카테고리, 상태)과 정렬 조건에 따라 경매 목록을 조회합니다.")
+    @GetMapping
+    public PagedResponseDto<AuctionListResponseDto> getAuctions(
+            @ModelAttribute AuctionSearchCondition condition,
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        return auctionFacade.getAuctions(condition, pageable);
+    }
 
     @Operation(summary = "경매 상세 조회", description = "경매의 상세 정보를 조회합니다. (로그인 시 내 입찰 내역 포함)")
     @GetMapping("/{auctionId}")
@@ -105,22 +86,22 @@ public class AuctionController {
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "관심 경매 등록", description = "특정 경매를 관심 목록에 추가합니다")
     @PostMapping("/{auctionId}/bookmarks")
-    public SuccessResponseDto<WishlistAddResponseDto> addBookmark(
+    public SuccessResponseDto<AuctionAddBookmarkResponseDto> addBookmark(
             @AuthenticationPrincipal MemberPrincipal memberPrincipal,
             @PathVariable Long auctionId
     ) {
-        WishlistAddResponseDto response = auctionFacade.addBookmark(memberPrincipal.publicId(), auctionId);
+        AuctionAddBookmarkResponseDto response = auctionFacade.addBookmark(memberPrincipal.publicId(), auctionId);
         return SuccessResponseDto.from(SuccessType.OK, response);
     }
 
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "관심 경매 해제", description = "특정 경매를 관심 목록에서 제거합니다")
     @DeleteMapping("/{auctionId}/bookmarks")
-    public SuccessResponseDto<WishlistRemoveResponseDto> removeBookmark(
+    public SuccessResponseDto<AuctionRemoveBookmarkResponseDto> removeBookmark(
             @AuthenticationPrincipal MemberPrincipal memberPrincipal,
             @PathVariable Long auctionId
     ) {
-        WishlistRemoveResponseDto response = auctionFacade.removeBookmark(memberPrincipal.publicId(), auctionId);
+        AuctionRemoveBookmarkResponseDto response = auctionFacade.removeBookmark(memberPrincipal.publicId(), auctionId);
         return SuccessResponseDto.from(SuccessType.OK, response);
     }
 
@@ -135,25 +116,25 @@ public class AuctionController {
         return SuccessResponseDto.from(SuccessType.OK, response);
     }
 
-	@Operation(summary = "재경매 등록", description = "유찰되거나 결제 실패한 경매 상품을 다시 등록합니다. (판매자 전용)")
-	@PostMapping("/{auctionId}/relist")
-	public SuccessResponseDto<AuctionRelistResponseDto> relistAuction(
-		@PathVariable Long auctionId,
-		@RequestBody AuctionRelistRequestDto request,
-		@AuthenticationPrincipal MemberPrincipal principal
-	) {
-		return auctionFacade.relistAuction(auctionId, principal.publicId(), request);
-	}
+    @Operation(summary = "재경매 등록", description = "유찰되거나 결제 실패한 경매 상품을 다시 등록합니다. (판매자 전용)")
+    @PostMapping("/{auctionId}/relist")
+    public SuccessResponseDto<AuctionRelistResponseDto> relistAuction(
+            @PathVariable Long auctionId,
+            @RequestBody AuctionRelistRequestDto request,
+            @AuthenticationPrincipal MemberPrincipal principal
+    ) {
+        return auctionFacade.relistAuction(auctionId, principal.publicId(), request);
+    }
 
-	@SecurityRequirement(name = "bearerAuth")
-	@Operation(summary = "검수승인 후 경매일정 확정", description = "관리자가 검수 승인 후 해당상품의 경매일정을 확정합니다.")
-	@PreAuthorize("hasRole('ADMIN')")
-	@PatchMapping("/{productId}/startTime")
-	public SuccessResponseDto<Long> deterMineStartAuction(
-		@PathVariable Long productId
-	) {
-		return SuccessResponseDto.from(SuccessType.OK,
-			auctionFacade.determineStartAuction(productId));
-	}
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "검수승인 후 경매일정 확정", description = "관리자가 검수 승인 후 해당상품의 경매일정을 확정합니다.")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/{productId}/startTime")
+    public SuccessResponseDto<Long> deterMineStartAuction(
+            @PathVariable Long productId
+    ) {
+        return SuccessResponseDto.from(SuccessType.OK,
+                auctionFacade.determineStartAuction(productId));
+    }
 
 }
