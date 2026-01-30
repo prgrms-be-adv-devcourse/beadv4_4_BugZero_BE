@@ -1,7 +1,9 @@
 package com.bugzero.rarego.global.response;
 
 import com.bugzero.rarego.standard.response.ResponseDto;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record SuccessResponseDto<T>(
 	Integer status,
 	String message,
