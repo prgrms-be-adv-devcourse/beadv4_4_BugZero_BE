@@ -23,8 +23,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class Settlement extends BaseIdAndTime {
-	// TODO: 수수료율은 팀원들과 합의 후 확정 필요
 	private static final double FEE_RATE = 0.1; // 10% 수수료
+
+	private static final int MAX_TRY_COUNT = 3;
 
 	@Column(nullable = false, unique = true)
 	private Long auctionId;
@@ -47,6 +48,10 @@ public class Settlement extends BaseIdAndTime {
 	@Builder.Default
 	private SettlementStatus status = SettlementStatus.READY;
 
+	@Builder.Default
+	@Column(nullable = false)
+	private int tryCount = 0;
+
 	public static Settlement create(Long auctionId, PaymentMember seller, int salesAmount) {
 		int feeAmount = (int)(salesAmount * FEE_RATE);
 		int settlementAmount = salesAmount - feeAmount;
@@ -65,18 +70,33 @@ public class Settlement extends BaseIdAndTime {
 		this.status = SettlementStatus.DONE;
 	}
 
-	public void fail() {
-		this.status = SettlementStatus.FAILED;
+	// 정산 중 실패 처리
+	public boolean fail() {
+		this.tryCount++;
+
+		// 3번 시도해도 실패하면 FAILED로 변경
+		if (this.tryCount > MAX_TRY_COUNT) {
+			this.status = SettlementStatus.FAILED;
+			return true; // 수동 처리 대상
+		}
+
+		// 재처리 대상 다음 배치 때 재시도
+		return false;
+	}
+
+	// 환불 시 실패 처리
+	public void cancel() {
+		this.status = SettlementStatus.CANCELED;
 	}
 
 	public static Settlement createFromForfeit(Long auctionId, PaymentMember seller, int forfeitAmount) {
 		return Settlement.builder()
-				.auctionId(auctionId)
-				.seller(seller)
-				.salesAmount(forfeitAmount)
-				.feeAmount(0)
-				.settlementAmount(forfeitAmount)
-				.status(SettlementStatus.READY)
-				.build();
+			.auctionId(auctionId)
+			.seller(seller)
+			.salesAmount(forfeitAmount)
+			.feeAmount(0)
+			.settlementAmount(forfeitAmount)
+			.status(SettlementStatus.READY)
+			.build();
 	}
 }

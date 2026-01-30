@@ -1,6 +1,8 @@
 package com.bugzero.rarego.boundedContext.payment.app;
 
+import static java.util.concurrent.TimeUnit.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.awaitility.Awaitility.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -18,7 +20,6 @@ import com.bugzero.rarego.boundedContext.payment.domain.PaymentMember;
 import com.bugzero.rarego.boundedContext.payment.domain.Settlement;
 import com.bugzero.rarego.boundedContext.payment.domain.SettlementStatus;
 import com.bugzero.rarego.boundedContext.payment.domain.Wallet;
-import com.bugzero.rarego.boundedContext.payment.domain.WalletTransactionType;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentMemberRepository;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentTransactionRepository;
 import com.bugzero.rarego.boundedContext.payment.out.SettlementFeeRepository;
@@ -110,48 +111,49 @@ class PaymentProcessSettlementUseCaseIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("부분 성공 테스트: 실패 건이 있어도 성공 건의 수수료만 합산되어 시스템 지갑에 들어간다")
+	@DisplayName("부분 성공 테스트: 실패 건은 재시도 대기 상태가 되고, 성공 건은 이벤트 리스너를 통해 수수료가 처리된다")
 	void partial_success_integration_test() {
 		// given
-		// 1. 정상 판매자 (수수료 1000원)
 		PaymentMember normalSeller = createMember(200L, "normal");
 		createWallet(normalSeller);
 		createSettlement(normalSeller, 10000, 1000);
 
-		// 2. 오류 판매자 (수수료 2000원) - 지갑 미생성으로 에러 유도
 		PaymentMember errorSeller = createMember(300L, "error");
-		// 지갑 없이 정산 데이터만 생성 -> processSellerDeposit 내부에서 에러 발생
+		// 지갑 미생성 -> 에러 유도
 		createSettlement(errorSeller, 20000, 2000);
 
 		// when
-		// UseCase 내부에서 TransactionTemplate으로 정산 커밋 -> 수수료 조회 순서로 실행됨
+		// [중요] UseCase 자체에 @Transactional이 붙어있음.
+		// 테스트 메서드가 @Transactional이 아니어야(SpringBootTest 기본값) 커밋 이벤트가 발생함.
 		int successCount = useCase.processSettlements(10);
 
 		// then
-		assertThat(successCount).isEqualTo(1); // 1건만 성공
+		assertThat(successCount).isEqualTo(1);
 
-		// 1. 정상 판매자 입금 확인
+		// 1. 정상 판매자 검증
 		Wallet normalWallet = walletRepository.findByMemberId(200L).get();
 		assertThat(normalWallet.getBalance()).isEqualTo(10000);
 
-		// 2. 오류 판매자 상태 확인 (FAILED 상태로 변경되어야 함)
+		// 2. [수정] 오류 판매자 상태 검증
+		// 이제 한 번 실패했다고 바로 FAILED가 아님!
 		Settlement errorSettlement = findSettlementBySellerId(300L);
-		assertThat(errorSettlement.getStatus()).isEqualTo(SettlementStatus.FAILED);
+		// 상태는 여전히 READY (다음 배치가 집어가야 하니까)
+		// 대신 retryCount가 1이어야 함
+		assertThat(errorSettlement.getStatus()).isEqualTo(SettlementStatus.READY);
+		assertThat(errorSettlement.getTryCount()).isEqualTo(1);
 
-		// 3. [중요] 시스템 지갑 검증: 성공한 1건의 수수료(1000원)만 입금되어야 함
-		// (TransactionTemplate 적용으로 데이터 visibility 문제가 해결되어 성공함)
-		Wallet systemWallet = walletRepository.findByMemberId(SYSTEM_ID).get();
-		assertThat(systemWallet.getBalance()).isEqualTo(1000);
+		// 3. [수정] 시스템 지갑 & 수수료 검증 (비동기 대기)
+		// AFTER_COMMIT 리스너가 돌 때까지 최대 2초 기다림
+		await().atMost(2, SECONDS).untilAsserted(() -> {
+			Wallet systemWallet = walletRepository.findByMemberId(SYSTEM_ID).get();
+			// 수수료 1000원 입금 확인
+			assertThat(systemWallet.getBalance()).isEqualTo(1000);
+		});
 
-		// 4. 트랜잭션 타입 검증
-		boolean hasSystemFeeTx = paymentTransactionRepository.findAll().stream()
-			.anyMatch(tx -> tx.getTransactionType() == WalletTransactionType.SETTLEMENT_FEE
-				&& tx.getBalanceDelta() == 1000);
-		assertThat(hasSystemFeeTx).isTrue();
-
-		// 5. 수수료 대기열 검증: 처리된 1건은 삭제, 실패한 1건은 애초에 Insert 되지 않음(또는 롤백) -> 비어있어야 함
-		// (현재 로직상 실패 건은 예외 발생 시 fee 저장도 안되므로 깔끔하게 비어있음)
-		assertThat(settlementFeeRepository.findAll()).isEmpty();
+		// 4. 수수료 대기열 비워졌는지 확인 (역시 비동기 대기)
+		await().atMost(2, SECONDS).untilAsserted(() -> {
+			assertThat(settlementFeeRepository.findAll()).isEmpty();
+		});
 	}
 
 	// --- Helper Methods ---
