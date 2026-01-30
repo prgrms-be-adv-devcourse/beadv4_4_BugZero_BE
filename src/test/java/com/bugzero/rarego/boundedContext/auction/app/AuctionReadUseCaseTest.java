@@ -30,7 +30,7 @@ import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.Bid;
-import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistListResponseDto;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionBookmarkListResponseDto;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionBookmarkRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
@@ -196,7 +196,7 @@ class AuctionReadUseCaseTest {
 		given(productApiClient.getProducts(anySet())).willReturn(List.of(productDto));
 
 		// when
-		PagedResponseDto<WishlistListResponseDto> result = auctionReadUseCase.getMyBookmarks(publicId, pageable);
+		PagedResponseDto<AuctionBookmarkListResponseDto> result = auctionReadUseCase.getMyBookmarks(publicId, pageable);
 
 		// then
 		assertThat(result.data()).hasSize(1);

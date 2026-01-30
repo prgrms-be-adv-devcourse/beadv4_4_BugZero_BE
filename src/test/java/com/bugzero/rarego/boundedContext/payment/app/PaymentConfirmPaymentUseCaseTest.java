@@ -162,4 +162,43 @@ class PaymentConfirmPaymentUseCaseTest {
 		assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
 		verify(paymentRepository).save(payment);
 	}
+
+	@Test
+	@DisplayName("실패: 결제 승인은 성공했으나 내부 시스템 에러 발생 시, 보상 트랜잭션(cancel)이 호출되어야 한다")
+	void confirmPayment_fail_system_error_trigger_compensation() {
+		// given
+		String memberPublicId = "user-uuid";
+		String orderId = "ORDER_001";
+		String paymentKey = "test_payment_key";
+		PaymentConfirmRequestDto requestDto = new PaymentConfirmRequestDto(paymentKey, orderId, 10000);
+
+		PaymentMember member = PaymentMember.builder().id(1L).build();
+		Payment payment = Payment.builder()
+			.member(member)
+			.amount(10000)
+			.status(PaymentStatus.PENDING)
+			.build();
+
+		TossPaymentsConfirmResponseDto tossResponse = new TossPaymentsConfirmResponseDto(orderId, paymentKey, 10000);
+
+		given(paymentSupport.findMemberByPublicId(memberPublicId)).willReturn(member);
+		given(paymentSupport.findPaymentByOrderId(anyString())).willReturn(payment);
+
+		// 1. Toss API는 성공
+		given(tossApiClient.confirm(any())).willReturn(tossResponse);
+		// 2. 내부 로직(DB반영)에서 에러 발생
+		given(paymentConfirmFinalizer.finalizePayment(any(), any())).willThrow(new RuntimeException("DB Connection Error"));
+
+		// when & then
+		assertThatThrownBy(() -> useCase.confirmPayment(memberPublicId, requestDto))
+			.isInstanceOf(RuntimeException.class);
+
+		// then
+		// 1. 상태가 FAILED로 변경되어야 함
+		assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
+		verify(paymentRepository).save(payment);
+
+		// [핵심] 2. 보상 트랜잭션(취소 API)이 호출되었는지 검증
+		verify(tossApiClient).cancel(eq(paymentKey), anyString());
+	}
 }

@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.boundedContext.auction.domain.*;
-import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistListResponseDto;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionBookmarkListResponseDto;
 import com.bugzero.rarego.boundedContext.auction.out.*;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
@@ -253,7 +253,7 @@ public class AuctionReadUseCase {
 	}
 
 	// 내 관심 경매 목록 조회
-	public PagedResponseDto<WishlistListResponseDto> getMyBookmarks(String memberPublicId, Pageable pageable) {
+	public PagedResponseDto<AuctionBookmarkListResponseDto> getMyBookmarks(String memberPublicId, Pageable pageable) {
 		AuctionMember member = support.getPublicMember(memberPublicId);
 		Page<AuctionBookmark> bookmarkPage = auctionBookmarkRepository.findAllByMemberId(member.getId(), pageable);
 
@@ -266,8 +266,8 @@ public class AuctionReadUseCase {
 		Map<Long, AuctionListResponseDto> auctionDtoMap = auctionDtos.stream()
 			.collect(Collectors.toMap(AuctionListResponseDto::auctionId, Function.identity()));
 
-		List<WishlistListResponseDto> finalDtos = bookmarkPage.getContent().stream()
-			.map(bookmark -> WishlistListResponseDto.of(bookmark.getId(), auctionDtoMap.get(bookmark.getAuctionId())))
+		List<AuctionBookmarkListResponseDto> finalDtos = bookmarkPage.getContent().stream()
+			.map(bookmark -> AuctionBookmarkListResponseDto.of(bookmark.getId(), auctionDtoMap.get(bookmark.getAuctionId())))
 			.toList();
 
 		return new PagedResponseDto<>(finalDtos, PageDto.from(bookmarkPage));
