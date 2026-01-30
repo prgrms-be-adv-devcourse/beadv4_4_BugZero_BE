@@ -4,12 +4,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.boundedContext.payment.domain.Settlement;
 import com.bugzero.rarego.boundedContext.payment.domain.SettlementStatus;
+import com.bugzero.rarego.boundedContext.payment.event.SettlementFinishedEvent;
 import com.bugzero.rarego.boundedContext.payment.out.SettlementRepository;
+import com.bugzero.rarego.global.event.EventPublisher;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,56 +22,49 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentProcessSettlementUseCase {
 	private final SettlementRepository settlementRepository;
 	private final PaymentSettlementProcessor paymentSettlementProcessor;
+	private final EventPublisher eventPublisher;
 
 	@Value("${custom.payment.settlement.holdDays:7}")
 	private int settlementHoldDays;
 
+	@Transactional
 	public int processSettlements(int limit) {
 		// 7일 경과한 정산만 처리
 		LocalDateTime cutoffDate = LocalDateTime.now().minusDays(settlementHoldDays);
+
 		List<Settlement> settlements = settlementRepository.findSettlementsForBatch(
-			SettlementStatus.READY, cutoffDate, PageRequest.of(0, limit));
+			SettlementStatus.READY, cutoffDate, limit);
 
 		if (settlements.isEmpty()) {
+			// 정산할 게 없어도, 혹시 이전에 남겨진 수수료가 있다면 처리
+			eventPublisher.publish(new SettlementFinishedEvent());
 			return 0;
 		}
 
 		int successCount = 0;
-		int totalFeeAmount = 0;
 
 		for (Settlement settlement : settlements) {
 			try {
-				if (paymentSettlementProcessor.processSellerDeposit(settlement.getId())) {
-					totalFeeAmount += settlement.getFeeAmount();
+				if (paymentSettlementProcessor.processSellerDeposit(settlement)) {
 					successCount++;
 				}
 			} catch (Exception e) {
+				// TODO: 실패 정산 재시도 처리
 				log.error("정산 실패 ID: {} - {}", settlement.getId(), e.getMessage(), e);
-				markAsFailed(settlement); // 실패 처리 메서드 호출
+				settlement.fail();
 			}
 		}
 
-		if (successCount > 0 && totalFeeAmount > 0) {
-			try {
-				paymentSettlementProcessor.processSystemDeposit(totalFeeAmount);
-			} catch (Exception e) {
-				// TODO: 시스템 지갑 입금 실패 대응 처리
-				log.error("시스템 수수료 입금 실패 - 누락 금액: {}", totalFeeAmount, e);
-			}
-		}
+		eventPublisher.publish(new SettlementFinishedEvent());
 
 		return successCount;
 	}
 
-	/**
-	 * 실패 상태 변경 (안전하게 처리)
-	 */
-	private void markAsFailed(Settlement settlement) {
+	private void collectFees() {
 		try {
-			// TODO: 실패 정산 처리 로직 구현
-			paymentSettlementProcessor.fail(settlement.getId());
+			paymentSettlementProcessor.processFees(1000);
 		} catch (Exception e) {
-			log.error("정산 실패 처리 중 에러 발생 ID: {} - {}", settlement.getId(), e.getMessage(), e);
+			log.error("시스템 수수료 징수 실패 (데이터는 남아있으므로 다음 배치 때 재시도됨)", e);
 		}
 	}
 }
