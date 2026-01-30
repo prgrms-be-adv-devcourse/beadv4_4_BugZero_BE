@@ -39,6 +39,12 @@ public class ProductSupport {
 			.orElseThrow(() -> new CustomException(ErrorType.PRODUCT_NOT_FOUND));
 	}
 
+	//상품이미지를 한번에 불러와야할 때 FetchJoin 용
+	public Product findByIdWithImages (Long productId) {
+		return productRepository.findByIdWithImages(productId)
+			.orElseThrow(() -> new CustomException(ErrorType.PRODUCT_NOT_FOUND));
+	}
+
 	public void isAbleToChange(ProductMember seller, Product product) {
 		//해당 멤버의 상품인지 확인
 		if (!product.isSeller(seller.getId())) {
