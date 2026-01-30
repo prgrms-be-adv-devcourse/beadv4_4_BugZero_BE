@@ -73,3 +73,11 @@ src/main/resources/static/*
 .agent/
 .mantic/
 bin/
+
+# ===== Node - husky =====
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+Thumbs.db
+dist/
