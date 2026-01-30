@@ -49,22 +49,18 @@ public class PaymentProcessSettlementUseCase {
 					successCount++;
 				}
 			} catch (Exception e) {
-				// TODO: 실패 정산 재시도 처리
-				log.error("정산 실패 ID: {} - {}", settlement.getId(), e.getMessage(), e);
-				settlement.fail();
+				boolean isFinalFailure = settlement.fail();
+
+				if (isFinalFailure) {
+					log.error("정산 최종 실패 - ID: {}, 원인: {}. 수동 처리 필요", settlement.getId(), e.getMessage(), e);
+				} else {
+					log.warn("일시적 정산 실패 - ID: {}, 원인: {}. 다음 배치에서 재시도", settlement.getId(), e.getMessage());
+				}
 			}
 		}
 
 		eventPublisher.publish(new SettlementFinishedEvent());
 
 		return successCount;
-	}
-
-	private void collectFees() {
-		try {
-			paymentSettlementProcessor.processFees(1000);
-		} catch (Exception e) {
-			log.error("시스템 수수료 징수 실패 (데이터는 남아있으므로 다음 배치 때 재시도됨)", e);
-		}
 	}
 }
