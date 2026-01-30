@@ -1,13 +1,12 @@
-package com.bugzero.rarego.boundedContext.auction.app;
+package com.bugzero.rarego.bounded_context.auction.app;
 
-import com.bugzero.rarego.boundedContext.auction.domain.Auction;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionBookmark;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
-import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
-import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionBookmarkRepository;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
+import com.bugzero.rarego.bounded_context.auction.domain.Auction;
+import com.bugzero.rarego.bounded_context.auction.domain.AuctionBookmark;
+import com.bugzero.rarego.bounded_context.auction.domain.AuctionMember;
+import com.bugzero.rarego.bounded_context.auction.in.dto.AuctionAddBookmarkResponseDto;
+import com.bugzero.rarego.bounded_context.auction.in.dto.AuctionRemoveBookmarkResponseDto;
+import com.bugzero.rarego.bounded_context.auction.out.AuctionBookmarkRepository;
+import com.bugzero.rarego.bounded_context.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -21,10 +20,9 @@ public class AuctionBookmarkUseCase {
     private final AuctionBookmarkRepository auctionBookmarkRepository;
     private final AuctionSupport auctionSupport;
     private final AuctionMemberRepository auctionMemberRepository;
-    private final AuctionRepository auctionRepository;
 
     @Transactional
-    public WishlistAddResponseDto addBookmark(Long memberId, Long auctionId) {
+    public AuctionAddBookmarkResponseDto addBookmark(Long memberId, Long auctionId) {
         Auction auction = auctionSupport.findAuctionById(auctionId);
 
         // 중복 확인
@@ -40,11 +38,11 @@ public class AuctionBookmarkUseCase {
 
         auctionBookmarkRepository.save(bookmark);
 
-        return WishlistAddResponseDto.of(true, auctionId);
+        return AuctionAddBookmarkResponseDto.of(true, auctionId);
     }
 
     @Transactional
-    public WishlistRemoveResponseDto removeBookmark(String publicId, Long bookmarkId) {
+    public AuctionRemoveBookmarkResponseDto removeBookmark(String publicId, Long bookmarkId) {
         AuctionMember member = auctionMemberRepository.findByPublicId(publicId)
                 .orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
 
@@ -58,6 +56,6 @@ public class AuctionBookmarkUseCase {
 
         auctionBookmarkRepository.delete(bookmark);
 
-        return WishlistRemoveResponseDto.of(true, bookmarkId);
+        return AuctionRemoveBookmarkResponseDto.of(true, bookmarkId);
     }
 }

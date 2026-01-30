@@ -1,34 +1,24 @@
-package com.bugzero.rarego.boundedContext.auction.app;
+package com.bugzero.rarego.bounded_context.auction.app;
 
-import com.bugzero.rarego.boundedContext.auction.domain.Auction;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionBookmark;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
-import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
-import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistListResponseDto;
-import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionBookmarkRepository;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
+import com.bugzero.rarego.bounded_context.auction.domain.Auction;
+import com.bugzero.rarego.bounded_context.auction.domain.AuctionBookmark;
+import com.bugzero.rarego.bounded_context.auction.domain.AuctionMember;
+import com.bugzero.rarego.bounded_context.auction.in.dto.AuctionAddBookmarkResponseDto;
+import com.bugzero.rarego.bounded_context.auction.in.dto.AuctionRemoveBookmarkResponseDto;
+import com.bugzero.rarego.bounded_context.auction.out.AuctionBookmarkRepository;
+import com.bugzero.rarego.bounded_context.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
-import com.bugzero.rarego.global.response.PagedResponseDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
@@ -52,9 +42,6 @@ class AuctionBookmarkUseCaseTest {
 
     @Mock
     private AuctionMemberRepository auctionMemberRepository;
-
-    @Mock
-    private AuctionRepository auctionRepository;
 
     @Test
     @DisplayName("관심 경매 등록 - 성공")
@@ -80,7 +67,7 @@ class AuctionBookmarkUseCaseTest {
                 .willReturn(false);
 
         // when
-        WishlistAddResponseDto result = auctionBookmarkUseCase.addBookmark(memberId, auctionId);
+        AuctionAddBookmarkResponseDto result = auctionBookmarkUseCase.addBookmark(memberId, auctionId);
 
         // then
         assertThat(result.bookmarked()).isTrue();
@@ -150,7 +137,7 @@ class AuctionBookmarkUseCaseTest {
                 .willReturn(Optional.of(bookmark));
 
         // when
-        WishlistRemoveResponseDto result = auctionBookmarkUseCase.removeBookmark(publicId, bookmarkId);
+        AuctionRemoveBookmarkResponseDto result = auctionBookmarkUseCase.removeBookmark(publicId, bookmarkId);
 
         // then
         assertThat(result.removed()).isTrue();
