@@ -21,10 +21,11 @@ import com.bugzero.rarego.boundedContext.payment.domain.Wallet;
 import com.bugzero.rarego.boundedContext.payment.domain.WalletTransactionType;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentMemberRepository;
 import com.bugzero.rarego.boundedContext.payment.out.PaymentTransactionRepository;
+import com.bugzero.rarego.boundedContext.payment.out.SettlementFeeRepository;
 import com.bugzero.rarego.boundedContext.payment.out.SettlementRepository;
 import com.bugzero.rarego.boundedContext.payment.out.WalletRepository;
 
-@SpringBootTest
+@SpringBootTest(properties = "custom.payment.settlement.holdDays=-1")
 class PaymentProcessSettlementUseCaseIntegrationTest {
 	@Autowired
 	private PaymentProcessSettlementUseCase useCase;
@@ -41,10 +42,15 @@ class PaymentProcessSettlementUseCaseIntegrationTest {
 	@Autowired
 	private PaymentTransactionRepository paymentTransactionRepository;
 
+	@Autowired
+	private SettlementFeeRepository settlementFeeRepository;
+
 	private final Long SYSTEM_ID = 2L;
 
 	@BeforeEach
 	void setUp() {
+		// [핵심 2] FK 제약조건 순서에 맞춰 자식 테이블부터 삭제
+		settlementFeeRepository.deleteAll();
 		paymentTransactionRepository.deleteAll();
 		settlementRepository.deleteAll();
 		walletRepository.deleteAll();
@@ -53,7 +59,7 @@ class PaymentProcessSettlementUseCaseIntegrationTest {
 		// 1. 시스템 유저 및 지갑 생성
 		createMemberAndWallet(SYSTEM_ID, "system");
 
-		// 2. 판매자 생성
+		// 2. 판매자 생성 (기본 테스트용)
 		createMemberAndWallet(100L, "seller");
 	}
 
@@ -62,7 +68,7 @@ class PaymentProcessSettlementUseCaseIntegrationTest {
 	void concurrency_double_spending_check() throws InterruptedException {
 		// given
 		PaymentMember seller = memberRepository.findById(100L).get();
-		// 딱 1건만 존재
+		// 1건 생성 (수수료 1000원)
 		createSettlement(seller, 10000, 1000);
 
 		int threadCount = 5;
@@ -73,7 +79,7 @@ class PaymentProcessSettlementUseCaseIntegrationTest {
 		for (int i = 0; i < threadCount; i++) {
 			executorService.submit(() -> {
 				try {
-					// 여러 스레드가 동시에 이 메서드를 호출
+					// SKIP LOCKED 덕분에 5개 스레드가 경합해도 1개만 처리됨
 					useCase.processSettlements(10);
 				} finally {
 					latch.countDown();
@@ -84,20 +90,23 @@ class PaymentProcessSettlementUseCaseIntegrationTest {
 		latch.await();
 
 		// then
-		// 1. 정산 상태 검증
+		// 1. 정산 상태 검증 (DONE)
 		Settlement settlement = settlementRepository.findAll().get(0);
 		assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.DONE);
 
-		// 2. 판매자 잔액 검증 (중복 입금 확인)
+		// 2. 판매자 잔액 검증 (중복 입금 시 20000원이 되므로 10000원인지 확인)
 		Wallet sellerWallet = walletRepository.findByMemberId(100L).get();
 		assertThat(sellerWallet.getBalance()).isEqualTo(10000);
 
-		// 3. 시스템 잔액 검증 (Bulk 입금 중복 확인)
+		// 3. 시스템 잔액 검증 (수수료 1000원 확인)
 		Wallet systemWallet = walletRepository.findByMemberId(SYSTEM_ID).get();
 		assertThat(systemWallet.getBalance()).isEqualTo(1000);
 
-		// 4. 트랜잭션 수 검증 (판매자 입금 1건 + 시스템 수수료 입금 1건 = 2건)
+		// 4. 트랜잭션 수 검증 (판매자 1건 + 시스템 1건 = 2건)
 		assertThat(paymentTransactionRepository.count()).isEqualTo(2);
+
+		// 5. 수수료 대기열이 비워졌는지 확인 (처리 완료 후 삭제됨)
+		assertThat(settlementFeeRepository.findAll()).isEmpty();
 	}
 
 	@Test
@@ -109,34 +118,40 @@ class PaymentProcessSettlementUseCaseIntegrationTest {
 		createWallet(normalSeller);
 		createSettlement(normalSeller, 10000, 1000);
 
-		// 2. 오류 판매자 (수수료 2000원 - 지갑이 없어 FAILED 유발)
+		// 2. 오류 판매자 (수수료 2000원) - 지갑 미생성으로 에러 유도
 		PaymentMember errorSeller = createMember(300L, "error");
+		// 지갑 없이 정산 데이터만 생성 -> processSellerDeposit 내부에서 에러 발생
 		createSettlement(errorSeller, 20000, 2000);
 
 		// when
-		// 배치 실행
+		// UseCase 내부에서 TransactionTemplate으로 정산 커밋 -> 수수료 조회 순서로 실행됨
 		int successCount = useCase.processSettlements(10);
 
 		// then
 		assertThat(successCount).isEqualTo(1); // 1건만 성공
 
-		// 정상 판매자 입금 확인
+		// 1. 정상 판매자 입금 확인
 		Wallet normalWallet = walletRepository.findByMemberId(200L).get();
 		assertThat(normalWallet.getBalance()).isEqualTo(10000);
 
-		// 오류 판매자 상태 확인
+		// 2. 오류 판매자 상태 확인 (FAILED 상태로 변경되어야 함)
 		Settlement errorSettlement = findSettlementBySellerId(300L);
 		assertThat(errorSettlement.getStatus()).isEqualTo(SettlementStatus.FAILED);
 
-		// ✅ 시스템 지갑 검증: 성공한 1건의 수수료(1000원)만 입금되어야 함
+		// 3. [중요] 시스템 지갑 검증: 성공한 1건의 수수료(1000원)만 입금되어야 함
+		// (TransactionTemplate 적용으로 데이터 visibility 문제가 해결되어 성공함)
 		Wallet systemWallet = walletRepository.findByMemberId(SYSTEM_ID).get();
 		assertThat(systemWallet.getBalance()).isEqualTo(1000);
 
-		// 트랜잭션 타입 검증
+		// 4. 트랜잭션 타입 검증
 		boolean hasSystemFeeTx = paymentTransactionRepository.findAll().stream()
 			.anyMatch(tx -> tx.getTransactionType() == WalletTransactionType.SETTLEMENT_FEE
 				&& tx.getBalanceDelta() == 1000);
 		assertThat(hasSystemFeeTx).isTrue();
+
+		// 5. 수수료 대기열 검증: 처리된 1건은 삭제, 실패한 1건은 애초에 Insert 되지 않음(또는 롤백) -> 비어있어야 함
+		// (현재 로직상 실패 건은 예외 발생 시 fee 저장도 안되므로 깔끔하게 비어있음)
+		assertThat(settlementFeeRepository.findAll()).isEmpty();
 	}
 
 	// --- Helper Methods ---

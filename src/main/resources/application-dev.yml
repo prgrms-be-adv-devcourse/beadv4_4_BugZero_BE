@@ -6,6 +6,8 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       auto-commit: false
+      maximum-pool-size: 20
+      minimum-idle: 20
 
   jpa:
     hibernate:
