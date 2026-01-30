@@ -97,7 +97,7 @@ public class AuctionReadUseCase {
 
 		// [변경] Client를 통해 상품 정보 Bulk 조회
 		Map<Long, ProductAuctionResponseDto> productMap = productApiClient.getProducts(productIds).stream()
-			.collect(Collectors.toMap(ProductAuctionResponseDto::getId, p -> p));
+			.collect(Collectors.toMap(ProductAuctionResponseDto::id, p -> p));
 
 		Map<Long, AuctionOrder> orderMap = auctionOrderRepository.findAllByAuctionIdIn(auctionIds).stream()
 			.collect(Collectors.toMap(AuctionOrder::getAuctionId, Function.identity()));
@@ -132,9 +132,9 @@ public class AuctionReadUseCase {
 
 		return AuctionDetailResponseDto.from(
 			auction,
-			product.getName(),
-			product.getDescription(),
-			product.getImageUrls(), // DTO에 포함된 이미지 URL 사용
+			product.name(),
+			product.description(),
+			product.imageUrls(),
 			highestBid,
 			myLastBid,
 			(member != null) ? member.getId() : null);
@@ -161,8 +161,8 @@ public class AuctionReadUseCase {
 			order,
 			viewerRole.name(),
 			statusDescription,
-			product.getName(),
-			product.getThumbnailUrl(),
+			product.name(),
+			product.thumbnailUrl(),
 			trader.getPublicId(),
 			trader.getContactPhone());
 	}
@@ -199,7 +199,7 @@ public class AuctionReadUseCase {
 
 		// [변경] 상품 정보 Bulk 조회
 		Map<Long, ProductAuctionResponseDto> productMap = productApiClient.getProducts(productIds).stream()
-			.collect(Collectors.toMap(ProductAuctionResponseDto::getId, Function.identity()));
+			.collect(Collectors.toMap(ProductAuctionResponseDto::id, Function.identity()));
 
 		Map<Long, Integer> bidCountMap = bidRepository.countByAuctionIdIn(auctionIds).stream()
 			.collect(Collectors.toMap(row -> (Long) row[0], row -> ((Long) row[1]).intValue()));
@@ -207,7 +207,7 @@ public class AuctionReadUseCase {
 		List<AuctionListResponseDto> dtos = auctions.stream()
 			.map(auction -> {
 				ProductAuctionResponseDto product = productMap.get(auction.getProductId());
-				String thumbnail = (product != null) ? product.getThumbnailUrl() : null;
+				String thumbnail = (product != null) ? product.thumbnailUrl() : null;
 				int bidCount = bidCountMap.getOrDefault(auction.getId(), 0);
 
 				// AuctionListResponseDto.from 파라미터 수정 필요 (Product Entity -> ProductAuctionResponseDto)
@@ -234,7 +234,7 @@ public class AuctionReadUseCase {
 
 		// [변경] 상품 정보 Bulk 조회
 		Map<Long, ProductAuctionResponseDto> productMap = productApiClient.getProducts(productIds).stream()
-			.collect(Collectors.toMap(ProductAuctionResponseDto::getId, Function.identity()));
+			.collect(Collectors.toMap(ProductAuctionResponseDto::id, Function.identity()));
 
 		List<MyAuctionOrderListResponseDto> dtos = orders.stream()
 			.map(order -> {
@@ -242,7 +242,7 @@ public class AuctionReadUseCase {
 				if (auction == null) return null;
 
 				ProductAuctionResponseDto product = productMap.get(auction.getProductId());
-				String thumbnailUrl = (product != null) ? product.getThumbnailUrl() : null;
+				String thumbnailUrl = (product != null) ? product.thumbnailUrl() : null;
 
 				return MyAuctionOrderListResponseDto.from(order, product, thumbnailUrl);
 			})
@@ -283,7 +283,7 @@ public class AuctionReadUseCase {
 
 		// [변경] Client 사용
 		Map<Long, ProductAuctionResponseDto> productMap = productApiClient.getProducts(productIds).stream()
-			.collect(Collectors.toMap(ProductAuctionResponseDto::getId, Function.identity()));
+			.collect(Collectors.toMap(ProductAuctionResponseDto::id, Function.identity()));
 
 		Map<Long, Integer> bidCountMap = bidRepository.countByAuctionIdIn(auctionIds).stream()
 			.collect(Collectors.toMap(row -> (Long) row[0], row -> ((Long) row[1]).intValue()));
@@ -291,7 +291,7 @@ public class AuctionReadUseCase {
 		return auctions.stream()
 			.map(auction -> {
 				ProductAuctionResponseDto product = productMap.get(auction.getProductId());
-				String thumbnail = (product != null) ? product.getThumbnailUrl() : null;
+				String thumbnail = (product != null) ? product.thumbnailUrl() : null;
 				return AuctionListResponseDto.from(auction, product, thumbnail, bidCountMap.getOrDefault(auction.getId(), 0));
 			})
 			.toList();

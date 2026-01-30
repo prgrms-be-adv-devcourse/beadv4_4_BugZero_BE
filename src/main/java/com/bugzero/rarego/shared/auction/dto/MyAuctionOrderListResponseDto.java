@@ -29,7 +29,7 @@ public record MyAuctionOrderListResponseDto(
 			order.getId(),
 			order.getAuctionId(),
 			// NPE 방지
-			product != null ? product.getName() : "Unknown Product",
+			product != null ? product.name() : "Unknown Product",
 			thumbnailUrl,
 			order.getFinalPrice(),
 			order.getStatus(),

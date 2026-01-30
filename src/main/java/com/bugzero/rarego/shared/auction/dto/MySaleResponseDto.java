@@ -45,11 +45,11 @@ public record MySaleResponseDto (
 	}
 
 	private static String resolveTitle(ProductAuctionResponseDto product) {
-		return (product != null) ? product.getName() : "정보 없음";
+		return (product != null) ? product.name() : "정보 없음";
 	}
 
 	private static String resolveThumbnail(ProductAuctionResponseDto product) {
-		return (product != null) ? product.getThumbnailUrl() : null;
+		return (product != null) ? product.thumbnailUrl() : null;
 	}
 
 	private static long resolvePrice(Auction auction, AuctionOrder order) {

@@ -30,10 +30,10 @@ public record AuctionListResponseDto(
 			auction.getId(),
 			auction.getProductId(),
 			// NPE 방지
-			product != null ? product.getName() : "Unknown Product",
+			product != null ? product.name() : "Unknown Product",
 			thumbnailUrl,
 			// NPE 방지
-			product != null ? product.getCategory() : "ETC",
+			product != null ? product.category() : "ETC",
 
 			safeCurrentPrice,
 			auction.getStartPrice(),
