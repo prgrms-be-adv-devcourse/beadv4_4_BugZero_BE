@@ -2,6 +2,7 @@ package com.bugzero.rarego.boundedContext.payment.domain;
 
 import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
@@ -24,5 +25,6 @@ public class SettlementFee extends BaseIdAndTime {
 	@JoinColumn(nullable = false, unique = true)
 	private Settlement settlement;
 
+	@Column(nullable = false)
 	private int feeAmount;
 }
