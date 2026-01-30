@@ -2,8 +2,8 @@ package com.bugzero.rarego.boundedContext.auction.in;
 
 import com.bugzero.rarego.boundedContext.auction.app.AuctionBidStreamSupport;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
-import com.bugzero.rarego.boundedContext.auction.domain.event.AuctionBidCreatedEvent;
-import com.bugzero.rarego.boundedContext.auction.domain.event.AuctionFailedEvent;
+import com.bugzero.rarego.boundedContext.auction.event.AuctionBidCreatedEvent;
+import com.bugzero.rarego.boundedContext.auction.event.AuctionFailedEvent;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionMemberRepository;
 import com.bugzero.rarego.shared.auction.event.AuctionEndedEvent;
 import com.bugzero.rarego.shared.payment.event.PaymentTimeoutEvent;
