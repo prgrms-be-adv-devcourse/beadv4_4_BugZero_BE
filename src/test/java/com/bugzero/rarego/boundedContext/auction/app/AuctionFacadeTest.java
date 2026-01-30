@@ -22,7 +22,6 @@ import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.PageDto;
@@ -52,9 +51,6 @@ class AuctionFacadeTest {
 
     @Mock
     private AuctionBookmarkUseCase auctionBookmarkUseCase;
-
-    @Mock
-    private AuctionOrderRepository auctionOrderRepository;
 
     @Mock
     private AuctionRelistUseCase auctionRelistUseCase;

@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProductReadProductsForInspectionUseCase {
 	private final ProductRepository productRepository;
-	private final ProductCreateS3PresignerUrlUseCase s3PresignerUrlUseCase;
+	private final ProductImageS3UseCase s3PresignerUrlUseCase;
 
 	@Transactional(readOnly = true)
 	public PagedResponseDto<ProductResponseForInspectionDto> readProducts(

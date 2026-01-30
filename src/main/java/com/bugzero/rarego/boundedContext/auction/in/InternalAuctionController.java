@@ -78,7 +78,7 @@ public class InternalAuctionController {
             auctionFacade.updateAuction(publicId, productAuctionUpdateDto));
     }
 
-    @Operation(summary = "경매정보 수정", description = "검수 확정 전인 경매 정보를 삭제합니다.")
+    @Operation(summary = "경매정보 삭제", description = "검수 확정 전인 경매 정보를 삭제합니다.")
     @DeleteMapping("/{productId}/{publicId}")
     public SuccessResponseDto<Void> deleteAuction (
         @PathVariable String publicId,
