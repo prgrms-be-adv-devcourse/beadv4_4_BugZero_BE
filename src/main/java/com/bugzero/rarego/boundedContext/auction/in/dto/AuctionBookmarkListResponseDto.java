@@ -4,11 +4,11 @@ import com.bugzero.rarego.shared.auction.dto.AuctionListResponseDto;
 import lombok.Builder;
 
 @Builder
-public record WishlistListResponseDto(
+public record AuctionBookmarkListResponseDto(
         Long bookmarkId,
         AuctionListResponseDto auctionInfo
 ) {
-    public static WishlistListResponseDto of(Long bookmarkId, AuctionListResponseDto auctionInfo) {
-        return new WishlistListResponseDto(bookmarkId, auctionInfo);
+    public static AuctionBookmarkListResponseDto of(Long bookmarkId, AuctionListResponseDto auctionInfo) {
+        return new AuctionBookmarkListResponseDto(bookmarkId, auctionInfo);
     }
 }

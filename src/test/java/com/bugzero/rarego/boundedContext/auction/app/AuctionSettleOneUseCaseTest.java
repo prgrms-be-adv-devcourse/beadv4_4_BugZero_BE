@@ -1,12 +1,15 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.*;
-
-import java.time.LocalDateTime;
-import java.util.Optional;
-
+import com.bugzero.rarego.boundedContext.auction.domain.Auction;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
+import com.bugzero.rarego.boundedContext.auction.domain.Bid;
+import com.bugzero.rarego.boundedContext.auction.event.AuctionFailedEvent;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
+import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
+import com.bugzero.rarego.shared.auction.event.AuctionEndedEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,16 +19,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.bugzero.rarego.boundedContext.auction.domain.Auction;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
-import com.bugzero.rarego.boundedContext.auction.domain.Bid;
-import com.bugzero.rarego.boundedContext.auction.domain.event.AuctionFailedEvent;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionOrderRepository;
-import com.bugzero.rarego.boundedContext.auction.out.AuctionRepository;
-import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.response.ErrorType;
-import com.bugzero.rarego.shared.auction.event.AuctionEndedEvent;
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuctionSettleOneUseCaseTest {

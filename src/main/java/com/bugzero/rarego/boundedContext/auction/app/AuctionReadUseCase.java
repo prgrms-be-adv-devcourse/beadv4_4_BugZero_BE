@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.boundedContext.auction.domain.*;
-import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistListResponseDto;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionBookmarkListResponseDto;
 import com.bugzero.rarego.boundedContext.auction.out.*;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
@@ -30,6 +30,18 @@ import com.bugzero.rarego.shared.product.out.ProductApiClient;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static com.bugzero.rarego.boundedContext.auction.domain.AuctionViewerRoleStatus.*;
 
 @Slf4j
 @Service

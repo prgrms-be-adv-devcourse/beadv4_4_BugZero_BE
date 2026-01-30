@@ -1,18 +1,16 @@
 package com.bugzero.rarego.boundedContext.auction.app;
 
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionBookmark;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionMember;
-import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistAddResponseDto;
-import com.bugzero.rarego.boundedContext.auction.in.dto.WishlistRemoveResponseDto;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionAddBookmarkResponseDto;
+import com.bugzero.rarego.boundedContext.auction.in.dto.AuctionRemoveBookmarkResponseDto;
 import com.bugzero.rarego.boundedContext.auction.out.AuctionBookmarkRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +20,7 @@ public class AuctionBookmarkUseCase {
     private final AuctionSupport auctionSupport;
 
     @Transactional
-    public WishlistAddResponseDto addBookmark(String publicId, Long auctionId) {
+    public AuctionAddBookmarkResponseDto addBookmark(String publicId, Long auctionId) {
         AuctionMember member = auctionSupport.getPublicMember(publicId);
 
         Auction auction = auctionSupport.findAuctionById(auctionId);
@@ -40,11 +38,11 @@ public class AuctionBookmarkUseCase {
 
         auctionBookmarkRepository.save(bookmark);
 
-        return WishlistAddResponseDto.of(true, auctionId);
+        return AuctionAddBookmarkResponseDto.of(true, auctionId);
     }
 
     @Transactional
-    public WishlistRemoveResponseDto removeBookmark(String publicId, Long auctionId) {
+    public AuctionRemoveBookmarkResponseDto removeBookmark(String publicId, Long auctionId) {
         AuctionMember member = auctionSupport.getPublicMember(publicId);
 
         AuctionBookmark bookmark = auctionBookmarkRepository.findByAuctionIdAndMemberId(auctionId, member.getId())
@@ -52,6 +50,6 @@ public class AuctionBookmarkUseCase {
 
         auctionBookmarkRepository.delete(bookmark);
 
-        return WishlistRemoveResponseDto.of(true, auctionId);
+        return AuctionRemoveBookmarkResponseDto.of(true, auctionId);
     }
 }

@@ -43,6 +43,7 @@ import com.bugzero.rarego.shared.auction.dto.MyAuctionOrderListResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionResponseDto;
 import com.bugzero.rarego.shared.product.out.ProductApiClient;
 
+
 @ExtendWith(MockitoExtension.class)
 class AuctionReadUseCaseTest {
 
