@@ -58,8 +58,8 @@ class ProductReadProductsForInspectionUseCaseTest {
 			.inspectionStatus(InspectionStatus.APPROVED)
 			.build();
 
-		product1.addImage(new ProductImage(product1, "url0", 0));
-		product1.addImage(new ProductImage(product1, "url1", 1));
+		product1.addImage(ProductImage.createConfirmedImage(product1, "url0", 0));
+		product1.addImage(ProductImage.createConfirmedImage(product1, "url1", 1));
 
 		entityManager.persist(product1);
 		entityManager.persist(product2);

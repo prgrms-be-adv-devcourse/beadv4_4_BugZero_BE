@@ -122,7 +122,7 @@ class AuctionReadUseCaseTest {
 		Product product = Product.builder().seller(productSeller).name("Test Item").build();
 		ReflectionTestUtils.setField(product, "id", 50L);
 
-		ProductImage image = ProductImage.builder().product(product).imageUrl("thumb.jpg").build();
+		ProductImage image = ProductImage.createConfirmedImage(product,"thumb.jpg", 1);
 
 		// given
 		given(productRepository.findById(50L)).willReturn(Optional.of(product));
@@ -177,7 +177,7 @@ class AuctionReadUseCaseTest {
 		Product product = Product.builder().seller(productSeller).name("Test Item").build();
 		ReflectionTestUtils.setField(product, "id", 50L);
 
-		ProductImage image = ProductImage.builder().product(product).imageUrl("thumb.jpg").build();
+		ProductImage image = ProductImage.createConfirmedImage(product,"thumb.jpg", 1);
 
 		// 5. 판매자 정보
 		AuctionMember sellerMember = AuctionMember.builder().id(sellerId).publicId("seller_pub_id").nickname("sellerNick").build();
@@ -459,8 +459,8 @@ class AuctionReadUseCaseTest {
 		ReflectionTestUtils.setField(product, "id", 50L);
 
 		// 5. Image Mock (썸네일 정렬 확인용)
-		ProductImage img1 = ProductImage.builder().product(product).imageUrl("thumb.jpg").sortOrder(0).build();
-		ProductImage img2 = ProductImage.builder().product(product).imageUrl("detail.jpg").sortOrder(1).build();
+		ProductImage img1 = ProductImage.createConfirmedImage(product,"thumb.jpg", 0);
+		ProductImage img2 = ProductImage.createConfirmedImage(product,"thumb.jpg", 1);
 		ReflectionTestUtils.setField(img1, "product", product);
 
 		// Mocking Behavior

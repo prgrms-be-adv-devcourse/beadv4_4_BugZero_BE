@@ -139,9 +139,9 @@ class ProductControllerTest {
 
 	@Test
 	@DisplayName("성공 - 상품 수정 API 호출 시 성공하면 200 OK와 수정된 상품 ID를 반환한다")
-	void updateProduct_success() throws Exception {
+	void updateBasicInfoProduct_success() throws Exception {
 		// given
-		ProductUpdateDto updateDto = createUpdateDto("수정된 상품명");
+		ProductUpdateDto updateDto = createUpdateBasicInfoDto("수정된 상품명");
 		given(productFacade.updateProduct(eq(PUBLIC_ID), eq(PRODUCT_ID), any(ProductUpdateDto.class)))
 			.willReturn(defaultUpdateResponse);
 
@@ -190,7 +190,7 @@ class ProductControllerTest {
 		);
 	}
 
-	private ProductUpdateDto createUpdateDto(String name) {
+	private ProductUpdateDto createUpdateBasicInfoDto(String name) {
 		return new ProductUpdateDto(
 			name,
 			Category.스타워즈,
