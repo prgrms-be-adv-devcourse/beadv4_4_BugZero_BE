@@ -1,0 +1,151 @@
+name: Codex PR Review
+
+on:
+  pull_request:
+    branches: [ "dev", "main" ]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+# 같은 PR에서 커밋이 연속으로 올라오면 이전 리뷰 실행은 취소하고 최신만 남김
+concurrency:
+  group: codex-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  codex_review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+
+    env:
+      MAX_CHANGED_FILES: "40"
+      MAX_CHANGED_LINES: "1200"
+      CODEX_COMMENT_MARKER: "<!-- CODEX_REVIEW_COMMENT -->"
+
+    steps:
+      - name: Checkout PR merge commit
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          fetch-depth: 0
+
+      - name: Fetch base ref
+        run: |
+          git fetch --no-tags origin ${{ github.event.pull_request.base.ref }}
+
+      - name: Compute change size (skip if too large / docs-only)
+        id: size
+        shell: bash
+        run: |
+          BASE="origin/${{ github.event.pull_request.base.ref }}"
+          HEAD="HEAD"
+
+          CHANGED_FILES=$(git diff --name-only "$BASE...$HEAD" | wc -l | tr -d ' ')
+          echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+
+          # 라인 변경량: numstat(add,del) 합산. binary(-)는 0으로 처리
+          CHANGED_LINES=$(git diff --numstat "$BASE...$HEAD" \
+            | awk '{a=$1; d=$2; if(a=="-") a=0; if(d=="-") d=0; sum+=a+d} END{print sum+0}')
+          echo "changed_lines=$CHANGED_LINES" >> $GITHUB_OUTPUT
+
+          # docs-only 여부
+          CHANGED=$(git diff --name-only "$BASE...$HEAD")
+          if echo "$CHANGED" | grep -qE '^(README\.md|docs/|.*\.md$)' && \
+             ! echo "$CHANGED" | grep -qvE '^(README\.md|docs/|.*\.md$)'; then
+            echo "docs_only=true" >> $GITHUB_OUTPUT
+          else
+            echo "docs_only=false" >> $GITHUB_OUTPUT
+          fi
+
+          # too large 여부
+          if [ "$CHANGED_FILES" -gt "${MAX_CHANGED_FILES}" ] || [ "$CHANGED_LINES" -gt "${MAX_CHANGED_LINES}" ]; then
+            echo "too_large=true" >> $GITHUB_OUTPUT
+          else
+            echo "too_large=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Prepare skip comment body (docs-only)
+        if: steps.size.outputs.docs_only == 'true'
+        run: |
+          cat > codex-comment.md <<'EOF'
+          ## 🤖 Codex Review (skipped)
+          <!-- CODEX_REVIEW_COMMENT -->
+
+          Docs-only PR이라 리뷰를 생략했어요.
+          EOF
+
+      - name: Prepare skip comment body (too large)
+        if: steps.size.outputs.docs_only != 'true' && steps.size.outputs.too_large == 'true'
+        run: |
+          FILES="${{ steps.size.outputs.changed_files }}"
+          LINES="${{ steps.size.outputs.changed_lines }}"
+          cat > codex-comment.md <<EOF
+          ## 🤖 Codex Review (skipped)
+          <!-- CODEX_REVIEW_COMMENT -->
+
+          변경량이 커서 자동 리뷰를 생략했어요.
+          - changed files: ${FILES}
+          - changed lines: ${LINES}
+
+          (필요하면 PR 코멘트로 \`@codex review\`를 달아 수동으로 요청하거나, PR을 쪼개는 걸 추천해요.)
+          EOF
+
+      # Codex 실행: docs-only 아니고 too-large도 아닐 때만
+      - name: Run Codex review (write output)
+        if: steps.size.outputs.docs_only != 'true' && steps.size.outputs.too_large != 'true'
+        id: codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt-file: .github/codex/prompts/review.md
+          output-file: codex-review.md
+
+      - name: Prepare review comment body
+        if: steps.size.outputs.docs_only != 'true' && steps.size.outputs.too_large != 'true'
+        run: |
+          cat > codex-comment.md <<'EOF'
+          ## 🤖 Codex Review
+          <!-- CODEX_REVIEW_COMMENT -->
+          EOF
+          echo "" >> codex-comment.md
+          cat codex-review.md >> codex-comment.md
+
+      # 댓글은 "생성"이 아니라 "업데이트 우선"
+      - name: Upsert Codex comment on PR (update if exists)
+        if: always() && (steps.size.outputs.docs_only == 'true' || steps.size.outputs.too_large == 'true' || (steps.size.outputs.docs_only != 'true' && steps.size.outputs.too_large != 'true'))
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue_number = context.payload.pull_request.number;
+
+            const marker = process.env.CODEX_COMMENT_MARKER;
+            const body = fs.readFileSync('codex-comment.md', 'utf8');
+
+            // PR 댓글 목록에서 marker 포함된 기존 Codex 댓글 찾기
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number, per_page: 100,
+            });
+
+            const existing = comments.find(c => (c.body || '').includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner, repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number,
+                body,
+              });
+            }
+        env:
+          CODEX_COMMENT_MARKER: ${{ env.CODEX_COMMENT_MARKER }}
