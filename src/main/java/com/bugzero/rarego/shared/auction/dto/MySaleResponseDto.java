@@ -2,11 +2,11 @@ package com.bugzero.rarego.shared.auction.dto;
 
 import java.time.LocalDateTime;
 
-import com.bugzero.rarego.boundedContext.auction.domain.Auction;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
-import com.bugzero.rarego.boundedContext.product.domain.Product;
+import com.bugzero.rarego.bounded_context.auction.domain.Auction;
+import com.bugzero.rarego.bounded_context.auction.domain.AuctionOrder;
+import com.bugzero.rarego.bounded_context.auction.domain.AuctionOrderStatus;
+import com.bugzero.rarego.bounded_context.auction.domain.AuctionStatus;
+import com.bugzero.rarego.bounded_context.product.domain.Product;
 
 import lombok.Builder;
 

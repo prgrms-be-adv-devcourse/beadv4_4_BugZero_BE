@@ -15,7 +15,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.bugzero.rarego.global.security.CustomAccessDeniedHandler;
 import com.bugzero.rarego.global.security.CustomAuthenticationEntryPoint;
-import com.bugzero.rarego.boundedContext.auth.app.AuthOAuth2AccountService;
+import com.bugzero.rarego.bounded_context.auth.app.AuthOAuth2AccountService;
 import com.bugzero.rarego.global.security.CustomOAuth2SuccessHandler;
 import com.bugzero.rarego.global.security.JwtAuthenticationFilter;
 import com.bugzero.rarego.global.security.JwtParser;

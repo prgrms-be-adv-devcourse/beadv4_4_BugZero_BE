@@ -1,8 +1,8 @@
 package com.bugzero.rarego.shared.auction.dto;
 
-import com.bugzero.rarego.boundedContext.auction.domain.Auction;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
-import com.bugzero.rarego.boundedContext.auction.domain.Bid;
+import com.bugzero.rarego.bounded_context.auction.domain.Auction;
+import com.bugzero.rarego.bounded_context.auction.domain.AuctionStatus;
+import com.bugzero.rarego.bounded_context.auction.domain.Bid;
 import java.time.Duration;
 import java.time.LocalDateTime;
 

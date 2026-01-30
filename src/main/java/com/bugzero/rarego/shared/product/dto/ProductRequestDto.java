@@ -3,10 +3,10 @@ package com.bugzero.rarego.shared.product.dto;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.bugzero.rarego.boundedContext.product.domain.Category;
-import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
-import com.bugzero.rarego.boundedContext.product.domain.Product;
-import com.bugzero.rarego.boundedContext.product.domain.ProductCondition;
+import com.bugzero.rarego.bounded_context.product.domain.Category;
+import com.bugzero.rarego.bounded_context.product.domain.InspectionStatus;
+import com.bugzero.rarego.bounded_context.product.domain.Product;
+import com.bugzero.rarego.bounded_context.product.domain.ProductCondition;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;

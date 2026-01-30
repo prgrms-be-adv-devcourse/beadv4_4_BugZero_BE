@@ -1,7 +1,7 @@
 package com.bugzero.rarego.shared.product.dto;
 
-import com.bugzero.rarego.boundedContext.product.domain.Product;
-import com.bugzero.rarego.boundedContext.product.domain.ProductImage;
+import com.bugzero.rarego.bounded_context.product.domain.Product;
+import com.bugzero.rarego.bounded_context.product.domain.ProductImage;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;

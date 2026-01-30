@@ -8,7 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.bugzero.rarego.boundedContext.auth.domain.AuthRole;
+import com.bugzero.rarego.bounded_context.auth.domain.AuthRole;
 
 class JwtParserTest {
 	private static final String SECRET_KEY = "abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890";

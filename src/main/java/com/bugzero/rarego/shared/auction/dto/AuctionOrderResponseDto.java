@@ -1,7 +1,7 @@
 package com.bugzero.rarego.shared.auction.dto;
 
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
+import com.bugzero.rarego.bounded_context.auction.domain.AuctionOrder;
+import com.bugzero.rarego.bounded_context.auction.domain.AuctionOrderStatus;
 import java.time.LocalDateTime;
 
 public record AuctionOrderResponseDto(

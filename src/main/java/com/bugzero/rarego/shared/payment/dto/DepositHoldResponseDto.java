@@ -2,7 +2,7 @@ package com.bugzero.rarego.shared.payment.dto;
 
 import java.time.LocalDateTime;
 
-import com.bugzero.rarego.boundedContext.payment.domain.Deposit;
+import com.bugzero.rarego.bounded_context.payment.domain.Deposit;
 
 public record DepositHoldResponseDto(
         Long depositId,

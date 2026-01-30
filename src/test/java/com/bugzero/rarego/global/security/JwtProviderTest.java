@@ -10,7 +10,7 @@ import javax.crypto.SecretKey;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.bugzero.rarego.boundedContext.auth.domain.AuthRole;
+import com.bugzero.rarego.bounded_context.auth.domain.AuthRole;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

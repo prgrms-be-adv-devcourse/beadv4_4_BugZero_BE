@@ -2,7 +2,7 @@ package com.bugzero.rarego.shared.product.dto;
 
 import java.util.List;
 
-import com.bugzero.rarego.boundedContext.product.domain.Category;
+import com.bugzero.rarego.bounded_context.product.domain.Category;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;

@@ -1,10 +1,10 @@
 package com.bugzero.rarego.shared.product.dto;
 
-import com.bugzero.rarego.boundedContext.product.domain.Inspection;
-import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
-import com.bugzero.rarego.boundedContext.product.domain.Product;
-import com.bugzero.rarego.boundedContext.product.domain.ProductCondition;
-import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
+import com.bugzero.rarego.bounded_context.product.domain.Inspection;
+import com.bugzero.rarego.bounded_context.product.domain.InspectionStatus;
+import com.bugzero.rarego.bounded_context.product.domain.Product;
+import com.bugzero.rarego.bounded_context.product.domain.ProductCondition;
+import com.bugzero.rarego.bounded_context.product.domain.ProductMember;
 
 import jakarta.validation.constraints.NotNull;
 

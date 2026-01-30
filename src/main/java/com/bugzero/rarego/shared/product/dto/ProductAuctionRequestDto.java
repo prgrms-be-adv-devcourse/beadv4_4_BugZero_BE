@@ -1,6 +1,6 @@
 package com.bugzero.rarego.shared.product.dto;
 
-import com.bugzero.rarego.boundedContext.auction.domain.Auction;
+import com.bugzero.rarego.bounded_context.auction.domain.Auction;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
