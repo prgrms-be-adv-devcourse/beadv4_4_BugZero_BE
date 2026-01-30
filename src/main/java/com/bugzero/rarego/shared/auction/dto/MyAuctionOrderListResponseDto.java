@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrder;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionOrderStatus;
-import com.bugzero.rarego.boundedContext.product.domain.Product;
+import com.bugzero.rarego.shared.product.dto.ProductAuctionResponseDto;
 
 public record MyAuctionOrderListResponseDto(
 	Long orderId,
@@ -19,7 +19,7 @@ public record MyAuctionOrderListResponseDto(
 ) {
 	public static MyAuctionOrderListResponseDto from (
 		AuctionOrder order,
-		Product product,
+		ProductAuctionResponseDto product,
 		String thumbnailUrl
 	) {
 		String description = convertStatusToDescription(order.getStatus());
@@ -29,7 +29,7 @@ public record MyAuctionOrderListResponseDto(
 			order.getId(),
 			order.getAuctionId(),
 			// NPE 방지
-			product != null ? product.getName() : "Unknown Product",
+			product != null ? product.name() : "Unknown Product",
 			thumbnailUrl,
 			order.getFinalPrice(),
 			order.getStatus(),

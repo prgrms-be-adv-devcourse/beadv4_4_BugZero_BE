@@ -1,13 +1,10 @@
 package com.bugzero.rarego.boundedContext.auction.out;
 
-import com.bugzero.rarego.boundedContext.auction.domain.Auction;
-import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
-import com.bugzero.rarego.boundedContext.product.domain.Category;
-import com.bugzero.rarego.boundedContext.product.domain.Inspection;
-import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
-import com.bugzero.rarego.boundedContext.product.domain.Product;
-import com.bugzero.rarego.boundedContext.product.domain.ProductCondition;
-import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,10 +14,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import com.bugzero.rarego.boundedContext.auction.domain.Auction;
+import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
 
 @DataJpaTest
 class AuctionRepositoryTest {
@@ -32,45 +27,37 @@ class AuctionRepositoryTest {
 	private TestEntityManager em;
 
 	@Test
-	@DisplayName("경매 조회 - SCHEDULED 상태도 포함하여 검수 승인된 모든 경매 조회")
+	@DisplayName("경매 조회 - SCHEDULED 상태도 포함하여 조회되는지 확인")
 	void findAllBySearchConditions() {
-		// 1. [Given] 데이터 준비 (기존과 동일)
-		ProductMember seller = ProductMember.builder()
-			.id(1L)                     // ✅ ID 수동 할당 (필수)
-			.publicId("seller_pub_id")  // ✅ Public ID (필수)
-			.email("test@example.com")  // ✅ Email (필수, 로그상 NOT NULL 가능성 높음)
-			.nickname("테스트판매자")     // ✅ [핵심] 닉네임 (필수 - 에러 원인 해결)
-			.realName("홍길동")          // ✅ 실명 (필수 가능성 있음)
-			.contactPhone("01012345678") // ✅ 연락처
-			.deleted(false)             // ✅ 삭제 여부
-			.build();
-		em.persist(seller);
+		// 1. [Given] 데이터 준비 - 타 도메인 엔티티(Product, Member) 제거
 
-		Product approvedProduct = Product.builder()
-			.seller(seller).name("승인상품").inspectionStatus(InspectionStatus.APPROVED)
-			.productCondition(ProductCondition.MISB).category(Category.스타워즈).build();
-		em.persist(approvedProduct);
+		Long sellerId = 1L;
+		Long productId = 100L;
 
-		Inspection inspection = Inspection.builder()
-			.product(approvedProduct).seller(seller).inspectorId(999L)
-			.inspectionStatus(InspectionStatus.APPROVED).productCondition(ProductCondition.MISB).build();
-		em.persist(inspection);
-
-		// A: IN_PROGRESS (당연히 조회됨)
+		// A: IN_PROGRESS 상태의 경매
 		Auction target1 = Auction.builder()
-			.sellerId(seller.getId()).productId(approvedProduct.getId())
+			.sellerId(sellerId)
+			.productId(productId)
 			.startTime(LocalDateTime.now().minusHours(1))
 			.endTime(LocalDateTime.now().plusDays(3))
-			.startPrice(10000).durationDays(3).build();
+			.startPrice(10000)
+			.durationDays(3)
+			.build();
+
+		// status는 @BuilderDefault나 로직에 의해 결정되므로 테스트를 위해 강제 주입
 		ReflectionTestUtils.setField(target1, "status", AuctionStatus.IN_PROGRESS);
 		em.persist(target1);
 
-		// B: SCHEDULED (이제 조회되어야 함!)
+		// B: SCHEDULED 상태의 경매 (미래 시작)
 		Auction target2 = Auction.builder()
-			.sellerId(seller.getId()).productId(approvedProduct.getId())
-			.startTime(LocalDateTime.now().plusHours(1)) // 미래 시작
+			.sellerId(sellerId)
+			.productId(productId)
+			.startTime(LocalDateTime.now().plusHours(1))
 			.endTime(LocalDateTime.now().plusDays(3))
-			.startPrice(30000).durationDays(3).build();
+			.startPrice(30000)
+			.durationDays(3)
+			.build();
+
 		ReflectionTestUtils.setField(target2, "status", AuctionStatus.SCHEDULED);
 		em.persist(target2);
 
@@ -79,9 +66,10 @@ class AuctionRepositoryTest {
 
 		// 2. [When] 조건 없이 전체 조회 (status = null)
 		Page<Auction> result = auctionRepository.findAllBySearchConditions(
-			null,
+			null, // auctionIds
 			null, // status 필터 없음 -> SCHEDULED도 나와야 함
-			null,
+			null, // productIds
+			List.of(productId), // approvedProductIds - 테스트용으로 productId 포함
 			PageRequest.of(0, 10)
 		);
 

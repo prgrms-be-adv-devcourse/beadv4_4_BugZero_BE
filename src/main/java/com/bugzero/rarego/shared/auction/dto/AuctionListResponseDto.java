@@ -2,7 +2,8 @@ package com.bugzero.rarego.shared.auction.dto;
 
 import com.bugzero.rarego.boundedContext.auction.domain.Auction;
 import com.bugzero.rarego.boundedContext.auction.domain.AuctionStatus;
-import com.bugzero.rarego.boundedContext.product.domain.Product;
+import com.bugzero.rarego.shared.product.dto.ProductAuctionResponseDto;
+
 import java.time.LocalDateTime;
 
 public record AuctionListResponseDto(
@@ -19,7 +20,7 @@ public record AuctionListResponseDto(
 ) {
 	public static AuctionListResponseDto from(
 		Auction auction,
-		Product product,
+		ProductAuctionResponseDto product,
 		String thumbnailUrl,
 		int bidsCount
 	) {
@@ -29,10 +30,10 @@ public record AuctionListResponseDto(
 			auction.getId(),
 			auction.getProductId(),
 			// NPE 방지
-			product != null ? product.getName() : "Unknown Product",
+			product != null ? product.name() : "Unknown Product",
 			thumbnailUrl,
 			// NPE 방지
-			product != null ? String.valueOf(product.getCategory()) : "ETC",
+			product != null ? product.category() : "ETC",
 
 			safeCurrentPrice,
 			auction.getStartPrice(),
