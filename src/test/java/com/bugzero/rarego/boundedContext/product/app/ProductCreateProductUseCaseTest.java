@@ -28,6 +28,7 @@ import com.bugzero.rarego.shared.product.dto.ProductImageRequestDto;
 
 @ExtendWith(MockitoExtension.class)
 class ProductCreateProductUseCaseTest {
+
 	@InjectMocks
 	private ProductCreateProductUseCase useCase;
 
@@ -38,62 +39,69 @@ class ProductCreateProductUseCaseTest {
 	private AuctionApiClient auctionApiClient;
 
 	@Mock
+	private ProductImageS3UseCase productImageS3UseCase; // 추가된 의존성
+
+	@Mock
 	private ProductSupport productSupport;
 
 	@Test
-	@DisplayName("상품 정보 등록 성공")
+	@DisplayName("성공: 상품 정보가 등록되고, 이미지 경로가 치환되며 S3 비동기 확정 로직이 호출된다")
 	void createProduct_success() {
 		// given
-		String memberId = "1L";
+		String memberUUID = "seller-uuid";
 		Long expectedAuctionId = 100L;
+		String tempUrl = "temp/starwars.jpg";
 
 		ProductCreateRequestDto request = new ProductCreateRequestDto(
 			"스타워즈 시리즈",
 			Category.스타워즈,
 			"설명",
 			new ProductAuctionRequestDto(1000, 7),
-			List.of(new ProductImageRequestDto("url", 0))
+			List.of(new ProductImageRequestDto(tempUrl, 0))
 		);
 
-		ProductMember seller = ProductMember.builder()
-			.id(1L)
-			.build();
+		ProductMember seller = ProductMember.builder().id(1L).build();
 
-		//유효한 멤버 반환
-		given(productSupport.verifyValidateMember(memberId)).willReturn(seller);
+		// 1. 유효 멤버 반환
+		given(productSupport.verifyValidateMember(memberUUID)).willReturn(seller);
 
-		//productRepository 에 저장되었을 때 반환되는 값 지정
+		// 2. 이미지 정렬 로직 (받은 그대로 반환하도록 설정)
+		given(productSupport.normalizeCreateImageOrder(anyList()))
+			.willReturn(request.productImageRequestDto());
+
+		// 3. Repository 저장 시 ID 주입
 		given(productRepository.save(any(Product.class))).willAnswer(invocation -> {
-			Product product = invocation.getArgument(0); //들어온 인자값
-			ReflectionTestUtils.setField(product, "id", 1L); // 임의로 ID 부여
+			Product product = invocation.getArgument(0);
+			ReflectionTestUtils.setField(product, "id", 1L);
 			return product;
 		});
 
-		given(productSupport.normalizeCreateImageOrder(request.productImageRequestDto()))
-			.willReturn(request.productImageRequestDto());
-
-		given(auctionApiClient.createAuction(eq(1L),eq("1L"), any(ProductAuctionRequestDto.class)))
+		// 4. 경매 API 호출 결과
+		given(auctionApiClient.createAuction(eq(1L), eq(memberUUID), any(ProductAuctionRequestDto.class)))
 			.willReturn(expectedAuctionId);
 
 		// when
-		ProductCreateResponseDto response = useCase.createProduct(memberId, request);
-		ArgumentCaptor<Product> productCaptor = ArgumentCaptor.forClass(Product.class);
-
-		verify(productRepository, times(1)).save(productCaptor.capture());
-		verify(auctionApiClient, times(1)).createAuction(eq(1L),eq("1L"), any());
-
-		Product product = productCaptor.getValue();
+		ProductCreateResponseDto response = useCase.createProduct(memberUUID, request);
 
 		// then
-		// 저장값 검증
-		assertThat(product.getName()).isEqualTo("스타워즈 시리즈");
-		assertThat(product.getCategory()).isEqualTo(Category.스타워즈);
-		assertThat(product.getDescription()).isEqualTo("설명");
-		assertThat(product.getImages().size()).isEqualTo(1);
+		// 1. Repository 저장 데이터 검증 (ArgumentCaptor 활용)
+		ArgumentCaptor<Product> productCaptor = ArgumentCaptor.forClass(Product.class);
+		verify(productRepository).save(productCaptor.capture());
+		Product savedProduct = productCaptor.getValue();
 
-		// 반환값 검증
-		assertThat(response.productId()).isNotNull();
-		assertThat(response.auctionId()).isNotNull();
+		assertThat(savedProduct.getName()).isEqualTo("스타워즈 시리즈");
+		// DB 저장 시 경로가 temp/에서 products/로 치환되었는지 검증
+		assertThat(savedProduct.getImages().get(0).getImageUrl()).isEqualTo("products/starwars.jpg");
+
+		// 2. S3 비동기 확정 로직 호출 검증 (핵심!)
+		// 서비스 코드에서 tempPaths 리스트를 넘기는지 확인
+		ArgumentCaptor<List<String>> tempPathsCaptor = ArgumentCaptor.forClass(List.class);
+		verify(productImageS3UseCase).confirmImages(tempPathsCaptor.capture());
+		assertThat(tempPathsCaptor.getValue()).containsExactly(tempUrl);
+
+		// 3. 외부 API 호출 및 반환값 검증
+		verify(auctionApiClient).createAuction(eq(1L), eq(memberUUID), any());
+		assertThat(response.productId()).isEqualTo(1L);
 		assertThat(response.auctionId()).isEqualTo(expectedAuctionId);
 		assertThat(response.inspectionStatus()).isEqualTo(InspectionStatus.PENDING);
 	}

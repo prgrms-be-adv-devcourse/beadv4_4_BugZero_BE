@@ -60,7 +60,7 @@ class ProductImageS3UseCaseTest {
 
 		// then
 		assertThat(result.url()).isEqualTo(fakeUrl);
-		assertThat(result.s3Path()).startsWith("products/");
+		assertThat(result.s3Path()).startsWith("temp/");
 		assertThat(result.s3Path()).contains("lego_castle.png");
 
 		verify(s3Presigner, times(1)).presignPutObject(any(PutObjectPresignRequest.class));
