@@ -2,7 +2,9 @@ package com.bugzero.rarego.boundedContext.product.domain;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -76,38 +78,52 @@ public class Product extends BaseIdAndTime {
 		return this.inspectionStatus == InspectionStatus.APPROVED;
 	}
 
-	public void update(String name, Category category, String description,
-		List<ProductImageUpdateDto> imageDtos) {
+	public void updateBasicInfo(String name, Category category, String description) {
 		this.name = name;
 		this.category = category;
 		this.description = description;
-		updateImages(imageDtos);
 	}
 
-	private void updateImages(List<ProductImageUpdateDto> imageDtos) {
-		// 1. 삭제 대상 처리: 요청 DTO에 포함되지 않은 기존 이미지 ID들을 찾아 리스트에서 제거
+	//삭제될 이미지 리스트 반환
+	public List<String> removeOldImages(List<ProductImageUpdateDto> imageDtos) {
 		Set<Long> updateIds = imageDtos.stream()
 			.map(ProductImageUpdateDto::id)
 			.filter(Objects::nonNull)
 			.collect(Collectors.toSet());
 
-		this.images.removeIf(img -> !updateIds.contains(img.getId()));
+		// 삭제될 이미지 필터링
+		List<ProductImage> toDelete = this.images.stream()
+			.filter(img -> !updateIds.contains(img.getId()))
+			.toList();
 
-		// 2. 신규 추가 및 기존 수정
+		List<String> pathsToDelete = toDelete.stream()
+			.map(ProductImage::getImageUrl)
+			.toList();
+
+		// 고아 객체 제거 (DB 삭제 트리거)
+		this.images.removeAll(toDelete);
+
+		return pathsToDelete;
+	}
+
+	//수정시 새롭게 등록될 이미지 리스트 반환
+	public List<String> processNewImages(List<ProductImageUpdateDto> imageDtos) {
+		List<String> newImages = new ArrayList<>();
+		// 기존 이미지들을 Map으로 만들어 효율적으로 찾기
+		Map<Long, ProductImage> currentImageMap = this.images.stream()
+			.collect(Collectors.toMap(ProductImage::getId, img -> img));
+
 		for (ProductImageUpdateDto dto : imageDtos) {
 			if (dto.id() == null) {
-				//ID가 없으면 완전히 새로운 이미지 추가
-				this.addImage(dto.toEntity(this));
+				this.addImage(ProductImage.createConfirmedImage(this, dto.imgUrl(), dto.sortOrder()));
+				newImages.add(dto.imgUrl());
 			} else {
-				// 해당 ID를 가진 이미지가 현재 상품의 이미지 리스트에 있는지 확인
-				//ID가 있으면 기존 이미지 -> url, 순서만 변경
-				ProductImage existingImage = this.images.stream()
-					.filter(img -> img.getId().equals(dto.id()))
-					.findFirst()
+				ProductImage existingImage = Optional.ofNullable(currentImageMap.get(dto.id()))
 					.orElseThrow(() -> new CustomException(ErrorType.IMAGE_NOT_FOUND));
 
 				existingImage.update(dto.imgUrl(), dto.sortOrder());
 			}
 		}
+		return newImages;
 	}
 }
