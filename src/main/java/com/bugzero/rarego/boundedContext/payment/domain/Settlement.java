@@ -70,6 +70,7 @@ public class Settlement extends BaseIdAndTime {
 		this.status = SettlementStatus.DONE;
 	}
 
+	// 정산 중 실패 처리
 	public boolean fail() {
 		this.tryCount++;
 
@@ -81,6 +82,11 @@ public class Settlement extends BaseIdAndTime {
 
 		// 재처리 대상 다음 배치 때 재시도
 		return false;
+	}
+
+	// 환불 시 실패 처리
+	public void cancel() {
+		this.status = SettlementStatus.CANCELED;
 	}
 
 	public static Settlement createFromForfeit(Long auctionId, PaymentMember seller, int forfeitAmount) {
