@@ -26,16 +26,16 @@ public class AuctionApiClient {
 
 	private final RestClient restClient;
 	private final InternalApiErrorHandler errorHandler;
-
-	@Value("${spring.security.internal.secret}")
-	private String internalSecret;
-
+	private final String internalSecret;
 	// 나중에 spring.application.name에 각각의 서비스 이름을 제공함. 지금은 모듈화가 없어서 rarego
-	@Value("${spring.application.name:rarego}")
-	private String callerService;
+	private final String callerService;
 
 	public AuctionApiClient(@Value("${custom.global.internalBackUrl}") String internalBackUrl,
+		@Value("${spring.security.internal.secret}") String internalSecret,
+		@Value("${spring.application.name:rarego}") String callerService,
 		InternalApiErrorHandler errorHandler) {
+		this.internalSecret = internalSecret;
+		this.callerService = callerService;
 		this.errorHandler = errorHandler;
 		this.restClient = RestClient.builder()
 			.baseUrl(internalBackUrl + "/api/v1/internal/auctions")
