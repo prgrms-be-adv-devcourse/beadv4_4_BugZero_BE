@@ -17,6 +17,8 @@ spring:
       enabled: false
 
   security:
+    internal:
+      secret: test-secret
     oauth2:
       client:
         registration:
