@@ -42,6 +42,7 @@ public class MemberApiClient {
 		this.errorHandler = errorHandler;
 		this.internalRestClient = RestClient.builder()
 			.baseUrl(internalBackUrl + "/api/v1/internal/members")
+			.defaultHeaders(headers -> headers.addAll(createInternalHeaders()))
 			.build();
 	}
 
@@ -49,7 +50,6 @@ public class MemberApiClient {
 		MemberJoinRequestDto request = new MemberJoinRequestDto(email);
 		SuccessResponseDto<MemberJoinResponseDto> response = internalRestClient.post()
 			.uri("/me")
-			.headers(headers -> headers.addAll(createInternalHeaders()))
 			.body(request)
 			.retrieve()
 			.onStatus(HttpStatusCode::isError,
@@ -68,7 +68,6 @@ public class MemberApiClient {
 		MemberWithdrawRequestDto request = new MemberWithdrawRequestDto(publicId);
 		SuccessResponseDto<MemberWithdrawResponseDto> response = internalRestClient.post()
 			.uri("/withdraw")
-			.headers(headers -> headers.addAll(createInternalHeaders()))
 			.body(request)
 			.retrieve()
 			.onStatus(HttpStatusCode::isError,
@@ -86,6 +85,11 @@ public class MemberApiClient {
 		HttpHeaders headers = new HttpHeaders();
 		headers.set(INTERNAL_SECRET_HEADER, internalSecret);
 		headers.setContentType(MediaType.APPLICATION_JSON);
+		String requestId = MDC.get("requestId");
+		if (requestId == null || requestId.isBlank()) {
+			requestId = UUID.randomUUID().toString();
+		}
+		headers.set(REQUEST_ID_HEADER, requestId);
 		headers.set(CALLER_SERVICE_HEADER, callerService);
 		return headers;
 	}
