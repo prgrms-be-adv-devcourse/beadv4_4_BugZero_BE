@@ -18,27 +18,29 @@ import com.bugzero.rarego.shared.member.domain.MemberWithdrawRequestDto;
 import com.bugzero.rarego.shared.member.domain.MemberWithdrawResponseDto;
 
 import java.util.UUID;
+
 import org.slf4j.MDC;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 public class MemberApiClient {
 	private static final String INTERNAL_SECRET_HEADER = "X-Internal-Secret";
-	private static final String REQUEST_ID_HEADER = "X-Request-Id";
 	private static final String CALLER_SERVICE_HEADER = "X-Caller-Service";
 
 	private final RestClient internalRestClient;
 	private final InternalApiErrorHandler errorHandler;
-
-	@Value("${spring.security.internal.secret}")
-	private String internalSecret;
-
+	private final String internalSecret;
 	// 나중에 spring.application.name에 각각의 서비스 이름을 제공함. 지금은 모듈화가 없어서 rarego
-	@Value("${spring.application.name:rarego}")
-	private String callerService;
+	private final String callerService;
 
 	public MemberApiClient(
 		@Value("${custom.global.internalBackUrl}") String internalBackUrl,
+		@Value("${spring.security.internal.secret}") String internalSecret,
+		@Value("${spring.application.name:rarego}") String callerService,
 		InternalApiErrorHandler errorHandler) {
+		this.internalSecret = internalSecret;
+		this.callerService = callerService;
 		this.errorHandler = errorHandler;
 		this.internalRestClient = RestClient.builder()
 			.baseUrl(internalBackUrl + "/api/v1/internal/members")
@@ -85,11 +87,6 @@ public class MemberApiClient {
 		HttpHeaders headers = new HttpHeaders();
 		headers.set(INTERNAL_SECRET_HEADER, internalSecret);
 		headers.setContentType(MediaType.APPLICATION_JSON);
-		String requestId = MDC.get("requestId");
-		if (requestId == null || requestId.isBlank()) {
-			requestId = UUID.randomUUID().toString();
-		}
-		headers.set(REQUEST_ID_HEADER, requestId);
 		headers.set(CALLER_SERVICE_HEADER, callerService);
 		return headers;
 	}
