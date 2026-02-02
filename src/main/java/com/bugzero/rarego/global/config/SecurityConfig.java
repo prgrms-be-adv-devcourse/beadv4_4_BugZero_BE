@@ -63,8 +63,8 @@ public class SecurityConfig {
 			.authenticationEntryPoint(authenticationEntryPoint)
 			.accessDeniedHandler(accessDeniedHandler)
 		);
-		http.addFilterBefore(internalAuthenticationFilter, JwtAuthenticationFilter.class);
-		http.addFilterBefore(new JwtAuthenticationFilter(jwtParser),
+		http.addFilterBefore(internalAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+		http.addFilterAt(new JwtAuthenticationFilter(jwtParser),
 			UsernamePasswordAuthenticationFilter.class);
 
 		return http.build();
