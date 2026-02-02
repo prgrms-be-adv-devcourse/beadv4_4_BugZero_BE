@@ -24,6 +24,8 @@ spring:
       port: ${SPRING_DATA_REDIS_PORT:6379}
 
   security:
+    internal:
+      secret: ${INTERNAL_SECRET}
     oauth2:
       client:
         registration:

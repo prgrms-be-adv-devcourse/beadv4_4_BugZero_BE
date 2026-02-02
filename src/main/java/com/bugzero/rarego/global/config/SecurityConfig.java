@@ -15,9 +15,9 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.bugzero.rarego.boundedContext.auth.app.AuthAccessTokenBlacklistUseCase;
 import com.bugzero.rarego.global.security.CustomAccessDeniedHandler;
 import com.bugzero.rarego.global.security.CustomAuthenticationEntryPoint;
+import com.bugzero.rarego.global.security.InternalAuthenticationFilter;
 import com.bugzero.rarego.global.security.JwtAuthenticationFilter;
 import com.bugzero.rarego.global.security.JwtParser;
 import com.bugzero.rarego.global.security.OAuth2SecurityConfigurer;
@@ -44,7 +44,8 @@ public class SecurityConfig {
 	public SecurityFilterChain filterChain(HttpSecurity http, JwtParser jwtParser,
 		CustomAuthenticationEntryPoint authenticationEntryPoint,
 		CustomAccessDeniedHandler accessDeniedHandler,
-		OAuth2SecurityConfigurer oauth2SecurityConfigurer) throws Exception {
+		OAuth2SecurityConfigurer oauth2SecurityConfigurer,
+		InternalAuthenticationFilter internalAuthenticationFilter) throws Exception {
 		http.authorizeHttpRequests(
 			auth -> auth
 				.requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
@@ -61,6 +62,7 @@ public class SecurityConfig {
 			.authenticationEntryPoint(authenticationEntryPoint)
 			.accessDeniedHandler(accessDeniedHandler)
 		);
+		http.addFilterBefore(internalAuthenticationFilter, JwtAuthenticationFilter.class);
 		http.addFilterBefore(new JwtAuthenticationFilter(jwtParser),
 			UsernamePasswordAuthenticationFilter.class);
 
