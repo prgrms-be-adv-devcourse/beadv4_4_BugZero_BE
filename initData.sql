@@ -374,13 +374,13 @@ INSERT INTO auction_auctionorder (deleted, created_at, updated_at, auction_id, b
 /* ==================================================================================
    [STEP 11] PAYMENT_SETTLEMENT 생성 (정산 상태)
    ================================================================================== */
-INSERT INTO payment_settlement (deleted, created_at, updated_at, auction_id, seller_id, sales_amount, fee_amount, settlement_amount, status) VALUES
-                                                                                                                                                 (0, NOW(), NOW(), 26, 7, 400000, 40000, 360000, 'READY'),
-                                                                                                                                                 (0, NOW(), NOW(), 30, 3, 600000, 60000, 540000, 'READY'),
-                                                                                                                                                 (0, NOW(), NOW(), 31, 4, 20000, 0, 20000, 'READY'), -- 몰수금 정산
-                                                                                                                                                 (0, NOW(), NOW(), 41, 5, 180000, 18000, 162000, 'READY'),
-                                                                                                                                                 (0, NOW(), NOW(), 42, 3, 40000, 0, 40000, 'READY'), -- 몰수금 정산
-                                                                                                                                                 (0, NOW(), NOW(), 43, 4, 70000, 7000, 63000, 'DONE');
+INSERT INTO payment_settlement (deleted, created_at, updated_at, auction_id, seller_id, sales_amount, fee_amount, settlement_amount, status, try_count) VALUES
+                                                                                                                                                 (0, NOW(), NOW(), 26, 7, 400000, 40000, 360000, 'READY', 0),
+                                                                                                                                                 (0, NOW(), NOW(), 30, 3, 600000, 60000, 540000, 'READY', 0),
+                                                                                                                                                 (0, NOW(), NOW(), 31, 4, 20000, 0, 20000, 'READY', 0), -- 몰수금 정산
+                                                                                                                                                 (0, NOW(), NOW(), 41, 5, 180000, 18000, 162000, 'READY', 0),
+                                                                                                                                                 (0, NOW(), NOW(), 42, 3, 40000, 0, 40000, 'READY', 0), -- 몰수금 정산
+                                                                                                                                                 (0, NOW(), NOW(), 43, 4, 70000, 7000, 63000, 'DONE', 0);
 
 
 /* ==================================================================================
