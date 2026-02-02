@@ -16,7 +16,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class InternalAuthenticationFilter extends OncePerRequestFilter {
 	private static final String INTERNAL_SECRET_HEADER = "X-Internal-Secret";
-	private static final String INTERNAL_PATH_PATTERN = "/internal/**";
+	private static final String INTERNAL_PATH_PATTERN = "/api/v1/internal/**";
 	private static final AntPathMatcher pathMatcher = new AntPathMatcher();
 
 	@Value("${spring.security.internal.secret}")
