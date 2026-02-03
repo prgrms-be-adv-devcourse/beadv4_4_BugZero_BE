@@ -4,3 +4,32 @@ server:
 spring:
   application:
     name: notification-service
+
+  config:
+    import: optional:file:.env[.properties]
+
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/rarego?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+    username: ${SPRING_DATASOURCE_USERNAME:rarego}
+    password: ${SPRING_DATASOURCE_PASSWORD:rarego}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  kafka:
+    consumer:
+      bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+      group-id: ${spring.application.name}-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.trusted.packages: "*"
