@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.bugzero.rarego.boundedContext.product.domain.dto.PresignedUrlRequestDto;
@@ -15,7 +14,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
+import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
@@ -88,8 +90,6 @@ public class ProductImageS3UseCase {
 		return s3Presigner.presignGetObject(presignRequest).url().toString();
 	}
 
-	// S3에 이미지를 등록하는 과정은 비동기로 처리
-	@Async
 	public void confirmImages(List<String> tempPaths) {
 		for (String tempPath : tempPaths) {
 			try {
@@ -115,6 +115,28 @@ public class ProductImageS3UseCase {
 			} catch (Exception e) {
 				log.error("S3 이미지 확정 중 오류 발생 (path: {}): {}", tempPath, e.getMessage());
 			}
+		}
+	}
+
+	public void deleteS3Image(List<String> s3Paths) {
+		if (s3Paths == null || s3Paths.isEmpty()) return;
+
+		try {
+			// 지울 객체들을 리스트로 변환
+			List<ObjectIdentifier> keys = s3Paths.stream()
+				.map(path -> ObjectIdentifier.builder().key(path).build())
+				.toList();
+
+			// S3 일괄 삭제 요청
+			DeleteObjectsRequest deleteRequest = DeleteObjectsRequest.builder()
+				.bucket(bucketName)
+				.delete(Delete.builder().objects(keys).build())
+				.build();
+
+			s3Client.deleteObjects(deleteRequest);
+			log.info("S3 이미지 삭제 완료: {} 건", s3Paths.size());
+		} catch (Exception e) {
+			log.error("S3 이미지 삭제 중 오류 발생: {}", e.getMessage());
 		}
 	}
 

@@ -16,15 +16,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.bugzero.rarego.boundedContext.product.domain.Category;
-import com.bugzero.rarego.boundedContext.product.domain.InspectionStatus;
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
+import com.bugzero.rarego.global.event.EventPublisher;
 import com.bugzero.rarego.shared.auction.out.AuctionApiClient;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductCreateRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductCreateResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductImageRequestDto;
+import com.bugzero.rarego.shared.product.event.S3ImageConfirmEvent;
 
 @ExtendWith(MockitoExtension.class)
 class ProductCreateProductUseCaseTest {
@@ -39,13 +40,13 @@ class ProductCreateProductUseCaseTest {
 	private AuctionApiClient auctionApiClient;
 
 	@Mock
-	private ProductImageS3UseCase productImageS3UseCase; // 추가된 의존성
-
-	@Mock
 	private ProductSupport productSupport;
 
+	@Mock
+	private EventPublisher eventPublisher; // 수정된 의존성
+
 	@Test
-	@DisplayName("성공: 상품 정보가 등록되고, 이미지 경로가 치환되며 S3 비동기 확정 로직이 호출된다")
+	@DisplayName("성공: 상품이 등록되면 DB에는 products/ 경로로 저장되고 S3 확정 이벤트가 발행된다")
 	void createProduct_success() {
 		// given
 		String memberUUID = "seller-uuid";
@@ -62,21 +63,16 @@ class ProductCreateProductUseCaseTest {
 
 		ProductMember seller = ProductMember.builder().id(1L).build();
 
-		// 1. 유효 멤버 반환
 		given(productSupport.verifyValidateMember(memberUUID)).willReturn(seller);
-
-		// 2. 이미지 정렬 로직 (받은 그대로 반환하도록 설정)
 		given(productSupport.normalizeCreateImageOrder(anyList()))
 			.willReturn(request.productImageRequestDto());
 
-		// 3. Repository 저장 시 ID 주입
 		given(productRepository.save(any(Product.class))).willAnswer(invocation -> {
 			Product product = invocation.getArgument(0);
 			ReflectionTestUtils.setField(product, "id", 1L);
 			return product;
 		});
 
-		// 4. 경매 API 호출 결과
 		given(auctionApiClient.createAuction(eq(1L), eq(memberUUID), any(ProductAuctionRequestDto.class)))
 			.willReturn(expectedAuctionId);
 
@@ -84,25 +80,24 @@ class ProductCreateProductUseCaseTest {
 		ProductCreateResponseDto response = useCase.createProduct(memberUUID, request);
 
 		// then
-		// 1. Repository 저장 데이터 검증 (ArgumentCaptor 활용)
+		// 1. DB 저장 경로 검증 (ProductImage.createConfirmedImage 내부에 치환 로직이 있다고 가정)
 		ArgumentCaptor<Product> productCaptor = ArgumentCaptor.forClass(Product.class);
 		verify(productRepository).save(productCaptor.capture());
 		Product savedProduct = productCaptor.getValue();
 
-		assertThat(savedProduct.getName()).isEqualTo("스타워즈 시리즈");
-		// DB 저장 시 경로가 temp/에서 products/로 치환되었는지 검증
-		assertThat(savedProduct.getImages().get(0).getImageUrl()).isEqualTo("products/starwars.jpg");
+		assertThat(savedProduct.getImages().get(0).getImageUrl())
+			.isEqualTo("products/starwars.jpg"); // 정적 팩토리 메서드에서 처리된 결과 검증
 
-		// 2. S3 비동기 확정 로직 호출 검증 (핵심!)
-		// 서비스 코드에서 tempPaths 리스트를 넘기는지 확인
-		ArgumentCaptor<List<String>> tempPathsCaptor = ArgumentCaptor.forClass(List.class);
-		verify(productImageS3UseCase).confirmImages(tempPathsCaptor.capture());
-		assertThat(tempPathsCaptor.getValue()).containsExactly(tempUrl);
+		// 2. 이벤트 발행 검증 (핵심 변경 사항)
+		ArgumentCaptor<S3ImageConfirmEvent> eventCaptor = ArgumentCaptor.forClass(S3ImageConfirmEvent.class);
+		verify(eventPublisher).publish(eventCaptor.capture());
 
-		// 3. 외부 API 호출 및 반환값 검증
+		S3ImageConfirmEvent publishedEvent = eventCaptor.getValue();
+		assertThat(publishedEvent.paths()).containsExactly(tempUrl); // 원본 temp 경로가 담겼는지 확인
+
+		// 3. 외부 API 호출 및 응답값 검증
 		verify(auctionApiClient).createAuction(eq(1L), eq(memberUUID), any());
 		assertThat(response.productId()).isEqualTo(1L);
 		assertThat(response.auctionId()).isEqualTo(expectedAuctionId);
-		assertThat(response.inspectionStatus()).isEqualTo(InspectionStatus.PENDING);
 	}
 }

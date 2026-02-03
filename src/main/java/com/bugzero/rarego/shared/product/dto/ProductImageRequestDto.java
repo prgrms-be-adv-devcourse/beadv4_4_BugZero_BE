@@ -1,8 +1,5 @@
 package com.bugzero.rarego.shared.product.dto;
 
-import com.bugzero.rarego.boundedContext.product.domain.Product;
-import com.bugzero.rarego.boundedContext.product.domain.ProductImage;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;
 
@@ -12,13 +9,6 @@ public record ProductImageRequestDto(
 	@PositiveOrZero(message = "사진 순서는 음수값을 사용하지 못합니다.")
 	int sortOrder
 ) {
-	public ProductImage toEntity(Product product, String permanentPath) {
-		return ProductImage.builder()
-			.product(product)
-			.imageUrl(permanentPath)
-			.sortOrder(sortOrder)
-			.build();
-	}
 
 	public ProductImageRequestDto withOrder(int newOrder) {
 		return new ProductImageRequestDto(this.imgUrl, newOrder);

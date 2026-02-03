@@ -7,12 +7,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.boundedContext.product.domain.Product;
+import com.bugzero.rarego.boundedContext.product.domain.ProductImage;
 import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
 import com.bugzero.rarego.boundedContext.product.out.ProductRepository;
+import com.bugzero.rarego.global.event.EventPublisher;
 import com.bugzero.rarego.shared.auction.out.AuctionApiClient;
 import com.bugzero.rarego.shared.product.dto.ProductCreateRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductCreateResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductImageRequestDto;
+import com.bugzero.rarego.shared.product.event.S3ImageConfirmEvent;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,8 +24,8 @@ import lombok.RequiredArgsConstructor;
 public class ProductCreateProductUseCase {
 	private final ProductRepository productRepository;
 	private final AuctionApiClient auctionApiClient;
-	private final ProductImageS3UseCase productImageS3UseCase;
 	private final ProductSupport productSupport;
+	private final EventPublisher eventPublisher;
 
     @Transactional
     public ProductCreateResponseDto createProduct(String memberUUID, ProductCreateRequestDto productCreateRequestDto) {
@@ -58,13 +61,11 @@ public class ProductCreateProductUseCase {
 			String originalTempPath = imageRequestDto.imgUrl(); // "temp/uuid_lego.jpg"
 			tempPaths.add(originalTempPath);
 
-			// DB에는 products/ 경로로 치환해서 저장
-			String permanentPath = originalTempPath.replace("temp/", "products/");
-			product.addImage(imageRequestDto.toEntity(product, permanentPath));
+			product.addImage(ProductImage.createConfirmedImage(product, imageRequestDto.imgUrl(), imageRequestDto.sortOrder()));
 		});
 
 		// S3 파일 이동 비동기 호출 (원본 temp 경로 리스트 전달 -> 확정이미지만 S3 product 경로로 옮김)
-		productImageS3UseCase.confirmImages(tempPaths);
+		eventPublisher.publish(new S3ImageConfirmEvent(tempPaths));
 
 		return product;
 	}

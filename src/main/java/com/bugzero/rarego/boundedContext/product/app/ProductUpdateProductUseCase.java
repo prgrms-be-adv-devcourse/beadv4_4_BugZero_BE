@@ -7,10 +7,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.boundedContext.product.domain.Product;
 import com.bugzero.rarego.boundedContext.product.domain.ProductMember;
+import com.bugzero.rarego.global.event.EventPublisher;
 import com.bugzero.rarego.shared.auction.out.AuctionApiClient;
 import com.bugzero.rarego.shared.product.dto.ProductImageUpdateDto;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateDto;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateResponseDto;
+import com.bugzero.rarego.shared.product.event.S3ImageConfirmEvent;
+import com.bugzero.rarego.shared.product.event.S3ImageDeleteEvent;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 public class ProductUpdateProductUseCase {
 	private final ProductSupport productSupport;
 	private final AuctionApiClient auctionApiClient;
+	private final EventPublisher eventPublisher;
 
 	@Transactional
 	public ProductUpdateResponseDto updateProduct(String  publicId, Long productId, ProductUpdateDto productUpdateDto) {
@@ -32,13 +36,20 @@ public class ProductUpdateProductUseCase {
 		List<ProductImageUpdateDto> images = productSupport.normalizeUpdateImageOrder(
 			productUpdateDto.productImageUpdateDtos()
 		);
-		//상품 정보 수정
-		product.update(
+		//상품 기본 정보 수정
+		product.updateBasicInfo(
 			productUpdateDto.name(),
 			productUpdateDto.category(),
-			productUpdateDto.description(),
-			images
+			productUpdateDto.description()
 		);
+		//수정 중 삭제되는 이미지가 있다면 반환
+		List<String> pathToDelete = product.removeOldImages(images);
+		//수정 중 새롭게 등록되는 이미지가 있다면 반환
+		List<String> pathToUpdate = product.processNewImages(images);
+		//S3삭제 이벤트 발행
+		eventPublisher.publish(new S3ImageDeleteEvent(pathToDelete));
+		//S3등록 이벤트 발행
+		eventPublisher.publish(new S3ImageConfirmEvent(pathToUpdate));
 
 		Long auctionId = auctionApiClient.updateAuction(publicId, productUpdateDto.productAuctionUpdateDto());
 

@@ -22,6 +22,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 	@Query("SELECT p.id FROM Product p WHERE p.seller.id = :sellerId")
 	List<Long> findAllIdsBySellerId(@Param("sellerId") Long sellerId);
 
+	//상품 조회 시 이미지를 한번에 가져와야 할때
+	@Query("select p from Product p join fetch p.images where p.id = :productId")
+	Optional<Product> findByIdWithImages(@Param("productId") Long productId);
+
 	// 상품 ID 목록으로 상품 엔티티 일괄 조회
 	List<Product> findAllByIdIn(Collection<Long> ids);
 
