@@ -62,6 +62,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-dev-secret-key-have-to-change-abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz}
       AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
       AWS_SECRET_KEY: ${AWS_SECRET_KEY}
+      INTERNAL_SECRET: ${INTERNAL_SECRET:tempinternalsecret23425436675434}
       INTERNAL_BACK_URL: ${INTERNAL_BACK_URL:-http://localhost:8080}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
       TZ: Asia/Seoul
