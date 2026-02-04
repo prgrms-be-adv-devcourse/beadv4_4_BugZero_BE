@@ -45,7 +45,7 @@ public class SecurityConfig {
 	public SecurityFilterChain filterChain(HttpSecurity http, JwtParser jwtParser,
 		CustomAuthenticationEntryPoint authenticationEntryPoint,
 		CustomAccessDeniedHandler accessDeniedHandler,
-		ObjectProvider<OAuth2SecurityConfigurer> oauth2ConfigurerProvider) throws Exception {
+		ObjectProvider<OAuth2SecurityConfigurer> oauth2ConfigurerProvider,
 		InternalAuthenticationFilter internalAuthenticationFilter) throws Exception {
 		http.authorizeHttpRequests(
 			auth -> auth
