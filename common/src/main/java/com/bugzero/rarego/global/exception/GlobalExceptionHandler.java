@@ -1,5 +1,6 @@
 package com.bugzero.rarego.global.exception;
 
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -38,5 +39,27 @@ public class GlobalExceptionHandler {
 		return ResponseEntity
 			.status(HttpStatus.BAD_REQUEST)
 			.body(body);
+	}
+
+
+	// JPA 정렬 오류 등 잘못된 API 사용 시 발생 (이번 401 원인)
+	@ExceptionHandler(InvalidDataAccessApiUsageException.class)
+	public ResponseEntity<ExceptionResponseDto> handleInvalidDataAccessApiUsageException(
+		InvalidDataAccessApiUsageException e) {
+		log.error("InvalidDataAccessApiUsageException 발생 (정렬 파라미터 오류 등): {}", e.getMessage());
+
+		ExceptionResponseDto body = ExceptionResponseDto.from(ErrorType.INVALID_INPUT, "정렬 파라미터가 잘못되었습니다.");
+		return ResponseEntity
+			.status(HttpStatus.BAD_REQUEST)
+			.body(body);
+	}
+
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<ExceptionResponseDto> handleAll(Exception e) {
+		log.error("알 수 없는 예외 발생: {}", e.getClass().getName());
+		log.error("메시지: {}", e.getMessage());
+		return ResponseEntity
+			.status(HttpStatus.INTERNAL_SERVER_ERROR)
+			.body(ExceptionResponseDto.from(ErrorType.INTERNAL_SERVER_ERROR));
 	}
 }
