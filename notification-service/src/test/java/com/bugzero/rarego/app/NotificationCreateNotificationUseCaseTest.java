@@ -11,9 +11,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import com.bugzero.rarego.app.mapper.NotificationMapper;
 import com.bugzero.rarego.domain.Notification;
+import com.bugzero.rarego.domain.NotificationMember;
 import com.bugzero.rarego.out.NotificationRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,29 +31,54 @@ class NotificationCreateNotificationUseCaseTest {
 
 	@BeforeEach
 	void setUp() {
-		// 매퍼 리스트에 Mock 매퍼 하나를 넣어서 주입
 		List<NotificationMapper<?>> mappers = List.of(notificationMapper);
 		useCase = new NotificationCreateNotificationUseCase(notificationRepository, mappers);
 	}
 
 	@Test
-	@DisplayName("성공: 지원하는 이벤트가 들어오면 알림을 생성하고 저장한다.")
+	@DisplayName("성공: 지원하는 이벤트가 들어오면 알림을 생성하고 '단건으로' 저장한다.")
 	void createNotification_success() {
 		// given
 		TestEvent event = new TestEvent(1L);
-		Notification notification = mock(Notification.class); // 내부 값은 중요하지 않으므로 Mock 처리
+		Notification notification = mock(Notification.class);
 
-		// 매퍼가 이 이벤트를 지원한다고 설정
 		given(notificationMapper.supports(event)).willReturn(true);
-		// 매퍼가 변환 결과로 알림 리스트를 반환한다고 설정
 		given(notificationMapper.map(event)).willReturn(List.of(notification));
 
 		// when
 		useCase.createNotification(event);
 
 		// then
-		// 리포지토리의 saveAll이 1번 호출되었는지 검증
-		then(notificationRepository).should().saveAll(List.of(notification));
+		// [변경] saveAll이 아니라 save가 호출되었는지 검증
+		then(notificationRepository).should(times(1)).save(notification);
+	}
+
+	@Test
+	@DisplayName("성공(중복무시): 이미 존재하는 알림(중복)이라면 에러를 무시하고 정상 종료한다.")
+	void createNotification_success_duplicate() {
+		// given
+		TestEvent event = new TestEvent(1L);
+		Notification notification = mock(Notification.class);
+		NotificationMember member = mock(NotificationMember.class);
+
+		given(notificationMapper.supports(event)).willReturn(true);
+		given(notificationMapper.map(event)).willReturn(List.of(notification));
+
+		// [중요] 예외 발생 시 로그를 찍기 위해 notification.getMember().getId()를 호출함.
+		// Mock 객체이므로 NullPointerException 방지를 위해 Member 스텁핑 필요
+		given(notification.getMember()).willReturn(member);
+
+		// [핵심] 저장 시 DataIntegrityViolationException 예외가 터지도록 설정
+		willThrow(new DataIntegrityViolationException("Duplicate entry"))
+			.given(notificationRepository).save(notification);
+
+		// when
+		// 예외가 던져지지 않아야 테스트 통과 (try-catch 작동 확인)
+		useCase.createNotification(event);
+
+		// then
+		// 저장은 시도했으나 예외를 삼켰음을 검증
+		then(notificationRepository).should(times(1)).save(notification);
 	}
 
 	@Test
@@ -60,17 +87,15 @@ class NotificationCreateNotificationUseCaseTest {
 		// given
 		TestEvent event = new TestEvent(1L);
 
-		// 매퍼가 이 이벤트를 지원하지 않는다고 설정 (false)
 		given(notificationMapper.supports(event)).willReturn(false);
 
 		// when
 		useCase.createNotification(event);
 
 		// then
-		// map 메서드는 호출되지 않아야 함
 		then(notificationMapper).should(never()).map(any());
-		// 리포지토리 save는 절대 호출되지 않아야 함
-		then(notificationRepository).should(never()).saveAll(any());
+		// [변경] saveAll -> save
+		then(notificationRepository).should(never()).save(any());
 	}
 
 	@Test
@@ -79,20 +104,17 @@ class NotificationCreateNotificationUseCaseTest {
 		// given
 		TestEvent event = new TestEvent(1L);
 
-		// 지원은 하지만
 		given(notificationMapper.supports(event)).willReturn(true);
-		// 결과가 비어있음 (예: 조건에 맞지 않아 알림 생성 안 함)
 		given(notificationMapper.map(event)).willReturn(Collections.emptyList());
 
 		// when
 		useCase.createNotification(event);
 
 		// then
-		// 리포지토리 save는 호출되지 않아야 함
-		then(notificationRepository).should(never()).saveAll(any());
+		// [변경] saveAll -> save
+		then(notificationRepository).should(never()).save(any());
 	}
 
-	// 테스트용 이벤트 클래스
 	record TestEvent(Long id) {
 	}
 }

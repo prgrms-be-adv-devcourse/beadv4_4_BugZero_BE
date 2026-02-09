@@ -3,6 +3,7 @@ package com.bugzero.rarego.app;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,9 +42,23 @@ public class NotificationCreateNotificationUseCase {
 			return;
 		}
 
-		notificationRepository.saveAll(notifications);
+		for (Notification notification : notifications) {
+			saveWithIdempotency(notification);
+		}
 
 		log.info("[알림] 저장 완료. 타입: {}, 개수: {}건",
 			event.getClass().getSimpleName(), notifications.size());
+	}
+
+	private void saveWithIdempotency(Notification notification) {
+		try {
+			notificationRepository.save(notification);
+		} catch (DataIntegrityViolationException e) {
+			// 이미 DB에 존재하는 경우 (Unique Constraint 위배)
+			log.warn("[알림 중복 무시] 이미 존재하는 알림입니다. MemberId: {}, Type: {}, RefId: {}",
+				notification.getMember().getId(),
+				notification.getType(),
+				notification.getReferenceId());
+		}
 	}
 }
