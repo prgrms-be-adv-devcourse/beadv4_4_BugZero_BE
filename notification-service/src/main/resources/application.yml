@@ -76,4 +76,3 @@ springdoc:
 custom:
   global:
     internalBackUrl: ${INTERNAL_BACK_URL:http://rarego-nginx}
-    frontUrl: ${FRONT_URL:http://localhost:3000}
