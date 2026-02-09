@@ -27,7 +27,7 @@ public class NotificationCreateNotificationUseCase {
 			.filter(m -> m.supports(event))
 			.findFirst();
 
-		// 에러를 던지지 않고 로그만 찍고 넘어감 -> 에러 던지면 kafka 무한 재시도
+		// 에러를 던지지 않고 로그만 찍고 넘어감 -> 에러 던지면 kafka 재시도
 		if (mapperOptional.isEmpty()) {
 			log.error("지원하지 않는 알림 이벤트가 감지되었습니다. mapper에 등록해주세요. Event: {}", event.getClass().getSimpleName());
 			return;
