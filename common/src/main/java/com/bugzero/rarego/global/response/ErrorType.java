@@ -57,6 +57,7 @@ public enum ErrorType {
 	WITHDRAWAL_ACTIVE_BID_EXISTS(409, 1516, "진행 중인 입찰이 있어 탈퇴할 수 없습니다."),
 	WITHDRAWAL_ACTIVE_SALE_EXISTS(409, 1517, "진행 중인 판매가 있어 탈퇴할 수 없습니다."),
 	WITHDRAWAL_PROCESSING_ORDER_EXISTS(409, 1518, "처리 중인 주문이 있어 탈퇴할 수 없습니다."),
+	AUTH_PROMOTE_SELLER_FAILED(500, 1519, "판매자 승격에 실패했습니다."),
 
 	// Auction (2000 ~ 2999)
 	AUCTION_CREATE_FAILED(500, 2000, "경매 생성에 실패했습니다."),

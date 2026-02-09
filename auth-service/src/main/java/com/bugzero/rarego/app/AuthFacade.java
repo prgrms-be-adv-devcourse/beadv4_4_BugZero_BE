@@ -17,6 +17,7 @@ public class AuthFacade {
 	private final AuthRefreshTokenFacade authRefreshTokenFacade;
 	private final AuthLogoutAccountUseCase authLogoutAccountUseCase;
 	private final AuthWithdrawAccountUseCase authWithdrawAccountUseCase;
+	private final AuthPromoteSellerUseCase authPromoteSellerUseCase;
 
 	// 테스트용 accessToken 발급
 	public String issueAccessToken(String providerId, String role) {
@@ -26,8 +27,10 @@ public class AuthFacade {
 	// 로그인, 회원가입 통합
 	public TokenPairDto login(String providerId, String email, Provider provider) {
 		Account account = authLoginAccountFacade.loginOrSignup(providerId, email, provider);
-		String accessToken = authIssueTokenUseCase.issueToken(account.getMemberPublicId(), account.getRole().name(), true);
-		String refreshToken = authIssueTokenUseCase.issueToken(account.getMemberPublicId(), account.getRole().name(), false);
+		String accessToken = authIssueTokenUseCase.issueToken(account.getMemberPublicId(), account.getRole().name(),
+			true);
+		String refreshToken = authIssueTokenUseCase.issueToken(account.getMemberPublicId(), account.getRole().name(),
+			false);
 		authStoreRefreshTokenUseCase.store(account.getMemberPublicId(), refreshToken);
 		return new TokenPairDto(accessToken, refreshToken);
 	}
@@ -42,5 +45,9 @@ public class AuthFacade {
 
 	public void withdraw(String accessToken) {
 		authWithdrawAccountUseCase.withdraw(accessToken);
+	}
+
+	public void promoteSeller(String accessToken) {
+		authPromoteSellerUseCase.promoteSeller(accessToken);
 	}
 }
