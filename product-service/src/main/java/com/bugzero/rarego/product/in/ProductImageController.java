@@ -12,6 +12,7 @@ import com.bugzero.rarego.product.domain.dto.PresignedUrlRequestDto;
 import com.bugzero.rarego.product.domain.dto.PresignedUrlResponseDto;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class ProductImageController {
 
 	private final ProductImageS3UseCase s3PresignerUrlUseCase;
 
+	@SecurityRequirement(name = "bearerAuth")
 	@Operation(summary = "Presigned URL 발급", description = "S3 이미지 업로드용 Presigned URL을 발급합니다")
 	@PostMapping("/presigned-url")
 	public SuccessResponseDto<PresignedUrlResponseDto> getPresignedUrl(
