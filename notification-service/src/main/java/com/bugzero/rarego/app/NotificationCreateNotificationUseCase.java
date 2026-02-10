@@ -3,12 +3,15 @@ package com.bugzero.rarego.app;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.app.mapper.NotificationMapper;
 import com.bugzero.rarego.domain.Notification;
+import com.bugzero.rarego.event.NotificationCreatedEvent;
+import com.bugzero.rarego.in.dto.NotificationResponseDto;
 import com.bugzero.rarego.out.NotificationRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -20,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 public class NotificationCreateNotificationUseCase {
 	private final NotificationRepository notificationRepository;
 	private final List<NotificationMapper<?>> mappers;
+	private final ApplicationEventPublisher eventPublisher;
 
 	@SuppressWarnings("unchecked")
 	@Transactional
@@ -42,24 +46,29 @@ public class NotificationCreateNotificationUseCase {
 		}
 
 		for (Notification notification : notifications) {
-			saveWithIdempotency(notification);
+			boolean saved = saveWithIdempotency(notification);
+
+			if (saved) {
+				NotificationResponseDto dto = NotificationResponseDto.from(notification);
+				eventPublisher.publishEvent(new NotificationCreatedEvent(notification.getMember().getPublicId(), dto));
+			}
 		}
 
 		log.info("[알림] 저장 완료. 타입: {}, 개수: {}건", event.getClass().getSimpleName(), notifications.size());
 	}
 
-	private void saveWithIdempotency(Notification notification) {
+	private boolean saveWithIdempotency(Notification notification) {
 		try {
 			notificationRepository.saveAndFlush(notification);
+			return true;
 		} catch (DataIntegrityViolationException e) {
 			// 이미 DB에 존재하는 경우 (Unique Constraint 위배)
 			if (isDuplicateEntryException(e)) {
-
 				log.warn("[알림 중복 무시] 이미 존재하는 알림입니다. MemberId: {}, Type: {}, RefId: {}",
 					notification.getMember().getId(),
 					notification.getType(),
 					notification.getReferenceId());
-				return;
+				return false;
 			}
 
 			log.error("중복이 아닌 심각한 오류 발생, 알림 저장 실패.", e);
