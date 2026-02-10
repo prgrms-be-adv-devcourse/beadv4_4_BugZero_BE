@@ -27,8 +27,12 @@ spring:
   ai:
     openai:
       api-key: ${OPENAI_API_KEY:empty}
+      embedding:
+        options:
+          model: text-embedding-3-small
     api:
       timeout: 30s
+
 
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:29092}

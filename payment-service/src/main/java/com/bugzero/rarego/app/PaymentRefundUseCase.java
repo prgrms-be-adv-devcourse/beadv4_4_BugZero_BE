@@ -2,6 +2,7 @@ package com.bugzero.rarego.app;
 
 import java.util.Optional;
 
+import com.bugzero.rarego.config.PaymentMetrics;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +33,7 @@ public class PaymentRefundUseCase {
 	private final SettlementRepository settlementRepository;
 	private final PaymentTransactionRepository transactionRepository;
 	private final PaymentSupport paymentSupport;
+	private final PaymentMetrics paymentMetrics;
 
 	@Transactional
 	public RefundResponseDto processRefund(Long auctionId) {
@@ -51,6 +53,9 @@ public class PaymentRefundUseCase {
 
 		// 5. Settlement 상태 변경 (READY -> FAILED)
 		settlement.cancel();
+
+		// 환불 메트릭 기록
+		paymentMetrics.incrementRefund();
 
 		log.info("환불 처리 완료: auctionId={}, buyerId={}, refundAmount={}",
 			auctionId, order.bidderId(), order.finalPrice());

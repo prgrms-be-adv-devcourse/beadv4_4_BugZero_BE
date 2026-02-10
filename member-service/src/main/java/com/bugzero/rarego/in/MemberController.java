@@ -46,7 +46,7 @@ public class MemberController {
 		@RequestBody MemberUpdateRequestDto requestDto
 	) {
 		return SuccessResponseDto.from(SuccessType.OK,
-			memberFacade.updateMe(memberPrincipal.publicId(), memberPrincipal.role(), requestDto)
+			memberFacade.updateMe(memberPrincipal.publicId(), requestDto)
 		);
 	}
 

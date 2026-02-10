@@ -3,6 +3,7 @@ package com.bugzero.rarego.app;
 import com.bugzero.rarego.domain.Auction;
 import com.bugzero.rarego.domain.AuctionMember;
 import com.bugzero.rarego.domain.Bid;
+import com.bugzero.rarego.config.AuctionMetrics;
 import com.bugzero.rarego.domain.event.AuctionBidCreatedEvent;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
@@ -46,7 +47,8 @@ class AuctionCreateBidUseCaseTest {
     private PaymentApiClient paymentApiClient;
     @Mock
     private ApplicationEventPublisher eventPublisher;
-
+    @Mock
+    private AuctionMetrics auctionMetrics;
     // UseCase가 직접 쓰지 않는 Repository Mock들은 제거함 (AuctionRepository,
     // AuctionMemberRepository)
 

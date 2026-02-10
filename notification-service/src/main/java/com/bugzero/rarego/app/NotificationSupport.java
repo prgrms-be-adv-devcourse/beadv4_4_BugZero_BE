@@ -3,6 +3,7 @@ package com.bugzero.rarego.app;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.bugzero.rarego.domain.Notification;
 import com.bugzero.rarego.domain.NotificationMember;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
@@ -21,5 +22,17 @@ public class NotificationSupport {
 	public NotificationMember findMemberById(Long memberId) {
 		return notificationMemberRepository.findById(memberId)
 			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
+	}
+
+	@Transactional(readOnly = true)
+	public NotificationMember findMemberByPublicId(String publicId) {
+		return notificationMemberRepository.findByPublicId(publicId)
+			.orElseThrow(() -> new CustomException(ErrorType.MEMBER_NOT_FOUND));
+	}
+
+	@Transactional(readOnly = true)
+	public Notification findNotificationById(Long id) {
+		return notificationRepository.findById(id)
+			.orElseThrow(() -> new CustomException(ErrorType.NOTIFICATION_NOT_FOUND));
 	}
 }

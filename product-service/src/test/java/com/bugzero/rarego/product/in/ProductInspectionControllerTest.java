@@ -191,7 +191,7 @@ class ProductInspectionControllerTest {
 		// given
 		// 1. 가짜 응답 데이터 준비
 		ProductResponseForInspectionDto productDto = new ProductResponseForInspectionDto(
-			1L, "레고 스타워즈", "seller@test.com", Category.스타워즈, InspectionStatus.PENDING, "url0");
+			1L, "레고 스타워즈", "seller@test.com", Category.STARWARS, InspectionStatus.PENDING, "url0");
 
 		Page<ProductResponseForInspectionDto> pageResponse = new PageImpl<>(List.of(productDto));
 		PagedResponseDto<ProductResponseForInspectionDto> pagedResponse = PagedResponseDto.from(pageResponse);
@@ -203,7 +203,7 @@ class ProductInspectionControllerTest {
 		// when & then
 		mockMvc.perform(get("/api/v1/products/inspections")
 				.param("name", "레고")
-				.param("category", "스타워즈")
+				.param("category", "STARWARS")
 				.param("status", "PENDING")
 				.param("page", "0")
 				.param("size", "10")

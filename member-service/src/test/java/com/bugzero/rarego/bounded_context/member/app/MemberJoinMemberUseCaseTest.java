@@ -12,12 +12,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import com.bugzero.rarego.app.MemberJoinMemberUseCase;
 import com.bugzero.rarego.domain.Member;
 import com.bugzero.rarego.out.MemberRepository;
-import com.bugzero.rarego.global.event.EventPublisher;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.shared.member.domain.MemberJoinResponseDto;
@@ -29,7 +29,7 @@ class MemberJoinMemberUseCaseTest {
 	private MemberRepository memberRepository;
 
 	@Mock
-	private EventPublisher eventPublisher;
+	private ApplicationEventPublisher applicationEventPublisher;
 
 	@InjectMocks
 	private MemberJoinMemberUseCase memberJoinMemberUseCase;
@@ -59,7 +59,7 @@ class MemberJoinMemberUseCaseTest {
 		assertThat(result.memberPublicId()).isEqualTo("public-id");
 		assertThat(result.nickname()).isEqualTo("tester");
 		verify(memberRepository, never()).save(any(Member.class));
-		verify(eventPublisher, never()).publish(any());
+		verify(applicationEventPublisher, never()).publishEvent(any());
 	}
 
 	@Test
@@ -78,7 +78,7 @@ class MemberJoinMemberUseCaseTest {
 
 		assertThat(result.memberPublicId()).isEqualTo("new-public-id");
 		assertThat(result.nickname()).isEqualTo("newbie");
-		verify(eventPublisher).publish(any(MemberJoinedEvent.class));
+		verify(applicationEventPublisher).publishEvent(any(MemberJoinedEvent.class));
 	}
 
 	@Test
@@ -98,7 +98,7 @@ class MemberJoinMemberUseCaseTest {
 		MemberJoinResponseDto result = memberJoinMemberUseCase.join("dup@example.com");
 
 		assertThat(result.memberPublicId()).isEqualTo("dup-public-id");
-		verify(eventPublisher, never()).publish(any());
+		verify(applicationEventPublisher, never()).publishEvent(any());
 	}
 
 	@Test

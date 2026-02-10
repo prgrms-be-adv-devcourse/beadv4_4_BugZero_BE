@@ -1,0 +1,46 @@
+# Handle line endings automatically for files detected as text
+# and perform LF normalization (conversion to LF on check-in).
+* text=auto
+
+# Explicitly declare text files you want to always be LF or CRLF
+# to avoid OS-specific auto-detection issues.
+
+# Shell scripts must always use LF to run in Docker/Unix environments.
+*.sh text eol=lf
+
+# Configuration files typically used in Unix/Docker environments.
+*.conf text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sql text eol=lf
+Dockerfile* text eol=lf
+
+# Java/Kotlin files
+*.java text
+*.kts text
+
+# Git configuration files
+.gitignore text
+.gitattributes text
+.gitmessage.txt text
+
+# Build tools
+gradlew text eol=lf
+*.gradle text
+*.properties text
+
+# OS specific files
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary files - explicitly mark as binary so Git doesn't touch them
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.ico binary
+*.jar binary
+*.war binary
+*.zip binary
+*.tar binary
+*.gz binary

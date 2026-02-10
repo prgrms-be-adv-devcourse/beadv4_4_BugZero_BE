@@ -10,9 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.bugzero.rarego.app.PaymentConfirmFinalizer;
-import com.bugzero.rarego.app.PaymentConfirmPaymentUseCase;
-import com.bugzero.rarego.app.PaymentSupport;
+import com.bugzero.rarego.config.PaymentMetrics;
 import com.bugzero.rarego.domain.Payment;
 import com.bugzero.rarego.domain.PaymentMember;
 import com.bugzero.rarego.domain.PaymentStatus;
@@ -41,6 +39,9 @@ class PaymentConfirmPaymentUseCaseTest {
 
 	@Mock
 	private PaymentSupport paymentSupport;
+
+	@Mock
+	private PaymentMetrics paymentMetrics;
 
 	@Test
 	@DisplayName("결제 승인 성공: 모든 검증을 통과하고 최종 저장까지 호출되어야 한다")

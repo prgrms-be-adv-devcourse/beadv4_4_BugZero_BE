@@ -44,19 +44,7 @@ public class PaymentEventListener {
             throw e;
         }
     }
-
-    @TransactionalEventListener(phase = AFTER_COMMIT)
-    @Transactional(propagation = REQUIRES_NEW)
-    public void onMemberCreated(MemberJoinedEvent event) {
-        paymentFacade.syncMember(event.memberDto());
-    }
-
-    @TransactionalEventListener(phase = AFTER_COMMIT)
-    @Transactional(propagation = REQUIRES_NEW)
-    public void onMemberUpdated(MemberUpdatedEvent event) {
-        paymentFacade.syncMember(event.memberDto());
-    }
-
+	
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleSettlementFinished(SettlementFinishedEvent event) {
         try {

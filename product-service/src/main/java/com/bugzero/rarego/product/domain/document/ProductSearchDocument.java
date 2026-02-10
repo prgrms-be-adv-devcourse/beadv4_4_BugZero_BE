@@ -1,22 +1,22 @@
 package com.bugzero.rarego.product.domain.document;
 
-import com.bugzero.rarego.shared.auction.type.AuctionStatus;
-import com.bugzero.rarego.shared.product.type.Category;
-import com.bugzero.rarego.shared.product.type.InspectionStatus;
-import com.bugzero.rarego.shared.product.type.ProductCondition;
+import java.time.LocalDateTime;
+import java.util.List;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import com.bugzero.rarego.shared.auction.type.AuctionStatus;
+import com.bugzero.rarego.shared.product.type.Category;
+import com.bugzero.rarego.shared.product.type.ProductCondition;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @AllArgsConstructor
@@ -71,11 +71,16 @@ public class ProductSearchDocument {
 	private String imageUrl;
 
 	// 상품명+설명 벡터
-	@Field(type = FieldType.Dense_Vector, dims = 1536)
-	private float[] embedding;
+	@Field(type = FieldType.Dense_Vector,
+		dims = 1536,
+		similarity = "cosine",
+		index = true)
+	private List<Float> embedding;
 
 	public static String generateId(Long productId, Long auctionId) {
 		return productId + "_" + auctionId;
 	}
+
+	public static final String EMBEDDING_TEMPLATE = "상품명: %s, 상세내용: %s, 카테고리: %s, 상품상태: %s";
 }
 

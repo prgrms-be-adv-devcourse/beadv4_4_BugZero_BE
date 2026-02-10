@@ -9,6 +9,8 @@ import static org.mockito.Mockito.verify;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import com.bugzero.rarego.config.PaymentMetrics;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,8 +19,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.bugzero.rarego.app.PaymentRefundUseCase;
-import com.bugzero.rarego.app.PaymentSupport;
 import com.bugzero.rarego.domain.PaymentMember;
 import com.bugzero.rarego.domain.PaymentTransaction;
 import com.bugzero.rarego.domain.ReferenceType;
@@ -51,6 +51,9 @@ class PaymentRefundUseCaseTest {
 
 	@Mock
 	private PaymentSupport paymentSupport;
+
+	@Mock
+	private PaymentMetrics paymentMetrics;
 
 	private static final Long AUCTION_ID = 100L;
 	private static final Long BIDDER_ID = 1L;

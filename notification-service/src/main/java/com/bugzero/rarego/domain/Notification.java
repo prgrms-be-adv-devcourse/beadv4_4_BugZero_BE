@@ -49,4 +49,8 @@ public class Notification extends BaseIdAndTime {
 
 	@Column(nullable = false)
 	private Long referenceId;
+
+	public void read() {
+		this.isRead = true;
+	}
 }

@@ -1,5 +1,6 @@
 package com.bugzero.rarego.app;
 
+import com.bugzero.rarego.config.AuctionMetrics;
 import com.bugzero.rarego.domain.Auction;
 import com.bugzero.rarego.domain.AuctionMember;
 import com.bugzero.rarego.domain.Bid;
@@ -27,9 +28,13 @@ public class AuctionCreateBidUseCase {
     private final BidRepository bidRepository;
     private final PaymentApiClient paymentApiClient;
     private final ApplicationEventPublisher eventPublisher;
+    private final AuctionMetrics auctionMetrics;
 
     @Transactional
     public BidResponseDto createBid(Long auctionId, String memberPublicId, int bidAmount) {
+        // 입찰 시도 메트릭 기록
+        auctionMetrics.incrementBidTotal();
+
         // 1. 회원 조회
         AuctionMember bidder = support.getPublicMember(memberPublicId);
 
@@ -77,6 +82,9 @@ public class AuctionCreateBidUseCase {
             ));
         }
 
+        // 입찰 성공 메트릭 기록
+        auctionMetrics.incrementBidSuccess();
+
         return BidResponseDto.from(
                 bid,
                 bidder.getPublicId(),
@@ -87,23 +95,27 @@ public class AuctionCreateBidUseCase {
     private void validateBid(Auction auction, AuctionMember bidder, int bidAmount) {
         // 경매가 진행중이 아닐 때 입찰 방지
         if (auction.getStatus() != AuctionStatus.IN_PROGRESS) {
+            auctionMetrics.incrementBidFailNotInProgress();
             throw new CustomException(ErrorType.AUCTION_NOT_IN_PROGRESS, "경매가 진행 중인 상태가 아닙니다.");
         }
 
         // 판매자 본인 입찰 방지 (ID 비교)
         if (auction.getSellerId().equals(bidder.getId())) {
+            auctionMetrics.incrementBidFailSellerBid();
             throw new CustomException(ErrorType.AUCTION_SELLER_CANNOT_BID, "본인 경매에는 입찰할 수 없습니다.");
         }
 
         // 연속 입찰 방지 (현재 최고 입찰자 = 본인이면 거절)
         Optional<Bid> lastBid = bidRepository.findTopByAuctionIdOrderByBidTimeDesc(auction.getId());
         if (lastBid.isPresent() && lastBid.get().getBidderId().equals(bidder.getId())) {
+            auctionMetrics.incrementBidFailAlreadyHighest();
             throw new CustomException(ErrorType.AUCTION_ALREADY_HIGHEST_BIDDER, "연속 입찰은 불가합니다.");
         }
 
         // 경매 입찰 가능한 시간인지에 대한 검증
         LocalDateTime now = LocalDateTime.now();
         if (now.isBefore(auction.getStartTime()) || now.isAfter(auction.getEndTime())) {
+            auctionMetrics.incrementBidFailNotInProgress();
             throw new CustomException(ErrorType.AUCTION_NOT_IN_PROGRESS, "경매 시간이 아닙니다.");
         }
 
@@ -112,6 +124,7 @@ public class AuctionCreateBidUseCase {
                 : auction.getCurrentPrice() + auction.getTickSize();
 
         if (bidAmount < minimumBid) {
+            auctionMetrics.incrementBidFailAmountTooLow();
             throw new CustomException(ErrorType.AUCTION_BID_AMOUNT_TOO_LOW, "입찰 금액이 유효하지 않습니다.");
         }
     }

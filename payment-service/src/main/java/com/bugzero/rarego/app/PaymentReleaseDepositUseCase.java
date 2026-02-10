@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.domain.Deposit;
 import com.bugzero.rarego.domain.DepositStatus;
+import com.bugzero.rarego.domain.PaymentMember;
 import com.bugzero.rarego.domain.PaymentTransaction;
 import com.bugzero.rarego.domain.ReferenceType;
 import com.bugzero.rarego.domain.Wallet;
@@ -59,6 +60,28 @@ public class PaymentReleaseDepositUseCase {
 
 		transactionRepository.saveAll(transactions);
 		log.info("경매 {} 보증금 환급 완료: {}명", auctionId, depositsToRelease.size());
+	}
+
+	@Transactional
+	public void releaseDeposit(Long auctionId, String memberPublicId) {
+		PaymentMember member = paymentSupport.findMemberByPublicId(memberPublicId);
+		Deposit deposit = depositRepository.findByMemberIdAndAuctionId(member.getId(), auctionId)
+				.orElseThrow(() -> new CustomException(ErrorType.DEPOSIT_NOT_FOUND));
+
+		if (deposit.getStatus() != DepositStatus.HOLD) {
+			log.info("보증금이 HOLD 상태가 아님 (상태: {}), 환급 건너뜀", deposit.getStatus());
+			return;
+		}
+		Wallet wallet = paymentSupport.findWalletByMemberIdForUpdate(member.getId());
+
+		if (wallet == null) {
+			throw new CustomException(ErrorType.WALLET_NOT_FOUND);
+		}
+
+		PaymentTransaction transaction = releaseDeposit(deposit, wallet);
+		transactionRepository.save(transaction);
+
+		log.info("단건 보증금 환급 완료: auctionId={}, memberPublicId={}", auctionId, memberPublicId);
 	}
 
 	private List<Deposit> findDepositsToRelease(Long auctionId, Long winnerId) {

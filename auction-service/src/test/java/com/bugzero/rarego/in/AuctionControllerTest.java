@@ -1,17 +1,19 @@
 package com.bugzero.rarego.in;
 
-import com.bugzero.rarego.app.AuctionFacade;
-import com.bugzero.rarego.domain.AuctionOrderStatus;
-import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.exception.GlobalExceptionHandler;
-import com.bugzero.rarego.global.response.*;
-import com.bugzero.rarego.global.security.MemberPrincipal;
-import com.bugzero.rarego.in.dto.*;
-import com.bugzero.rarego.shared.auction.dto.AuctionSortType;
-import com.bugzero.rarego.shared.auction.type.AuctionStatus;
-import com.bugzero.rarego.shared.product.type.Category;
-import com.bugzero.rarego.support.WithMockMemberPrincipal;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.*;
+import static org.mockito.BDDMockito.verify;
+import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.argThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,19 +32,30 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.verify;
-import static org.mockito.Mockito.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.bugzero.rarego.app.AuctionFacade;
+import com.bugzero.rarego.domain.AuctionOrderStatus;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.exception.GlobalExceptionHandler;
+import com.bugzero.rarego.global.response.ErrorType;
+import com.bugzero.rarego.global.response.PageDto;
+import com.bugzero.rarego.global.response.PagedResponseDto;
+import com.bugzero.rarego.global.response.SuccessResponseDto;
+import com.bugzero.rarego.global.response.SuccessType;
+import com.bugzero.rarego.global.security.MemberPrincipal;
+import com.bugzero.rarego.in.dto.AuctionAddBookmarkResponseDto;
+import com.bugzero.rarego.in.dto.AuctionDetailResponseDto;
+import com.bugzero.rarego.in.dto.AuctionOrderResponseDto;
+import com.bugzero.rarego.in.dto.AuctionRelistRequestDto;
+import com.bugzero.rarego.in.dto.AuctionRelistResponseDto;
+import com.bugzero.rarego.in.dto.AuctionRemoveBookmarkResponseDto;
+import com.bugzero.rarego.in.dto.BidLogResponseDto;
+import com.bugzero.rarego.in.dto.BidRequestDto;
+import com.bugzero.rarego.in.dto.BidResponseDto;
+import com.bugzero.rarego.shared.auction.dto.AuctionSortType;
+import com.bugzero.rarego.shared.auction.type.AuctionStatus;
+import com.bugzero.rarego.shared.product.type.Category;
+import com.bugzero.rarego.support.WithMockMemberPrincipal;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
 class AuctionControllerTest {
@@ -242,7 +255,7 @@ class AuctionControllerTest {
         // when
         mockMvc.perform(get("/api/v1/auctions")
                         .param("keyword", "Lego")
-                        .param("category", "스타워즈")
+                        .param("category", "STARWARS")
                         .param("sort", "CLOSING_SOON"))
                 .andExpect(status().isOk());
 
@@ -250,7 +263,7 @@ class AuctionControllerTest {
         verify(auctionFacade).getAuctions(
                 argThat(condition ->
                         "Lego".equals(condition.getKeyword()) &&
-                                Category.스타워즈 == condition.getCategory() &&
+                                Category.STARWARS == condition.getCategory() &&
                                 AuctionSortType.CLOSING_SOON == condition.getSort()
                 ),
                 any(Pageable.class)

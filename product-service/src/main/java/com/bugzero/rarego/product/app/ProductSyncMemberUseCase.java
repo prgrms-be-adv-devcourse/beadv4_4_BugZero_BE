@@ -28,17 +28,6 @@ public class ProductSyncMemberUseCase {
 		 */
 		if (existedOpt.isPresent()) {
 			ProductMember existed = existedOpt.get();
-
-			// 지연된 이벤트 (현재 updatedAt과 비교 후 느리면) 무시됨
-			if (existed.getUpdatedAt() != null
-				&& member.updatedAt() != null
-				&& !member.updatedAt().isAfter(existed.getUpdatedAt())) {
-
-				log.info("[SKIP] AuctionMember sync 중 이벤트 지연 무시됨. id={}, existedUpdatedAt={}, eventUpdatedAt={}",
-					member.id(), existed.getUpdatedAt(), member.updatedAt());
-				return existed; // 스킵
-			}
-
 			existed.updateFrom(member);
 			return existed;
 		}

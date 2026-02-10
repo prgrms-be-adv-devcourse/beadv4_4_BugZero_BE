@@ -322,6 +322,8 @@ services:
       GF_SERVER_SERVE_FROM_SUB_PATH: ${GF_SERVER_SERVE_FROM_SUB_PATH:-true}
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./docker/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
     restart: always
     networks:
       - rarego-network
