@@ -14,6 +14,7 @@ public enum ErrorType {
 	INVALID_INPUT(400, 9001, "잘못된 입력값입니다."),
 	LOCK_ACQUISITION_FAILED(503, 9002, "현재 요청이 많아 처리가 지연되고 있습니다. 잠시 후 다시 시도해주세요."),
 	CONCURRENCY_ISSUE(409, 9003, "동시성 이슈가 발생했습니다. 잠시 후 다시 시도해주세요."),
+	JSON_PARSING_FAILED(400, 9004, "JSON 파싱에 실패했습니다. 파싱할 데이터를 확인헤주세요."),
 
 	// Member (1000 ~ 1499)
 	MEMBER_NOT_FOUND(404, 1001, "존재하지 않는 회원입니다."),
