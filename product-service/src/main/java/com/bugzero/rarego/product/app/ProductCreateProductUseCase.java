@@ -1,38 +1,49 @@
 package com.bugzero.rarego.product.app;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.global.event.EventPublisher;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.product.domain.Product;
 import com.bugzero.rarego.product.domain.ProductImage;
 import com.bugzero.rarego.product.domain.ProductMember;
 import com.bugzero.rarego.product.domain.dto.ProductCreateResponseDto;
 import com.bugzero.rarego.product.out.ProductRepository;
+import com.bugzero.rarego.shared.auction.event.AuctionManagementEvent;
 import com.bugzero.rarego.shared.auction.out.AuctionApiClient;
+import com.bugzero.rarego.shared.auction.type.AuctionProductEventType;
 import com.bugzero.rarego.shared.product.dto.ProductCreateRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductImageRequestDto;
 import com.bugzero.rarego.shared.product.event.S3ImageConfirmEvent;
-import com.bugzero.rarego.shared.product.type.InspectionStatus;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductCreateProductUseCase {
 	private final ProductRepository productRepository;
 	private final AuctionApiClient auctionApiClient;
 	private final ProductSupport productSupport;
 	private final EventPublisher eventPublisher;
+	private final ObjectMapper objectMapper;
+
+	private final KafkaTemplate<String, Object> kafkaTemplate;
 
 	@Transactional
-    public ProductCreateResponseDto createProduct(String memberUUID, ProductCreateRequestDto dto) {
+    public ProductCreateResponseDto createProduct(String publicId, ProductCreateRequestDto dto) {
 
-		ProductMember seller = productSupport.verifyValidateMember(memberUUID);
+		ProductMember seller = productSupport.verifyValidateMember(publicId);
 
 		Product product = confirmImages(Product.createProduct(seller, dto.name(), dto.category(), dto.description()),
 			dto.productImageRequestDto());
@@ -40,13 +51,29 @@ public class ProductCreateProductUseCase {
         // 부모만 저장 (CascadeType.PERSIST에 의해 자식인 ProductImage들도 자동으로 INSERT됨)
         Product savedProduct = productRepository.save(product);
 
-        // 경매 정보 생성 요청하는 api
-        Long auctionId = auctionApiClient.createAuction(savedProduct.getId(), memberUUID,
-                dto.productAuctionRequestDto());
+
+		//TODO 아웃박스 패턴 도입 시 아웃박스 테이블에 발행할 이벤트를 저장하는 로직으로 변경
+		try {
+			String payload = objectMapper.writeValueAsString(dto.productAuctionRequestDto());
+
+			AuctionManagementEvent event = new AuctionManagementEvent(
+				AuctionProductEventType.CREATE, // eventType
+				"REQ-" + UUID.randomUUID(),    // requestId
+				savedProduct.getId(),                           // productId
+				publicId,               // publicId
+				payload                     // payload
+			);
+
+			kafkaTemplate.send("auction-product-events", event.productId().toString(), event);
+		} catch (JsonProcessingException e) {
+			log.error("errorCode: {}, message: {}",
+				ErrorType.JSON_PARSING_FAILED.getCode(),
+				ErrorType.JSON_PARSING_FAILED.getMessage());
+			throw new CustomException(ErrorType.JSON_PARSING_FAILED);
+		}
 
 		return ProductCreateResponseDto.builder()
 			.productId(savedProduct.getId())
-			.auctionId(auctionId)
 			.inspectionStatus(savedProduct.getInspectionStatus())
 			.build();
 	}
