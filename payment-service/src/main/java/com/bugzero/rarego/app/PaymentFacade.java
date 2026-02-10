@@ -59,6 +59,13 @@ public class PaymentFacade {
 	}
 
 	/**
+	 * 보증금 단건 환급 (입찰 실패 시 보상 트랜잭션용)
+	 */
+	public void releaseDeposit(Long auctionId, String memberPublicId) {
+		paymentReleaseDepositUseCase.releaseDeposit(auctionId, memberPublicId);
+	}
+
+	/**
 	 * 예치금 결제 요청
 	 */
 	public PaymentRequestResponseDto requestPayment(String memberPublicId, PaymentRequestDto requestDto) {
