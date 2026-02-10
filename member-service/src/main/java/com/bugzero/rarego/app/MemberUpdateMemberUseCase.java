@@ -2,6 +2,7 @@ package com.bugzero.rarego.app;
 
 import java.util.Set;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,7 +11,6 @@ import com.bugzero.rarego.domain.MemberClearField;
 import com.bugzero.rarego.domain.MemberUpdateRequestDto;
 import com.bugzero.rarego.domain.MemberUpdateResponseDto;
 import com.bugzero.rarego.out.MemberRepository;
-import com.bugzero.rarego.global.event.EventPublisher;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.shared.member.domain.MemberDto;
@@ -25,9 +25,9 @@ public class MemberUpdateMemberUseCase {
 
 	private final MemberSupport memberSupport;
 	private final MemberRepository memberRepository;
-	private final EventPublisher eventPublisher;
+	private final ApplicationEventPublisher eventPublisher;
 
-	public MemberUpdateResponseDto updateMe(String publicId, String role, MemberUpdateRequestDto requestDto) {
+	public MemberUpdateResponseDto updateMe(String publicId, MemberUpdateRequestDto requestDto) {
 		Member member = memberSupport.findByPublicId(publicId);
 
 		// clearField와 본문 일치하는지 확인
@@ -40,9 +40,9 @@ public class MemberUpdateMemberUseCase {
 		validateAfterPatch(requestDto, member);
 
 		// 3) 저장 후 이벤트 발생
-		memberRepository.save(member);
-		eventPublisher.publish(new MemberUpdatedEvent(MemberDto.from(member)));
-		return MemberUpdateResponseDto.from(member);
+		Member saved = memberRepository.saveAndFlush(member);
+		eventPublisher.publishEvent(new MemberUpdatedEvent(MemberDto.from(saved)));
+		return MemberUpdateResponseDto.from(saved);
 	}
 
 	// ClearField와 수정본 일치하는지 확인 (null ClearField에 존재하는데 dto에 수정 내용이 들어왔다면 오류처리합니다.)
