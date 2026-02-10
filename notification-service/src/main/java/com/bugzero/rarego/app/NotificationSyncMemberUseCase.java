@@ -1,33 +1,32 @@
-package com.bugzero.rarego.product.app;
+package com.bugzero.rarego.app;
 
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.bugzero.rarego.product.domain.ProductMember;
-import com.bugzero.rarego.product.out.ProductMemberRepository;
+import com.bugzero.rarego.domain.NotificationMember;
+import com.bugzero.rarego.out.NotificationMemberRepository;
 import com.bugzero.rarego.shared.member.domain.MemberDto;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
-@Slf4j
-public class ProductSyncMemberUseCase {
-	private final ProductMemberRepository productMemberRepository;
+public class NotificationSyncMemberUseCase {
+	private final NotificationMemberRepository notificationMemberRepository;
 
-	public ProductMember syncMember(MemberDto member) {
+	public NotificationMember syncMember(MemberDto member) {
 
-		Optional<ProductMember> existedOpt = productMemberRepository.findById(member.id());
+		Optional<NotificationMember> existedOpt = notificationMemberRepository.findById(member.id());
 
 		/**
 		 * 이미 존재하는 객체 업데이트
 		 */
 		if (existedOpt.isPresent()) {
-			ProductMember existed = existedOpt.get();
+			NotificationMember existed = existedOpt.get();
+
 			existed.updateFrom(member);
 			return existed;
 		}
@@ -36,8 +35,8 @@ public class ProductSyncMemberUseCase {
 		 여기부터는 신규 가입일 때만 진행
 		 **/
 
-		ProductMember saved =
-			ProductMember.builder()
+		NotificationMember saved =
+			NotificationMember.builder()
 				.id(member.id())
 				.publicId(member.publicId())
 				.email(member.email())
@@ -52,7 +51,7 @@ public class ProductSyncMemberUseCase {
 				.updatedAt(member.updatedAt())
 				.deleted(member.deleted())
 				.build();
-		productMemberRepository.save(saved);
+		notificationMemberRepository.save(saved);
 		return saved;
 	}
 }

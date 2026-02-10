@@ -27,8 +27,6 @@ repositories {
 
 dependencies {
     implementation(project(":common"))
-    implementation(platform("software.amazon.awssdk:bom:2.41.24"))
-    implementation("software.amazon.awssdk:s3")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-validation")
@@ -47,8 +45,9 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testRuntimeOnly("com.h2database:h2")
+
+    implementation("org.springframework.boot:spring-boot-starter-kafka")
     testImplementation("org.springframework.kafka:spring-kafka-test")
-    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.13.0")

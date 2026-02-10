@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import com.bugzero.rarego.app.MemberSupport;
 import com.bugzero.rarego.app.MemberUpdateIdentityUseCase;
@@ -17,7 +18,6 @@ import com.bugzero.rarego.domain.Member;
 import com.bugzero.rarego.domain.MemberUpdateIdentityRequestDto;
 import com.bugzero.rarego.domain.MemberUpdateResponseDto;
 import com.bugzero.rarego.out.MemberRepository;
-import com.bugzero.rarego.global.event.EventPublisher;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 
@@ -31,7 +31,7 @@ class MemberUpdateIdentityUseCaseTest {
 	private MemberRepository memberRepository;
 
 	@Mock
-	private EventPublisher eventPublisher;
+	private ApplicationEventPublisher eventPublisher;
 
 	@InjectMocks
 	private MemberUpdateIdentityUseCase memberUpdateIdentityUseCase;
@@ -47,6 +47,7 @@ class MemberUpdateIdentityUseCaseTest {
 			"Alice",
 			"010-1234-5678"
 		);
+		given(memberRepository.saveAndFlush(member)).willReturn(member);
 
 		// when
 		MemberUpdateResponseDto response = memberUpdateIdentityUseCase.updateIdentity(
@@ -57,7 +58,7 @@ class MemberUpdateIdentityUseCaseTest {
 		// then
 		assertThat(response.contactPhone()).isEqualTo("01012345678");
 		assertThat(response.realName()).isEqualTo("Alice");
-		verify(memberRepository).save(member);
+		verify(memberRepository).saveAndFlush(member);
 	}
 
 	@Test
@@ -86,7 +87,7 @@ class MemberUpdateIdentityUseCaseTest {
 			.isInstanceOf(CustomException.class)
 			.extracting("errorType")
 			.isEqualTo(ErrorType.MEMBER_IDENTITY_ALREADY_VERIFIED);
-		verify(memberRepository, never()).save(any(Member.class));
+		verify(memberRepository, never()).saveAndFlush(any(Member.class));
 	}
 
 	@Test
@@ -112,7 +113,7 @@ class MemberUpdateIdentityUseCaseTest {
 			.isInstanceOf(CustomException.class)
 			.extracting("errorType")
 			.isEqualTo(ErrorType.MEMBER_IDENTITY_REQUIRED);
-		verify(memberRepository, never()).save(any(Member.class));
+		verify(memberRepository, never()).saveAndFlush(any(Member.class));
 	}
 
 	@Test
@@ -138,7 +139,7 @@ class MemberUpdateIdentityUseCaseTest {
 			.isInstanceOf(CustomException.class)
 			.extracting("errorType")
 			.isEqualTo(ErrorType.MEMBER_INVALID_PHONE_NUMBER);
-		verify(memberRepository, never()).save(any(Member.class));
+		verify(memberRepository, never()).saveAndFlush(any(Member.class));
 	}
 
 	@Test
@@ -164,7 +165,7 @@ class MemberUpdateIdentityUseCaseTest {
 			.isInstanceOf(CustomException.class)
 			.extracting("errorType")
 			.isEqualTo(ErrorType.MEMBER_INVALID_REALNAME);
-		verify(memberRepository, never()).save(any(Member.class));
+		verify(memberRepository, never()).saveAndFlush(any(Member.class));
 	}
 
 	private Member baseMember(String contactPhone, String realName) {

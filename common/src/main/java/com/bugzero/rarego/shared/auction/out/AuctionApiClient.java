@@ -134,6 +134,7 @@ public class AuctionApiClient {
 	public AuctionInfoResponseDto getAuctionInfo(Long productId) {
 		SuccessResponseDto<AuctionInfoResponseDto> response = restClient.get()
 			.uri("/products/{productId}", productId) // Auction Service에 해당 API 필요
+			.header("Authorization", "Bearer " + systemAuthTokenProvider.getSystemAccessToken())
 			.retrieve()
 			.onStatus(HttpStatusCode::isError, (req, res) ->
 				errorHandler.handleWithDefault(req, res, ErrorType.AUCTION_NOT_FOUND))

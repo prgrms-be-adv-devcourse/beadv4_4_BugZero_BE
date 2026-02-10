@@ -121,7 +121,7 @@ class MemberControllerTest {
 			LocalDateTime.of(2024, 1, 1, 0, 0),
 			LocalDateTime.of(2024, 1, 2, 0, 0)
 		);
-		given(memberFacade.updateMe("public-id", "USER", requestDto)).willReturn(responseDto);
+		given(memberFacade.updateMe("public-id", requestDto)).willReturn(responseDto);
 
 		MemberPrincipal principal = new MemberPrincipal("public-id", "USER");
 		Authentication authentication = new UsernamePasswordAuthenticationToken(
@@ -211,7 +211,7 @@ class MemberControllerTest {
 			null,
 			Set.of(MemberClearField.INTRO)
 		);
-		given(memberFacade.updateMe("public-id", "USER", requestDto))
+		given(memberFacade.updateMe("public-id", requestDto))
 			.willThrow(new CustomException(ErrorType.MEMBER_UPDATED_FAILED));
 
 		MemberPrincipal principal = new MemberPrincipal("public-id", "USER");
