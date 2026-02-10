@@ -4,13 +4,9 @@ global:
 
 scrape_configs:
   - job_name: prometheus
+    metrics_path: /prometheus/metrics
     static_configs:
       - targets: ["prometheus:9090"]
-
-  - job_name: rarego-app
-    metrics_path: /actuator/prometheus
-    static_configs:
-      - targets: ["app:8080"]
 
   - job_name: member-service
     metrics_path: /actuator/prometheus

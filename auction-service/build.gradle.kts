@@ -28,7 +28,7 @@ repositories {
 dependencies {
     implementation(project(":common"))
 
-    implementation(platform("software.amazon.awssdk:bom:2.41.19"))
+    implementation(platform("software.amazon.awssdk:bom:2.41.24"))
     implementation("software.amazon.awssdk:s3")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
@@ -36,9 +36,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-batch")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
-    implementation("org.redisson:redisson-spring-boot-starter:4.1.0")
+    implementation("org.redisson:redisson-spring-boot-starter:4.2.0")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-kafka")
+    implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")
     testImplementation("org.springframework.batch:spring-batch-test")
     compileOnly("org.projectlombok:lombok")

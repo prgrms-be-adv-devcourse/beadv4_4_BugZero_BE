@@ -4,10 +4,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.domain.Member;
-import com.bugzero.rarego.global.event.EventPublisher;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
-import com.bugzero.rarego.shared.member.event.MemberBecameSellerEvent;
+import com.bugzero.rarego.shared.auth.out.AuthApiClient;
 
 import lombok.RequiredArgsConstructor;
 
@@ -15,19 +14,19 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MemberPromoteSellerUseCase {
 	private final MemberSupport memberSupport;
-	private final EventPublisher eventPublisher;
+	private final AuthApiClient authApiClient;
 
 	@Transactional
 	public void promoteSeller(String publicId, String role) {
 
-		// 이미 seller나 admin이라면 로직 불필요
-		if (role.equals("SELLER") || role.equals("ADMIN")) {
+		// 이미 seller나 admin, system이라면 로직 불필요
+		if (!role.equals("USER")) {
 			return;
 		}
 
 		Member member = memberSupport.findByPublicId(publicId);
 		validateSellerField(member);
-		eventPublisher.publish(new MemberBecameSellerEvent(publicId));
+		authApiClient.promoteSeller(publicId);
 	}
 
 	private void validateSellerField(Member member) {

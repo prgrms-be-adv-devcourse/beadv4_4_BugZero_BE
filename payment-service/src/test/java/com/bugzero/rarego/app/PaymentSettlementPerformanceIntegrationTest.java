@@ -10,8 +10,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StopWatch;
@@ -28,6 +30,9 @@ import com.bugzero.rarego.out.WalletRepository;
 @SpringBootTest
 @ActiveProfiles("test")
 class PaymentSettlementPerformanceIntegrationTest {
+	@MockitoBean
+	private KafkaTemplate<String, Object> kafkaTemplate;
+
 	@Autowired
 	private PaymentProcessSettlementUseCase optimizedUseCase; // 현재 로직 (Bulk)
 	@Autowired

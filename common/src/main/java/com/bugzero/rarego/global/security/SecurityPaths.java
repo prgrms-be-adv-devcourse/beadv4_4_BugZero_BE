@@ -32,9 +32,7 @@ public final class SecurityPaths {
 		"/api/v1/auth/test/check",
 		"/api/v1/auth/test/admin",
 		"/api/v1/payments/settlement",
-
-		// 임시로 internal 일단 허용한다
-		"/api/v1/internal/**"
+		"/actuator/**"
 	};
 
 	public static final String[] PUBLIC_GET = {

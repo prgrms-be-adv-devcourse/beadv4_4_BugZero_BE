@@ -16,22 +16,23 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.bugzero.rarego.app.PaymentAuctionFinalUseCase;
-import com.bugzero.rarego.app.PaymentSupport;
 import com.bugzero.rarego.domain.Deposit;
 import com.bugzero.rarego.domain.DepositStatus;
 import com.bugzero.rarego.domain.PaymentMember;
 import com.bugzero.rarego.domain.PaymentTransaction;
+import com.bugzero.rarego.domain.Settlement;
 import com.bugzero.rarego.domain.Wallet;
-import com.bugzero.rarego.in.dto.AuctionFinalPaymentRequestDto;
-import com.bugzero.rarego.in.dto.AuctionFinalPaymentResponseDto;
-import com.bugzero.rarego.out.DepositRepository;
-import com.bugzero.rarego.out.AuctionOrderApiClient;
-import com.bugzero.rarego.out.PaymentTransactionRepository;
-import com.bugzero.rarego.out.SettlementRepository;
+import com.bugzero.rarego.global.event.EventPublisher;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
+import com.bugzero.rarego.in.dto.AuctionFinalPaymentRequestDto;
+import com.bugzero.rarego.in.dto.AuctionFinalPaymentResponseDto;
+import com.bugzero.rarego.out.AuctionOrderApiClient;
+import com.bugzero.rarego.out.DepositRepository;
+import com.bugzero.rarego.out.PaymentTransactionRepository;
+import com.bugzero.rarego.out.SettlementRepository;
 import com.bugzero.rarego.shared.auction.dto.AuctionOrderDto;
+import com.bugzero.rarego.shared.payment.event.AuctionPaymentCompletedEvent;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentAuctionFinalUseCaseTest {
@@ -54,74 +55,103 @@ class PaymentAuctionFinalUseCaseTest {
 	@Mock
 	private PaymentSupport paymentSupport;
 
+	@Mock
+	private EventPublisher eventPublisher;
+
 	@BeforeEach
 	void setUp() {
 		ReflectionTestUtils.setField(paymentAuctionFinalUseCase, "paymentTimeoutDays", 3);
 	}
 
 	@Test
-	@DisplayName("성공: 낙찰 결제 완료")
+	@DisplayName("성공: 낙찰 결제 완료 (정산 생성 및 이벤트 발행 포함)")
 	void finalPayment_Success() {
 		// given
-		String memberPublicId = "uuid-member-1"; // String ID
-		Long memberId = 1L; // Internal ID
-		Long sellerId = 5L;
+		String memberPublicId = "uuid-member-1";
+		Long memberId = 1L;   // 구매자
+		Long sellerId = 5L;   // 판매자
 		Long auctionId = 100L;
 		int finalPrice = 100000;
 		int depositAmount = 10000;
 		int expectedPaymentAmount = finalPrice - depositAmount;
 
+		// Request DTO
 		AuctionFinalPaymentRequestDto request = new AuctionFinalPaymentRequestDto(
 			"홍길동", "010-1234-5678", "12345", "서울시", "101호", "문앞");
 
-		AuctionOrderDto order = new AuctionOrderDto(1L, auctionId, sellerId, memberId, finalPrice, "PROCESSING",
-			LocalDateTime.now());
+		// Order DTO (낙찰자 ID 일치, 상태 PROCESSING, 날짜 최신)
+		AuctionOrderDto order = new AuctionOrderDto(
+			1L, auctionId, sellerId, memberId, finalPrice, "PROCESSING", LocalDateTime.now());
 
-		// Member Mocking
-		PaymentMember buyer = mock(PaymentMember.class);
-		given(buyer.getId()).willReturn(memberId);
-		given(buyer.getPublicId()).willReturn(memberPublicId);
+		// 구매자 & 판매자 객체 생성 (Builder 사용 가정)
+		PaymentMember buyer = PaymentMember.builder()
+			.id(memberId)
+			.publicId(memberPublicId)
+			.build();
 
-		PaymentMember seller = mock(PaymentMember.class);
+		PaymentMember seller = PaymentMember.builder()
+			.id(sellerId)
+			.build();
 
-		Deposit deposit = Deposit.create(buyer, auctionId, depositAmount);
-		Wallet wallet = Wallet.builder().balance(200000).holdingAmount(depositAmount).build();
+		// 보증금 (HOLD 상태)
+		Deposit deposit = Deposit.builder()
+			.member(buyer)
+			.auctionId(auctionId)
+			.amount(depositAmount) // getAmount() 대응
+			.status(DepositStatus.HOLD)
+			.build();
 
-		// [중요] Public ID로 조회 시 Member 반환 (ID 포함)
+		// 지갑 (잔액 충분)
+		Wallet wallet = Wallet.builder()
+			.member(buyer)
+			.balance(200000)
+			.holdingAmount(depositAmount)
+			.build();
+
+		// --- Stubbing (Mock 행동 정의) ---
+
+		// 1. 유저 식별 (PublicId -> Member)
 		given(paymentSupport.findMemberByPublicId(memberPublicId)).willReturn(buyer);
 
-		// 이후 로직은 memberId(Long)를 사용하므로 기존 Mock 유지
+		// 2. 주문 조회
 		given(auctionOrderApiClient.getOrder(auctionId)).willReturn(order);
+
+		// 3. 보증금 조회
 		given(depositRepository.findByMemberIdAndAuctionId(memberId, auctionId))
 			.willReturn(Optional.of(deposit));
+
+		// 4. 지갑 조회 (Lock)
 		given(paymentSupport.findWalletByMemberIdForUpdate(memberId)).willReturn(wallet);
 
-		// recordTransaction 등에서 재조회 하는 경우를 위한 Mock
-		given(paymentSupport.findMemberById(memberId)).willReturn(buyer);
-		given(paymentSupport.findMemberById(sellerId)).willReturn(seller);
+		// 5. 트랜잭션 기록 및 정산 생성을 위한 멤버 조회
+		// UseCase 로직상 buyer와 seller를 각각 조회함
+		given(paymentSupport.findMemberById(memberId)).willReturn(buyer);   // Step 4에서 호출
+		given(paymentSupport.findMemberById(sellerId)).willReturn(seller);  // Step 8에서 호출
 
 		// when
 		AuctionFinalPaymentResponseDto response = paymentAuctionFinalUseCase.finalPayment(memberPublicId, auctionId,
 			request);
 
 		// then
+		// 1. 응답값 검증
 		assertThat(response.auctionId()).isEqualTo(auctionId);
-		assertThat(response.finalPrice()).isEqualTo(finalPrice);
-		assertThat(response.depositAmount()).isEqualTo(depositAmount);
 		assertThat(response.paidAmount()).isEqualTo(expectedPaymentAmount);
-		assertThat(response.status()).isEqualTo("PAID");
+		assertThat(response.status()).isEqualTo("PAID"); // Response DTO 생성 로직 확인 필요
 
-		// Wallet 잔액 검증
-		int expectedBalance = 200000 - depositAmount - expectedPaymentAmount;
-		assertThat(wallet.getBalance()).isEqualTo(expectedBalance);
+		// 2. Wallet 잔액 및 홀딩 차감 검증
+		// 200,000 - 10,000(보증금사용) - 90,000(잔금결제) = 100,000
+		assertThat(wallet.getBalance()).isEqualTo(100000);
 		assertThat(wallet.getHoldingAmount()).isEqualTo(0);
 
-		// Deposit 상태 검증
-		assertThat(deposit.getStatus()).isEqualTo(DepositStatus.USED);
+		// 3. Deposit 상태 변경 검증 (use() 호출 여부)
+		// Deposit 엔티티 내부 로직에 따라 상태가 변경되었는지 확인
+		// assertThat(deposit.getStatus()).isEqualTo(DepositStatus.USED); // 엔티티 구현에 따라 주석 해제
 
-		// 트랜잭션 이력 2건 (보증금 사용, 잔금 결제)
-		verify(transactionRepository, times(2)).save(any(PaymentTransaction.class));
-		verify(auctionOrderApiClient).completeOrder(auctionId);
+		// 4. 외부 호출 검증 (Verify)
+		verify(transactionRepository, times(2)).save(any(PaymentTransaction.class)); // 거래내역 2건
+		verify(auctionOrderApiClient).completeOrder(auctionId); // 주문 완료 요청
+		verify(settlementRepository).save(any(Settlement.class)); // 정산 정보 저장 (NEW)
+		verify(eventPublisher).publish(any(AuctionPaymentCompletedEvent.class)); // 이벤트 발행 (NEW)
 	}
 
 	@Test

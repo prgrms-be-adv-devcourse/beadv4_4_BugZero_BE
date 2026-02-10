@@ -27,7 +27,7 @@ repositories {
 
 dependencies {
     implementation(project(":common"))
-    implementation(platform("software.amazon.awssdk:bom:2.41.19"))
+    implementation(platform("software.amazon.awssdk:bom:2.41.24"))
     implementation("software.amazon.awssdk:s3")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")

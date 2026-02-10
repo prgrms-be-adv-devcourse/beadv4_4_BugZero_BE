@@ -10,17 +10,17 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.bugzero.rarego.app.PaymentProcessSettlementUseCase;
-import com.bugzero.rarego.app.PaymentSettlementProcessor;
+import com.bugzero.rarego.domain.PaymentMember;
 import com.bugzero.rarego.domain.Settlement;
 import com.bugzero.rarego.domain.SettlementStatus;
-import com.bugzero.rarego.event.SettlementFinishedEvent;
-import com.bugzero.rarego.out.SettlementRepository;
 import com.bugzero.rarego.global.event.EventPublisher;
+import com.bugzero.rarego.out.SettlementRepository;
+import com.bugzero.rarego.shared.payment.event.SettlementFinishedEvent;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentProcessSettlementUseCaseUnitTest {
@@ -38,11 +38,11 @@ class PaymentProcessSettlementUseCaseUnitTest {
 	private EventPublisher eventPublisher;
 
 	@Test
-	@DisplayName("정상 흐름: 2건 모두 성공 시 - 판매자 처리 2회 후 이벤트 발행 확인")
+	@DisplayName("정상 흐름: 2건 모두 성공 시 - 판매자 처리 2회 후 결과가 담긴 이벤트 발행")
 	void success_all() {
 		// given
-		Settlement s1 = createSettlement(1L);
-		Settlement s2 = createSettlement(2L);
+		Settlement s1 = createMockSettlement(1L);
+		Settlement s2 = createMockSettlement(2L);
 		List<Settlement> list = List.of(s1, s2);
 
 		given(settlementRepository.findSettlementsForBatch(eq(SettlementStatus.READY), any(), anyInt()))
@@ -57,26 +57,28 @@ class PaymentProcessSettlementUseCaseUnitTest {
 		// then
 		assertThat(count).isEqualTo(2);
 
-		// 1. 판매자 정산 처리 호출 검증
 		verify(paymentSettlementProcessor).processSellerDeposit(s1);
 		verify(paymentSettlementProcessor).processSellerDeposit(s2);
 
-		// 2. [변경] 수수료 로직 직접 호출이 아닌, '이벤트 발행' 여부 검증
-		verify(eventPublisher).publish(any(SettlementFinishedEvent.class));
+		// [검증 수정] ArgumentCaptor를 사용하여 이벤트 내부 데이터 검증
+		ArgumentCaptor<SettlementFinishedEvent> eventCaptor = ArgumentCaptor.forClass(SettlementFinishedEvent.class);
+		verify(eventPublisher).publish(eventCaptor.capture());
 
-		// (선택) 프로세서의 수수료 메서드는 UseCase에서 직접 호출되지 않음을 확인
-		verify(paymentSettlementProcessor, never()).processFees(anyInt());
+		SettlementFinishedEvent event = eventCaptor.getValue();
+		assertThat(event.settlements()).hasSize(2); // DTO가 2개 담겼는지 확인
+		assertThat(event.settlements().get(0).id()).isEqualTo(1L);
+		assertThat(event.settlements().get(1).id()).isEqualTo(2L);
 	}
 
 	@Test
-	@DisplayName("동시성 방어: 프로세서가 false를 반환하면 카운트되지 않지만, 이벤트는 발행됨")
+	@DisplayName("동시성 방어: 프로세서가 false를 반환하면 카운트되지 않고 이벤트 리스트에도 포함되지 않음")
 	void skip_if_processor_returns_false() {
 		// given
-		Settlement s1 = createSettlement(1L);
+		Settlement s1 = createMockSettlement(1L); // Mock 생성은 하지만
 		given(settlementRepository.findSettlementsForBatch(any(), any(), anyInt()))
 			.willReturn(List.of(s1));
 
-		// 이미 처리된 건 등으로 인해 false 반환
+		// 프로세서가 실패(false) 반환
 		given(paymentSettlementProcessor.processSellerDeposit(s1)).willReturn(false);
 
 		// when
@@ -85,16 +87,19 @@ class PaymentProcessSettlementUseCaseUnitTest {
 		// then
 		assertThat(count).isEqualTo(0);
 
-		// 처리 건수가 0이어도 마무리 이벤트는 발행되어야 함
-		verify(eventPublisher).publish(any(SettlementFinishedEvent.class));
+		// 이벤트는 발행되지만, 리스트는 비어있어야 함 (성공한 게 없으므로)
+		ArgumentCaptor<SettlementFinishedEvent> eventCaptor = ArgumentCaptor.forClass(SettlementFinishedEvent.class);
+		verify(eventPublisher).publish(eventCaptor.capture());
+
+		assertThat(eventCaptor.getValue().settlements()).isEmpty();
 	}
 
 	@Test
-	@DisplayName("부분 성공: 1건 성공, 1건 실패(예외) 시 - 실패 처리 후 이벤트 발행됨")
+	@DisplayName("부분 성공: 1건 성공, 1건 실패(예외) 시 - 실패 처리 후 성공한 건만 이벤트에 담김")
 	void partial_success() {
 		// given
-		Settlement successItem = createSettlement(1L);
-		Settlement failItem = createSettlement(2L);
+		Settlement successItem = createMockSettlement(1L);
+		Settlement failItem = createMockSettlement(2L); // 실패하는 건도 Mock 기본 설정은 해둠
 
 		given(settlementRepository.findSettlementsForBatch(any(), any(), anyInt()))
 			.willReturn(List.of(successItem, failItem));
@@ -109,15 +114,18 @@ class PaymentProcessSettlementUseCaseUnitTest {
 		// then
 		assertThat(count).isEqualTo(1);
 
-		// 실패 처리 검증
 		verify(failItem).fail();
 
-		// 예외가 발생했더라도 이벤트는 발행되어야 함
-		verify(eventPublisher).publish(any(SettlementFinishedEvent.class));
+		// 이벤트 검증: 성공한 1건만 들어있어야 함
+		ArgumentCaptor<SettlementFinishedEvent> eventCaptor = ArgumentCaptor.forClass(SettlementFinishedEvent.class);
+		verify(eventPublisher).publish(eventCaptor.capture());
+
+		assertThat(eventCaptor.getValue().settlements()).hasSize(1);
+		assertThat(eventCaptor.getValue().settlements().get(0).id()).isEqualTo(1L);
 	}
 
 	@Test
-	@DisplayName("빈 데이터: 데이터가 없어도 수수료 처리(잔여분)를 위해 이벤트는 발행되어야 함")
+	@DisplayName("빈 데이터: 데이터가 없어도 빈 리스트 이벤트가 발행되어야 함")
 	void empty_data_but_publish_event() {
 		// given
 		given(settlementRepository.findSettlementsForBatch(any(), any(), anyInt()))
@@ -129,13 +137,32 @@ class PaymentProcessSettlementUseCaseUnitTest {
 		// then
 		assertThat(count).isEqualTo(0);
 
-		// [중요] 빈 리스트여도 이벤트 발행 호출 확인
-		verify(eventPublisher).publish(any(SettlementFinishedEvent.class));
+		ArgumentCaptor<SettlementFinishedEvent> eventCaptor = ArgumentCaptor.forClass(SettlementFinishedEvent.class);
+		verify(eventPublisher).publish(eventCaptor.capture());
+
+		assertThat(eventCaptor.getValue().settlements()).isEmpty();
 	}
 
-	private Settlement createSettlement(Long id) {
+	// [헬퍼 메서드 수정] DTO 변환 과정에서 호출되는 메서드들을 Stubbing 해야 함
+	private Settlement createMockSettlement(Long id) {
 		Settlement settlement = mock(Settlement.class);
+		PaymentMember seller = mock(PaymentMember.class);
+
+		// 기본 ID 설정
 		lenient().when(settlement.getId()).thenReturn(id);
+
+		// DTO 변환 시 호출되는 연관 관계 및 필드 Stubbing
+		// settlement.getSeller().getId() 호출 대응
+		lenient().when(seller.getId()).thenReturn(id * 10);
+		lenient().when(settlement.getSeller()).thenReturn(seller);
+
+		// 기타 필드들
+		lenient().when(settlement.getAuctionId()).thenReturn(id * 100);
+		lenient().when(settlement.getSalesAmount()).thenReturn(10000);
+		lenient().when(settlement.getFeeAmount()).thenReturn(1000);
+		lenient().when(settlement.getSettlementAmount()).thenReturn(9000);
+		lenient().when(settlement.getStatus()).thenReturn(SettlementStatus.READY); // .name() 호출 대응
+
 		return settlement;
 	}
 }

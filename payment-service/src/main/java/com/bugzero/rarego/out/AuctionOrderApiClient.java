@@ -90,6 +90,37 @@ public class AuctionOrderApiClient {
 			.toEntity(new ParameterizedTypeReference<>() {
 			});
 
+		return getAuctionOrderSlice(entity);
+	}
+
+	public AuctionOrderSlice findExpiringSoonOrders(LocalDateTime targetEndedAt, Pageable pageable) {
+		ResponseEntity<SuccessResponseDto<List<AuctionOrderDto>>> entity = restClient.get()
+			.uri(uriBuilder -> uriBuilder
+				.path("/orders/expiring-soon")
+				.queryParam("targetEndedAt", targetEndedAt)
+				.queryParam("page", pageable.getPageNumber())
+				.queryParam("size", pageable.getPageSize())
+				.build())
+			.retrieve()
+			.onStatus(HttpStatusCode::isError, errorHandler::handle)
+			.toEntity(new ParameterizedTypeReference<>() {
+			});
+
+		return getAuctionOrderSlice(entity);
+	}
+
+	public void markAsNoticed(Long orderId) {
+		restClient.patch()
+			.uri(uriBuilder -> uriBuilder
+				.path("/orders/{orderId}/notice")
+				.build(orderId))
+			.retrieve()
+			.onStatus(HttpStatusCode::isError, errorHandler::handle)
+			.toBodilessEntity();
+	}
+
+	private AuctionOrderApiClient.AuctionOrderSlice getAuctionOrderSlice(
+		ResponseEntity<SuccessResponseDto<List<AuctionOrderDto>>> entity) {
 		SuccessResponseDto<List<AuctionOrderDto>> body = entity.getBody();
 		List<AuctionOrderDto> content = body == null || body.data() == null ? List.of() : body.data();
 		boolean hasNext = Boolean.parseBoolean(entity.getHeaders().getFirst(HAS_NEXT_HEADER));

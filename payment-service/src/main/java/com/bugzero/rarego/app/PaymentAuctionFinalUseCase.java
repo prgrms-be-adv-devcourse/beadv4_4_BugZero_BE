@@ -14,15 +14,17 @@ import com.bugzero.rarego.domain.ReferenceType;
 import com.bugzero.rarego.domain.Settlement;
 import com.bugzero.rarego.domain.Wallet;
 import com.bugzero.rarego.domain.WalletTransactionType;
+import com.bugzero.rarego.global.event.EventPublisher;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.in.dto.AuctionFinalPaymentRequestDto;
 import com.bugzero.rarego.in.dto.AuctionFinalPaymentResponseDto;
+import com.bugzero.rarego.out.AuctionOrderApiClient;
 import com.bugzero.rarego.out.DepositRepository;
 import com.bugzero.rarego.out.PaymentTransactionRepository;
 import com.bugzero.rarego.out.SettlementRepository;
-import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.shared.auction.dto.AuctionOrderDto;
-import com.bugzero.rarego.out.AuctionOrderApiClient;
+import com.bugzero.rarego.shared.payment.event.AuctionPaymentCompletedEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +39,7 @@ public class PaymentAuctionFinalUseCase {
 	private final PaymentTransactionRepository transactionRepository;
 	private final SettlementRepository settlementRepository;
 	private final PaymentSupport paymentSupport;
+	private final EventPublisher eventPublisher;
 
 	@Value("${auction.payment-timeout-days:3}")
 	private int paymentTimeoutDays;
@@ -83,6 +86,14 @@ public class PaymentAuctionFinalUseCase {
 
 		log.info("낙찰 결제 완료: auctionId={}, memberId={}, finalPrice={}, paid={}, settlementId={}",
 			auctionId, memberId, finalPrice, paymentAmount, settlement.getId());
+
+		// 9. 낙찰 결제 완료 이벤트 발행
+		eventPublisher.publish(new AuctionPaymentCompletedEvent(
+			order.orderId(),
+			auctionId,
+			order.sellerId(),
+			memberId,
+			finalPrice));
 
 		return AuctionFinalPaymentResponseDto.of(
 			order.orderId(),

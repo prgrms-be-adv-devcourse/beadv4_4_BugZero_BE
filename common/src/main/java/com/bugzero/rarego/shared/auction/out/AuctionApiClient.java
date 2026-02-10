@@ -14,6 +14,7 @@ import com.bugzero.rarego.global.exception.InternalApiErrorHandler;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.shared.product.dto.AuctionInfoResponseDto;
+import com.bugzero.rarego.global.security.SystemAuthTokenProvider;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionUpdateDto;
 
@@ -21,18 +22,22 @@ import com.bugzero.rarego.shared.product.dto.ProductAuctionUpdateDto;
 public class AuctionApiClient {
 	private final RestClient restClient;
 	private final InternalApiErrorHandler errorHandler;
+	private final SystemAuthTokenProvider systemAuthTokenProvider;
 
 	public AuctionApiClient(@Value("${custom.global.internalBackUrl}") String internalBackUrl,
-		InternalApiErrorHandler errorHandler) {
+		InternalApiErrorHandler errorHandler,
+		SystemAuthTokenProvider systemAuthTokenProvider) {
 		this.errorHandler = errorHandler;
 		this.restClient = RestClient.builder()
 			.baseUrl(internalBackUrl + "/api/v1/internal/auctions")
 			.build();
+		this.systemAuthTokenProvider = systemAuthTokenProvider;
 	}
 
 	public Long createAuction(Long productId, String publicId, ProductAuctionRequestDto productAuctionRequestDto) {
 		SuccessResponseDto<Long> response = restClient.post()
 			.uri("/{productId}/{publicId}", productId, publicId)
+			.header("Authorization", "Bearer " + systemAuthTokenProvider.getSystemAccessToken())
 			.contentType(MediaType.APPLICATION_JSON)
 			.body(productAuctionRequestDto)
 			.retrieve()
@@ -50,6 +55,7 @@ public class AuctionApiClient {
 	public Long updateAuction(String publicId, ProductAuctionUpdateDto productAuctionUpdateDto) {
 		SuccessResponseDto<Long> response = restClient.patch()
 			.uri("/{publicId}", publicId)
+			.header("Authorization", "Bearer " + systemAuthTokenProvider.getSystemAccessToken())
 			.contentType(MediaType.APPLICATION_JSON)
 			.body(productAuctionUpdateDto)
 			.retrieve()
@@ -70,6 +76,7 @@ public class AuctionApiClient {
 	public boolean hasActiveBids(String publicId) {
 		SuccessResponseDto<Boolean> response = restClient.get()
 			.uri("/members/{publicId}/bids/active", publicId)
+			.header("Authorization", "Bearer " + systemAuthTokenProvider.getSystemAccessToken())
 			.retrieve()
 			.onStatus(HttpStatusCode::isError, (httpRequest, httpResponse) -> {
 				throw new CustomException(ErrorType.INTERNAL_SERVER_ERROR);
@@ -87,6 +94,7 @@ public class AuctionApiClient {
 	public boolean hasActiveSales(String publicId) {
 		SuccessResponseDto<Boolean> response = restClient.get()
 			.uri("/members/{publicId}/sales/active", publicId)
+			.header("Authorization", "Bearer " + systemAuthTokenProvider.getSystemAccessToken())
 			.retrieve()
 			.onStatus(HttpStatusCode::isError, (httpRequest, httpResponse) -> {
 				throw new CustomException(ErrorType.INTERNAL_SERVER_ERROR);
@@ -100,6 +108,7 @@ public class AuctionApiClient {
 	public boolean hasProcessingOrders(String publicId) {
 		SuccessResponseDto<Boolean> response = restClient.get()
 			.uri("/members/{publicId}/orders/processing", publicId)
+			.header("Authorization", "Bearer " + systemAuthTokenProvider.getSystemAccessToken())
 			.retrieve()
 			.onStatus(HttpStatusCode::isError, (httpRequest, httpResponse) -> {
 				throw new CustomException(ErrorType.INTERNAL_SERVER_ERROR);
@@ -113,6 +122,7 @@ public class AuctionApiClient {
 	public void deleteAuction(String publicId, Long productId) {
 		restClient.delete()
 			.uri("/{productId}/{publicId}", productId, publicId)
+			.header("Authorization", "Bearer " + systemAuthTokenProvider.getSystemAccessToken())
 			.retrieve()
 			.onStatus(HttpStatusCode::isError,
 				(httpRequest, httpResponse) -> errorHandler.handleWithDefault(httpRequest, httpResponse,

@@ -282,8 +282,17 @@ jobs:
 
             docker login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
             
-            # if/else 문을 제거하고 항상 모든 서비스를 pull 하고 up 시킵니다.
+            # 모든 서비스 이미지 pull
             docker compose --env-file .env.deploy pull
+            
+            # 서비스 시작 (nginx 제외)
             docker compose --env-file .env.deploy up -d
+            
+            # 서비스들이 시작될 시간 대기
+            echo "Waiting for services to start..."
+            sleep 15
+            
+            # nginx 강제 재시작 (새 서비스 컨테이너에 연결)
+            docker compose --env-file .env.deploy restart nginx
             
             docker image prune -f

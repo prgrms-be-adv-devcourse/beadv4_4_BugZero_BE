@@ -1,8 +1,15 @@
 package com.bugzero.rarego.app;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.bugzero.rarego.domain.PaymentMember;
 import com.bugzero.rarego.domain.SettlementStatus;
 import com.bugzero.rarego.domain.WalletTransactionType;
+import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.in.dto.AuctionFinalPaymentRequestDto;
 import com.bugzero.rarego.in.dto.AuctionFinalPaymentResponseDto;
 import com.bugzero.rarego.in.dto.PaymentConfirmRequestDto;
@@ -10,20 +17,15 @@ import com.bugzero.rarego.in.dto.PaymentConfirmResponseDto;
 import com.bugzero.rarego.in.dto.PaymentRequestDto;
 import com.bugzero.rarego.in.dto.PaymentRequestResponseDto;
 import com.bugzero.rarego.in.dto.RefundResponseDto;
-import com.bugzero.rarego.in.dto.SettlementResponseDto;
 import com.bugzero.rarego.in.dto.WalletResponseDto;
 import com.bugzero.rarego.in.dto.WalletTransactionResponseDto;
-import com.bugzero.rarego.global.response.PagedResponseDto;
+import com.bugzero.rarego.shared.auction.dto.AuctionOrderDto;
 import com.bugzero.rarego.shared.member.domain.MemberDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldRequestDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
+import com.bugzero.rarego.shared.payment.dto.SettlementResponseDto;
 
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +42,7 @@ public class PaymentFacade {
 	private final PaymentSyncMemberUseCase paymentSyncMemberUseCase;
 	private final PaymentGetMyWalletUseCase paymentGetMyWalletUseCase;
 	private final PaymentWithdrawUseCase paymentWithdrawUseCase;
+	private final PaymentAuctionExpiringSoonUseCase paymentAuctionExpiringSoonUseCase;
 
 	/**
 	 * 보증금 홀딩
@@ -127,5 +130,12 @@ public class PaymentFacade {
 	 */
 	public WalletResponseDto getMyWallet(String memberPublicId) {
 		return paymentGetMyWalletUseCase.getMyWallet(memberPublicId);
+	}
+
+	/**
+	 * 결제 마감 임박 이벤트 발행
+	 */
+	public void publishExpiringSoonEvent(AuctionOrderDto order, LocalDateTime expiredAt) {
+		paymentAuctionExpiringSoonUseCase.publishExpiringSoonEvent(order, expiredAt);
 	}
 }

@@ -6,7 +6,7 @@ WORKDIR /app
 COPY . .
 
 # 실행 권한을 부여하고 'payment-service' 모듈만 bootJar로 빌드합니다.
-RUN chmod +x ./gradlew
+RUN sed -i 's/\r$//' gradlew && chmod +x ./gradlew
 
 RUN ./gradlew :notification-service:bootJar --no-daemon
 

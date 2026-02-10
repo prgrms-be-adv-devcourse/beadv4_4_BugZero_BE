@@ -22,13 +22,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
-
 @Table(
 	name = "NOTIFICATION_NOTIFICATION",
 	uniqueConstraints = {
 		@UniqueConstraint(
-			name = "uk_notification_dedup", // 제약조건 이름 (DB 에러 로그에서 확인 용이)
-			columnNames = {"reference_id", "type", "member_id"} // ✅ 3개 조합 유니크
+			name = "uk_notification_dedup",
+			columnNames = {"reference_id", "type", "member_id"}
 		)
 	}
 )
@@ -36,9 +35,6 @@ public class Notification extends BaseIdAndTime {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(nullable = false)
 	private NotificationMember member;
-
-	@Column(nullable = false)
-	private String title;
 
 	@Column(nullable = false)
 	private String message;
@@ -53,7 +49,4 @@ public class Notification extends BaseIdAndTime {
 
 	@Column(nullable = false)
 	private Long referenceId;
-
-	private String link;
-
 }

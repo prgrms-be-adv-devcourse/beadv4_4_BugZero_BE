@@ -15,8 +15,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import com.bugzero.rarego.app.PaymentProcessSettlementUseCase;
 import com.bugzero.rarego.domain.PaymentMember;
 import com.bugzero.rarego.domain.Settlement;
 import com.bugzero.rarego.domain.SettlementStatus;
@@ -29,6 +30,9 @@ import com.bugzero.rarego.out.WalletRepository;
 
 @SpringBootTest(properties = "custom.payment.settlement.holdDays=-1")
 class PaymentProcessSettlementUseCaseIntegrationTest {
+	@MockitoBean
+	private KafkaTemplate<String, Object> kafkaTemplate;
+
 	@Autowired
 	private PaymentProcessSettlementUseCase useCase;
 

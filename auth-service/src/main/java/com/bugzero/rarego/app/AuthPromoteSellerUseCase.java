@@ -27,10 +27,9 @@ public class AuthPromoteSellerUseCase {
 		Account account = authSupport.findByPublicId(memberPublicId);
 
 		AuthRole currentRole = account.getRole();
-		if (currentRole == AuthRole.SELLER || currentRole == AuthRole.ADMIN) {
+		if (currentRole != AuthRole.USER) {
 			return;
 		}
-
 		account.changeRole(AuthRole.SELLER);
 	}
 }

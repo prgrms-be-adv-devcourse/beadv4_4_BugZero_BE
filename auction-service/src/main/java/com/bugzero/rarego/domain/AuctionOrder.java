@@ -1,5 +1,7 @@
 package com.bugzero.rarego.domain;
 
+import java.time.LocalDateTime;
+
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.jpa.entity.BaseIdAndTime;
 import com.bugzero.rarego.global.response.ErrorType;
@@ -36,6 +38,8 @@ public class AuctionOrder extends BaseIdAndTime {
 	@Column(nullable = false)
 	private AuctionOrderStatus status;
 
+	private LocalDateTime noticedAt;
+
 	@Builder
 	public AuctionOrder(Long auctionId, Long sellerId, Long bidderId, Integer finalPrice) {
 		this.auctionId = auctionId;
@@ -65,5 +69,9 @@ public class AuctionOrder extends BaseIdAndTime {
 			throw new CustomException(ErrorType.INVALID_ORDER_STATUS);
 		}
 		this.status = AuctionOrderStatus.FAILED;
+	}
+
+	public void markAsNoticed() {
+		this.noticedAt = LocalDateTime.now();
 	}
 }

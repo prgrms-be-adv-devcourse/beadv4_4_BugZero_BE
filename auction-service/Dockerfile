@@ -6,9 +6,7 @@ WORKDIR /app
 COPY . .
 
 # 실행 권한을 부여하고 'auction-service' 모듈만 bootJar로 빌드합니다.
-RUN chmod +x ./gradlew
-
-RUN sed -i 's/\r$//' gradlew
+RUN sed -i 's/\r$//' gradlew && chmod +x ./gradlew
 
 RUN ./gradlew :auction-service:bootJar --no-daemon
 

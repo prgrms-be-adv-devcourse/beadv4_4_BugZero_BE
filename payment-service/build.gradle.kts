@@ -27,7 +27,7 @@ repositories {
 
 dependencies {
     implementation(project(":common"))
-    implementation(platform("software.amazon.awssdk:bom:2.41.19"))
+    implementation(platform("software.amazon.awssdk:bom:2.41.24"))
     implementation("software.amazon.awssdk:s3")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
@@ -35,6 +35,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-batch")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-kafka")
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")
     testImplementation("org.springframework.batch:spring-batch-test")
     compileOnly("org.projectlombok:lombok")
@@ -44,6 +45,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-security-test")
     testImplementation("org.springframework.boot:spring-boot-starter-validation-test")
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+    testImplementation("org.springframework.kafka:spring-kafka-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testRuntimeOnly("com.h2database:h2")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
@@ -59,8 +61,8 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
 
     // ShedLock for distributed scheduler locking
-    implementation("net.javacrumbs.shedlock:shedlock-spring:6.3.0")
-    implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.3.0")
+    implementation("net.javacrumbs.shedlock:shedlock-spring:7.6.0")
+    implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.6.0")
 }
 
 tasks.withType<Test> {

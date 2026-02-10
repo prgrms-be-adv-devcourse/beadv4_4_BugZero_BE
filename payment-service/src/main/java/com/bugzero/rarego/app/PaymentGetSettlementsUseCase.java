@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.domain.Settlement;
 import com.bugzero.rarego.domain.SettlementStatus;
-import com.bugzero.rarego.in.dto.SettlementResponseDto;
+import com.bugzero.rarego.shared.payment.dto.SettlementResponseDto;
 import com.bugzero.rarego.out.SettlementRepository;
 import com.bugzero.rarego.global.response.PagedResponseDto;
 
@@ -38,6 +38,19 @@ public class PaymentGetSettlementsUseCase {
 		Page<Settlement> settlements = settlementRepository.searchSettlements(memberId, status, fromDateTime,
 			toDateTime, pageable);
 
-		return PagedResponseDto.from(settlements, SettlementResponseDto::from);
+		return PagedResponseDto.from(settlements, this::toDto);
+	}
+
+	private SettlementResponseDto toDto(Settlement settlement) {
+		return new SettlementResponseDto(
+			settlement.getId(),
+			settlement.getAuctionId(),
+			settlement.getSeller().getId(),
+			settlement.getSalesAmount(),
+			settlement.getFeeAmount(),
+			settlement.getSettlementAmount(),
+			settlement.getStatus().name(), // Enum -> String 변환
+			settlement.getCreatedAt()
+		);
 	}
 }

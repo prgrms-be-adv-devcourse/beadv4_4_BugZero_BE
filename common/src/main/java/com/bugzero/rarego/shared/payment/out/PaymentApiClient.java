@@ -11,6 +11,7 @@ import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.exception.InternalApiErrorHandler;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
+import com.bugzero.rarego.global.security.SystemAuthTokenProvider;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldRequestDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
 
@@ -18,14 +19,17 @@ import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
 public class PaymentApiClient {
 	private final RestClient restClient;
 	private final InternalApiErrorHandler errorHandler;
+	private final SystemAuthTokenProvider systemAuthTokenProvider;
 
 	public PaymentApiClient(
 		@Value("${custom.global.internalBackUrl}") String internalBackUrl,
-		InternalApiErrorHandler errorHandler) {
+		InternalApiErrorHandler errorHandler,
+		SystemAuthTokenProvider systemAuthTokenProvider) {
 		this.errorHandler = errorHandler;
 		this.restClient = RestClient.builder()
 			.baseUrl(internalBackUrl + "/api/v1/internal/payments")
 			.build();
+		this.systemAuthTokenProvider = systemAuthTokenProvider;
 	}
 
 	public DepositHoldResponseDto holdDeposit(int amount, String memberPublicId, Long auctionId) {
@@ -33,6 +37,7 @@ public class PaymentApiClient {
 		SuccessResponseDto<DepositHoldResponseDto> response = restClient.post()
 			.uri("/deposits/hold")
 			.contentType(MediaType.APPLICATION_JSON)
+			.header("Authorization", "Bearer " + systemAuthTokenProvider.getSystemAccessToken())
 			.body(request)
 			.retrieve()
 			.onStatus(HttpStatusCode::isError, errorHandler::handle)
@@ -51,6 +56,7 @@ public class PaymentApiClient {
 	public boolean hasProcessingOrders(String publicId) {
 		SuccessResponseDto<Boolean> response = restClient.get()
 			.uri("/members/{publicId}/orders/processing", publicId)
+			.header("Authorization", "Bearer " + systemAuthTokenProvider.getSystemAccessToken())
 			.retrieve()
 			.onStatus(HttpStatusCode::isError, (httpRequest, httpResponse) -> {
 				throw new CustomException(ErrorType.INTERNAL_SERVER_ERROR);

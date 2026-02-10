@@ -301,6 +301,12 @@ services:
       - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     restart: always
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.external-url=https://rarego.duckdns.org/prometheus/'
     networks:
       - rarego-network
 
@@ -335,6 +341,12 @@ services:
       - ./docker/letsencrypt:/etc/letsencrypt
       - ./docker/letsencrypt-lib:/var/lib/letsencrypt
     depends_on:
+      - auth-service
+      - member-service
+      - auction-service
+      - payment-service
+      - product-service
+      - notification-service
       - grafana
       - prometheus
     extra_hosts:

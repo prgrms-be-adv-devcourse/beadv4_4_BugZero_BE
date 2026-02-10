@@ -21,6 +21,9 @@ TRUNCATE TABLE member_member;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
+-- auth-service AuthRole(USER/ADMIN/SELLER/SYSTEM)와 스키마 enum 동기화
+ALTER TABLE auth_account MODIFY COLUMN role ENUM('ADMIN','SELLER','USER','SYSTEM') NOT NULL;
+
 
 /* ==================================================================================
    [STEP 1] 회원(Member) 및 계정(Account/Wallet) 통합 생성
@@ -49,7 +52,7 @@ INSERT INTO payment_member SELECT * FROM member_member;
 
 -- 3. 소셜 로그인 계정 생성
 INSERT INTO auth_account (deleted, member_public_id, provider, provider_id, role, created_at, updated_at) VALUES
-                                                                                                              (0, '00000000-0000-0000-0000-000000000001', 'GOOGLE', 'sys_1', 'ADMIN', NOW(), NOW()),
+                                                                                                              (0, '00000000-0000-0000-0000-000000000001', 'GOOGLE', 'sys_1', 'SYSTEM', NOW(), NOW()),
                                                                                                               (0, '00000000-0000-0000-0000-000000000002', 'GOOGLE', 'adm_2', 'ADMIN', NOW(), NOW()),
                                                                                                               (0, '00000000-0000-0000-0000-000000000003', 'KAKAO',  'sel_3', 'SELLER', NOW(), NOW()),
                                                                                                               (0, '00000000-0000-0000-0000-000000000004', 'KAKAO',  'sel_4', 'SELLER', NOW(), NOW()),

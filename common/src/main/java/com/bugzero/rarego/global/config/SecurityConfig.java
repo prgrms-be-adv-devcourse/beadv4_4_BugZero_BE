@@ -50,6 +50,7 @@ public class SecurityConfig {
 				.requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
 				.requestMatchers(SecurityPaths.PUBLIC).permitAll()
 				.requestMatchers(HttpMethod.GET, SecurityPaths.PUBLIC_GET).permitAll()
+				.requestMatchers("/api/v1/internal/**").hasRole("SYSTEM")
 				.anyRequest().authenticated()
 		);
 		http.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));

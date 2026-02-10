@@ -25,7 +25,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		// this.authAccessTokenBlacklistUseCase = authAccessTokenBlacklistUseCase;
 	}
 
-	private static String resolveToken(HttpServletRequest request) {
+	private static String
+	resolveToken(HttpServletRequest request) {
 		String header = request.getHeader("Authorization");
 		if (header == null || !header.startsWith("Bearer "))
 			return null;

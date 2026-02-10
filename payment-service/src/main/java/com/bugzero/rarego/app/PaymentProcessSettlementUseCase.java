@@ -1,6 +1,7 @@
 package com.bugzero.rarego.app;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -9,7 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.domain.Settlement;
 import com.bugzero.rarego.domain.SettlementStatus;
-import com.bugzero.rarego.event.SettlementFinishedEvent;
+import com.bugzero.rarego.shared.payment.event.SettlementFinishedEvent;
+import com.bugzero.rarego.shared.payment.dto.SettlementResponseDto;
 import com.bugzero.rarego.out.SettlementRepository;
 import com.bugzero.rarego.global.event.EventPublisher;
 
@@ -37,16 +39,25 @@ public class PaymentProcessSettlementUseCase {
 
 		if (settlements.isEmpty()) {
 			// 정산할 게 없어도, 혹시 이전에 남겨진 수수료가 있다면 처리
-			eventPublisher.publish(new SettlementFinishedEvent());
+			eventPublisher.publish(SettlementFinishedEvent.of(List.of()));
 			return 0;
 		}
 
-		int successCount = 0;
+		List<SettlementResponseDto> successSettlements = new ArrayList<>();
 
 		for (Settlement settlement : settlements) {
 			try {
 				if (paymentSettlementProcessor.processSellerDeposit(settlement)) {
-					successCount++;
+					successSettlements.add(new SettlementResponseDto(
+						settlement.getId(),
+						settlement.getAuctionId(),
+						settlement.getSeller().getId(),
+						settlement.getSalesAmount(),
+						settlement.getFeeAmount(),
+						settlement.getSettlementAmount(),
+						settlement.getStatus().name(), // Enum -> String 변환
+						settlement.getCreatedAt()
+					));
 				}
 			} catch (Exception e) {
 				boolean isFinalFailure = settlement.fail();
@@ -59,8 +70,8 @@ public class PaymentProcessSettlementUseCase {
 			}
 		}
 
-		eventPublisher.publish(new SettlementFinishedEvent());
+		eventPublisher.publish(SettlementFinishedEvent.of(successSettlements));
 
-		return successCount;
+		return successSettlements.size();
 	}
 }

@@ -2,7 +2,7 @@ package com.bugzero.rarego.in;
 
 import com.bugzero.rarego.app.PaymentFacade;
 import com.bugzero.rarego.app.PaymentSettlementProcessor;
-import com.bugzero.rarego.event.SettlementFinishedEvent;
+import com.bugzero.rarego.shared.payment.event.SettlementFinishedEvent;
 import com.bugzero.rarego.shared.auction.event.AuctionEndedEvent;
 import com.bugzero.rarego.shared.member.event.MemberJoinedEvent;
 import com.bugzero.rarego.shared.member.event.MemberUpdatedEvent;
