@@ -8,9 +8,11 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 public record ProductCreateRequestDto(
 	@NotBlank(message = "상품명은 필수입니다.")
+	@Size(max = 100)
 	String name,
 	@NotNull(message = "카테고리는 필수입니다.")
 	Category category,

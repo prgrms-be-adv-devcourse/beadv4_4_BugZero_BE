@@ -93,7 +93,7 @@ class ProductUpdateProductUseCaseTest {
 
 		// then
 		// 1. 기본 정보 수정 호출 확인
-		verify(spyProduct).updateBasicInfo(eq("수정된 이름"), eq(Category.스타워즈), anyString());
+		verify(spyProduct).updateBasicInfo(eq("수정된 이름"), eq(Category.STARWARS), anyString());
 
 		// 2. 이벤트 발행 검증 (가장 중요한 변경점)
 		ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
@@ -140,7 +140,7 @@ class ProductUpdateProductUseCaseTest {
 	private ProductUpdateDto createUpdateDto(String name, List<ProductImageUpdateDto> images) {
 		return new ProductUpdateDto(
 			name,
-			Category.스타워즈,
+			Category.STARWARS,
 			"설명",
 			new ProductAuctionUpdateDto(1L, 1000, 7),
 			images

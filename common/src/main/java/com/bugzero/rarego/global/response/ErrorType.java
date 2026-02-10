@@ -123,7 +123,7 @@ public enum ErrorType {
 	ALREADY_USED_DEPOSIT(409, 4205, "이미 사용된 보증금입니다."),
 	PAYMENT_DEADLINE_EXCEEDED(400, 4206, "결제 기한이 지났습니다."),
 	SETTLEMENT_ALREADY_COMPLETED(400, 4207, "이미 정산이 완료되어 환불할 수 없습니다."),
-
+	INVALID_DEPOSIT_STATUS(400, 4208, "이미 예치 중이거나 처리된 보증금입니다."),
 	// Notification (5000 ~ 5999)
 	NOTIFICATION_NOT_FOUND(404, 5001, "알림이 존재하지 않습니다."),
 	NOTIFICATION_OWNER_MISMATCH(403, 5002, "알림에 대한 접근 권한이 없습니다."),

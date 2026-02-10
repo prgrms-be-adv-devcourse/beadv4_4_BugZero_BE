@@ -55,7 +55,7 @@ class ProductCreateProductUseCaseTest {
 
 		ProductCreateRequestDto request = new ProductCreateRequestDto(
 			"스타워즈 시리즈",
-			Category.스타워즈,
+			Category.STARWARS,
 			"설명",
 			new ProductAuctionRequestDto(1000, 7),
 			List.of(new ProductImageRequestDto(tempUrl, 0))

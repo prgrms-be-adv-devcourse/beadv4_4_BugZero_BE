@@ -183,7 +183,7 @@ class ProductControllerTest {
 	private ProductCreateRequestDto createProductRequest(String name, int price, int duration) {
 		return new ProductCreateRequestDto(
 			name,
-			Category.스타워즈,
+			Category.STARWARS,
 			"설명",
 			new ProductAuctionRequestDto(price, duration),
 			List.of(new ProductImageRequestDto("https://s3.image.com/test.jpg", 1))
@@ -193,7 +193,7 @@ class ProductControllerTest {
 	private ProductUpdateDto createUpdateBasicInfoDto(String name) {
 		return new ProductUpdateDto(
 			name,
-			Category.스타워즈,
+			Category.STARWARS,
 			"설명",
 			new ProductAuctionUpdateDto(1L, 1000, 7),
 			List.of(new ProductImageUpdateDto(1L, "url", 1))

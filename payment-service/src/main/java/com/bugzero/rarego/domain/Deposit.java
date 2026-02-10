@@ -60,6 +60,14 @@ public class Deposit extends BaseIdAndTime {
 		this.status = DepositStatus.RELEASED;
 	}
 
+	public void reHold(int amount) {
+		if (this.status != DepositStatus.RELEASED) {
+			throw new CustomException(ErrorType.INVALID_DEPOSIT_STATUS);
+		}
+		this.amount = amount;
+		this.status = DepositStatus.HOLD;
+	}
+
 	public void use() {
 		if (this.status != DepositStatus.HOLD) {
 			throw new CustomException(ErrorType.ALREADY_USED_DEPOSIT);
