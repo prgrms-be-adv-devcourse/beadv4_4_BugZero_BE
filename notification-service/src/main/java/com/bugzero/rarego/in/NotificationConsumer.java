@@ -1,10 +1,15 @@
 package com.bugzero.rarego.in;
 
+import static org.springframework.transaction.annotation.Propagation.*;
+
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.app.NotificationFacade;
 import com.bugzero.rarego.shared.auction.event.AuctionEndedEvent;
+import com.bugzero.rarego.shared.member.event.MemberJoinedEvent;
+import com.bugzero.rarego.shared.member.event.MemberUpdatedEvent;
 import com.bugzero.rarego.shared.payment.event.AuctionPaymentCompletedEvent;
 import com.bugzero.rarego.shared.payment.event.AuctionPaymentExpiringSoonEvent;
 import com.bugzero.rarego.shared.payment.event.SettlementFinishedEvent;
@@ -72,4 +77,33 @@ public class NotificationConsumer {
 	// 	log.info(">> [Kafka] 관심 경매 시작 이벤트 수신: auctionId={}", event.auctionId());
 	// 	notificationService.createNotification(event);
 	// }
+
+	/**
+	 * notificationMember 생성 동기화
+	 */
+	@KafkaListener(topics = "member-joined")
+	public void handleMemberJoined(MemberJoinedEvent event) {
+		try {
+			notificationFacade.syncMember(event.memberDto());
+			log.info("[notification] 회원 레플리카 등록 완료 - memberPublicId: {}", event.memberDto().publicId());
+		} catch (Exception e) {
+			log.error("[notification] 회원 레플리카 등록 실패 - memberPublicId: {}", event.memberDto().publicId(), e);
+			throw e;
+		}
+	}
+
+	/**
+	 * notificationMember 수정 동기화
+	 * @param event
+	 */
+	@KafkaListener(topics = "member-updated")
+	public void handleMemberUpdated(MemberUpdatedEvent event) {
+		try {
+			notificationFacade.syncMember(event.memberDto());
+			log.info("[notificaiton] 회원 레플리카 수정 완료 - memberPublicId: {}", event.memberDto().publicId());
+		} catch (Exception e) {
+			log.error("[notification] 회원 레플리카 수정 실패 - memberPublicId: {}", event.memberDto().publicId(), e);
+			throw e;
+		}
+	}
 }

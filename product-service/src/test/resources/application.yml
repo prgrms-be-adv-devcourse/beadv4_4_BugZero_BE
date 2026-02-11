@@ -39,6 +39,22 @@ spring:
     elasticsearch:
       uris: http://localhost:9200
 
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+    consumer:
+      group-id: ${spring.application.name}-group # 모듈 분리를 고려한 ID 설정
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+        spring.json.trusted.packages: "*" # 모듈 분리 전까지 모든 패키지 허용 -> 추후 수정
+    listener:
+      ack-mode: batch
+
 logging:
   level:
     org.hibernate.SQL: debug

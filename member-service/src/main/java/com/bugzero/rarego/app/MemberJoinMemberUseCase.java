@@ -3,6 +3,7 @@ package com.bugzero.rarego.app;
 import java.security.SecureRandom;
 import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +31,7 @@ public class MemberJoinMemberUseCase {
 		"사자", "다람쥐", "부엉이", "거북이", "햄스터", "수달", "늑대", "치타"
 	};
 	private final MemberRepository memberRepository;
-	private final EventPublisher eventPublisher;
+	private final ApplicationEventPublisher eventPublisher;
 
 	// 랜덤으로 닉네임 제공
 	public static String randomUserNickname() {
@@ -76,7 +77,8 @@ public class MemberJoinMemberUseCase {
 				.build();
 			Member saved = memberRepository.save(member);
 			MemberJoinResponseDto responseDto = new MemberJoinResponseDto(saved.getNickname(), saved.getPublicId());
-			eventPublisher.publish(new MemberJoinedEvent(MemberDto.from(saved)));
+			MemberJoinedEvent event = new MemberJoinedEvent(MemberDto.from(saved));
+			eventPublisher.publishEvent(event);
 			return responseDto;
 		} catch (DataIntegrityViolationException e) {
 			Member existing = memberRepository.findByEmail(email).orElseThrow(() -> e);

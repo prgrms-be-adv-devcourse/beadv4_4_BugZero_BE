@@ -1,12 +1,8 @@
 package com.bugzero.rarego.product.app;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,8 +20,6 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.ai.embedding.EmbeddingModel;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-
 import com.bugzero.rarego.product.domain.Product;
 import com.bugzero.rarego.product.domain.ProductImage;
 import com.bugzero.rarego.product.domain.ProductMember;
@@ -34,6 +28,8 @@ import com.bugzero.rarego.product.out.ProductSearchRepository;
 import com.bugzero.rarego.shared.auction.type.AuctionStatus;
 import com.bugzero.rarego.shared.product.type.Category;
 import com.bugzero.rarego.shared.product.type.ProductCondition;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -70,7 +66,7 @@ class ProductSearchServiceTest {
 		int startPrice = 1000000;
 		LocalDateTime startedAt = LocalDateTime.now().minusHours(1);
 
-		Product mockProduct = createMockProduct(productId, productName, "설명", Category.스타워즈);
+		Product mockProduct = createMockProduct(productId, productName, "설명", Category.STARWARS);
 		ProductImage mockImage = createMockImage("http://image.url", 0);
 
 		// when
@@ -94,7 +90,7 @@ class ProductSearchServiceTest {
 	@DisplayName("여러 이미지 중 sortOrder가 가장 낮은 이미지가 대표 이미지로 저장된다")
 	void save_shouldSelectFirstImageBySortOrder() {
 		// given
-		Product mockProduct = createMockProduct(2L, "테스트 상품", "설명", Category.스타워즈);
+		Product mockProduct = createMockProduct(2L, "테스트 상품", "설명", Category.STARWARS);
 		ProductImage image1 = createMockImage("http://second.jpg", 1);
 		ProductImage image2 = createMockImage("http://first.jpg", 0);
 		ProductImage image3 = createMockImage("http://third.jpg", 2);

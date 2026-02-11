@@ -1,5 +1,20 @@
 package com.bugzero.rarego.product.app;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
+import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
 import com.bugzero.rarego.product.domain.Product;
 import com.bugzero.rarego.product.domain.ProductImage;
 import com.bugzero.rarego.product.domain.document.ProductSearchDocument;
@@ -13,20 +28,6 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.embedding.EmbeddingModel;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
-
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -51,14 +52,14 @@ public class ProductSearchService {
 
 		// 임베딩 생성
 		String textToEmbed = String.format(
-			"카테고리: %s, 상품명: %s, 상품상태: %s, 상세내용: %s",
-			product.getCategory(),
+			ProductSearchDocument.EMBEDDING_TEMPLATE,
 			product.getName(),
-			product.getProductCondition(),
-			product.getDescription()
+			product.getDescription(),
+			product.getCategory(),
+			product.getProductCondition()
 		);
 
-		float[] vector = embeddingModel.embed(textToEmbed);
+		List<Float> vector = generateEmbeddingToFloat(textToEmbed);
 
 		String imageUrl = images.stream()
 			.sorted(Comparator.comparingInt(ProductImage::getSortOrder))
@@ -197,7 +198,7 @@ public class ProductSearchService {
 						.k(10)
 						.numCandidates(100)
 						.filter(f -> f.bool(b -> b.filter(filters)))
-						.boost(0.3f) // 벡터 점수 비중
+						.boost(1.5f) // 벡터 점수 비중
 					);
 				} else {
 					// 키워드 없을 땐 필터만 적용
@@ -237,11 +238,10 @@ public class ProductSearchService {
 
 	// 문자열 포맷으로 변환
 	private String buildSearchPrompt(String keyword, Category category) {
-		StringBuilder prompt = new StringBuilder();
-		if (category != null) {
-			prompt.append("카테고리: ").append(category.name()).append(", ");
-		}
-		prompt.append("상품명 또는 상세내용: ").append(keyword);
-		return prompt.toString();
+		return String.format(ProductSearchDocument.EMBEDDING_TEMPLATE,
+			keyword, keyword,
+			(category != null ? category.name() : ""),
+			""
+		);
 	}
 }

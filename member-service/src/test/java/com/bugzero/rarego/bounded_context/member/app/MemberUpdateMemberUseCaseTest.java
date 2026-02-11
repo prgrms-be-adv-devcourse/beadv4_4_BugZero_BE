@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import com.bugzero.rarego.app.MemberSupport;
 import com.bugzero.rarego.app.MemberUpdateMemberUseCase;
@@ -20,7 +21,6 @@ import com.bugzero.rarego.domain.MemberClearField;
 import com.bugzero.rarego.domain.MemberUpdateRequestDto;
 import com.bugzero.rarego.domain.MemberUpdateResponseDto;
 import com.bugzero.rarego.out.MemberRepository;
-import com.bugzero.rarego.global.event.EventPublisher;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 
@@ -34,7 +34,7 @@ class MemberUpdateMemberUseCaseTest {
 	private MemberRepository memberRepository;
 
 	@Mock
-	private EventPublisher eventPublisher;
+	private ApplicationEventPublisher eventPublisher;
 
 	@InjectMocks
 	private MemberUpdateMemberUseCase memberUpdateMemberUseCase;
@@ -53,9 +53,10 @@ class MemberUpdateMemberUseCaseTest {
 			null
 		);
 		given(memberSupport.findByPublicId("public-id")).willReturn(member);
+		given(memberRepository.saveAndFlush(member)).willReturn(member);
 
 		// when
-		MemberUpdateResponseDto response = memberUpdateMemberUseCase.updateMe("public-id", "USER", requestDto);
+		MemberUpdateResponseDto response = memberUpdateMemberUseCase.updateMe("public-id", requestDto);
 
 		// then
 		assertThat(response.nickname()).isEqualTo("newNick");
@@ -63,7 +64,7 @@ class MemberUpdateMemberUseCaseTest {
 		assertThat(response.zipCode()).isEqualTo("12345");
 		assertThat(response.address()).isEqualTo("new address");
 		assertThat(response.addressDetail()).isEqualTo("detail");
-		verify(memberRepository).save(member);
+		verify(memberRepository).saveAndFlush(member);
 	}
 
 	@Test
@@ -84,7 +85,7 @@ class MemberUpdateMemberUseCaseTest {
 
 		// when
 		Throwable thrown = catchThrowable(
-			() -> memberUpdateMemberUseCase.updateMe("public-id", "USER", requestDto)
+			() -> memberUpdateMemberUseCase.updateMe("public-id", requestDto)
 		);
 
 		// then
@@ -92,7 +93,7 @@ class MemberUpdateMemberUseCaseTest {
 			.isInstanceOf(CustomException.class)
 			.extracting("errorType")
 			.isEqualTo(ErrorType.MEMBER_NICKNAME_ALREADY_EXISTS);
-		verify(memberRepository, never()).save(any(Member.class));
+		verify(memberRepository, never()).saveAndFlush(any(Member.class));
 	}
 
 	@Test
@@ -109,13 +110,14 @@ class MemberUpdateMemberUseCaseTest {
 			Set.of(MemberClearField.INTRO)
 		);
 		given(memberSupport.findByPublicId("public-id")).willReturn(member);
+		given(memberRepository.saveAndFlush(member)).willReturn(member);
 
 		// when
-		MemberUpdateResponseDto response = memberUpdateMemberUseCase.updateMe("public-id", "USER", requestDto);
+		MemberUpdateResponseDto response = memberUpdateMemberUseCase.updateMe("public-id", requestDto);
 
 		// then
 		assertThat(response.intro()).isNull();
-		verify(memberRepository).save(member);
+		verify(memberRepository).saveAndFlush(member);
 	}
 
 	@Test
@@ -138,7 +140,7 @@ class MemberUpdateMemberUseCaseTest {
 
 		// when
 		Throwable thrown = catchThrowable(
-			() -> memberUpdateMemberUseCase.updateMe("public-id", "USER", requestDto)
+			() -> memberUpdateMemberUseCase.updateMe("public-id", requestDto)
 		);
 
 		// then
@@ -146,7 +148,7 @@ class MemberUpdateMemberUseCaseTest {
 			.isInstanceOf(CustomException.class)
 			.extracting("errorType")
 			.isEqualTo(ErrorType.MEMBER_UPDATED_FAILED);
-		verify(memberRepository, never()).save(any(Member.class));
+		verify(memberRepository, never()).saveAndFlush(any(Member.class));
 	}
 
 	private Member baseMember() {

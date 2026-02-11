@@ -5,6 +5,10 @@ services:
     # 로컬에서는 443(SSL)이 없으므로 80 포트로만 접근
     ports:
       - "80:80"
+    # IntelliJ에서 수동으로 실행하므로 도커 의존성 제거 (포트 충돌 방지)
+    depends_on: []
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   # 로컬 개발 시에는 certbot이 필요 없음
   certbot:

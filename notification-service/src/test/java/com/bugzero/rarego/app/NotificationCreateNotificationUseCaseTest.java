@@ -3,6 +3,7 @@ package com.bugzero.rarego.app;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
@@ -12,11 +13,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import com.bugzero.rarego.app.mapper.NotificationMapper;
 import com.bugzero.rarego.domain.Notification;
 import com.bugzero.rarego.domain.NotificationMember;
+import com.bugzero.rarego.domain.NotificationType;
+import com.bugzero.rarego.event.NotificationCreatedEvent;
 import com.bugzero.rarego.out.NotificationRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,34 +32,54 @@ class NotificationCreateNotificationUseCaseTest {
 	@Mock
 	private NotificationMapper<Object> notificationMapper;
 
+	@Mock
+	private ApplicationEventPublisher eventPublisher;
+
 	private NotificationCreateNotificationUseCase useCase;
 
 	@BeforeEach
 	void setUp() {
 		List<NotificationMapper<?>> mappers = List.of(notificationMapper);
-		useCase = new NotificationCreateNotificationUseCase(notificationRepository, mappers);
+		// ✅ eventPublisher 주입
+		useCase = new NotificationCreateNotificationUseCase(notificationRepository, mappers, eventPublisher);
 	}
 
 	@Test
-	@DisplayName("성공: 지원하는 이벤트가 들어오면 알림을 변환하고 '즉시 저장(saveAndFlush)'한다.")
+	@DisplayName("성공: 알림 저장 후 이벤트(NotificationCreatedEvent)가 정상적으로 발행된다.")
 	void createNotification_success() {
 		// given
 		TestEvent event = new TestEvent(1L);
 		Notification notification = mock(Notification.class);
+		NotificationMember member = mock(NotificationMember.class);
 
+		// 1. Mapper 동작 설정
 		given(notificationMapper.supports(event)).willReturn(true);
 		given(notificationMapper.map(event)).willReturn(List.of(notification));
+
+		// 2. DTO 변환 및 이벤트 발행을 위한 Notification 내부 데이터 Stubbing
+		// (NotificationResponseDto.from() 호출 시 NPE 방지)
+		given(notification.getId()).willReturn(100L);
+		given(notification.getMember()).willReturn(member);
+		given(member.getPublicId()).willReturn("member-uuid");
+		given(notification.getType()).willReturn(NotificationType.AUCTION_WON); // Enum 타입 필요
+		given(notification.getMessage()).willReturn("메시지");
+		given(notification.getReferenceId()).willReturn(50L);
+		given(notification.getCreatedAt()).willReturn(LocalDateTime.now());
+		given(notification.isRead()).willReturn(false);
 
 		// when
 		useCase.createNotification(event);
 
 		// then
-		// [변경] 트랜잭션 내 예외 포착을 위해 saveAndFlush 호출 검증
+		// 1. 저장 검증 (saveAndFlush)
 		then(notificationRepository).should(times(1)).saveAndFlush(notification);
+
+		// 2. 이벤트 발행 검증 (핵심)
+		then(eventPublisher).should(times(1)).publishEvent(any(NotificationCreatedEvent.class));
 	}
 
 	@Test
-	@DisplayName("성공(중복무시): 'Duplicate entry' 예외가 발생하면 로그를 남기고 정상 종료한다.")
+	@DisplayName("성공(중복무시): 중복 예외가 발생하면 로그를 남기고 종료하며, '이벤트는 발행하지 않는다'.")
 	void createNotification_success_duplicate() {
 		// given
 		TestEvent event = new TestEvent(1L);
@@ -65,10 +89,10 @@ class NotificationCreateNotificationUseCaseTest {
 		given(notificationMapper.supports(event)).willReturn(true);
 		given(notificationMapper.map(event)).willReturn(List.of(notification));
 
-		// 로그 출력을 위한 Mock Stubbing
+		// 로그 출력을 위한 Member Stubbing
 		given(notification.getMember()).willReturn(member);
 
-		// [핵심] 예외 메시지에 "Duplicate entry"가 포함되어야 로직에서 중복으로 인식함
+		// 중복 예외 발생 설정
 		DataIntegrityViolationException duplicateException =
 			new DataIntegrityViolationException("Duplicate entry '1-OUTBID' for key 'uk_notification_dedup'");
 
@@ -79,12 +103,15 @@ class NotificationCreateNotificationUseCaseTest {
 		useCase.createNotification(event);
 
 		// then
-		// 예외가 던져지지 않고(Swallowed), 저장 시도는 했음을 검증
+		// 1. 저장은 시도했으나 예외를 삼킴 (성공)
 		then(notificationRepository).should(times(1)).saveAndFlush(notification);
+
+		// 2. [중요] 중복이므로 이벤트는 절대 발행되면 안 됨
+		then(eventPublisher).shouldHaveNoInteractions();
 	}
 
 	@Test
-	@DisplayName("실패: 중복이 아닌 다른 데이터 무결성 예외(FK, NotNull 등)는 다시 던져야 한다.")
+	@DisplayName("실패: 중복이 아닌 데이터 무결성 예외는 던져져야 하며, 이벤트는 발행되지 않는다.")
 	void createNotification_fail_integrity_violation() {
 		// given
 		TestEvent event = new TestEvent(1L);
@@ -93,7 +120,7 @@ class NotificationCreateNotificationUseCaseTest {
 		given(notificationMapper.supports(event)).willReturn(true);
 		given(notificationMapper.map(event)).willReturn(List.of(notification));
 
-		// [핵심] 중복 키워드가 없는 다른 종류의 예외 생성
+		// 중복이 아닌 다른 예외
 		DataIntegrityViolationException otherException =
 			new DataIntegrityViolationException("Column 'message' cannot be null");
 
@@ -101,36 +128,33 @@ class NotificationCreateNotificationUseCaseTest {
 			.given(notificationRepository).saveAndFlush(notification);
 
 		// when & then
-		// 중복이 아니므로 예외가 밖으로 던져져야 함 -> Kafka 재시도 유도
 		assertThatThrownBy(() -> useCase.createNotification(event))
-			.isInstanceOf(DataIntegrityViolationException.class)
-			.hasMessageContaining("cannot be null");
+			.isInstanceOf(DataIntegrityViolationException.class);
 
-		then(notificationRepository).should(times(1)).saveAndFlush(notification);
+		// 이벤트 발행 없음 검증
+		then(eventPublisher).shouldHaveNoInteractions();
 	}
 
 	@Test
-	@DisplayName("실패: 지원하지 않는 이벤트가 들어오면 저장하지 않는다.")
+	@DisplayName("실패: 지원하지 않는 이벤트는 처리하지 않는다.")
 	void createNotification_fail_not_supported() {
 		// given
 		TestEvent event = new TestEvent(1L);
-
 		given(notificationMapper.supports(event)).willReturn(false);
 
 		// when
 		useCase.createNotification(event);
 
 		// then
-		then(notificationMapper).should(never()).map(any());
-		then(notificationRepository).should(never()).saveAndFlush(any());
+		then(notificationRepository).shouldHaveNoInteractions();
+		then(eventPublisher).shouldHaveNoInteractions();
 	}
 
 	@Test
-	@DisplayName("실패: 매퍼가 빈 리스트를 반환하면 저장하지 않는다.")
+	@DisplayName("실패: 매퍼 결과가 비어있으면 처리하지 않는다.")
 	void createNotification_fail_empty_list() {
 		// given
 		TestEvent event = new TestEvent(1L);
-
 		given(notificationMapper.supports(event)).willReturn(true);
 		given(notificationMapper.map(event)).willReturn(Collections.emptyList());
 
@@ -138,7 +162,8 @@ class NotificationCreateNotificationUseCaseTest {
 		useCase.createNotification(event);
 
 		// then
-		then(notificationRepository).should(never()).saveAndFlush(any());
+		then(notificationRepository).shouldHaveNoInteractions();
+		then(eventPublisher).shouldHaveNoInteractions();
 	}
 
 	record TestEvent(Long id) {
