@@ -9,7 +9,7 @@ import com.bugzero.rarego.global.event.EventPublisher;
 import com.bugzero.rarego.product.domain.Product;
 import com.bugzero.rarego.product.domain.ProductMember;
 import com.bugzero.rarego.product.domain.dto.ProductUpdateResponseDto;
-import com.bugzero.rarego.shared.auction.out.AuctionApiClient;
+import com.bugzero.rarego.shared.auction.type.AuctionProductEventType;
 import com.bugzero.rarego.shared.product.dto.ProductImageUpdateDto;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateDto;
 import com.bugzero.rarego.shared.product.event.S3ImageConfirmEvent;
@@ -21,11 +21,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProductUpdateProductUseCase {
 	private final ProductSupport productSupport;
-	private final AuctionApiClient auctionApiClient;
+	private final ProductOutboxSupport productOutboxSupport;
 	private final EventPublisher eventPublisher;
 
 	@Transactional
-	public ProductUpdateResponseDto updateProduct(String  publicId, Long productId, ProductUpdateDto productUpdateDto) {
+	public ProductUpdateResponseDto updateProduct(String  publicId, Long productId, ProductUpdateDto dto) {
 		//유효한 멤버인지 확인
 		ProductMember seller = productSupport.verifyValidateMember(publicId);
 		//유효한 상품인지 확인
@@ -34,13 +34,13 @@ public class ProductUpdateProductUseCase {
 		productSupport.isAbleToChange(seller, product);
 		//상품 이미지 순서 보장 정렬
 		List<ProductImageUpdateDto> images = productSupport.normalizeUpdateImageOrder(
-			productUpdateDto.productImageUpdateDtos()
+			dto.productImageUpdateDtos()
 		);
 		//상품 기본 정보 수정
 		product.updateBasicInfo(
-			productUpdateDto.name(),
-			productUpdateDto.category(),
-			productUpdateDto.description()
+			dto.name(),
+			dto.category(),
+			dto.description()
 		);
 		//수정 중 삭제되는 이미지가 있다면 반환
 		List<String> pathToDelete = product.removeOldImages(images);
@@ -51,11 +51,12 @@ public class ProductUpdateProductUseCase {
 		//S3등록 이벤트 발행
 		eventPublisher.publish(new S3ImageConfirmEvent(pathToUpdate));
 
-		Long auctionId = auctionApiClient.updateAuction(publicId, productUpdateDto.productAuctionUpdateDto());
+		//아웃박스에 저장
+		productOutboxSupport.saveOutbox(productId, publicId,
+			AuctionProductEventType.UPDATE, dto.productAuctionUpdateDto());
 
 		return ProductUpdateResponseDto.builder()
 			.productId(productId)
-			.auctionId(auctionId)
 			.build();
 	}
 }
