@@ -58,16 +58,4 @@ public class AuctionEventListener {
             log.error("경매 {} 수정 이벤트 처리 실패", event.auctionId(), e);
         }
     }
-
-    @TransactionalEventListener(phase = AFTER_COMMIT)
-    @Transactional(propagation = REQUIRES_NEW)
-    public void onMemberCreated(MemberJoinedEvent event) {
-        auctionFacade.syncMember(event.memberDto());
-    }
-
-    @TransactionalEventListener(phase = AFTER_COMMIT)
-    @Transactional(propagation = REQUIRES_NEW)
-    public void onMemberUpdated(MemberUpdatedEvent event) {
-        auctionFacade.syncMember(event.memberDto());
-    }
 }

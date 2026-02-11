@@ -10,12 +10,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import com.bugzero.rarego.app.MemberSupport;
 import com.bugzero.rarego.app.MemberWithdrawMemberUseCase;
 import com.bugzero.rarego.domain.Member;
 import com.bugzero.rarego.out.MemberRepository;
-import com.bugzero.rarego.global.event.EventPublisher;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.shared.member.event.MemberUpdatedEvent;
@@ -29,7 +29,7 @@ class MemberWithdrawMemberUseCaseTest {
 	private MemberRepository memberRepository;
 
 	@Mock
-	private EventPublisher eventPublisher;
+	private ApplicationEventPublisher eventPublisher;
 
 	@InjectMocks
 	private MemberWithdrawMemberUseCase memberWithdrawMemberUseCase;
@@ -78,15 +78,16 @@ class MemberWithdrawMemberUseCaseTest {
 			.build();
 
 		when(memberSupport.findByPublicId("public-id")).thenReturn(member);
+		when(memberRepository.saveAndFlush(member)).thenReturn(member);
 
 		String result = memberWithdrawMemberUseCase.withdraw("public-id");
 
 		assertThat(result).isEqualTo("public-id");
 		assertThat(member.isDeleted()).isTrue();
-		verify(memberRepository).save(member);
+		verify(memberRepository).saveAndFlush(member);
 
 		ArgumentCaptor<MemberUpdatedEvent> captor = ArgumentCaptor.forClass(MemberUpdatedEvent.class);
-		verify(eventPublisher).publish(captor.capture());
+		verify(eventPublisher).publishEvent(captor.capture());
 		assertThat(captor.getValue().memberDto().publicId()).isEqualTo("public-id");
 	}
 }

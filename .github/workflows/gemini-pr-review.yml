@@ -1,4 +1,4 @@
-name: Codex PR Review
+name: Gemini PR Review
 
 on:
   pull_request:
@@ -11,18 +11,18 @@ permissions:
 
 # 같은 PR에서 커밋이 연속으로 올라오면 이전 리뷰 실행은 취소하고 최신만 남김
 concurrency:
-  group: codex-review-${{ github.event.pull_request.number }}
+  group: gemini-review-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
-  codex_review:
+  gemini_review:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
 
     env:
       MAX_CHANGED_FILES: "40"
       MAX_CHANGED_LINES: "1200"
-      CODEX_COMMENT_MARKER: "<!-- CODEX_REVIEW_COMMENT -->"
+      GEMINI_COMMENT_MARKER: "<!-- GEMINI_REVIEW_COMMENT -->"
 
     steps:
       - name: Checkout PR merge commit
@@ -69,9 +69,9 @@ jobs:
       - name: Prepare skip comment body (docs-only)
         if: steps.size.outputs.docs_only == 'true'
         run: |
-          cat > codex-comment.md <<'EOF'
-          ## 🤖 Codex Review (skipped)
-          <!-- CODEX_REVIEW_COMMENT -->
+          cat > gemini-comment.md <<'EOF'
+          ## 🤖 Gemini Review (skipped)
+          <!-- GEMINI_REVIEW_COMMENT -->
 
           Docs-only PR이라 리뷰를 생략했어요.
           EOF
@@ -81,39 +81,58 @@ jobs:
         run: |
           FILES="${{ steps.size.outputs.changed_files }}"
           LINES="${{ steps.size.outputs.changed_lines }}"
-          cat > codex-comment.md <<EOF
-          ## 🤖 Codex Review (skipped)
-          <!-- CODEX_REVIEW_COMMENT -->
+          cat > gemini-comment.md <<EOF
+          ## 🤖 Gemini Review (skipped)
+          <!-- GEMINI_REVIEW_COMMENT -->
 
           변경량이 커서 자동 리뷰를 생략했어요.
           - changed files: ${FILES}
           - changed lines: ${LINES}
 
-          (필요하면 PR 코멘트로 \`@codex review\`를 달아 수동으로 요청하거나, PR을 쪼개는 걸 추천해요.)
+          (PR을 쪼개거나 수동 리뷰를 진행해 주세요.)
           EOF
 
-      # Codex 실행: docs-only 아니고 too-large도 아닐 때만
-      - name: Run Codex review (write output)
+      # Gemini 실행: docs-only 아니고 too-large도 아닐 때만
+      - name: Run Gemini review (API Call)
         if: steps.size.outputs.docs_only != 'true' && steps.size.outputs.too_large != 'true'
-        id: codex
-        uses: openai/codex-action@v1
-        with:
-          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
-          prompt-file: .github/codex/prompts/review.md
-          output-file: codex-review.md
+        id: gemini
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          BASE="origin/${{ github.event.pull_request.base.ref }}"
+          DIFF=$(git diff "$BASE...HEAD")
+          PROMPT=$(cat .github/gemini/prompts/review.md)
+          
+          # JSON payload 생성 (diff 포함)
+          PAYLOAD=$(jq -n --arg system "$PROMPT" --arg code "$DIFF" \
+            '{contents: [{parts: [{text: ($system + "\n\nCode Diff:\n" + $code)}]}]}')
+          
+          # API 호출 (Gemini 2.5 Flash 사용)
+          curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" > gemini-response.json
+          
+          # 결과 추출 및 저장
+          if jq -e '.candidates[0].content.parts[0].text' gemini-response.json > /dev/null; then
+            jq -r '.candidates[0].content.parts[0].text' gemini-response.json > gemini-review.md
+          else
+            echo "Gemini API Error or Empty Response"
+            echo "Response: $(cat gemini-response.json)"
+            echo "리뷰를 생성하는 중에 문제가 발생했습니다." > gemini-review.md
+          fi
 
       - name: Prepare review comment body
         if: steps.size.outputs.docs_only != 'true' && steps.size.outputs.too_large != 'true'
         run: |
-          cat > codex-comment.md <<'EOF'
-          ## 🤖 Codex Review
-          <!-- CODEX_REVIEW_COMMENT -->
+          cat > gemini-comment.md <<'EOF'
+          ## 🤖 Gemini Review
+          <!-- GEMINI_REVIEW_COMMENT -->
           EOF
-          echo "" >> codex-comment.md
-          cat codex-review.md >> codex-comment.md
+          echo "" >> gemini-comment.md
+          cat gemini-review.md >> gemini-comment.md
 
       # 댓글은 "생성"이 아니라 "업데이트 우선"
-      - name: Upsert Codex comment on PR (update if exists)
+      - name: Upsert Gemini comment on PR (update if exists)
         if: always() && (steps.size.outputs.docs_only == 'true' || steps.size.outputs.too_large == 'true' || (steps.size.outputs.docs_only != 'true' && steps.size.outputs.too_large != 'true'))
         uses: actions/github-script@v7
         with:
@@ -124,11 +143,9 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const issue_number = context.payload.pull_request.number;
+            const marker = process.env.GEMINI_COMMENT_MARKER;
+            const body = fs.readFileSync('gemini-comment.md', 'utf8');
 
-            const marker = process.env.CODEX_COMMENT_MARKER;
-            const body = fs.readFileSync('codex-comment.md', 'utf8');
-
-            // PR 댓글 목록에서 marker 포함된 기존 Codex 댓글 찾기
             const comments = await github.paginate(github.rest.issues.listComments, {
               owner, repo, issue_number, per_page: 100,
             });
@@ -148,4 +165,4 @@ jobs:
               });
             }
         env:
-          CODEX_COMMENT_MARKER: ${{ env.CODEX_COMMENT_MARKER }}
+          GEMINI_COMMENT_MARKER: ${{ env.GEMINI_COMMENT_MARKER }}

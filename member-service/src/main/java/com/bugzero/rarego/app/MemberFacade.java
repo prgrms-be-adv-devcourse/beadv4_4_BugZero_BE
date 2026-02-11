@@ -33,8 +33,8 @@ public class MemberFacade {
 	}
 
 	@Transactional
-	public MemberUpdateResponseDto updateMe(String publicId, String role, MemberUpdateRequestDto requestDto) {
-		return memberUpdateMemberUseCase.updateMe(publicId, role, requestDto);
+	public MemberUpdateResponseDto updateMe(String publicId, MemberUpdateRequestDto requestDto) {
+		return memberUpdateMemberUseCase.updateMe(publicId, requestDto);
 	}
 
 	@Transactional

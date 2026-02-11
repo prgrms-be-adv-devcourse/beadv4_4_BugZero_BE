@@ -47,14 +47,14 @@ class ProductReadProductsForInspectionUseCaseTest {
 		product1 = Product.builder()
 			.name("레고 스타워즈")
 			.seller(seller)
-			.category(Category.스타워즈)
+			.category(Category.STARWARS)
 			.inspectionStatus(InspectionStatus.PENDING)
 			.build();
 
 		product2 = Product.builder()
 			.name("해리포터 불의잔")
 			.seller(seller)
-			.category(Category.해리포터)
+			.category(Category.HARRYPOTTER)
 			.inspectionStatus(InspectionStatus.APPROVED)
 			.build();
 
@@ -87,7 +87,7 @@ class ProductReadProductsForInspectionUseCaseTest {
 		Product noImgProduct = Product.builder()
 			.name("해리포터 아즈카반의 죄수")
 			.seller(seller)
-			.category(Category.해리포터)
+			.category(Category.HARRYPOTTER)
 			.inspectionStatus(InspectionStatus.APPROVED)
 			.build();
 		entityManager.persist(noImgProduct);

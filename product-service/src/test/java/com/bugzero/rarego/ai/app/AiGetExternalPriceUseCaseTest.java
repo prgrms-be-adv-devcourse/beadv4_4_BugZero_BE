@@ -55,7 +55,7 @@ class AiGetExternalPriceUseCaseTest {
 
 		// when
 		Flux<String> result = useCase.execute(new AiExternalPriceRequestDto(
-			Category.스타워즈, TemporaryCondition.MISB, "75192"
+			Category.STARWARS, TemporaryCondition.MISB, "75192"
 		));
 
 		// then
