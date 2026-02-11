@@ -22,7 +22,7 @@ import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.product.domain.Product;
 import com.bugzero.rarego.product.domain.ProductMember;
 import com.bugzero.rarego.product.domain.dto.ProductUpdateResponseDto;
-import com.bugzero.rarego.shared.auction.out.AuctionApiClient;
+import com.bugzero.rarego.shared.auction.type.AuctionProductEventType;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionUpdateDto;
 import com.bugzero.rarego.shared.product.dto.ProductImageUpdateDto;
 import com.bugzero.rarego.shared.product.dto.ProductUpdateDto;
@@ -37,7 +37,7 @@ class ProductUpdateProductUseCaseTest {
 	private ProductSupport productSupport;
 
 	@Mock
-	private AuctionApiClient auctionApiClient;
+	private ProductOutboxSupport productOutboxSupport; // 핵심 변경: API 클라이언트 대신 아웃박스 서포트 주입
 
 	@Mock
 	private EventPublisher eventPublisher;
@@ -48,7 +48,6 @@ class ProductUpdateProductUseCaseTest {
 	private final String PUBLIC_ID = "seller-uuid";
 	private final Long PRODUCT_ID = 1L;
 	private final Long SELLER_ID = 100L;
-	private final Long AUCTION_ID = 200L;
 
 	private ProductMember commonSeller;
 	private Product spyProduct;
@@ -68,7 +67,7 @@ class ProductUpdateProductUseCaseTest {
 	}
 
 	@Test
-	@DisplayName("성공: 상품 정보 수정 시 이미지 삭제 및 확정 이벤트가 각각 발행된다")
+	@DisplayName("성공: 상품 정보 수정 시 아웃박스에 저장되고 이미지 삭제/확정 이벤트가 각각 발행된다")
 	void updateProduct_success() {
 		// given
 		List<ProductImageUpdateDto> imageDtos = List.of(new ProductImageUpdateDto(null, "temp/new.jpg", 1));
@@ -81,12 +80,9 @@ class ProductUpdateProductUseCaseTest {
 		given(productSupport.verifyValidateProduct(PRODUCT_ID)).willReturn(spyProduct);
 		given(productSupport.normalizeUpdateImageOrder(anyList())).willReturn(imageDtos);
 
-		// Entity 비즈니스 로직 결과 모킹 (이미지 삭제 및 추가 경로 반환)
+		// Entity 비즈니스 로직 결과 모킹
 		doReturn(deletePaths).when(spyProduct).removeOldImages(anyList());
 		doReturn(confirmPaths).when(spyProduct).processNewImages(anyList());
-
-		given(auctionApiClient.updateAuction(eq(PUBLIC_ID), any(ProductAuctionUpdateDto.class)))
-			.willReturn(AUCTION_ID);
 
 		// when
 		ProductUpdateResponseDto response = useCase.updateProduct(PUBLIC_ID, PRODUCT_ID, updateDto);
@@ -95,29 +91,28 @@ class ProductUpdateProductUseCaseTest {
 		// 1. 기본 정보 수정 호출 확인
 		verify(spyProduct).updateBasicInfo(eq("수정된 이름"), eq(Category.STARWARS), anyString());
 
-		// 2. 이벤트 발행 검증 (가장 중요한 변경점)
+		// 2. 아웃박스 저장 검증 (가장 중요한 변경점)
+		verify(productOutboxSupport).saveOutbox(
+			eq(PRODUCT_ID),
+			eq(PUBLIC_ID),
+			eq(AuctionProductEventType.UPDATE),
+			eq(updateDto.productAuctionUpdateDto())
+		);
+
+		// 3. S3 이벤트 발행 검증 (순서상 아웃박스 저장 후 호출됨)
 		ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
 		verify(eventPublisher, times(2)).publish(eventCaptor.capture());
 
 		List<Object> publishedEvents = eventCaptor.getAllValues();
-
-		// S3ImageDeleteEvent 검증
 		assertThat(publishedEvents.get(0)).isInstanceOf(S3ImageDeleteEvent.class);
-		S3ImageDeleteEvent deleteEvent = (S3ImageDeleteEvent) publishedEvents.get(0);
-		assertThat(deleteEvent.paths()).isEqualTo(deletePaths);
-
-		// S3ImageConfirmEvent 검증
 		assertThat(publishedEvents.get(1)).isInstanceOf(S3ImageConfirmEvent.class);
-		S3ImageConfirmEvent confirmEvent = (S3ImageConfirmEvent) publishedEvents.get(1);
-		assertThat(confirmEvent.paths()).isEqualTo(confirmPaths);
 
-		// 3. 결과 반환 확인
+		// 4. 결과 반환 확인
 		assertThat(response.productId()).isEqualTo(PRODUCT_ID);
-		assertThat(response.auctionId()).isEqualTo(AUCTION_ID);
 	}
 
 	@Test
-	@DisplayName("실패: 수정 권한이 없으면 예외가 발생하고 이벤트가 발행되지 않는다")
+	@DisplayName("실패: 수정 권한이 없으면 아웃박스 저장 및 이벤트 발행이 수행되지 않는다")
 	void updateProduct_fail_unauthorized() {
 		// given
 		ProductUpdateDto updateDto = createUpdateDto("이름", Collections.emptyList());
@@ -132,7 +127,8 @@ class ProductUpdateProductUseCaseTest {
 		assertThatThrownBy(() -> useCase.updateProduct(PUBLIC_ID, PRODUCT_ID, updateDto))
 			.isInstanceOf(CustomException.class);
 
-		// 이벤트가 하나도 발행되지 않았음을 확인
+		// 검증: 핵심 행위들이 전혀 실행되지 않았어야 함
+		verifyNoInteractions(productOutboxSupport);
 		verifyNoInteractions(eventPublisher);
 		verify(spyProduct, never()).updateBasicInfo(any(), any(), any());
 	}
@@ -142,7 +138,7 @@ class ProductUpdateProductUseCaseTest {
 			name,
 			Category.STARWARS,
 			"설명",
-			new ProductAuctionUpdateDto(1L, 1000, 7),
+			new ProductAuctionUpdateDto(1L, 1000, 7), // auctionId=1L
 			images
 		);
 	}

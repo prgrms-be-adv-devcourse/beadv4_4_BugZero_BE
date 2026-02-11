@@ -1,10 +1,9 @@
 package com.bugzero.rarego.product.app;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.*;
 import static org.mockito.BDDMockito.*;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +21,7 @@ import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.product.domain.Product;
 import com.bugzero.rarego.product.domain.ProductImage;
 import com.bugzero.rarego.product.domain.ProductMember;
-import com.bugzero.rarego.shared.auction.out.AuctionApiClient;
+import com.bugzero.rarego.shared.auction.type.AuctionProductEventType;
 import com.bugzero.rarego.shared.product.event.S3ImageDeleteEvent;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,10 +31,10 @@ class ProductDeleteProductUseCaseTest {
 	private ProductSupport productSupport;
 
 	@Mock
-	private AuctionApiClient auctionApiClient;
+	private ProductOutboxSupport productOutboxSupport; // 핵심 변경: API 클라이언트 대신 아웃박스 서포트 주입
 
 	@Mock
-	private EventPublisher eventPublisher; // 이벤트 발행자 추가
+	private EventPublisher eventPublisher;
 
 	@InjectMocks
 	private ProductDeleteProductUseCase useCase;
@@ -54,26 +53,24 @@ class ProductDeleteProductUseCaseTest {
 			.build();
 
 		// 테스트용 이미지들을 포함한 상품 생성
-		ProductImage image1 = ProductImage.createConfirmedImage(spyProduct,"products/image1.jpg", 0);
-		ProductImage image2 = ProductImage.createConfirmedImage(spyProduct,"products/image2.jpg", 1);
-
-		List<ProductImage> images = new ArrayList<>(List.of(image1, image2));
-
 		Product product = Product.builder()
 			.name("삭제될 상품")
-			.images(images)
+			.images(new ArrayList<>()) // 가변 리스트로 초기화
 			.build();
+
+		product.addImage(ProductImage.createConfirmedImage(product, "products/image1.jpg", 0));
+		product.addImage(ProductImage.createConfirmedImage(product, "products/image2.jpg", 1));
+
 		ReflectionTestUtils.setField(product, "id", PRODUCT_ID);
 
 		spyProduct = spy(product);
 	}
 
 	@Test
-	@DisplayName("성공: 상품 삭제 시 소프트 삭제를 수행하고 S3 삭제 이벤트를 발행한다")
+	@DisplayName("성공: 상품 삭제 시 소프트 삭제를 수행하고 아웃박스 저장 및 S3 삭제 이벤트를 발행한다")
 	void deleteProduct_Success() {
 		// given
 		given(productSupport.verifyValidateMember(PUBLIC_ID)).willReturn(commonSeller);
-		// 실제 코드의 메서드명인 findByIdWithImages에 맞춤
 		given(productSupport.findByIdWithImages(PRODUCT_ID)).willReturn(spyProduct);
 
 		// when
@@ -82,23 +79,29 @@ class ProductDeleteProductUseCaseTest {
 		// then
 		// 1. 엔티티 행위 검증
 		verify(spyProduct).softDelete();
-		assertThat(spyProduct.getImages()).isEmpty();// clear() 호출 확인
+		assertThat(spyProduct.getImages()).isEmpty(); // clear() 호출 확인
 
+		// 2. 아웃박스 저장 검증 (가장 중요한 변경점)
+		// 삭제는 DTO가 없는 오버로딩 메서드가 호출되어야 함
+		verify(productOutboxSupport).saveOutbox(
+			eq(PRODUCT_ID),
+			eq(PUBLIC_ID),
+			eq(AuctionProductEventType.DELETE)
+		);
 
-		// 2. S3 이미지 삭제 이벤트 발행 검증 (가장 중요한 변경점)
+		// 3. S3 이미지 삭제 이벤트 발행 검증 (커밋 후 실행될 이벤트)
 		ArgumentCaptor<S3ImageDeleteEvent> eventCaptor = ArgumentCaptor.forClass(S3ImageDeleteEvent.class);
 		verify(eventPublisher).publish(eventCaptor.capture());
 
 		S3ImageDeleteEvent publishedEvent = eventCaptor.getValue();
 		assertThat(publishedEvent.paths()).containsExactly("products/image1.jpg", "products/image2.jpg");
 
-		// 3. 외부 API 호출 확인
-		verify(auctionApiClient).deleteAuction(PUBLIC_ID, PRODUCT_ID);
+		// 4. 권한 체크 수행 여부 확인
 		verify(productSupport).isAbleToDelete(commonSeller, spyProduct);
 	}
 
 	@Test
-	@DisplayName("실패: 삭제 권한이 없으면 이벤트를 발행하지 않고 외부 API도 호출하지 않는다")
+	@DisplayName("실패: 삭제 권한이 없으면 아웃박스 저장 및 S3 이벤트를 발행하지 않는다")
 	void deleteProduct_Fail_Unauthorized() {
 		// given
 		given(productSupport.verifyValidateMember(PUBLIC_ID)).willReturn(commonSeller);
@@ -111,9 +114,9 @@ class ProductDeleteProductUseCaseTest {
 		assertThatThrownBy(() -> useCase.deleteProduct(PUBLIC_ID, PRODUCT_ID))
 			.isInstanceOf(CustomException.class);
 
-		// 검증: 예외 발생 시 부가 로직이 실행되지 않아야 함
+		// 검증: 예외 발생 시 DB 상태를 변경하거나 외부에 알리는 로직이 실행되지 않아야 함
 		verify(spyProduct, never()).softDelete();
-		verifyNoInteractions(eventPublisher); // 이벤트 발행 안됨
-		verifyNoInteractions(auctionApiClient); // API 호출 안됨
+		verifyNoInteractions(productOutboxSupport); // 아웃박스 저장 안됨
+		verifyNoInteractions(eventPublisher);       // S3 이벤트 발행 안됨
 	}
 }

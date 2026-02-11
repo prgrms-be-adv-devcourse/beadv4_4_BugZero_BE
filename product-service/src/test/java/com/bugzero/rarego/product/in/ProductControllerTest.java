@@ -99,7 +99,6 @@ class ProductControllerTest {
 
 		defaultUpdateResponse = ProductUpdateResponseDto.builder()
 			.productId(PRODUCT_ID)
-			.auctionId(2L)
 			.build();
 	}
 
@@ -152,7 +151,6 @@ class ProductControllerTest {
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.status").value(200))
 			.andExpect(jsonPath("$.data.productId").value(defaultUpdateResponse.productId()))
-			.andExpect(jsonPath("$.data.auctionId").value(defaultUpdateResponse.auctionId()))
 			.andDo(print());
 	}
 
