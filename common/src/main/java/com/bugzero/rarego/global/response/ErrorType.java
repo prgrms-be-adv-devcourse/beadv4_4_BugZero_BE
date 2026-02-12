@@ -1,44 +1,44 @@
 package com.bugzero.rarego.global.response;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
 import java.util.Arrays;
 import java.util.Optional;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
 public enum ErrorType {
-    // Global (9000 ~ 9999)
-    INTERNAL_SERVER_ERROR(500, 9000, "서버 오류가 발생했습니다."),
-    INVALID_INPUT(400, 9001, "잘못된 입력값입니다."),
-    LOCK_ACQUISITION_FAILED(503, 9002, "현재 요청이 많아 처리가 지연되고 있습니다. 잠시 후 다시 시도해주세요."),
-    CONCURRENCY_ISSUE(409, 9003, "동시성 이슈가 발생했습니다. 잠시 후 다시 시도해주세요."),
+	// Global (9000 ~ 9999)
+	INTERNAL_SERVER_ERROR(500, 9000, "서버 오류가 발생했습니다."),
+	INVALID_INPUT(400, 9001, "잘못된 입력값입니다."),
+	LOCK_ACQUISITION_FAILED(503, 9002, "현재 요청이 많아 처리가 지연되고 있습니다. 잠시 후 다시 시도해주세요."),
+	CONCURRENCY_ISSUE(409, 9003, "동시성 이슈가 발생했습니다. 잠시 후 다시 시도해주세요."),
 
-    // Member (1000 ~ 1499)
-    MEMBER_NOT_FOUND(404, 1001, "존재하지 않는 회원입니다."),
-    MEMBER_EMAIL_EMPTY(400, 1003, "이메일은 필수 입력값입니다."),
-    MEMBER_JOIN_FAILED(500, 1004, "회원 가입에 실패했습니다."),
-    MEMBER_INVALID_NICKNAME(400, 1005, "닉네임이 공백이거나 50자 이상입니다."),
-    MEMBER_INVALID_INTRO(400, 1006, "자기소개 형식이 올바르지 않습니다."),
-    MEMBER_INVALID_ZIPCODE(400, 1007, "우편번호 형식이 올바르지 않습니다."),
-    MEMBER_INVALID_ADDRESS(400, 1008, "주소 형식이 올바르지 않습니다."),
-    MEMBER_INVALID_ADDRESS_DETAIL(400, 1009, "상세주소 형식이 올바르지 않습니다."),
-    MEMBER_INVALID_REALNAME(400, 1010, "이름은 한국어/영어로 이루어진 1~10자여야 합니다."),
-    MEMBER_INVALID_PHONE_NUMBER(400, 1011, "연락처 형식이 올바르지 않습니다."),
-    MEMBER_IDENTITY_REQUIRED(400, 1012, "이름과 연락처를 입력해주세요"),
-    MEMBER_NICKNAME_REQUIRED(400, 1013, "닉네임은 필수 입력값입니다."),
-    MEMBER_ZIPCODE_REQUIRED(400, 1014, "우편번호는 필수 입력값입니다."),
-    MEMBER_ADDRESS_REQUIRED(400, 1015, "주소는 필수 입력값입니다."),
-    MEMBER_ADDRESS_DETAIL_REQUIRED(400, 1016, "상세주소는 필수 입력값입니다."),
-    MEMBER_PHONE_REQUIRED(400, 1017, "연락처는 필수 입력값입니다."),
-    MEMBER_REALNAME_REQUIRED(400, 1018, "실명은 필수 입력값입니다."),
-    MEMBER_SELLER_REQUIRED_FIELD_CANNOT_BE_CLEARED(400, 1019, "판매자 정보의 필수 항목은 삭제할 수 없습니다."),
-    MEMBER_UPDATED_FAILED(400, 1020, "삭제 요청된 항목에 값이 함께 전달되었습니다."),
-    MEMBER_IDENTITY_ALREADY_VERIFIED(409, 1021, "이미 본인인증이 완료되었습니다."),
-    MEMBER_NICKNAME_ALREADY_EXISTS(409, 1022, "이미 존재하는 닉네임입니다."),
-    MEMBER_MEMBER_DELETED(403, 1023, "탈퇴한 계정입니다."),
-    MEMBER_WITHDRAW_FAILED(500, 1024, "회원 탈퇴에 실패했습니다."),
+	// Member (1000 ~ 1499)
+	MEMBER_NOT_FOUND(404, 1001, "존재하지 않는 회원입니다."),
+	MEMBER_EMAIL_EMPTY(400, 1003, "이메일은 필수 입력값입니다."),
+	MEMBER_JOIN_FAILED(500, 1004, "회원 가입에 실패했습니다."),
+	MEMBER_INVALID_NICKNAME(400, 1005, "닉네임이 공백이거나 50자 이상입니다."),
+	MEMBER_INVALID_INTRO(400, 1006, "자기소개 형식이 올바르지 않습니다."),
+	MEMBER_INVALID_ZIPCODE(400, 1007, "우편번호 형식이 올바르지 않습니다."),
+	MEMBER_INVALID_ADDRESS(400, 1008, "주소 형식이 올바르지 않습니다."),
+	MEMBER_INVALID_ADDRESS_DETAIL(400, 1009, "상세주소 형식이 올바르지 않습니다."),
+	MEMBER_INVALID_REALNAME(400, 1010, "이름은 한국어/영어로 이루어진 1~10자여야 합니다."),
+	MEMBER_INVALID_PHONE_NUMBER(400, 1011, "연락처 형식이 올바르지 않습니다."),
+	MEMBER_IDENTITY_REQUIRED(400, 1012, "이름과 연락처를 입력해주세요"),
+	MEMBER_NICKNAME_REQUIRED(400, 1013, "닉네임은 필수 입력값입니다."),
+	MEMBER_ZIPCODE_REQUIRED(400, 1014, "우편번호는 필수 입력값입니다."),
+	MEMBER_ADDRESS_REQUIRED(400, 1015, "주소는 필수 입력값입니다."),
+	MEMBER_ADDRESS_DETAIL_REQUIRED(400, 1016, "상세주소는 필수 입력값입니다."),
+	MEMBER_PHONE_REQUIRED(400, 1017, "연락처는 필수 입력값입니다."),
+	MEMBER_REALNAME_REQUIRED(400, 1018, "실명은 필수 입력값입니다."),
+	MEMBER_SELLER_REQUIRED_FIELD_CANNOT_BE_CLEARED(400, 1019, "판매자 정보의 필수 항목은 삭제할 수 없습니다."),
+	MEMBER_UPDATED_FAILED(400, 1020, "삭제 요청된 항목에 값이 함께 전달되었습니다."),
+	MEMBER_IDENTITY_ALREADY_VERIFIED(409, 1021, "이미 본인인증이 완료되었습니다."),
+	MEMBER_NICKNAME_ALREADY_EXISTS(409, 1022, "이미 존재하는 닉네임입니다."),
+	MEMBER_MEMBER_DELETED(403, 1023, "탈퇴한 계정입니다."),
+	MEMBER_WITHDRAW_FAILED(500, 1024, "회원 탈퇴에 실패했습니다."),
 
 	// Auth/JWT (1500 ~ 1999)
 	AUTH_MEMBER_REQUIRED(400, 1501, "회원 정보가 필요합니다."),
@@ -59,64 +59,66 @@ public enum ErrorType {
 	WITHDRAWAL_PROCESSING_ORDER_EXISTS(409, 1518, "처리 중인 주문이 있어 탈퇴할 수 없습니다."),
 	AUTH_PROMOTE_SELLER_FAILED(500, 1519, "판매자 승격에 실패했습니다."),
 
-    // Auction (2000 ~ 2999)
-    AUCTION_CREATE_FAILED(500, 2000, "경매 생성에 실패했습니다."),
-    AUCTION_NOT_FOUND(404, 2001, "경매를 찾을 수 없습니다."),
-    AUCTION_NOT_IN_PROGRESS(400, 2002, "경매가 진행 중인 상태가 아닙니다."),
-    AUCTION_ALREADY_HIGHEST_BIDDER(409, 2003, "현재 최고 입찰자이므로 연속 입찰할 수 없습니다."),
-    AUCTION_SELLER_CANNOT_BID(403, 2004, "본인의 경매에는 입찰할 수 없습니다."),
-    AUCTION_TIME_INVALID(400, 2005, "입찰 가능한 시간이 아닙니다."),
-    AUCTION_BID_AMOUNT_TOO_LOW(400, 2006, "입찰 금액이 현재가 또는 시작가보다 낮습니다."),
-    ORDER_NOT_FOUND(404, 2007, "낙찰 기록 정보를 찾을 수 없습니다."),
-    AUCTION_ORDER_ACCESS_DENIED(403, 2008, "낙찰 기록 정보에 접근 권한이 없습니다."),
-    AUCTION_ALREADY_HAS_START_TIME(400, 2009, "이미 시작이 예정된 경매입니다."),
-    UNAUTHORIZED_AUCTION_SELLER(403, 2010, "해당 경매의 판매자가 아닙니다."),
-    AUCTION_ALREADY_IN_PROGRESS(400, 2011, "경매 시작 전에만 수정 가능합니다."),
-    AUCTION_UPDATE_FAILED(500, 2012, "경매 정보 수정에 실패했습니다."),
-    AUCTION_NOT_ENDED(400, 2013, "종료된 경매만 재등록할 수 있습니다."),
-    AUCTION_ALREADY_SOLD(409, 2014, "이미 판매가 완료되거나 진행 중인 상품입니다."),
-    AUCTION_DELETE_FAILED(500, 2015, "경매 정보 삭제에 실패했습니다."),
-    BID_NOT_FOUND(404, 2501, "입찰가를 찾을 수 없습니다."),
-    AUCTION_NOT_SCHEDULED(400, 2503, "예정된 경매가 아닙니다."),
-    AUCTION_SCHEDULE_FAILED(500, 2504, "경매 정산 예약에 실패했습니다."),
-    SCHEDULER_CAPACITY_EXCEEDED(503, 2505, "스케줄러 용량이 초과되었습니다."),
-    SERVICE_SUBSCRIBER_LIMIT_EXCEEDED(503, 2506, "구독자 수 한도를 초과했습니다."),
-    BOOKMARK_ALREADY_EXISTS(409, 2507, "이미 관심 경매로 등록된 경매입니다."),
-    BOOKMARK_NOT_FOUND(404, 2508, "관심 경매로 등록되지 않은 경매입니다."),
-    AUCTION_NOT_SELLER(403, 2509, "본인의 경매만 처리할 수 있습니다."),
-    AUCTION_WITHDRAW_NOT_ENDED(400, 2510, "종료된 경매만 판매 포기할 수 있습니다."),
-    AUCTION_WITHDRAW_ALREADY_PAID(400, 2511, "결제 완료된 경매는 판매 포기할 수 없습니다."),
-    AUCTION_WITHDRAW_PAYMENT_IN_PROGRESS(400, 2512, "결제 진행 중인 경매는 판매 포기할 수 없습니다."),
-    AUCTION_WITHDRAW_NOT_INSPECTED(400, 2513, "검수 전 경매는 판매 포기할 수 없습니다."),
-    BOOKMARK_UNAUTHORIZED_ACCESS(403, 2514, "요청한 사용자가 북마크의 memberId와 일치하지 않습니다."),
-    AUCTION_NOT_FOUND_OR_ALREADY_SETTLED(404, 2515, "존재하지 않는 경매이거나 이미 정산이 완료된 경매입니다."),
-    AUCTION_NOT_FINISHED(400, 2516, "아직 경매 종료 시간이 되지 않아 정산할 수 없습니다."),
-    AUCTION_OUTBOX_NOT_FOUND(404, 2517, "처리할 경매 관련 아웃박스 데이터를 찾을 수 없습니다."),
-    INVALID_OUTBOX_PAYLOAD(400, 2518, "아웃박스 페이로드가 유효하지 않습니다. 필수 필드를 확인하세요."),
+	// Auction (2000 ~ 2999)
+	AUCTION_CREATE_FAILED(500, 2000, "경매 생성에 실패했습니다."),
+	AUCTION_NOT_FOUND(404, 2001, "경매를 찾을 수 없습니다."),
+	AUCTION_NOT_IN_PROGRESS(400, 2002, "경매가 진행 중인 상태가 아닙니다."),
+	AUCTION_ALREADY_HIGHEST_BIDDER(409, 2003, "현재 최고 입찰자이므로 연속 입찰할 수 없습니다."),
+	AUCTION_SELLER_CANNOT_BID(403, 2004, "본인의 경매에는 입찰할 수 없습니다."),
+	AUCTION_TIME_INVALID(400, 2005, "입찰 가능한 시간이 아닙니다."),
+	AUCTION_BID_AMOUNT_TOO_LOW(400, 2006, "입찰 금액이 현재가 또는 시작가보다 낮습니다."),
+	ORDER_NOT_FOUND(404, 2007, "낙찰 기록 정보를 찾을 수 없습니다."),
+	AUCTION_ORDER_ACCESS_DENIED(403, 2008, "낙찰 기록 정보에 접근 권한이 없습니다."),
+	AUCTION_ALREADY_HAS_START_TIME(400, 2009, "이미 시작이 예정된 경매입니다."),
+	UNAUTHORIZED_AUCTION_SELLER(403, 2010, "해당 경매의 판매자가 아닙니다."),
+	AUCTION_ALREADY_IN_PROGRESS(400, 2011, "경매 시작 전에만 수정 가능합니다."),
+	AUCTION_UPDATE_FAILED(500, 2012, "경매 정보 수정에 실패했습니다."),
+	AUCTION_NOT_ENDED(400, 2013, "종료된 경매만 재등록할 수 있습니다."),
+	AUCTION_ALREADY_SOLD(409, 2014, "이미 판매가 완료되거나 진행 중인 상품입니다."),
+	AUCTION_DELETE_FAILED(500, 2015, "경매 정보 삭제에 실패했습니다."),
+	BID_NOT_FOUND(404, 2501, "입찰가를 찾을 수 없습니다."),
+	AUCTION_NOT_SCHEDULED(400, 2503, "예정된 경매가 아닙니다."),
+	AUCTION_SCHEDULE_FAILED(500, 2504, "경매 정산 예약에 실패했습니다."),
+	SCHEDULER_CAPACITY_EXCEEDED(503, 2505, "스케줄러 용량이 초과되었습니다."),
+	SERVICE_SUBSCRIBER_LIMIT_EXCEEDED(503, 2506, "구독자 수 한도를 초과했습니다."),
+	BOOKMARK_ALREADY_EXISTS(409, 2507, "이미 관심 경매로 등록된 경매입니다."),
+	BOOKMARK_NOT_FOUND(404, 2508, "관심 경매로 등록되지 않은 경매입니다."),
+	AUCTION_NOT_SELLER(403, 2509, "본인의 경매만 처리할 수 있습니다."),
+	AUCTION_WITHDRAW_NOT_ENDED(400, 2510, "종료된 경매만 판매 포기할 수 있습니다."),
+	AUCTION_WITHDRAW_ALREADY_PAID(400, 2511, "결제 완료된 경매는 판매 포기할 수 없습니다."),
+	AUCTION_WITHDRAW_PAYMENT_IN_PROGRESS(400, 2512, "결제 진행 중인 경매는 판매 포기할 수 없습니다."),
+	AUCTION_WITHDRAW_NOT_INSPECTED(400, 2513, "검수 전 경매는 판매 포기할 수 없습니다."),
+	BOOKMARK_UNAUTHORIZED_ACCESS(403, 2514, "요청한 사용자가 북마크의 memberId와 일치하지 않습니다."),
+	AUCTION_NOT_FOUND_OR_ALREADY_SETTLED(404, 2515, "존재하지 않는 경매이거나 이미 정산이 완료된 경매입니다."),
+	AUCTION_NOT_FINISHED(400, 2516, "아직 경매 종료 시간이 되지 않아 정산할 수 없습니다."),
+	AUCTION_OUTBOX_NOT_FOUND(404, 2517, "처리할 경매 관련 아웃박스 데이터를 찾을 수 없습니다."),
+	INVALID_OUTBOX_PAYLOAD(400, 2518, "아웃박스 페이로드가 유효하지 않습니다. 필수 필드를 확인하세요."),
 
-    // Product (3000 ~ 3999)
-    PRODUCT_NOT_FOUND(404, 3001, "상품이 존재하지 않습니다."),
-    UNAUTHORIZED_SELLER(403, 3002, "해당 상품의 판매자가 아닙니다."),
-    IMAGE_NOT_FOUND(404, 3003, "해당 상품 이미지가 존재하지 않습니다."),
+	// Product (3000 ~ 3999)
+	PRODUCT_NOT_FOUND(404, 3001, "상품이 존재하지 않습니다."),
+	UNAUTHORIZED_SELLER(403, 3002, "해당 상품의 판매자가 아닙니다."),
+	IMAGE_NOT_FOUND(404, 3003, "해당 상품 이미지가 존재하지 않습니다."),
 
-    INSPECTION_REJECT_REASON_REQUIRED(400, 3501, "검수 반려시 사유가 있어야 합니다."),
-    INSPECTION_ALREADY_COMPLETED(400, 3502, "검수가 이미 완료된 상품입니다."),
-    INSPECTION_NOT_FOUND(404, 3503, "해당 상품에 해당하는 검수 정보가 없습니다."),
+	INSPECTION_REJECT_REASON_REQUIRED(400, 3501, "검수 반려시 사유가 있어야 합니다."),
+	INSPECTION_ALREADY_COMPLETED(400, 3502, "검수가 이미 완료된 상품입니다."),
+	INSPECTION_NOT_FOUND(404, 3503, "해당 상품에 해당하는 검수 정보가 없습니다."),
 
-    // Payment (4000 ~ 4999)
-    WALLET_NOT_FOUND(404, 4001, "회원의 지갑이 존재하지 않습니다."),
-    INSUFFICIENT_BALANCE(400, 4002, "예치금 잔액이 부족합니다."),
-    INSUFFICIENT_HOLDING(400, 4003, "환급할 보증금이 부족합니다."),
+	// Payment (4000 ~ 4999)
+	WALLET_NOT_FOUND(404, 4001, "회원의 지갑이 존재하지 않습니다."),
+	INSUFFICIENT_BALANCE(400, 4002, "예치금 잔액이 부족합니다."),
+	INSUFFICIENT_HOLDING(400, 4003, "환급할 보증금이 부족합니다."),
 
-    PAYMENT_CONFIRM_FAILED(400, 4101, "토스 결제 승인에 실패했습니다."),
-    PAYMENT_NOT_FOUND(404, 4102, "존재하지 않는 결제입니다."),
-    INVALID_PAYMENT_AMOUNT(400, 4103, "결제 금액이 일치하지 않습니다."),
-    ALREADY_PROCESSED_PAYMENT(409, 4104, "이미 처리된 결제입니다."),
-    PAYMENT_OWNER_MISMATCH(403, 4105, "해당 결제에 대한 접근 권한이 없습니다."),
-    SETTLEMENT_BATCH_FAILED(500, 4106, "정산 배치 실행에 실패했습니다."),
-    SETTLEMENT_NOT_FOUND(404, 4107, "정산 정보를 찾을 수 없습니다."),
-    SYSTEM_WALLET_NOT_FOUND(404, 4108, "시스템 지갑을 찾을 수 없습니다."),
-    PAYMENT_CANCEL_FAILED(400, 4109, "토스 결제 취소에 실패했습니다."),
+	PAYMENT_CONFIRM_FAILED(400, 4101, "토스 결제 승인에 실패했습니다."),
+	PAYMENT_NOT_FOUND(404, 4102, "존재하지 않는 결제입니다."),
+	INVALID_PAYMENT_AMOUNT(400, 4103, "결제 금액이 일치하지 않습니다."),
+	ALREADY_PROCESSED_PAYMENT(409, 4104, "이미 처리된 결제입니다."),
+	PAYMENT_OWNER_MISMATCH(403, 4105, "해당 결제에 대한 접근 권한이 없습니다."),
+	SETTLEMENT_BATCH_FAILED(500, 4106, "정산 배치 실행에 실패했습니다."),
+	SETTLEMENT_NOT_FOUND(404, 4107, "정산 정보를 찾을 수 없습니다."),
+	SYSTEM_WALLET_NOT_FOUND(404, 4108, "시스템 지갑을 찾을 수 없습니다."),
+	PAYMENT_CANCEL_FAILED(400, 4109, "토스 결제 취소에 실패했습니다."),
+	PAYMENT_LOOKUP_FAILED(400, 4110, "토스 결제 조회에 실패했습니다."),
+	PAYMENT_NOT_FOUND_IN_TOSS(404, 4111, "토스 결제 정보를 찾을 수 없습니다."),
 
 	AUCTION_ORDER_NOT_FOUND(404, 4201, "주문 정보를 찾을 수 없습니다."),
 	NOT_AUCTION_WINNER(403, 4202, "낙찰자만 결제할 수 있습니다."),
@@ -128,16 +130,15 @@ public enum ErrorType {
 	INVALID_DEPOSIT_STATUS(400, 4208, "이미 예치 중이거나 처리된 보증금입니다."),
 	// Notification (5000 ~ 5999)
 	NOTIFICATION_NOT_FOUND(404, 5001, "알림이 존재하지 않습니다."),
-	NOTIFICATION_OWNER_MISMATCH(403, 5002, "알림에 대한 접근 권한이 없습니다."),
-	;
+	NOTIFICATION_OWNER_MISMATCH(403, 5002, "알림에 대한 접근 권한이 없습니다.");
 
-    private final Integer httpStatus;
-    private final int code;
-    private final String message;
+	private final Integer httpStatus;
+	private final int code;
+	private final String message;
 
-    public static Optional<ErrorType> findByCode(int code) {
-        return Arrays.stream(values())
-                .filter(type -> type.code == code)
-                .findFirst();
-    }
+	public static Optional<ErrorType> findByCode(int code) {
+		return Arrays.stream(values())
+			.filter(type -> type.code == code)
+			.findFirst();
+	}
 }

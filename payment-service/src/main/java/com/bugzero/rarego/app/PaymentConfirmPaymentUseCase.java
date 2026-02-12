@@ -8,7 +8,7 @@ import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.in.dto.PaymentConfirmRequestDto;
 import com.bugzero.rarego.in.dto.PaymentConfirmResponseDto;
-import com.bugzero.rarego.in.dto.TossPaymentsConfirmResponseDto;
+import com.bugzero.rarego.in.dto.TossPaymentsResponseDto;
 import com.bugzero.rarego.out.PaymentRepository;
 import com.bugzero.rarego.out.TossPaymentsApiClient;
 
@@ -40,7 +40,7 @@ public class PaymentConfirmPaymentUseCase {
 			throw e;
 		}
 
-		TossPaymentsConfirmResponseDto tossResponse = null;
+		TossPaymentsResponseDto tossResponse = null;
 
 		try {
 			// PG 승인 요청
@@ -73,12 +73,10 @@ public class PaymentConfirmPaymentUseCase {
 					log.info("결제 취소 요청 성공 - orderId: {}, paymentKey: {}", requestDto.orderId(),
 						tossResponse.paymentKey());
 				} catch (Exception e2) {
-					log.error("결체 취소 요청 실패, 수동 처리 필요 - orderId: {}, paymentKey: {}, 원인: {}",
+					log.error("결체 취소 요청 실패 (스케줄러로 처리) - orderId: {}, paymentKey: {}, 원인: {}",
 						requestDto.orderId(), tossResponse.paymentKey(), e2.getMessage(), e2);
 				}
 			}
-
-			handleFail(payment);
 
 			throw e;
 		}
