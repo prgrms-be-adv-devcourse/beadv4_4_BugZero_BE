@@ -13,8 +13,8 @@ import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.exception.InternalApiErrorHandler;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
-import com.bugzero.rarego.shared.product.dto.AuctionInfoResponseDto;
 import com.bugzero.rarego.global.security.SystemAuthTokenProvider;
+import com.bugzero.rarego.shared.product.dto.AuctionInfoResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionRequestDto;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionUpdateDto;
 
@@ -138,7 +138,8 @@ public class AuctionApiClient {
 			.retrieve()
 			.onStatus(HttpStatusCode::isError, (req, res) ->
 				errorHandler.handleWithDefault(req, res, ErrorType.AUCTION_NOT_FOUND))
-			.body(new ParameterizedTypeReference<>() {});
+			.body(new ParameterizedTypeReference<>() {
+			});
 
 		return Optional.ofNullable(response)
 			.map(SuccessResponseDto::data)

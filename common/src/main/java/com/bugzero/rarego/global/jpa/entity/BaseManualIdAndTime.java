@@ -19,14 +19,14 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @Getter
 public abstract class BaseManualIdAndTime extends BaseEntity {
-    @Id
-    private Long id;
-    @CreatedDate
-    private LocalDateTime createdAt;
-    @LastModifiedDate
-    private LocalDateTime updatedAt;
+	@Id
+	private Long id;
+	@CreatedDate
+	private LocalDateTime createdAt;
+	@LastModifiedDate
+	private LocalDateTime updatedAt;
 
-    public BaseManualIdAndTime(Long id) {
-        this.id = id;
-    }
+	public BaseManualIdAndTime(Long id) {
+		this.id = id;
+	}
 }

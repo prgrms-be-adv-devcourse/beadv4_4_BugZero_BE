@@ -18,7 +18,7 @@ import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.in.dto.PaymentConfirmRequestDto;
 import com.bugzero.rarego.in.dto.PaymentConfirmResponseDto;
-import com.bugzero.rarego.in.dto.TossPaymentsConfirmResponseDto;
+import com.bugzero.rarego.in.dto.TossPaymentsResponseDto;
 import com.bugzero.rarego.out.PaymentRepository;
 import com.bugzero.rarego.out.TossPaymentsApiClient;
 
@@ -62,7 +62,7 @@ class PaymentConfirmPaymentUseCaseTest {
 			.status(PaymentStatus.PENDING)
 			.build());
 
-		TossPaymentsConfirmResponseDto tossResponse = new TossPaymentsConfirmResponseDto(orderId, "paymentKey", amount);
+		TossPaymentsResponseDto tossResponse = new TossPaymentsResponseDto(orderId, "paymentKey", "status", amount);
 		PaymentConfirmResponseDto expectedResponse = new PaymentConfirmResponseDto(orderId, amount, 20000);
 
 		given(paymentSupport.findMemberByPublicId(memberPublicId)).willReturn(member);
@@ -155,7 +155,7 @@ class PaymentConfirmPaymentUseCaseTest {
 		given(paymentSupport.findPaymentByOrderId(anyString())).willReturn(payment);
 
 		// finalizePayment 도중 런타임 에러 발생 (DB 연결 끊김 등)
-		given(tossApiClient.confirm(any())).willReturn(mock(TossPaymentsConfirmResponseDto.class));
+		given(tossApiClient.confirm(any())).willReturn(mock(TossPaymentsResponseDto.class));
 		given(paymentConfirmFinalizer.finalizePayment(any(), any())).willThrow(new RuntimeException("DB Error"));
 
 		// when & then
@@ -183,7 +183,7 @@ class PaymentConfirmPaymentUseCaseTest {
 			.status(PaymentStatus.PENDING)
 			.build();
 
-		TossPaymentsConfirmResponseDto tossResponse = new TossPaymentsConfirmResponseDto(orderId, paymentKey, 10000);
+		TossPaymentsResponseDto tossResponse = new TossPaymentsResponseDto(orderId, paymentKey, "status", 10000);
 
 		given(paymentSupport.findMemberByPublicId(memberPublicId)).willReturn(member);
 		given(paymentSupport.findPaymentByOrderId(anyString())).willReturn(payment);

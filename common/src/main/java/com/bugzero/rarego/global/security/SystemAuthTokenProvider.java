@@ -21,8 +21,8 @@ public class SystemAuthTokenProvider {
 		return jwtProvider.issueToken(
 			accessTokenExpirationSeconds,
 			Map.of(
-			"publicId", "00000000-0000-0000-0000-000000000001",
-			"role", "SYSTEM"
+				"publicId", "00000000-0000-0000-0000-000000000001",
+				"role", "SYSTEM"
 			)
 		);
 	}

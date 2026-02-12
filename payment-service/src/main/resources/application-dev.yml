@@ -1,54 +1,54 @@
 spring:
-  datasource:
-    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
-      auto-commit: false
-      maximum-pool-size: 20
-      minimum-idle: 20
+    datasource:
+        url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+        username: ${DB_USERNAME}
+        password: ${DB_PASSWORD}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        hikari:
+            auto-commit: false
+            maximum-pool-size: 20
+            minimum-idle: 20
 
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        format_sql: true
-        use_sql_comments: true
-        default_batch_fetch_size: 100
-    open-in-view: false
+    jpa:
+        hibernate:
+            ddl-auto: update
+        properties:
+            hibernate:
+                format_sql: true
+                use_sql_comments: true
+                default_batch_fetch_size: 100
+        open-in-view: false
 
-  sql:
-    init:
-      mode: never
+    sql:
+        init:
+            mode: never
 
 logging:
-  level:
-    root: INFO
-    org.hibernate.SQL: DEBUG
-    org.hibernate.orm.jdbc.bind: TRACE
-    org.hibernate.orm.jdbc.extract: TRACE
-    org.springframework.transaction.interceptor: TRACE
-    com.bugzero.rarego.global.security: DEBUG
+    level:
+        root: INFO
+        org.hibernate.SQL: DEBUG
+        org.hibernate.orm.jdbc.bind: TRACE
+        org.hibernate.orm.jdbc.extract: TRACE
+        org.springframework.transaction.interceptor: TRACE
+        com.bugzero.rarego.global.security: DEBUG
 
 management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,prometheus
-  endpoint:
-    prometheus:
-      enabled: true
+    endpoints:
+        web:
+            exposure:
+                include: health,info,prometheus
+    endpoint:
+        prometheus:
+            enabled: true
 
 jwt:
-  secret: ${JWT_SECRET}
-  access-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:3600}
-  refresh-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:86400}
+    secret: ${JWT_SECRET}
+    access-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:3600}
+    refresh-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:86400}
 
 custom:
-  global:
-    frontUrl: ${FRONT_URL:http://localhost:3000}
-  payment:
-    settlement:
-      holdDays: 0
+    global:
+        frontUrl: ${FRONT_URL:http://localhost:3000}
+    payment:
+        settlement:
+            holdDays: 0

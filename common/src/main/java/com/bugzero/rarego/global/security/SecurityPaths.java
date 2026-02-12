@@ -13,8 +13,7 @@ public final class SecurityPaths {
 		"/swagger-ui.html",
 		"/api-docs/**",
 
-
- // OAuth2 로그인 관련
+		// OAuth2 로그인 관련
 		"/oauth2/**",
 		"/login/**",
 

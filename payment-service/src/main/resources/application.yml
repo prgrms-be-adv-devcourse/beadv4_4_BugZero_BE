@@ -1,73 +1,73 @@
 server:
-  port: 8082
-  forward-headers-strategy: native
-  tomcat:
-    relaxed-query-chars: '[,]'
+    port: 8082
+    forward-headers-strategy: native
+    tomcat:
+        relaxed-query-chars: '[,]'
 
 spring:
-  application:
-    name: payment-service
-  config:
-    import: optional:file:.env[.properties]
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
-  output:
-    ansi:
-      enabled: always
-  batch:
-    job:
-      enabled: false
-  data:
-    redis:
-      host: ${SPRING_DATA_REDIS_HOST:localhost}
-      port: ${SPRING_DATA_REDIS_PORT:6379}
+    application:
+        name: payment-service
+    config:
+        import: optional:file:.env[.properties]
+    profiles:
+        active: ${SPRING_PROFILES_ACTIVE:dev}
+    output:
+        ansi:
+            enabled: always
+    batch:
+        job:
+            enabled: false
+    data:
+        redis:
+            host: ${SPRING_DATA_REDIS_HOST:localhost}
+            port: ${SPRING_DATA_REDIS_PORT:6379}
 
-  kafka:
-    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
-    consumer:
-      group-id: ${spring.application.name}-group # 모듈 분리를 고려한 ID 설정
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
-      properties:
-        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
-        spring.json.trusted.packages: "*" # 모듈 분리 전까지 모든 패키지 허용 -> 추후 수정
-    listener:
-      ack-mode: batch
+    kafka:
+        bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+        producer:
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+        consumer:
+            group-id: ${spring.application.name}-group # 모듈 분리를 고려한 ID 설정
+            auto-offset-reset: earliest
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+            properties:
+                spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+                spring.json.trusted.packages: "*" # 모듈 분리 전까지 모든 패키지 허용 -> 추후 수정
+        listener:
+            ack-mode: batch
 
 toss:
-  payments:
-    secretKey: ${TOSS_PAYMENTS_SECRET_KEY}
-    url: "https://api.tosspayments.com/v1/payments"
+    payments:
+        secretKey: ${TOSS_PAYMENTS_SECRET_KEY}
+        url: "https://api.tosspayments.com/v1/payments"
 
 jwt:
-  secret: ${JWT_SECRET}
-  access-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:3600}
-  refresh-token-expire-seconds: ${JWT_REFRESH_TOKEN_EXPIRE_SECONDS:86400}
+    secret: ${JWT_SECRET}
+    access-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:3600}
+    refresh-token-expire-seconds: ${JWT_REFRESH_TOKEN_EXPIRE_SECONDS:86400}
 
 custom:
-  global:
-    internalBackUrl: ${INTERNAL_BACK_URL:http://rarego-nginx}
-    frontUrl: ${FRONT_URL:http://localhost:3000}
-  payment:
-    settlement:
-      chunkSize: 10
-      holdDays: 7
-    systemMemberId: 1
+    global:
+        internalBackUrl: ${INTERNAL_BACK_URL:http://rarego-nginx}
+        frontUrl: ${FRONT_URL:http://localhost:3000}
+    payment:
+        settlement:
+            chunkSize: 10
+            holdDays: 7
+        systemMemberId: 1
 
 springdoc:
-  api-docs:
-    path: /api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-    tags-sorter: alpha
-    operations-sorter: alpha
+    api-docs:
+        path: /api-docs
+    swagger-ui:
+        path: /swagger-ui.html
+        tags-sorter: alpha
+        operations-sorter: alpha
 
 auction:
-  payment-timeout-days: 3
+    payment-timeout-days: 3
 payment:
-  outbox:
-    retry-delay-ms: 300000
+    outbox:
+        retry-delay-ms: 300000

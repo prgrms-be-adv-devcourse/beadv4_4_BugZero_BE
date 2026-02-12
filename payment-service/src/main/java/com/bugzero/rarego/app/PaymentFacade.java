@@ -42,6 +42,7 @@ public class PaymentFacade {
 	private final PaymentGetMyWalletUseCase paymentGetMyWalletUseCase;
 	private final PaymentWithdrawUseCase paymentWithdrawUseCase;
 	private final PaymentAuctionExpiringSoonUseCase paymentAuctionExpiringSoonUseCase;
+	private final PaymentRecoveryUseCase paymentRecoveryUseCase;
 
 	/**
 	 * 보증금 홀딩
@@ -142,5 +143,12 @@ public class PaymentFacade {
 	 */
 	public void publishExpiringSoonEvent(AuctionOrderDto order, LocalDateTime expiredAt) {
 		paymentAuctionExpiringSoonUseCase.publishExpiringSoonEvent(order, expiredAt);
+	}
+
+	/**
+	 * 결제 복구 작업
+	 */
+	public void recoverPendingPayments() {
+		paymentRecoveryUseCase.recoverPendingPayments();
 	}
 }

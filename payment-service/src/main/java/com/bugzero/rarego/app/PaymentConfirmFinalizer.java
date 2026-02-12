@@ -9,7 +9,7 @@ import com.bugzero.rarego.domain.ReferenceType;
 import com.bugzero.rarego.domain.Wallet;
 import com.bugzero.rarego.domain.WalletTransactionType;
 import com.bugzero.rarego.in.dto.PaymentConfirmResponseDto;
-import com.bugzero.rarego.in.dto.TossPaymentsConfirmResponseDto;
+import com.bugzero.rarego.in.dto.TossPaymentsResponseDto;
 import com.bugzero.rarego.out.PaymentRepository;
 import com.bugzero.rarego.out.PaymentTransactionRepository;
 
@@ -23,7 +23,7 @@ public class PaymentConfirmFinalizer {
 	private final PaymentSupport paymentSupport;
 
 	@Transactional
-	public PaymentConfirmResponseDto finalizePayment(Payment payment, TossPaymentsConfirmResponseDto tossResponse) {
+	public PaymentConfirmResponseDto finalizePayment(Payment payment, TossPaymentsResponseDto tossResponse) {
 		payment.complete(tossResponse.paymentKey()); // 결제 완료 처리
 		paymentRepository.save(payment); // payment는 준영속 상태이므로 명시적 저장
 

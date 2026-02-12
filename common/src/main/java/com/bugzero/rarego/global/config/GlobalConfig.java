@@ -14,7 +14,7 @@ public class GlobalConfig {
 	private static EventPublisher eventPublisher;
 
 	@Autowired
-	public void setEventPublisher(EventPublisher eventPublisher){
+	public void setEventPublisher(EventPublisher eventPublisher) {
 		GlobalConfig.eventPublisher = eventPublisher;
 	}
 

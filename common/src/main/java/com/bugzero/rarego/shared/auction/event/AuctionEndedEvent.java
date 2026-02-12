@@ -9,8 +9,8 @@ package com.bugzero.rarego.shared.auction.event;
  * @param productId  상품 ID
  */
 public record AuctionEndedEvent(
-        Long auctionId,
-        Long winnerId,
-        Integer finalPrice,
-        Long productId) {
+	Long auctionId,
+	Long winnerId,
+	Integer finalPrice,
+	Long productId) {
 }

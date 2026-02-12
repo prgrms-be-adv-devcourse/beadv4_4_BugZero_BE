@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 public class EventPublisher {
 	private final ApplicationEventPublisher applicationEventPublisher;
 
-	public void publish(Object event){
+	public void publish(Object event) {
 		applicationEventPublisher.publishEvent(event);
 	}
 }

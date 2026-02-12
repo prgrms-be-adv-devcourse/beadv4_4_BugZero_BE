@@ -8,4 +8,5 @@ import com.bugzero.rarego.shared.member.domain.MemberDto;
  */
 public record MemberUpdatedEvent(
 	MemberDto memberDto
-) {}
+) {
+}

@@ -14,8 +14,8 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public abstract class BaseIdAndTimeManual extends BaseEntity {
-    @Id
-    private Long id;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+	@Id
+	private Long id;
+	private LocalDateTime createdAt;
+	private LocalDateTime updatedAt;
 }

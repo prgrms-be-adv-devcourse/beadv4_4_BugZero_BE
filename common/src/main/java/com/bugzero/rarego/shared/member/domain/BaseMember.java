@@ -70,6 +70,7 @@ public abstract class BaseMember extends BaseEntity {
 		this.contactPhone = contactPhone;
 		this.realName = realName;
 	}
+
 	protected void updateFrom(MemberDto member) {
 		this.publicId = member.publicId();
 		this.email = member.email();

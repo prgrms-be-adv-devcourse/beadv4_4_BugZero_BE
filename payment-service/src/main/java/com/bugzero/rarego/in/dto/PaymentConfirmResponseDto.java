@@ -5,7 +5,7 @@ public record PaymentConfirmResponseDto(
 	int amount,
 	int balance
 ) {
-	public static PaymentConfirmResponseDto of(TossPaymentsConfirmResponseDto tossResponse, int balance) {
+	public static PaymentConfirmResponseDto of(TossPaymentsResponseDto tossResponse, int balance) {
 		return new PaymentConfirmResponseDto(
 			tossResponse.orderId(),
 			tossResponse.totalAmount(),

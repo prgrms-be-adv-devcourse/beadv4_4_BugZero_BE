@@ -25,7 +25,8 @@ public class GlobalExceptionHandler {
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public ResponseEntity<ExceptionResponseDto> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+	public ResponseEntity<ExceptionResponseDto> handleMethodArgumentNotValidException(
+		MethodArgumentNotValidException e) {
 		log.error("MethodArgumentNotValidException 발생: {}", e.getMessage());
 
 		// 에러가 발생한 필드 중 첫 번째 필드의 에러 메시지만 가져온다.

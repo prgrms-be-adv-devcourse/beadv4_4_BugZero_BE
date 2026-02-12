@@ -1,62 +1,62 @@
 spring:
-  datasource:
-    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    datasource:
+        url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+        driver-class-name: org.h2.Driver
+        username: sa
+        password:
 
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-    properties:
-      hibernate:
-        format_sql: true
+    jpa:
+        hibernate:
+            ddl-auto: create-drop
+        properties:
+            hibernate:
+                format_sql: true
 
-  batch:
-    job:
-      enabled: false
+    batch:
+        job:
+            enabled: false
 
-  data:
-    redis:
-      host: ${SPRING_DATA_REDIS_HOST:localhost}
-      port: ${SPRING_DATA_REDIS_PORT:6379}
+    data:
+        redis:
+            host: ${SPRING_DATA_REDIS_HOST:localhost}
+            port: ${SPRING_DATA_REDIS_PORT:6379}
 
 
-  kafka:
-    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
-    consumer:
-      group-id: ${spring.application.name}-group # 모듈 분리를 고려한 ID 설정
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
-      properties:
-        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
-        spring.json.trusted.packages: "*" # 모듈 분리 전까지 모든 패키지 허용 -> 추후 수정
-    listener:
-      ack-mode: batch
+    kafka:
+        bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+        producer:
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+        consumer:
+            group-id: ${spring.application.name}-group # 모듈 분리를 고려한 ID 설정
+            auto-offset-reset: earliest
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+            properties:
+                spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+                spring.json.trusted.packages: "*" # 모듈 분리 전까지 모든 패키지 허용 -> 추후 수정
+        listener:
+            ack-mode: batch
 
 logging:
-  level:
-    org.hibernate.SQL: debug
+    level:
+        org.hibernate.SQL: debug
 
 toss:
-  payments:
-    secretKey: ${TOSS_PAYMENTS_SECRET_KEY:test}
-    url: "https://api.tosspayments.com/v1/payments"
+    payments:
+        secretKey: ${TOSS_PAYMENTS_SECRET_KEY:test}
+        url: "https://api.tosspayments.com/v1/payments"
 
 jwt:
-  secret: ${JWT_SECRET:dev-secret-key-have-to-change-abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz}
-  access-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:3600}
-  refresh-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:86400}
+    secret: ${JWT_SECRET:dev-secret-key-have-to-change-abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz}
+    access-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:3600}
+    refresh-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:86400}
 
 custom:
-  global:
-    internalBackUrl: ${INTERNAL_BACK_URL:http://rarego-nginx}
-  payment:
-    settlement:
-      holdDays: 0
-    systemMemberId: 2
+    global:
+        internalBackUrl: ${INTERNAL_BACK_URL:http://rarego-nginx}
+    payment:
+        settlement:
+            holdDays: 0
+        systemMemberId: 2
 

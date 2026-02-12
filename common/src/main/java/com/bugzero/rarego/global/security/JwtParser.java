@@ -149,25 +149,25 @@ public class JwtParser {
 			log.debug("JWT payload type is not supported. purpose={}, payloadType={}",
 				purpose, payload == null ? "null" : payload.getClass().getName());
 			return null;
-		// 만료됨
+			// 만료됨
 		} catch (ExpiredJwtException e) {
 			log.debug("JWT expired. purpose={}, token={}, msg={}", purpose, mask(jwtStr), e.getMessage());
 			return null;
-		// 서명 불일치
+			// 서명 불일치
 		} catch (SecurityException e) {
 			log.debug("JWT signature/security error. purpose={}, token={}, msg={}", purpose, mask(jwtStr),
 				e.getMessage());
 			return null;
-		// 형식 오류, claim 오류 등 JJWT 계열 전반
+			// 형식 오류, claim 오류 등 JJWT 계열 전반
 		} catch (JwtException e) {
 			log.debug("JWT invalid. purpose={}, token={}, ex={}, msg={}",
 				purpose, mask(jwtStr), e.getClass().getSimpleName(), e.getMessage());
 			return null;
-		// null, blank
+			// null, blank
 		} catch (IllegalArgumentException e) {
 			log.debug("JWT illegal argument. purpose={}, token={}, msg={}", purpose, mask(jwtStr), e.getMessage());
 			return null;
-		// 그 외 예외 오류
+			// 그 외 예외 오류
 		} catch (Exception e) {
 			log.warn("JWT unexpected error. purpose={}, token={}, ex={}",
 				purpose, mask(jwtStr), e.getClass().getName(), e);
