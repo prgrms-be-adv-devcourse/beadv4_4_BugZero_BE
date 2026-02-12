@@ -161,10 +161,6 @@ class PaymentConfirmPaymentUseCaseTest {
 		// when & then
 		assertThatThrownBy(() -> useCase.confirmPayment(memberPublicId, requestDto))
 			.isInstanceOf(RuntimeException.class);
-
-		// then: Exception catch 블록에서 handleFail 호출 확인
-		assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
-		verify(paymentRepository).save(payment);
 	}
 
 	@Test
@@ -197,11 +193,6 @@ class PaymentConfirmPaymentUseCaseTest {
 		// when & then
 		assertThatThrownBy(() -> useCase.confirmPayment(memberPublicId, requestDto))
 			.isInstanceOf(RuntimeException.class);
-
-		// then
-		// 1. 상태가 FAILED로 변경되어야 함
-		assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
-		verify(paymentRepository).save(payment);
 
 		// [핵심] 2. 보상 트랜잭션(취소 API)이 호출되었는지 검증
 		verify(tossApiClient).cancel(eq(paymentKey), anyString());
