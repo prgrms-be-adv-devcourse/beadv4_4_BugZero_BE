@@ -17,7 +17,7 @@ public record MyAuctionOrderListResponseDto(
 	LocalDateTime tradeDate,
 	boolean auctionRequired
 ) {
-	public static MyAuctionOrderListResponseDto from (
+	public static MyAuctionOrderListResponseDto from(
 		AuctionOrder order,
 		ProductAuctionResponseDto product,
 		String thumbnailUrl
@@ -41,7 +41,8 @@ public record MyAuctionOrderListResponseDto(
 
 	// 상태값을 설명으로 바꿔주는 메서드
 	private static String convertStatusToDescription(AuctionOrderStatus status) {
-		if (status == null) return "-";
+		if (status == null)
+			return "-";
 
 		return switch (status) {
 			case PROCESSING -> "결제 대기중";

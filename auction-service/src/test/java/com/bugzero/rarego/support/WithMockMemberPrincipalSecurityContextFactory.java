@@ -12,24 +12,24 @@ import org.springframework.security.test.context.support.WithSecurityContextFact
 import com.bugzero.rarego.global.security.MemberPrincipal;
 
 public class WithMockMemberPrincipalSecurityContextFactory
-        implements WithSecurityContextFactory<WithMockMemberPrincipal> {
+	implements WithSecurityContextFactory<WithMockMemberPrincipal> {
 
-    @Override
-    public SecurityContext createSecurityContext(WithMockMemberPrincipal annotation) {
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
+	@Override
+	public SecurityContext createSecurityContext(WithMockMemberPrincipal annotation) {
+		SecurityContext context = SecurityContextHolder.createEmptyContext();
 
-        MemberPrincipal principal = new MemberPrincipal(
-                annotation.publicId(),
-                annotation.role()
-        );
+		MemberPrincipal principal = new MemberPrincipal(
+			annotation.publicId(),
+			annotation.role()
+		);
 
-        Authentication auth = new UsernamePasswordAuthenticationToken(
-                principal,
-                null,
-                List.of(new SimpleGrantedAuthority(annotation.role()))
-        );
+		Authentication auth = new UsernamePasswordAuthenticationToken(
+			principal,
+			null,
+			List.of(new SimpleGrantedAuthority(annotation.role()))
+		);
 
-        context.setAuthentication(auth);
-        return context;
-    }
+		context.setAuthentication(auth);
+		return context;
+	}
 }

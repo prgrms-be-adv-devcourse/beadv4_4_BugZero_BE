@@ -1,10 +1,10 @@
 package com.bugzero.rarego.in.dto;
 
 public record AuctionAddBookmarkResponseDto(
-        boolean bookmarked,
-        Long auctionId
+	boolean bookmarked,
+	Long auctionId
 ) {
-    public static AuctionAddBookmarkResponseDto of(boolean bookmarked, Long auctionId) {
-        return new AuctionAddBookmarkResponseDto(bookmarked, auctionId);
-    }
+	public static AuctionAddBookmarkResponseDto of(boolean bookmarked, Long auctionId) {
+		return new AuctionAddBookmarkResponseDto(bookmarked, auctionId);
+	}
 }

@@ -10,14 +10,14 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 @EnableScheduling
 public class SchedulerConfig {
 
-    @Bean
-    public TaskScheduler taskScheduler() {
-        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-        scheduler.setPoolSize(10);
-        scheduler.setThreadNamePrefix("auction-scheduler-");
-        scheduler.setWaitForTasksToCompleteOnShutdown(true);
-        scheduler.setAwaitTerminationSeconds(30);
-        scheduler.initialize();
-        return scheduler;
-    }
+	@Bean
+	public TaskScheduler taskScheduler() {
+		ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+		scheduler.setPoolSize(10);
+		scheduler.setThreadNamePrefix("auction-scheduler-");
+		scheduler.setWaitForTasksToCompleteOnShutdown(true);
+		scheduler.setAwaitTerminationSeconds(30);
+		scheduler.initialize();
+		return scheduler;
+	}
 }

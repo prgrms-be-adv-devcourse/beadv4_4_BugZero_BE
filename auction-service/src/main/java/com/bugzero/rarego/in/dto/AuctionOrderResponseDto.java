@@ -1,8 +1,9 @@
 package com.bugzero.rarego.in.dto;
 
+import java.time.LocalDateTime;
+
 import com.bugzero.rarego.domain.AuctionOrder;
 import com.bugzero.rarego.domain.AuctionOrderStatus;
-import java.time.LocalDateTime;
 
 public record AuctionOrderResponseDto(
 	Long orderId,
@@ -17,10 +18,17 @@ public record AuctionOrderResponseDto(
 	TraderInfo trader,
 	ShippingInfo shippingInfo
 ) {
-	public record ProductInfo(String title, String thumbnailUrl) {}
-	public record PaymentInfo(int finalPrice, int depositUsed, int paymentAmount) {}
-	public record TraderInfo(String nickname, String contact) {}
-	public record ShippingInfo(String receiverName, String address, String trackingNumber) {}
+	public record ProductInfo(String title, String thumbnailUrl) {
+	}
+
+	public record PaymentInfo(int finalPrice, int depositUsed, int paymentAmount) {
+	}
+
+	public record TraderInfo(String nickname, String contact) {
+	}
+
+	public record ShippingInfo(String receiverName, String address, String trackingNumber) {
+	}
 
 	public static AuctionOrderResponseDto from(
 		AuctionOrder order,
@@ -33,7 +41,7 @@ public record AuctionOrderResponseDto(
 	) {
 
 		int finalPrice = order.getFinalPrice();
-		int depositUsed = (int) (finalPrice * 0.1);
+		int depositUsed = (int)(finalPrice * 0.1);
 		int paymentAmount = finalPrice - depositUsed;
 
 		return new AuctionOrderResponseDto(

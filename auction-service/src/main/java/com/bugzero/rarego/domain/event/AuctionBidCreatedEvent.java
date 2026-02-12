@@ -7,17 +7,17 @@ import java.time.LocalDateTime;
  * SSE 브로드캐스트를 위해 발행됨
  */
 public record AuctionBidCreatedEvent(
-        Long auctionId,
-        Long bidderId,
-        Integer bidAmount,
-        LocalDateTime bidTime
+	Long auctionId,
+	Long bidderId,
+	Integer bidAmount,
+	LocalDateTime bidTime
 ) {
-    public static AuctionBidCreatedEvent of(Long auctionId, Long bidderId, Integer bidAmount) {
-        return new AuctionBidCreatedEvent(
-                auctionId,
-                bidderId,
-                bidAmount,
-                LocalDateTime.now()
-        );
-    }
+	public static AuctionBidCreatedEvent of(Long auctionId, Long bidderId, Integer bidAmount) {
+		return new AuctionBidCreatedEvent(
+			auctionId,
+			bidderId,
+			bidAmount,
+			LocalDateTime.now()
+		);
+	}
 }

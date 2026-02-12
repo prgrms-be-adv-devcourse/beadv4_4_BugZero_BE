@@ -1,7 +1,8 @@
 package com.bugzero.rarego.in.dto;
 
-import com.bugzero.rarego.domain.Bid;
 import java.time.LocalDateTime;
+
+import com.bugzero.rarego.domain.Bid;
 
 public record BidResponseDto(
 	Long bidId,

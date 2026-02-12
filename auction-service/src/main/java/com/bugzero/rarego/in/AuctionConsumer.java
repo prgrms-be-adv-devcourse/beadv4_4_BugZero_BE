@@ -1,7 +1,5 @@
 package com.bugzero.rarego.in;
 
-import static org.springframework.transaction.annotation.Propagation.*;
-
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
