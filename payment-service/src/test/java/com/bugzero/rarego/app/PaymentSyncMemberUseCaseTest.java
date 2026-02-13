@@ -14,7 +14,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.bugzero.rarego.app.PaymentSyncMemberUseCase;
 import com.bugzero.rarego.domain.PaymentMember;
 import com.bugzero.rarego.domain.Wallet;
 import com.bugzero.rarego.out.PaymentMemberRepository;

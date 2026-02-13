@@ -6,7 +6,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import com.bugzero.rarego.shared.payment.event.PaymentTimeoutEvent;
 import com.bugzero.rarego.domain.Deposit;
 import com.bugzero.rarego.domain.DepositStatus;
 import com.bugzero.rarego.domain.PaymentMember;
@@ -16,14 +15,15 @@ import com.bugzero.rarego.domain.ReferenceType;
 import com.bugzero.rarego.domain.Settlement;
 import com.bugzero.rarego.domain.Wallet;
 import com.bugzero.rarego.domain.WalletTransactionType;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
+import com.bugzero.rarego.out.AuctionOrderApiClient;
 import com.bugzero.rarego.out.DepositRepository;
 import com.bugzero.rarego.out.PaymentOutboxRepository;
 import com.bugzero.rarego.out.PaymentTransactionRepository;
 import com.bugzero.rarego.out.SettlementRepository;
-import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.shared.auction.dto.AuctionOrderDto;
-import com.bugzero.rarego.out.AuctionOrderApiClient;
+import com.bugzero.rarego.shared.payment.event.PaymentTimeoutEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

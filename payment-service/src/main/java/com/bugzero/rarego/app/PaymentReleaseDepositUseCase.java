@@ -14,10 +14,10 @@ import com.bugzero.rarego.domain.PaymentTransaction;
 import com.bugzero.rarego.domain.ReferenceType;
 import com.bugzero.rarego.domain.Wallet;
 import com.bugzero.rarego.domain.WalletTransactionType;
-import com.bugzero.rarego.out.DepositRepository;
-import com.bugzero.rarego.out.PaymentTransactionRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
+import com.bugzero.rarego.out.DepositRepository;
+import com.bugzero.rarego.out.PaymentTransactionRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -66,7 +66,7 @@ public class PaymentReleaseDepositUseCase {
 	public void releaseDeposit(Long auctionId, String memberPublicId) {
 		PaymentMember member = paymentSupport.findMemberByPublicId(memberPublicId);
 		Deposit deposit = depositRepository.findByMemberIdAndAuctionId(member.getId(), auctionId)
-				.orElseThrow(() -> new CustomException(ErrorType.DEPOSIT_NOT_FOUND));
+			.orElseThrow(() -> new CustomException(ErrorType.DEPOSIT_NOT_FOUND));
 
 		if (deposit.getStatus() != DepositStatus.HOLD) {
 			log.info("보증금이 HOLD 상태가 아님 (상태: {}), 환급 건너뜀", deposit.getStatus());

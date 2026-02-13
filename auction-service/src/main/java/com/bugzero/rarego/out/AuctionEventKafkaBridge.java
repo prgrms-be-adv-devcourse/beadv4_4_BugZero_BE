@@ -1,14 +1,16 @@
 package com.bugzero.rarego.out;
 
-import com.bugzero.rarego.shared.auction.event.AuctionEndedEvent;
-import com.bugzero.rarego.shared.auction.event.AuctionRelistedEvent;
-import com.bugzero.rarego.shared.auction.event.AuctionStartedEvent;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+
+import com.bugzero.rarego.shared.auction.event.AuctionEndedEvent;
+import com.bugzero.rarego.shared.auction.event.AuctionRelistedEvent;
+import com.bugzero.rarego.shared.auction.event.AuctionStartedEvent;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * AuctionEndedEvent를 Kafka로 중계하는 브릿지

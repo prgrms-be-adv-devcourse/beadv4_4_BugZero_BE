@@ -30,14 +30,14 @@ import com.bugzero.rarego.out.WalletRepository;
 @SpringBootTest
 @ActiveProfiles("test")
 class PaymentSettlementPerformanceIntegrationTest {
+	private final int DATA_SIZE = 100; // 데이터 100개
+	private final Long SYSTEM_ID = 2L;
 	@MockitoBean
 	private KafkaTemplate<String, Object> kafkaTemplate;
-
 	@Autowired
 	private PaymentProcessSettlementUseCase optimizedUseCase; // 현재 로직 (Bulk)
 	@Autowired
 	private BadPerformanceProcessor badProcessor; // 비교군 (One-by-One)
-
 	@Autowired
 	private PaymentMemberRepository memberRepository;
 	@Autowired
@@ -46,9 +46,6 @@ class PaymentSettlementPerformanceIntegrationTest {
 	private SettlementRepository settlementRepository;
 	@Autowired
 	private PaymentTransactionRepository transactionRepository;
-
-	private final int DATA_SIZE = 100; // 데이터 100개
-	private final Long SYSTEM_ID = 2L;
 
 	@BeforeEach
 	void setUp() {

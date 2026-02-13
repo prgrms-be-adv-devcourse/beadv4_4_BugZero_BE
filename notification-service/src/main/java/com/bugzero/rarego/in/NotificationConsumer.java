@@ -1,10 +1,7 @@
 package com.bugzero.rarego.in;
 
-import static org.springframework.transaction.annotation.Propagation.*;
-
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.app.NotificationFacade;
 import com.bugzero.rarego.shared.auction.event.AuctionEndedEvent;
@@ -82,7 +79,7 @@ public class NotificationConsumer {
 	 * notificationMember 생성 동기화
 	 */
 	@KafkaListener(topics = "member-joined")
-	public void handleMemberJoined(MemberJoinedEvent event) {
+	public void consumeMemberJoined(MemberJoinedEvent event) {
 		try {
 			notificationFacade.syncMember(event.memberDto());
 			log.info("[notification] 회원 레플리카 등록 완료 - memberPublicId: {}", event.memberDto().publicId());
@@ -97,7 +94,7 @@ public class NotificationConsumer {
 	 * @param event
 	 */
 	@KafkaListener(topics = "member-updated")
-	public void handleMemberUpdated(MemberUpdatedEvent event) {
+	public void consumeMemberUpdated(MemberUpdatedEvent event) {
 		try {
 			notificationFacade.syncMember(event.memberDto());
 			log.info("[notificaiton] 회원 레플리카 수정 완료 - memberPublicId: {}", event.memberDto().publicId());

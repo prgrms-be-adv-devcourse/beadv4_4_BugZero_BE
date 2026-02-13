@@ -22,7 +22,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.bugzero.rarego.app.PaymentFacade;
 import com.bugzero.rarego.global.aspect.ResponseAspect;
 import com.bugzero.rarego.global.response.SuccessType;
-import com.bugzero.rarego.in.InternalPaymentController;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldRequestDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
 

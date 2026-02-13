@@ -22,7 +22,8 @@ public interface DepositRepository extends JpaRepository<Deposit, Long> {
 		@Param("auctionId") Long auctionId,
 		@Param("status") DepositStatus status);
 
-	@Query("SELECT d FROM Deposit d JOIN FETCH d.member WHERE d.auctionId = :auctionId AND d.status = :status AND d.member.id != :memberId")
+	@Query("SELECT d FROM Deposit d JOIN FETCH d.member "
+		+ "WHERE d.auctionId = :auctionId AND d.status = :status AND d.member.id != :memberId")
 	List<Deposit> findAllByAuctionIdAndStatusAndMemberIdNotWithMember(
 		@Param("auctionId") Long auctionId,
 		@Param("status") DepositStatus status,

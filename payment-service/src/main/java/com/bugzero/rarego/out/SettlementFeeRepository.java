@@ -12,8 +12,8 @@ public interface SettlementFeeRepository extends JpaRepository<SettlementFee, Lo
 	// SKIP LOCKED를 사용하여 다른 스레드가 처리 중인 데이터는 건너뛰고 조회
 	@Query(value = """
 		SELECT * FROM payment_settlement_fee
-		ORDER BY id ASC 
-		LIMIT :limit 
+		ORDER BY id ASC
+		LIMIT :limit
 		FOR UPDATE SKIP LOCKED
 		""", nativeQuery = true)
 	List<SettlementFee> findAllForBatch(@Param("limit") int limit);

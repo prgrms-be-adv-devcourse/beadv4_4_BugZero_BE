@@ -15,7 +15,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.bugzero.rarego.app.PaymentAuctionTimeoutUseCase;
-import com.bugzero.rarego.in.PaymentTimeoutScheduler;
 import com.bugzero.rarego.out.AuctionOrderApiClient;
 import com.bugzero.rarego.shared.auction.dto.AuctionOrderDto;
 

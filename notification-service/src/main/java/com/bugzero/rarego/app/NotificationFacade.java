@@ -2,15 +2,11 @@ package com.bugzero.rarego.app;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.bugzero.rarego.shared.member.domain.MemberDto;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.in.dto.NotificationResponseDto;
 import com.bugzero.rarego.in.dto.NotificationUnreadCountResponseDto;
-
 import com.bugzero.rarego.shared.member.domain.MemberDto;
 
 import lombok.RequiredArgsConstructor;
@@ -23,6 +19,7 @@ public class NotificationFacade {
 	private final NotificationGetNotificationsUseCase notificationGetNotificationsUseCase;
 	private final NotificationGetUnreadCountUseCase notificationGetUnreadCountUseCase;
 	private final NotificationMarkAsReadUseCase notificationMarkAsReadUseCase;
+	private final NotificationCleanupUseCase notificationCleanupUseCase;
 	private final NotificationSubscribeUseCase notificationSubscribeUseCase;
 
 	public void createNotification(Object event) {
@@ -48,5 +45,9 @@ public class NotificationFacade {
 
 	public void syncMember(MemberDto memberDto) {
 		notificationSyncMemberUseCase.syncMember(memberDto);
+	}
+
+	public void deleteOldNotifications() {
+		notificationCleanupUseCase.deleteOldNotifications();
 	}
 }

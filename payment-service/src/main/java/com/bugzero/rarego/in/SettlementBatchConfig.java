@@ -21,14 +21,12 @@ import lombok.RequiredArgsConstructor;
 @Configuration
 @RequiredArgsConstructor
 public class SettlementBatchConfig {
-	@Value("${custom.payment.settlement.chunkSize:10}")
-	private int chunkSize;
-
 	private static final int THREAD_SIZE = 5;
-
 	private final PaymentFacade paymentFacade;
 	private final JobRepository jobRepository;
 	private final PlatformTransactionManager transactionManager;
+	@Value("${custom.payment.settlement.chunkSize:10}")
+	private int chunkSize;
 
 	@Bean
 	public Job settlementJob() {

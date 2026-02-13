@@ -3,7 +3,6 @@ package com.bugzero.rarego.app;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.domain.AuctionMember;
 import com.bugzero.rarego.out.AuctionMemberRepository;

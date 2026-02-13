@@ -1,15 +1,11 @@
 package com.bugzero.rarego.app;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.*;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
-
-import com.bugzero.rarego.config.PaymentMetrics;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.bugzero.rarego.config.PaymentMetrics;
 import com.bugzero.rarego.domain.PaymentMember;
 import com.bugzero.rarego.domain.PaymentTransaction;
 import com.bugzero.rarego.domain.ReferenceType;
@@ -26,39 +23,33 @@ import com.bugzero.rarego.domain.Settlement;
 import com.bugzero.rarego.domain.SettlementStatus;
 import com.bugzero.rarego.domain.Wallet;
 import com.bugzero.rarego.domain.WalletTransactionType;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.in.dto.RefundResponseDto;
 import com.bugzero.rarego.out.AuctionOrderApiClient;
 import com.bugzero.rarego.out.PaymentTransactionRepository;
 import com.bugzero.rarego.out.SettlementRepository;
-import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.shared.auction.dto.AuctionOrderDto;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentRefundUseCaseTest {
 
-	@InjectMocks
-	private PaymentRefundUseCase paymentRefundUseCase;
-
-	@Mock
-	private AuctionOrderApiClient auctionOrderApiClient;
-
-	@Mock
-	private SettlementRepository settlementRepository;
-
-	@Mock
-	private PaymentTransactionRepository transactionRepository;
-
-	@Mock
-	private PaymentSupport paymentSupport;
-
-	@Mock
-	private PaymentMetrics paymentMetrics;
-
 	private static final Long AUCTION_ID = 100L;
 	private static final Long BIDDER_ID = 1L;
 	private static final Long SELLER_ID = 2L;
 	private static final int FINAL_PRICE = 100000;
+	@InjectMocks
+	private PaymentRefundUseCase paymentRefundUseCase;
+	@Mock
+	private AuctionOrderApiClient auctionOrderApiClient;
+	@Mock
+	private SettlementRepository settlementRepository;
+	@Mock
+	private PaymentTransactionRepository transactionRepository;
+	@Mock
+	private PaymentSupport paymentSupport;
+	@Mock
+	private PaymentMetrics paymentMetrics;
 
 	@Test
 	@DisplayName("성공: 환불 처리 시 지갑 잔액 증가 및 상태 변경")

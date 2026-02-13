@@ -33,20 +33,20 @@ public class PaymentHoldDepositUseCase {
 
 		// 1. 멱등성 체크 (memberId로 조회)
 		return depositRepository.findByMemberIdAndAuctionId(memberId, request.auctionId())
-				.map(deposit -> {
-					if (deposit.getStatus() == DepositStatus.RELEASED) {
-						// 이미 환급된 경우: 다시 돈을 묶음 (재입찰)
-						return executeReHold(deposit, member, request.amount());
-					}
-					// 이미 HOLD 상태이거나 다른 처리 중인 경우: 기존 정보 반환
-					return new DepositHoldResponseDto(
-							deposit.getId(),
-							deposit.getAuctionId(),
-							deposit.getAmount(),
-							deposit.getStatus().name(),
-							deposit.getCreatedAt());
-				})
-				.orElseGet(() -> executeHold(member, request));
+			.map(deposit -> {
+				if (deposit.getStatus() == DepositStatus.RELEASED) {
+					// 이미 환급된 경우: 다시 돈을 묶음 (재입찰)
+					return executeReHold(deposit, member, request.amount());
+				}
+				// 이미 HOLD 상태이거나 다른 처리 중인 경우: 기존 정보 반환
+				return new DepositHoldResponseDto(
+					deposit.getId(),
+					deposit.getAuctionId(),
+					deposit.getAmount(),
+					deposit.getStatus().name(),
+					deposit.getCreatedAt());
+			})
+			.orElseGet(() -> executeHold(member, request));
 	}
 
 	private DepositHoldResponseDto executeReHold(Deposit deposit, PaymentMember member, int amount) {
@@ -59,23 +59,23 @@ public class PaymentHoldDepositUseCase {
 
 		// 3. 이력 기록
 		PaymentTransaction transaction = PaymentTransaction.builder()
-				.member(member)
-				.wallet(wallet)
-				.transactionType(WalletTransactionType.DEPOSIT_HOLD)
-				.balanceDelta(0)
-				.holdingDelta(amount)
-				.balanceAfter(wallet.getBalance())
-				.referenceType(ReferenceType.DEPOSIT)
-				.referenceId(deposit.getId())
-				.build();
+			.member(member)
+			.wallet(wallet)
+			.transactionType(WalletTransactionType.DEPOSIT_HOLD)
+			.balanceDelta(0)
+			.holdingDelta(amount)
+			.balanceAfter(wallet.getBalance())
+			.referenceType(ReferenceType.DEPOSIT)
+			.referenceId(deposit.getId())
+			.build();
 		transactionRepository.save(transaction);
 
 		return new DepositHoldResponseDto(
-				deposit.getId(),
-				deposit.getAuctionId(),
-				deposit.getAmount(),
-				deposit.getStatus().name(),
-				deposit.getCreatedAt());
+			deposit.getId(),
+			deposit.getAuctionId(),
+			deposit.getAmount(),
+			deposit.getStatus().name(),
+			deposit.getCreatedAt());
 	}
 
 	private DepositHoldResponseDto executeHold(PaymentMember member, DepositHoldRequestDto request) {

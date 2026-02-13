@@ -10,13 +10,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.bugzero.rarego.app.PaymentGetMyWalletUseCase;
-import com.bugzero.rarego.app.PaymentSupport;
 import com.bugzero.rarego.domain.PaymentMember;
 import com.bugzero.rarego.domain.Wallet;
-import com.bugzero.rarego.in.dto.WalletResponseDto;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
+import com.bugzero.rarego.in.dto.WalletResponseDto;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentGetMyWalletUseCaseTest {

@@ -1,19 +1,19 @@
 server:
-  port: 8085
-  forward-headers-strategy: native
-  tomcat:
-    relaxed-query-chars: '[,]'
+    port: 8085
+    forward-headers-strategy: native
+    tomcat:
+        relaxed-query-chars: '[,]'
 
 spring:
-  application:
-    name: notification-service
-  config:
-    import: optional:file:.env[.properties]
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
-  output:
-    ansi:
-      enabled: always
+    application:
+        name: notification-service
+    config:
+        import: optional:file:.env[.properties]
+    profiles:
+        active: ${SPRING_PROFILES_ACTIVE:dev}
+    output:
+        ansi:
+            enabled: always
 
   jpa:
     open-in-view: false
@@ -31,49 +31,49 @@ spring:
       port: ${SPRING_DATA_REDIS_PORT:6379}
       password: ${SPRING_DATA_REDIS_PASSWORD:}
 
-  datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/rarego?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
-    username: ${SPRING_DATASOURCE_USERNAME:rarego}
-    password: ${SPRING_DATASOURCE_PASSWORD:rarego}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
-      auto-commit: false
-      maximum-pool-size: 20
-      minimum-idle: 20
+    datasource:
+        url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/rarego?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+        username: ${SPRING_DATASOURCE_USERNAME:rarego}
+        password: ${SPRING_DATASOURCE_PASSWORD:rarego}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        hikari:
+            auto-commit: false
+            maximum-pool-size: 20
+            minimum-idle: 20
 
-  kafka:
-    consumer:
-      bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
-      group-id: ${spring.application.name}-group
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
-      properties:
-        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
-        spring.json.trusted.packages: "*"
+    kafka:
+        consumer:
+            bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+            group-id: ${spring.application.name}-group
+            auto-offset-reset: earliest
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+            properties:
+                spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+                spring.json.trusted.packages: "*"
 
 management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,prometheus
-  endpoint:
-    prometheus:
-      enabled: true
+    endpoints:
+        web:
+            exposure:
+                include: health,info,prometheus
+    endpoint:
+        prometheus:
+            enabled: true
 
 jwt:
-  secret: ${JWT_SECRET}
-  access-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:3600}
-  refresh-token-expire-seconds: ${JWT_REFRESH_TOKEN_EXPIRE_SECONDS:86400}
+    secret: ${JWT_SECRET}
+    access-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:3600}
+    refresh-token-expire-seconds: ${JWT_REFRESH_TOKEN_EXPIRE_SECONDS:86400}
 
 springdoc:
-  api-docs:
-    path: /api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-    tags-sorter: alpha
-    operations-sorter: alpha
+    api-docs:
+        path: /api-docs
+    swagger-ui:
+        path: /swagger-ui.html
+        tags-sorter: alpha
+        operations-sorter: alpha
 
 custom:
-  global:
-    internalBackUrl: ${INTERNAL_BACK_URL:http://rarego-nginx}
+    global:
+        internalBackUrl: ${INTERNAL_BACK_URL:http://rarego-nginx}

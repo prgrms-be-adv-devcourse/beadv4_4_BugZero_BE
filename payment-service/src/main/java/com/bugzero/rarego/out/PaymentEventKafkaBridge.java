@@ -19,11 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class PaymentEventKafkaBridge {
-	private final KafkaTemplate<String, Object> kafkaTemplate;
-
 	private static final String TOPIC_SETTLEMENT_FINISHED = "payment-settlement-finished";
 	private static final String TOPIC_AUCTION_PAYMENT_COMPLETED = "payment-auction-completed";
 	private static final String TOPIC_PAYMENT_EXPIRING_SOON = "payment-auction-expiring-soon";
+	private final KafkaTemplate<String, Object> kafkaTemplate;
 
 	@Async
 	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)

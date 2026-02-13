@@ -1,9 +1,8 @@
 package com.bugzero.rarego.app;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.*;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -17,61 +16,47 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
-import com.bugzero.rarego.app.PaymentAuctionTimeoutUseCase;
-import com.bugzero.rarego.app.PaymentSupport;
 import com.bugzero.rarego.domain.Deposit;
 import com.bugzero.rarego.domain.DepositStatus;
 import com.bugzero.rarego.domain.PaymentMember;
 import com.bugzero.rarego.domain.PaymentOutbox;
 import com.bugzero.rarego.domain.Wallet;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.out.AuctionOrderApiClient;
 import com.bugzero.rarego.out.DepositRepository;
 import com.bugzero.rarego.out.PaymentOutboxRepository;
 import com.bugzero.rarego.out.PaymentTransactionRepository;
 import com.bugzero.rarego.out.SettlementRepository;
-import com.bugzero.rarego.app.PaymentOutboxProcessor;
-import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.shared.auction.dto.AuctionOrderDto;
 import com.bugzero.rarego.shared.payment.event.PaymentTimeoutEvent;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 @ExtendWith(MockitoExtension.class)
 class PaymentAuctionTimeoutUseCaseTest {
-
-	@InjectMocks
-	private PaymentAuctionTimeoutUseCase paymentAuctionTimeoutUseCase;
-
-	@Mock
-	private AuctionOrderApiClient auctionOrderApiClient;
-
-	@Mock
-	private DepositRepository depositRepository;
-
-	@Mock
-	private PaymentTransactionRepository transactionRepository;
-
-	@Mock
-	private SettlementRepository settlementRepository;
-
-	@Mock
-	private PaymentSupport paymentSupport;
-
-	@Mock
-	private ApplicationEventPublisher eventPublisher;
-
-	@Mock
-	private PaymentOutboxRepository paymentOutboxRepository;
-
-	@Mock
-	private PaymentOutboxProcessor paymentOutboxProcessor;
 
 	private static final Long AUCTION_ID = 100L;
 	private static final Long BIDDER_ID = 1L;
 	private static final Long SELLER_ID = 2L;
 	private static final int FINAL_PRICE = 100000;
 	private static final int DEPOSIT_AMOUNT = 10000;
+	@InjectMocks
+	private PaymentAuctionTimeoutUseCase paymentAuctionTimeoutUseCase;
+	@Mock
+	private AuctionOrderApiClient auctionOrderApiClient;
+	@Mock
+	private DepositRepository depositRepository;
+	@Mock
+	private PaymentTransactionRepository transactionRepository;
+	@Mock
+	private SettlementRepository settlementRepository;
+	@Mock
+	private PaymentSupport paymentSupport;
+	@Mock
+	private ApplicationEventPublisher eventPublisher;
+	@Mock
+	private PaymentOutboxRepository paymentOutboxRepository;
+	@Mock
+	private PaymentOutboxProcessor paymentOutboxProcessor;
 
 	@Test
 	@DisplayName("성공: 타임아웃 처리 후 PaymentTimeoutEvent 발행")

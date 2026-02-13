@@ -1,13 +1,13 @@
 spring:
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
+    jpa:
+        hibernate:
+            ddl-auto: update
+        show-sql: true
 
 logging:
-  level:
-    root: INFO
-    org.hibernate.SQL: DEBUG
-    org.hibernate.orm.jdbc.bind: TRACE
-    org.hibernate.orm.jdbc.extract: TRACE
-    org.springframework.transaction.interceptor: TRACE
+    level:
+        root: INFO
+        org.hibernate.SQL: DEBUG
+        org.hibernate.orm.jdbc.bind: TRACE
+        org.hibernate.orm.jdbc.extract: TRACE
+        org.springframework.transaction.interceptor: TRACE

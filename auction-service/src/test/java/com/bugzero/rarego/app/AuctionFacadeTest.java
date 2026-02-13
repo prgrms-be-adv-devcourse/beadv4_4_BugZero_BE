@@ -9,6 +9,7 @@ import com.bugzero.rarego.in.dto.*;
 import com.bugzero.rarego.out.AuctionOrderRepository;
 import com.bugzero.rarego.shared.auction.type.AuctionStatus;
 import com.bugzero.rarego.shared.payment.out.PaymentApiClient;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,11 +37,11 @@ import static org.mockito.Mockito.doNothing;
 @ExtendWith(MockitoExtension.class)
 class AuctionFacadeTest {
 
-    @InjectMocks
-    private AuctionFacade auctionFacade;
+	@InjectMocks
+	private AuctionFacade auctionFacade;
 
-    @Mock
-    private AuctionCreateBidUseCase auctionCreateBidUseCase;
+	@Mock
+	private AuctionCreateBidUseCase auctionCreateBidUseCase;
 
     @Mock
     private AuctionReadUseCase auctionReadUseCase;

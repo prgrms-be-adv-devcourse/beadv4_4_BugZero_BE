@@ -66,6 +66,17 @@ public class Settlement extends BaseIdAndTime {
 			.build();
 	}
 
+	public static Settlement createFromForfeit(Long auctionId, PaymentMember seller, int forfeitAmount) {
+		return Settlement.builder()
+			.auctionId(auctionId)
+			.seller(seller)
+			.salesAmount(forfeitAmount)
+			.feeAmount(0)
+			.settlementAmount(forfeitAmount)
+			.status(SettlementStatus.READY)
+			.build();
+	}
+
 	public void complete() {
 		this.status = SettlementStatus.DONE;
 	}
@@ -87,16 +98,5 @@ public class Settlement extends BaseIdAndTime {
 	// 환불 시 실패 처리
 	public void cancel() {
 		this.status = SettlementStatus.CANCELED;
-	}
-
-	public static Settlement createFromForfeit(Long auctionId, PaymentMember seller, int forfeitAmount) {
-		return Settlement.builder()
-			.auctionId(auctionId)
-			.seller(seller)
-			.salesAmount(forfeitAmount)
-			.feeAmount(0)
-			.settlementAmount(forfeitAmount)
-			.status(SettlementStatus.READY)
-			.build();
 	}
 }

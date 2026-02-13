@@ -19,16 +19,14 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.bugzero.rarego.app.PaymentGetWalletTransactionsUseCase;
-import com.bugzero.rarego.app.PaymentSupport;
 import com.bugzero.rarego.domain.PaymentMember;
 import com.bugzero.rarego.domain.PaymentTransaction;
 import com.bugzero.rarego.domain.ReferenceType;
 import com.bugzero.rarego.domain.Wallet;
 import com.bugzero.rarego.domain.WalletTransactionType;
+import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.in.dto.WalletTransactionResponseDto;
 import com.bugzero.rarego.out.PaymentTransactionRepository;
-import com.bugzero.rarego.global.response.PagedResponseDto;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentGetWalletTransactionsUseCaseTest {

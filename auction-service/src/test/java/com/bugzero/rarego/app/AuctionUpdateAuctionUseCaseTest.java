@@ -34,7 +34,6 @@ class AuctionUpdateAuctionUseCaseTest {
 	private AuctionMember commonSeller;
 	private Auction spyAuction;
 
-
 	@BeforeEach
 	void setUp() {
 		// 멤버 생성
@@ -53,7 +52,6 @@ class AuctionUpdateAuctionUseCaseTest {
 		// 매 테스트마다 독립적인 상태를 보장하기 위해 Spy 객체화
 		spyAuction = spy(auction);
 	}
-
 
 	@Test
 	@DisplayName("경매 수정 성공: 유효한 요청일 경우 호가 단위를 재계산하여 수정을 완료한다")

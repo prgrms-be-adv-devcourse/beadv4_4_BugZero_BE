@@ -41,7 +41,7 @@ public class NotificationSseSupport {
 		sseEmitters.forEach(
 			(emitterId, emitter) -> sendToClient(emitter, emitterId, "notification", response));
 	}
-	
+
 	private void sendToClient(SseEmitter emitter, String emitterId, String eventName, Object data) {
 		try {
 			emitter.send(SseEmitter.event()

@@ -10,8 +10,8 @@ import java.time.LocalDateTime;
  * @param newEndTime 변경된 종료 시간
  */
 public record AuctionUpdatedEvent(
-        Long auctionId,
-        LocalDateTime oldEndTime,
-        LocalDateTime newEndTime
+	Long auctionId,
+	LocalDateTime oldEndTime,
+	LocalDateTime newEndTime
 ) {
 }

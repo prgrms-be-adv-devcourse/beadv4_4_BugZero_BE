@@ -14,13 +14,13 @@ import com.bugzero.rarego.config.PaymentMetrics;
 import com.bugzero.rarego.domain.Payment;
 import com.bugzero.rarego.domain.PaymentMember;
 import com.bugzero.rarego.domain.PaymentStatus;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.in.dto.PaymentConfirmRequestDto;
 import com.bugzero.rarego.in.dto.PaymentConfirmResponseDto;
 import com.bugzero.rarego.in.dto.TossPaymentsConfirmResponseDto;
 import com.bugzero.rarego.out.PaymentRepository;
 import com.bugzero.rarego.out.TossPaymentsApiClient;
-import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.response.ErrorType;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentConfirmPaymentUseCaseTest {

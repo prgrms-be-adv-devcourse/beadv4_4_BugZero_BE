@@ -3,12 +3,12 @@ package com.bugzero.rarego.in;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+
 import com.bugzero.rarego.app.PaymentOutboxProcessor;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 
 @Slf4j
 @Component

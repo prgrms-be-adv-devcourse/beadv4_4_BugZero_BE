@@ -13,12 +13,11 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class NotificationSyncMemberUseCase {
 	private final NotificationMemberRepository notificationMemberRepository;
 
+	@Transactional
 	public NotificationMember syncMember(MemberDto member) {
-
 		Optional<NotificationMember> existedOpt = notificationMemberRepository.findById(member.id());
 
 		/**

@@ -1,55 +1,57 @@
 package com.bugzero.rarego.app;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.bugzero.rarego.domain.Auction;
 import com.bugzero.rarego.domain.AuctionBookmark;
 import com.bugzero.rarego.domain.AuctionMember;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.in.dto.AuctionAddBookmarkResponseDto;
 import com.bugzero.rarego.in.dto.AuctionRemoveBookmarkResponseDto;
 import com.bugzero.rarego.out.AuctionBookmarkRepository;
-import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.response.ErrorType;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class AuctionBookmarkUseCase {
 
-    private final AuctionBookmarkRepository auctionBookmarkRepository;
-    private final AuctionSupport auctionSupport;
+	private final AuctionBookmarkRepository auctionBookmarkRepository;
+	private final AuctionSupport auctionSupport;
 
-    @Transactional
-    public AuctionAddBookmarkResponseDto addBookmark(String publicId, Long auctionId) {
-        AuctionMember member = auctionSupport.getPublicMember(publicId);
+	@Transactional
+	public AuctionAddBookmarkResponseDto addBookmark(String publicId, Long auctionId) {
+		AuctionMember member = auctionSupport.getPublicMember(publicId);
 
-        Auction auction = auctionSupport.findAuctionById(auctionId);
+		Auction auction = auctionSupport.findAuctionById(auctionId);
 
-        // 중복 확인
-        if (auctionBookmarkRepository.existsByAuctionIdAndMemberId(auctionId, member.getId()))
-            throw new CustomException(ErrorType.BOOKMARK_ALREADY_EXISTS);
+		// 중복 확인
+		if (auctionBookmarkRepository.existsByAuctionIdAndMemberId(auctionId, member.getId()))
+			throw new CustomException(ErrorType.BOOKMARK_ALREADY_EXISTS);
 
-        // 북마크 저장
-        AuctionBookmark bookmark = AuctionBookmark.builder()
-                .memberId(member.getId())
-                .auctionId(auctionId)
-                .productId(auction.getProductId())
-                .build();
+		// 북마크 저장
+		AuctionBookmark bookmark = AuctionBookmark.builder()
+			.memberId(member.getId())
+			.auctionId(auctionId)
+			.productId(auction.getProductId())
+			.build();
 
-        auctionBookmarkRepository.save(bookmark);
+		auctionBookmarkRepository.save(bookmark);
 
-        return AuctionAddBookmarkResponseDto.of(true, auctionId);
-    }
+		return AuctionAddBookmarkResponseDto.of(true, auctionId);
+	}
 
-    @Transactional
-    public AuctionRemoveBookmarkResponseDto removeBookmark(String publicId, Long auctionId) {
-        AuctionMember member = auctionSupport.getPublicMember(publicId);
+	@Transactional
+	public AuctionRemoveBookmarkResponseDto removeBookmark(String publicId, Long auctionId) {
+		AuctionMember member = auctionSupport.getPublicMember(publicId);
 
-        AuctionBookmark bookmark = auctionBookmarkRepository.findByAuctionIdAndMemberId(auctionId, member.getId())
-                .orElseThrow(() -> new CustomException(ErrorType.BOOKMARK_NOT_FOUND));
+		AuctionBookmark bookmark = auctionBookmarkRepository.findByAuctionIdAndMemberId(auctionId, member.getId())
+			.orElseThrow(() -> new CustomException(ErrorType.BOOKMARK_NOT_FOUND));
 
-        auctionBookmarkRepository.delete(bookmark);
+		auctionBookmarkRepository.delete(bookmark);
 
-        return AuctionRemoveBookmarkResponseDto.of(true, auctionId);
-    }
+		return AuctionRemoveBookmarkResponseDto.of(true, auctionId);
+	}
 }

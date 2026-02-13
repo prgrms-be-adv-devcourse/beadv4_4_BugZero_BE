@@ -8,8 +8,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.bugzero.rarego.app.PaymentAuctionTimeoutUseCase;
-import com.bugzero.rarego.shared.auction.dto.AuctionOrderDto;
 import com.bugzero.rarego.out.AuctionOrderApiClient;
+import com.bugzero.rarego.shared.auction.dto.AuctionOrderDto;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

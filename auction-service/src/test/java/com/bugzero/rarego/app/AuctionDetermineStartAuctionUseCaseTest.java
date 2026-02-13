@@ -17,9 +17,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.bugzero.rarego.domain.Auction;
-import com.bugzero.rarego.out.AuctionRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
+import com.bugzero.rarego.out.AuctionRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AuctionDetermineStartAuctionUseCaseTest {
@@ -68,7 +68,6 @@ class AuctionDetermineStartAuctionUseCaseTest {
 		);
 	}
 
-
 	@Test
 	@DisplayName("실패: 경매 일정이 확정되지 않은 경매를 찾을 수 없으면 예외가 발생한다")
 	void determineStartAuction_fail_not_found() {
@@ -81,8 +80,5 @@ class AuctionDetermineStartAuctionUseCaseTest {
 			.isInstanceOf(CustomException.class)
 			.hasFieldOrPropertyWithValue("errorType", ErrorType.AUCTION_NOT_FOUND);
 	}
-
-
-
 
 }

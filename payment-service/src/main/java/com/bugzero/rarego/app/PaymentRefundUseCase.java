@@ -2,10 +2,10 @@ package com.bugzero.rarego.app;
 
 import java.util.Optional;
 
-import com.bugzero.rarego.config.PaymentMetrics;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.bugzero.rarego.config.PaymentMetrics;
 import com.bugzero.rarego.domain.PaymentMember;
 import com.bugzero.rarego.domain.PaymentTransaction;
 import com.bugzero.rarego.domain.ReferenceType;
@@ -13,13 +13,13 @@ import com.bugzero.rarego.domain.Settlement;
 import com.bugzero.rarego.domain.SettlementStatus;
 import com.bugzero.rarego.domain.Wallet;
 import com.bugzero.rarego.domain.WalletTransactionType;
-import com.bugzero.rarego.in.dto.RefundResponseDto;
-import com.bugzero.rarego.out.PaymentTransactionRepository;
-import com.bugzero.rarego.out.SettlementRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
-import com.bugzero.rarego.shared.auction.dto.AuctionOrderDto;
+import com.bugzero.rarego.in.dto.RefundResponseDto;
 import com.bugzero.rarego.out.AuctionOrderApiClient;
+import com.bugzero.rarego.out.PaymentTransactionRepository;
+import com.bugzero.rarego.out.SettlementRepository;
+import com.bugzero.rarego.shared.auction.dto.AuctionOrderDto;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

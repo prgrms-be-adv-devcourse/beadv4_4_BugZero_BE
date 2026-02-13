@@ -1,9 +1,17 @@
 package com.bugzero.rarego.in;
 
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.bugzero.rarego.app.PaymentFacade;
-import com.bugzero.rarego.in.dto.RefundResponseDto;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
 import com.bugzero.rarego.global.response.SuccessType;
+import com.bugzero.rarego.in.dto.RefundResponseDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldRequestDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
 
@@ -12,8 +20,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/internal/payments")
@@ -38,6 +44,7 @@ public class InternalPaymentController {
 		paymentFacade.releaseDeposit(auctionId, memberPublicId);
 		return SuccessResponseDto.from(SuccessType.OK);
 	}
+
 	@Operation(summary = "환불 처리", description = "운영자가 결제 완료된 건을 환불 처리합니다")
 	@PostMapping("/refunds/{auctionId}")
 	public SuccessResponseDto<RefundResponseDto> processRefund(

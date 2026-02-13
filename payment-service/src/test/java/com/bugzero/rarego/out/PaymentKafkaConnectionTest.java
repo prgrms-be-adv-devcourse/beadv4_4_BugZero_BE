@@ -38,12 +38,11 @@ import com.bugzero.rarego.shared.payment.event.SettlementFinishedEvent;
 })
 class PaymentKafkaConnectionTest {
 
-	@Autowired
-	private KafkaTemplate<String, Object> kafkaTemplate;
-
 	private static final String TOPIC_SETTLEMENT = "payment-settlement-finished";
 	private static final String TOPIC_PAYMENT_COMPLETED = "payment-auction-completed";
 	private static final String TOPIC_EXPIRING_SOON = "payment-auction-expiring-soon";
+	@Autowired
+	private KafkaTemplate<String, Object> kafkaTemplate;
 
 	@Test
 	@DisplayName("1. 정산 완료 이벤트(SettlementFinishedEvent) 전송 테스트")

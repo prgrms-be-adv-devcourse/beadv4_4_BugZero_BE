@@ -7,7 +7,7 @@ package com.bugzero.rarego.domain.event;
  * @param productId 상품 ID
  */
 public record AuctionFailedEvent(
-        Long auctionId,
-        Long productId
+	Long auctionId,
+	Long productId
 ) {
 }

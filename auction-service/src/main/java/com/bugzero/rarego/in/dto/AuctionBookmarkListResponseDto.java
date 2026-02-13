@@ -4,10 +4,10 @@ import lombok.Builder;
 
 @Builder
 public record AuctionBookmarkListResponseDto(
-        Long bookmarkId,
-        AuctionListResponseDto auctionInfo
+	Long bookmarkId,
+	AuctionListResponseDto auctionInfo
 ) {
-    public static AuctionBookmarkListResponseDto of(Long bookmarkId, AuctionListResponseDto auctionInfo) {
-        return new AuctionBookmarkListResponseDto(bookmarkId, auctionInfo);
-    }
+	public static AuctionBookmarkListResponseDto of(Long bookmarkId, AuctionListResponseDto auctionInfo) {
+		return new AuctionBookmarkListResponseDto(bookmarkId, auctionInfo);
+	}
 }

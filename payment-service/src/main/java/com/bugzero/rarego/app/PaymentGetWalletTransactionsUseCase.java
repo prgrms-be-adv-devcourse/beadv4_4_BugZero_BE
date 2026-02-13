@@ -12,9 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.domain.PaymentTransaction;
 import com.bugzero.rarego.domain.WalletTransactionType;
+import com.bugzero.rarego.global.response.PagedResponseDto;
 import com.bugzero.rarego.in.dto.WalletTransactionResponseDto;
 import com.bugzero.rarego.out.PaymentTransactionRepository;
-import com.bugzero.rarego.global.response.PagedResponseDto;
 
 import lombok.RequiredArgsConstructor;
 

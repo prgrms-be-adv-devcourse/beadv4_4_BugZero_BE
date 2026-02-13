@@ -9,12 +9,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.bugzero.rarego.domain.Auction;
 import com.bugzero.rarego.domain.AuctionMember;
 import com.bugzero.rarego.domain.AuctionOrderStatus;
-import com.bugzero.rarego.out.AuctionOrderRepository;
-import com.bugzero.rarego.out.AuctionRepository;
 import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.in.dto.AuctionRelistRequestDto;
 import com.bugzero.rarego.in.dto.AuctionRelistResponseDto;
+import com.bugzero.rarego.out.AuctionOrderRepository;
+import com.bugzero.rarego.out.AuctionRepository;
 import com.bugzero.rarego.shared.auction.event.AuctionRelistedEvent;
 
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,8 @@ public class AuctionRelistUseCase {
 	private final ApplicationEventPublisher eventPublisher;
 
 	@Transactional
-	public AuctionRelistResponseDto relistAuction(Long oldAuctionId, String memberPublicId, AuctionRelistRequestDto request) {
+	public AuctionRelistResponseDto relistAuction(Long oldAuctionId, String memberPublicId,
+		AuctionRelistRequestDto request) {
 		// 회원 및 기존 경매 조회
 		AuctionMember seller = support.getPublicMember(memberPublicId);
 		Auction oldAuction = support.findAuctionById(oldAuctionId);

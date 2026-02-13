@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.domain.PaymentMember;
 import com.bugzero.rarego.domain.SettlementStatus;

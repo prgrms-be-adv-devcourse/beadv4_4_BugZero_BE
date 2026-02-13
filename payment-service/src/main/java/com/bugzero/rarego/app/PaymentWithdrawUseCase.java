@@ -1,10 +1,10 @@
 package com.bugzero.rarego.app;
 
+import org.springframework.stereotype.Service;
+
 import com.bugzero.rarego.shared.auction.out.AuctionApiClient;
 
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor

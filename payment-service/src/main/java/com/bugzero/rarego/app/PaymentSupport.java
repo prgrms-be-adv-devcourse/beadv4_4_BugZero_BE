@@ -10,12 +10,12 @@ import com.bugzero.rarego.domain.Payment;
 import com.bugzero.rarego.domain.PaymentMember;
 import com.bugzero.rarego.domain.Settlement;
 import com.bugzero.rarego.domain.Wallet;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.out.PaymentMemberRepository;
 import com.bugzero.rarego.out.PaymentRepository;
 import com.bugzero.rarego.out.SettlementRepository;
 import com.bugzero.rarego.out.WalletRepository;
-import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.response.ErrorType;
 
 import lombok.RequiredArgsConstructor;
 

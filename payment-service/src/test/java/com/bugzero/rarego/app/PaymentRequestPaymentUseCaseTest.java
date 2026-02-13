@@ -11,16 +11,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.bugzero.rarego.app.PaymentRequestPaymentUseCase;
-import com.bugzero.rarego.app.PaymentSupport;
 import com.bugzero.rarego.domain.Payment;
 import com.bugzero.rarego.domain.PaymentMember;
 import com.bugzero.rarego.domain.PaymentStatus;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.in.dto.PaymentRequestDto;
 import com.bugzero.rarego.in.dto.PaymentRequestResponseDto;
 import com.bugzero.rarego.out.PaymentRepository;
-import com.bugzero.rarego.global.exception.CustomException;
-import com.bugzero.rarego.global.response.ErrorType;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentRequestPaymentUseCaseTest {

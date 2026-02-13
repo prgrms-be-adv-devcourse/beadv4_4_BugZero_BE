@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * @param endTime   경매 종료 시간
  */
 public record AuctionCreatedEvent(
-        Long auctionId,
-        LocalDateTime endTime
+	Long auctionId,
+	LocalDateTime endTime
 ) {
 }

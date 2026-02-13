@@ -10,10 +10,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.domain.Settlement;
 import com.bugzero.rarego.domain.SettlementStatus;
-import com.bugzero.rarego.shared.payment.event.SettlementFinishedEvent;
-import com.bugzero.rarego.shared.payment.dto.SettlementResponseDto;
-import com.bugzero.rarego.out.SettlementRepository;
 import com.bugzero.rarego.global.event.EventPublisher;
+import com.bugzero.rarego.out.SettlementRepository;
+import com.bugzero.rarego.shared.payment.dto.SettlementResponseDto;
+import com.bugzero.rarego.shared.payment.event.SettlementFinishedEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

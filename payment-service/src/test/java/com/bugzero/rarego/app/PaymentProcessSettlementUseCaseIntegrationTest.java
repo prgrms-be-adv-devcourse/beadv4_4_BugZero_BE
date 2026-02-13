@@ -30,28 +30,21 @@ import com.bugzero.rarego.out.WalletRepository;
 
 @SpringBootTest(properties = "custom.payment.settlement.holdDays=-1")
 class PaymentProcessSettlementUseCaseIntegrationTest {
+	private final Long SYSTEM_ID = 2L;
 	@MockitoBean
 	private KafkaTemplate<String, Object> kafkaTemplate;
-
 	@Autowired
 	private PaymentProcessSettlementUseCase useCase;
-
 	@Autowired
 	private PaymentMemberRepository memberRepository;
-
 	@Autowired
 	private WalletRepository walletRepository;
-
 	@Autowired
 	private SettlementRepository settlementRepository;
-
 	@Autowired
 	private PaymentTransactionRepository paymentTransactionRepository;
-
 	@Autowired
 	private SettlementFeeRepository settlementFeeRepository;
-
-	private final Long SYSTEM_ID = 2L;
 
 	@BeforeEach
 	void setUp() {

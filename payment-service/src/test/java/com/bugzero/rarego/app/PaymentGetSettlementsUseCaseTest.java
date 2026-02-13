@@ -22,9 +22,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.bugzero.rarego.domain.PaymentMember;
 import com.bugzero.rarego.domain.Settlement;
 import com.bugzero.rarego.domain.SettlementStatus;
-import com.bugzero.rarego.shared.payment.dto.SettlementResponseDto;
-import com.bugzero.rarego.out.SettlementRepository;
 import com.bugzero.rarego.global.response.PagedResponseDto;
+import com.bugzero.rarego.out.SettlementRepository;
+import com.bugzero.rarego.shared.payment.dto.SettlementResponseDto;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentGetSettlementsUseCaseTest {
