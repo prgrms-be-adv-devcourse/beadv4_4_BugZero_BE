@@ -1,5 +1,7 @@
 package com.bugzero.rarego.app;
 
+import java.util.UUID;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,8 +26,8 @@ public class AuthJoinAccountUseCase {
 
 	@Transactional
 	public Account join(Provider provider, String providerId, String email) {
-		// 1. Member 생성/조회(멱등하게) -> memberPublicId 받기
-		MemberJoinResponseDto memberResponse = memberApiClient.join(email);
+		String requestedMemberPublicId = UUID.randomUUID().toString();
+		MemberJoinResponseDto memberResponse = memberApiClient.join(email, requestedMemberPublicId);
 		String memberPublicId = memberResponse.memberPublicId();
 
 		if (memberPublicId == null || memberPublicId.isBlank()) {

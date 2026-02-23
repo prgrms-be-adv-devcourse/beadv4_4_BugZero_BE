@@ -1,6 +1,7 @@
 package com.bugzero.rarego.shared.member.domain;
 
 public record MemberJoinRequestDto(
-	String email
+	String email,
+	String memberPublicId
 ) {
 }

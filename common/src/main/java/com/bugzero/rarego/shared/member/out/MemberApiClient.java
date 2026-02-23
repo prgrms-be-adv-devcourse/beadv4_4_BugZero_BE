@@ -34,8 +34,8 @@ public class MemberApiClient {
 		this.systemAuthTokenProvider = systemAuthTokenProvider;
 	}
 
-	public MemberJoinResponseDto join(String email) {
-		MemberJoinRequestDto request = new MemberJoinRequestDto(email);
+	public MemberJoinResponseDto join(String email, String memberPublicId) {
+		MemberJoinRequestDto request = new MemberJoinRequestDto(email, memberPublicId);
 		SuccessResponseDto<MemberJoinResponseDto> response = internalRestClient.post()
 			.uri("/me")
 			.header("Authorization", "Bearer " + systemAuthTokenProvider.getSystemAccessToken())

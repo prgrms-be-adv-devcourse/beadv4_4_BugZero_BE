@@ -31,7 +31,7 @@ public class InternalMemberController {
 	@Operation(summary = "소셜 로그인 이후 Member 생성(회원 가입)", description = "소셜 로그인 결과(email/provider)를 받아 회원가입 처리합니다.")
 	@PostMapping("/me")
 	public SuccessResponseDto<MemberJoinResponseDto> join(@RequestBody MemberJoinRequestDto requestDto) {
-		MemberJoinResponseDto responseDto = memberFacade.join(requestDto.email());
+		MemberJoinResponseDto responseDto = memberFacade.join(requestDto.email(), requestDto.memberPublicId());
 		return SuccessResponseDto.from(SuccessType.CREATED, responseDto);
 	}
 

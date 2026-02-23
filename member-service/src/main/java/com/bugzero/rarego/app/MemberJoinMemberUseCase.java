@@ -1,7 +1,6 @@
 package com.bugzero.rarego.app;
 
 import java.security.SecureRandom;
-import java.util.UUID;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -56,21 +55,24 @@ public class MemberJoinMemberUseCase {
 		return checkedNickname;
 	}
 
-	public MemberJoinResponseDto join(String email) {
+	public MemberJoinResponseDto join(String email, String memberPublicId) {
 		if (email == null || email.isBlank()) {
 			throw new CustomException(ErrorType.MEMBER_EMAIL_EMPTY);
 		}
-		return memberRepository.findByEmail(email)
+		if (memberPublicId == null || memberPublicId.isBlank()) {
+			throw new CustomException(ErrorType.MEMBER_JOIN_FAILED);
+		}
+		return memberRepository.findByPublicId(memberPublicId)
 			.map(existing -> new MemberJoinResponseDto(existing.getNickname(), existing.getPublicId()))
-			.orElseGet(() -> createAndPublishMember(email));
+			.orElseGet(() -> memberRepository.findByEmail(email)
+				.map(existing -> new MemberJoinResponseDto(existing.getNickname(), existing.getPublicId()))
+				.orElseGet(() -> createAndPublishMember(email, memberPublicId)));
 	}
 
-	private MemberJoinResponseDto createAndPublishMember(String email) {
-		UUID newPublicId = UUID.randomUUID();
-
+	private MemberJoinResponseDto createAndPublishMember(String email, String memberPublicId) {
 		try {
 			Member member = Member.builder()
-				.publicId(newPublicId.toString())
+				.publicId(memberPublicId)
 				.nickname(uniqueMemberNickname())
 				.email(email)
 				.build();
@@ -81,7 +83,8 @@ public class MemberJoinMemberUseCase {
 			outboxUseCase.saveOutbox(event);
 			return responseDto;
 		} catch (DataIntegrityViolationException e) {
-			Member existing = memberRepository.findByEmail(email).orElseThrow(() -> e);
+			Member existing = memberRepository.findByPublicId(memberPublicId)
+				.orElseGet(() -> memberRepository.findByEmail(email).orElseThrow(() -> e));
 			return new MemberJoinResponseDto(existing.getNickname(), existing.getPublicId());
 		} catch (Exception e) {
 			throw new CustomException(ErrorType.MEMBER_JOIN_FAILED);

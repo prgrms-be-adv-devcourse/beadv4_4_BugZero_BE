@@ -23,8 +23,8 @@ public class MemberFacade {
 	private final MemberWithdrawMemberUseCase memberWithdrawMemberUseCase;
 
 	@Transactional
-	public MemberJoinResponseDto join(String email) {
-		return memberJoinMemberUseCase.join(email);
+	public MemberJoinResponseDto join(String email, String memberPublicId) {
+		return memberJoinMemberUseCase.join(email, memberPublicId);
 	}
 
 	@Transactional(readOnly = true)
