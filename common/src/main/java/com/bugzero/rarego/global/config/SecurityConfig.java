@@ -29,6 +29,7 @@ import com.bugzero.rarego.global.security.SecurityPaths;
 
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -51,6 +52,7 @@ public class SecurityConfig {
 			auth -> auth
 				.requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
 				.requestMatchers(SecurityPaths.PUBLIC).permitAll()
+				.dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
 				.requestMatchers(HttpMethod.GET, SecurityPaths.PUBLIC_GET).permitAll()
 				.requestMatchers("/api/v1/internal/**").hasRole("SYSTEM")
 				.anyRequest().authenticated()

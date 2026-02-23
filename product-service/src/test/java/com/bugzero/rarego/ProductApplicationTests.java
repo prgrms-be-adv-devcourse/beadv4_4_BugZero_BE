@@ -11,7 +11,7 @@ import com.bugzero.rarego.ai.config.TestAiConfig;
 
 @SpringBootTest
 @Import({TestAiConfig.class})
-class ProductServiceApplicationTests {
+class ProductApplicationTests {
 
 	@MockitoBean
 	private ChatModel chatModel;

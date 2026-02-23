@@ -1,9 +1,15 @@
 package com.bugzero.rarego.in;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.annotation.KafkaHandler;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.app.NotificationFacade;
+import com.bugzero.rarego.global.inbox.app.InboxUseCase;
 import com.bugzero.rarego.shared.auction.event.AuctionEndedEvent;
 import com.bugzero.rarego.shared.auction.event.AuctionOutbidEvent;
 import com.bugzero.rarego.shared.auction.event.AuctionStartedEvent;
@@ -19,15 +25,40 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@KafkaListener(
+	topics = {
+		"payment-auction-completed",
+		"payment-auction-expiring-soon",
+		"payment-settlement-finished",
+		"auction-ended",
+		"auction-outbid",
+		"auction-started",
+		"member-joined",
+		"member-updated"
+	},
+	groupId = "${spring.kafka.consumer.group-id}",
+	containerFactory = "kafkaListenerContainerFactory"
+)
 public class NotificationConsumer {
+	@Value("${spring.kafka.consumer.group-id}")
+	private String consumerGroup;
+
 	private final NotificationFacade notificationFacade;
-	private static final String GROUP_ID = "${spring.kafka.consumer.group-id}";
+	private final InboxUseCase inboxUseCase;
 
 	/**
 	 * 낙찰 결제 완료
 	 */
-	@KafkaListener(topics = "payment-auction-completed", groupId = GROUP_ID)
-	public void consumePaymentCompleted(AuctionPaymentCompletedEvent event) {
+	@Transactional
+	@KafkaHandler
+	public void consumePaymentCompleted(
+		@Payload AuctionPaymentCompletedEvent event,
+		@Header("messageId") String messageId
+	) {
+		if (inboxUseCase.isAlreadyProcessed(messageId, consumerGroup)) {
+			return;
+		}
+
 		log.info(">> [Kafka] 결제 완료 이벤트 수신: auctionId={}", event.auctionId());
 		notificationFacade.createNotification(event);
 	}
@@ -35,8 +66,16 @@ public class NotificationConsumer {
 	/**
 	 * 낙찰 결제 마감 임박
 	 */
-	@KafkaListener(topics = "payment-auction-expiring-soon", groupId = GROUP_ID)
-	public void consumeExpiringSoon(AuctionPaymentExpiringSoonEvent event) {
+	@Transactional
+	@KafkaHandler
+	public void consumeExpiringSoon(
+		@Payload AuctionPaymentExpiringSoonEvent event,
+		@Header("messageId") String messageId
+	) {
+		if (inboxUseCase.isAlreadyProcessed(messageId, consumerGroup)) {
+			return;
+		}
+
 		log.info(">> [Kafka] 마감 임박 이벤트 수신: auctionId={}", event.auctionId());
 		notificationFacade.createNotification(event);
 	}
@@ -44,8 +83,16 @@ public class NotificationConsumer {
 	/**
 	 * 정산 완료
 	 */
-	@KafkaListener(topics = "payment-settlement-finished", groupId = GROUP_ID)
-	public void consumeSettlementFinished(SettlementFinishedEvent event) {
+	@Transactional
+	@KafkaHandler
+	public void consumeSettlementFinished(
+		@Payload SettlementFinishedEvent event,
+		@Header("messageId") String messageId
+	) {
+		if (inboxUseCase.isAlreadyProcessed(messageId, consumerGroup)) {
+			return;
+		}
+
 		log.info(">> [Kafka] 정산 완료 이벤트 수신: 총 {}건", event.settlements().size());
 		notificationFacade.createNotification(event);
 	}
@@ -53,8 +100,13 @@ public class NotificationConsumer {
 	/**
 	 * 낙찰 성공
 	 */
-	@KafkaListener(topics = "auction-ended", groupId = GROUP_ID)
-	public void consumeAuctionEnded(AuctionEndedEvent event) {
+	@Transactional
+	@KafkaHandler
+	public void consumeAuctionEnded(@Payload AuctionEndedEvent event, @Header("messageId") String messageId) {
+		if (inboxUseCase.isAlreadyProcessed(messageId, consumerGroup)) {
+			return;
+		}
+
 		log.info(">> [Kafka] 경매 낙찰 이벤트 수신: auctionId={}", event.auctionId());
 		notificationFacade.createNotification(event);
 	}
@@ -62,8 +114,13 @@ public class NotificationConsumer {
 	/**
 	 * 입찰가 추월
 	 */
-	@KafkaListener(topics = "auction-outbid", groupId = GROUP_ID)
-	public void consumeOutbid(AuctionOutbidEvent event) {
+	@Transactional
+	@KafkaHandler
+	public void consumeOutbid(@Payload AuctionOutbidEvent event, @Header("messageId") String messageId) {
+		if (inboxUseCase.isAlreadyProcessed(messageId, consumerGroup)) {
+			return;
+		}
+
 		log.info(">> [Kafka] 입찰가 추월 이벤트 수신: auctionId={}", event.auctionId());
 		notificationFacade.createNotification(event);
 	}
@@ -71,8 +128,13 @@ public class NotificationConsumer {
 	/**
 	 * 관심 경매 시작
 	 */
-	@KafkaListener(topics = "auction-started", groupId = GROUP_ID)
-	public void consumeAuctionStarted(AuctionStartedEvent event) {
+	@Transactional
+	@KafkaHandler
+	public void consumeAuctionStarted(@Payload AuctionStartedEvent event, @Header("messageId") String messageId) {
+		if (inboxUseCase.isAlreadyProcessed(messageId, consumerGroup)) {
+			return;
+		}
+
 		log.info(">> [Kafka] 관심 경매 시작 이벤트 수신: auctionId={}", event.auctionId());
 		notificationFacade.createNotification(event);
 	}
@@ -80,8 +142,13 @@ public class NotificationConsumer {
 	/**
 	 * notificationMember 생성 동기화
 	 */
-	@KafkaListener(topics = "member-joined")
-	public void consumeMemberJoined(MemberJoinedEvent event) {
+	@Transactional
+	@KafkaHandler
+	public void consumeMemberJoined(@Payload MemberJoinedEvent event, @Header("messageId") String messageId) {
+		if (inboxUseCase.isAlreadyProcessed(messageId, consumerGroup)) {
+			return;
+		}
+
 		try {
 			notificationFacade.syncMember(event.memberDto());
 			log.info("[notification] 회원 레플리카 등록 완료 - memberPublicId: {}", event.memberDto().publicId());
@@ -93,16 +160,25 @@ public class NotificationConsumer {
 
 	/**
 	 * notificationMember 수정 동기화
-	 * @param event
 	 */
-	@KafkaListener(topics = "member-updated")
-	public void consumeMemberUpdated(MemberUpdatedEvent event) {
+	@Transactional
+	@KafkaHandler
+	public void consumeMemberUpdated(@Payload MemberUpdatedEvent event, @Header("messageId") String messageId) {
+		if (inboxUseCase.isAlreadyProcessed(messageId, consumerGroup)) {
+			return;
+		}
+
 		try {
 			notificationFacade.syncMember(event.memberDto());
-			log.info("[notificaiton] 회원 레플리카 수정 완료 - memberPublicId: {}", event.memberDto().publicId());
+			log.info("[notification] 회원 레플리카 수정 완료 - memberPublicId: {}", event.memberDto().publicId());
 		} catch (Exception e) {
 			log.error("[notification] 회원 레플리카 수정 실패 - memberPublicId: {}", event.memberDto().publicId(), e);
 			throw e;
 		}
+	}
+
+	@KafkaHandler(isDefault = true)
+	public void defaultHandler(Object object) {
+		log.warn("[Notification] 수신된 이벤트 중 처리할 수 없는 타입입니다: {}", object.getClass().getName());
 	}
 }

@@ -5,6 +5,11 @@ metadata:
   namespace: rarego
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: auction-service
@@ -21,25 +26,36 @@ spec:
         resources:
           requests:
             memory: "256Mi"
-            cpu: "100m"
+            cpu: "50m"
           limits:
             memory: "512Mi"
-            cpu: "500m"
+            cpu: "300m"
         livenessProbe:
           httpGet:
             path: /actuator/health/liveness
             port: 8083
-          initialDelaySeconds: 30
+          initialDelaySeconds: 300
           periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 10
         readinessProbe:
           httpGet:
             path: /actuator/health/readiness
             port: 8083
-          initialDelaySeconds: 15
+          initialDelaySeconds: 120
           periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 10
+        startupProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8083
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 120
         env:
         - name: JAVA_OPTS
-          value: "-Xms128m -Xmx256m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+          value: "-Xms64m -Xmx128m -XX:+UseSerialGC -XX:MaxRAM=256m"
         - name: SPRING_DATASOURCE_URL
           value: "jdbc:mysql://mysql:3306/rarego_auction?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul"
         - name: SPRING_DATASOURCE_USERNAME

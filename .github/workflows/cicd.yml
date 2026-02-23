@@ -234,6 +234,7 @@ jobs:
           fi
           if [ "${{ needs.detect-changes.outputs.product }}" == "true" ] || [ "${{ needs.detect-changes.outputs.common }}" == "true" ]; then
             kustomize edit set image rarego-product-service=ghcr.io/${REPO_NAME}-product-service:${IMAGE_TAG}
+            kustomize edit set image rarego-product-elasticsearch=ghcr.io/${REPO_NAME}-product-elasticsearch:${IMAGE_TAG}
           fi
           if [ "${{ needs.detect-changes.outputs.payment }}" == "true" ] || [ "${{ needs.detect-changes.outputs.common }}" == "true" ]; then
             kustomize edit set image rarego-payment-service=ghcr.io/${REPO_NAME}-payment-service:${IMAGE_TAG}
@@ -309,6 +310,8 @@ jobs:
               \"kubectl --kubeconfig /etc/kubernetes/admin.conf patch serviceaccount default -n rarego -p '{\\\"imagePullSecrets\\\":[{\\\"name\\\":\\\"ghcr-creds\\\"}]}'\",
               \"kubectl --kubeconfig /etc/kubernetes/admin.conf rollout restart deployment -n rarego\",
               \"kubectl --kubeconfig /etc/kubernetes/admin.conf rollout restart statefulset -n rarego\",
+              \"kubectl --kubeconfig /etc/kubernetes/admin.conf -n rarego rollout status statefulset/mysql --timeout=300s\",
+              \"kubectl --kubeconfig /etc/kubernetes/admin.conf -n rarego exec mysql-0 -- mysql -uroot -p'${{ secrets.DB_ROOT_PASSWORD }}' -e \\\"CREATE USER IF NOT EXISTS '${{ secrets.DB_USERNAME }}'@'%' IDENTIFIED BY '${{ secrets.DB_PASSWORD }}'; ALTER USER '${{ secrets.DB_USERNAME }}'@'%' IDENTIFIED BY '${{ secrets.DB_PASSWORD }}'; GRANT ALL PRIVILEGES ON *.* TO '${{ secrets.DB_USERNAME }}'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;\\\"\",
               \"rm -rf /tmp/k8s\"
             ]" \
             --output text

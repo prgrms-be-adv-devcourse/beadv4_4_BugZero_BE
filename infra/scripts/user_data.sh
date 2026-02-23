@@ -107,6 +107,18 @@ kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisione
 sleep 10
 kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 
+# Ingress NGINX Controller 설치
+echo "Installing Ingress NGINX Controller..."
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx --create-namespace \
+  --set controller.kind=DaemonSet \
+  --set controller.hostNetwork=true \
+  --set controller.service.type=ClusterIP \
+  --set controller.dnsPolicy=ClusterFirstWithHostNet
+kubectl -n ingress-nginx rollout status daemonset/ingress-nginx-controller --timeout=180s
+
 # Cert-Manager 설치
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.17.0/cert-manager.yaml
 

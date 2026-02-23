@@ -1,8 +1,14 @@
 package com.bugzero.rarego.product.in;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.annotation.KafkaHandler;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.bugzero.rarego.global.inbox.app.InboxUseCase;
 import com.bugzero.rarego.product.app.ProductFacade;
 import com.bugzero.rarego.product.app.ProductSearchService;
 import com.bugzero.rarego.product.app.ProductSupport;
@@ -20,37 +26,57 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@KafkaListener(
+	topics = {"auction-management", "member-joined", "member-updated"},
+	groupId = "${spring.kafka.consumer.group-id}",
+	containerFactory = "kafkaListenerContainerFactory"
+)
 public class ProductConsumer {
-	private static final String GROUP_ID = "${spring.kafka.consumer.group-id}";
+	@Value("${spring.kafka.consumer.group-id}")
+	private String consumerGroup;
 
 	private final ProductFacade productFacade;
 	private final ProductSearchService productSearchService;
 	private final ProductSupport productSupport;
+	private final InboxUseCase inboxUseCase;
 
-	@KafkaListener(topics = "member-joined", groupId = GROUP_ID)
-	public void handleMemberJoined(MemberJoinedEvent event) {
+	/* --- 회원 관련 이벤트 핸들러 (통합됨) --- */
+
+	@Transactional
+	@KafkaHandler
+	public void onMemberEvent(@Payload MemberJoinedEvent event, @Header("messageId") String messageId) {
+		if (inboxUseCase.isAlreadyProcessed(messageId, consumerGroup))
+			return;
 		try {
 			productFacade.syncMember(event.memberDto());
 			log.info("[product] 회원 레플리카 등록 완료 - memberPublicId: {}", event.memberDto().publicId());
 		} catch (Exception e) {
-			log.error("회원 레플리카 등록 실패 - memberPublicId: {}", event.memberDto().publicId(), e);
+			log.error("[product] 회원 레플리카 등록 실패 - memberPublicId: {}", event.memberDto().publicId(), e);
 			throw e;
 		}
 	}
 
-	@KafkaListener(topics = "member-updated", groupId = GROUP_ID)
-	public void handleMemberUpdated(MemberUpdatedEvent event) {
+	@Transactional
+	@KafkaHandler
+	public void onMemberEvent(@Payload MemberUpdatedEvent event, @Header("messageId") String messageId) {
+		if (inboxUseCase.isAlreadyProcessed(messageId, consumerGroup))
+			return;
 		try {
 			productFacade.syncMember(event.memberDto());
 			log.info("[product] 회원 레플리카 수정 완료 - memberPublicId: {}", event.memberDto().publicId());
 		} catch (Exception e) {
-			log.error("회원 레플리카 수정 실패 - memberPublicId: {}", event.memberDto().publicId(), e);
+			log.error("[product] 회원 레플리카 수정 실패 - memberPublicId: {}", event.memberDto().publicId(), e);
 			throw e;
 		}
 	}
 
-	@KafkaListener(topics = "auction-started", groupId = GROUP_ID)
-	public void handleAuctionStarted(AuctionStartedEvent event) {
+	/* --- 상품/경매 관련 이벤트 핸들러 --- */
+
+	@Transactional
+	@KafkaHandler
+	public void onProductEvent(@Payload AuctionStartedEvent event, @Header("messageId") String messageId) {
+		if (inboxUseCase.isAlreadyProcessed(messageId, consumerGroup))
+			return;
 		try {
 			productSearchService.updateAuctionStatus(
 				event.productId(),
@@ -68,8 +94,11 @@ public class ProductConsumer {
 		}
 	}
 
-	@KafkaListener(topics = "auction-ended", groupId = GROUP_ID)
-	public void handleAuctionEnded(AuctionEndedEvent event) {
+	@Transactional
+	@KafkaHandler
+	public void onProductEvent(@Payload AuctionEndedEvent event, @Header("messageId") String messageId) {
+		if (inboxUseCase.isAlreadyProcessed(messageId, consumerGroup))
+			return;
 		try {
 			if (event.finalPrice() != null) {
 				// 낙찰된 경우
@@ -96,8 +125,11 @@ public class ProductConsumer {
 		}
 	}
 
-	@KafkaListener(topics = "auction-relisted", groupId = GROUP_ID)
-	public void handleAuctionRelisted(AuctionRelistedEvent event) {
+	@Transactional
+	@KafkaHandler
+	public void onProductEvent(@Payload AuctionRelistedEvent event, @Header("messageId") String messageId) {
+		if (inboxUseCase.isAlreadyProcessed(messageId, consumerGroup))
+			return;
 		try {
 			// 기존 상품 데이터 조회 (이미지 포함)
 			Product product = productSupport.findByIdWithImages(event.productId());
@@ -119,5 +151,10 @@ public class ProductConsumer {
 				event.productId(), event.newAuctionId(), e.getMessage(), e);
 			throw e;
 		}
+	}
+
+	@KafkaHandler(isDefault = true)
+	public void defaultHandler(Object object) {
+		log.warn("[product] 수신된 이벤트 중 처리할 수 없는 타입입니다: {}", object.getClass().getName());
 	}
 }

@@ -30,8 +30,8 @@ spec:
         - name: MYSQL_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: db-secret
-              key: password
+              name: global-secret
+              key: DB_ROOT_PASSWORD
         - name: MYSQL_DATABASE
           value: "rarego"
         - name: MYSQL_USER

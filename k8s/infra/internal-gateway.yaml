@@ -82,7 +82,7 @@ metadata:
   name: rarego-nginx
   namespace: rarego
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: rarego-nginx

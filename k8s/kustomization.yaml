@@ -41,3 +41,6 @@ images:
   - name: rarego-notification-service
     newName: ghcr.io/prgrms-be-adv-devcourse/beadv4_4_bugzero_be-notification-service
     newTag: v1.0.0-dev
+  - name: rarego-product-elasticsearch
+    newName: ghcr.io/prgrms-be-adv-devcourse/beadv4_4_bugzero_be-product-elasticsearch
+    newTag: v1.0.0-dev

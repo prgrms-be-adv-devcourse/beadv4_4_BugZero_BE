@@ -33,6 +33,7 @@ public class AiController {
 
 	@SecurityRequirement(name = "bearerAuth")
 	@Operation(summary = "외부시세 기반 AI 시작가 추천", description = "AI를 사용하여 유사 상품이 외부에서 가격이 어느정도에 형성되어있는지 알려줍니다.")
+	@PreAuthorize("hasRole('SELLER')")
 	@PostMapping(value = "/external-price", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 	public Flux<String> getExternalPriceGuide(@Valid @RequestBody AiExternalPriceRequestDto dto) {
 		return aiFacade.getExternalPrice(dto);
