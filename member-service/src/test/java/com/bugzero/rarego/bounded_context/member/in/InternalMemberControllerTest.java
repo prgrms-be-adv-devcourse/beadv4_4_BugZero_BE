@@ -44,10 +44,10 @@ class InternalMemberControllerTest {
 	@Test
 	@DisplayName("성공: 회원 가입 요청이 정상 처리되면 HTTP 201과 결과 데이터를 반환한다")
 	void join_success() throws Exception {
-		MemberJoinRequestDto requestDto = new MemberJoinRequestDto("new@example.com");
+		MemberJoinRequestDto requestDto = new MemberJoinRequestDto("new@example.com", "public-id");
 		MemberJoinResponseDto responseDto = new MemberJoinResponseDto("newbie", "public-id");
 
-		given(memberFacade.join("new@example.com")).willReturn(responseDto);
+		given(memberFacade.join("new@example.com", "public-id")).willReturn(responseDto);
 
 		mockMvc.perform(post("/api/v1/internal/members/me")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -61,9 +61,9 @@ class InternalMemberControllerTest {
 	@Test
 	@DisplayName("실패: 이메일이 비어있으면 HTTP 400을 반환한다")
 	void join_fail_empty_email() throws Exception {
-		MemberJoinRequestDto requestDto = new MemberJoinRequestDto("");
+		MemberJoinRequestDto requestDto = new MemberJoinRequestDto("", "public-id");
 
-		given(memberFacade.join("")).willThrow(new CustomException(ErrorType.MEMBER_EMAIL_EMPTY));
+		given(memberFacade.join("", "public-id")).willThrow(new CustomException(ErrorType.MEMBER_EMAIL_EMPTY));
 
 		mockMvc.perform(post("/api/v1/internal/members/me")
 				.contentType(MediaType.APPLICATION_JSON)

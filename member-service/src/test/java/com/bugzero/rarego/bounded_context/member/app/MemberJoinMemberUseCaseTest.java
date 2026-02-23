@@ -37,14 +37,14 @@ class MemberJoinMemberUseCaseTest {
 	@Test
 	@DisplayName("이메일이 비어있으면 MEMBER_EMAIL_EMPTY 예외를 발생시킨다.")
 	void joinRejectsBlankEmail() {
-		assertThatThrownBy(() -> memberJoinMemberUseCase.join("  "))
+		assertThatThrownBy(() -> memberJoinMemberUseCase.join("  ", "public-id"))
 			.isInstanceOf(CustomException.class)
 			.extracting("errorType")
 			.isEqualTo(ErrorType.MEMBER_EMAIL_EMPTY);
 	}
 
 	@Test
-	@DisplayName("이미 존재하는 이메일이면 기존 회원 정보를 반환한다.")
+	@DisplayName("이미 존재하는 memberPublicId이면 기존 회원 정보를 반환한다.")
 	void joinReturnsExistingMember() {
 		Member existing = Member.builder()
 			.publicId("public-id")
@@ -52,9 +52,9 @@ class MemberJoinMemberUseCaseTest {
 			.email("test@example.com")
 			.build();
 
-		when(memberRepository.findByEmail("test@example.com")).thenReturn(Optional.of(existing));
+		when(memberRepository.findByPublicId("public-id")).thenReturn(Optional.of(existing));
 
-		MemberJoinResponseDto result = memberJoinMemberUseCase.join("test@example.com");
+		MemberJoinResponseDto result = memberJoinMemberUseCase.join("test@example.com", "public-id");
 
 		assertThat(result.memberPublicId()).isEqualTo("public-id");
 		assertThat(result.nickname()).isEqualTo("tester");
@@ -71,10 +71,11 @@ class MemberJoinMemberUseCaseTest {
 			.email("new@example.com")
 			.build();
 
+		when(memberRepository.findByPublicId("new-public-id")).thenReturn(Optional.empty());
 		when(memberRepository.findByEmail("new@example.com")).thenReturn(Optional.empty());
 		when(memberRepository.save(any(Member.class))).thenReturn(saved);
 
-		MemberJoinResponseDto result = memberJoinMemberUseCase.join("new@example.com");
+		MemberJoinResponseDto result = memberJoinMemberUseCase.join("new@example.com", "new-public-id");
 
 		assertThat(result.memberPublicId()).isEqualTo("new-public-id");
 		assertThat(result.nickname()).isEqualTo("newbie");
@@ -90,12 +91,14 @@ class MemberJoinMemberUseCaseTest {
 			.email("dup@example.com")
 			.build();
 
-		when(memberRepository.findByEmail("dup@example.com"))
+		when(memberRepository.findByPublicId("dup-public-id"))
 			.thenReturn(Optional.empty(), Optional.of(existing));
+		when(memberRepository.findByEmail("dup@example.com"))
+			.thenReturn(Optional.empty());
 		when(memberRepository.save(any(Member.class)))
 			.thenThrow(new DataIntegrityViolationException("duplicate"));
 
-		MemberJoinResponseDto result = memberJoinMemberUseCase.join("dup@example.com");
+		MemberJoinResponseDto result = memberJoinMemberUseCase.join("dup@example.com", "dup-public-id");
 
 		assertThat(result.memberPublicId()).isEqualTo("dup-public-id");
 		verifyNoInteractions(outboxUseCase);
