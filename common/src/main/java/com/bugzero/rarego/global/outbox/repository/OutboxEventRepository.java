@@ -14,8 +14,9 @@ import com.bugzero.rarego.global.outbox.domain.OutboxStatus;
 
 public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> {
 
-	@Query("SELECT o FROM OutboxEvent o WHERE o.status = :status ORDER BY o.createdAt ASC")
-	List<OutboxEvent> findByStatusOrderByCreatedAt(
+	// 1. ID만 조회하여 네트워크 및 메모리 부하 최소화
+	@Query("SELECT o.id FROM OutboxEvent o WHERE o.status = :status ORDER BY o.createdAt ASC")
+	List<Long> findIdsByStatusOrderByCreatedAt(
 		@Param("status") OutboxStatus status,
 		Pageable pageable
 	);

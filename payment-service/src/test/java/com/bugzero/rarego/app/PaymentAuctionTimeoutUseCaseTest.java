@@ -19,13 +19,12 @@ import org.springframework.context.ApplicationEventPublisher;
 import com.bugzero.rarego.domain.Deposit;
 import com.bugzero.rarego.domain.DepositStatus;
 import com.bugzero.rarego.domain.PaymentMember;
-import com.bugzero.rarego.domain.PaymentOutbox;
 import com.bugzero.rarego.domain.Wallet;
 import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.outbox.app.OutboxUseCase;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.out.AuctionOrderApiClient;
 import com.bugzero.rarego.out.DepositRepository;
-import com.bugzero.rarego.out.PaymentOutboxRepository;
 import com.bugzero.rarego.out.PaymentTransactionRepository;
 import com.bugzero.rarego.out.SettlementRepository;
 import com.bugzero.rarego.shared.auction.dto.AuctionOrderDto;
@@ -39,8 +38,10 @@ class PaymentAuctionTimeoutUseCaseTest {
 	private static final Long SELLER_ID = 2L;
 	private static final int FINAL_PRICE = 100000;
 	private static final int DEPOSIT_AMOUNT = 10000;
+
 	@InjectMocks
 	private PaymentAuctionTimeoutUseCase paymentAuctionTimeoutUseCase;
+
 	@Mock
 	private AuctionOrderApiClient auctionOrderApiClient;
 	@Mock
@@ -52,14 +53,14 @@ class PaymentAuctionTimeoutUseCaseTest {
 	@Mock
 	private PaymentSupport paymentSupport;
 	@Mock
-	private ApplicationEventPublisher eventPublisher;
+	private ApplicationEventPublisher eventPublisher; // UseCase에 여전히 주입받고 있으므로 유지
+
+	// 1. 기존 결제 전용 Outbox 의존성을 지우고 공통 OutboxUseCase 모킹 추가
 	@Mock
-	private PaymentOutboxRepository paymentOutboxRepository;
-	@Mock
-	private PaymentOutboxProcessor paymentOutboxProcessor;
+	private OutboxUseCase outboxUseCase;
 
 	@Test
-	@DisplayName("성공: 타임아웃 처리 후 PaymentTimeoutEvent 발행")
+	@DisplayName("성공: 타임아웃 처리 후 공통 OutboxUseCase를 통해 PaymentTimeoutEvent 저장")
 	void processTimeout_Success_PublishesEvent() {
 		// given
 		AuctionOrderDto order = new AuctionOrderDto(
@@ -76,15 +77,14 @@ class PaymentAuctionTimeoutUseCaseTest {
 		given(paymentSupport.findWalletByMemberIdForUpdate(BIDDER_ID)).willReturn(wallet);
 		given(paymentSupport.findMemberById(BIDDER_ID)).willReturn(buyer);
 		given(paymentSupport.findMemberById(SELLER_ID)).willReturn(seller);
-		given(paymentOutboxRepository.save(any(PaymentOutbox.class)))
-			.willAnswer(invocation -> invocation.getArgument(0));
 
 		// when
 		paymentAuctionTimeoutUseCase.processTimeout(AUCTION_ID);
 
 		// then
+		// 2. eventPublisher 대신 outboxUseCase.saveOutbox()가 호출되었는지 검증
 		ArgumentCaptor<PaymentTimeoutEvent> eventCaptor = ArgumentCaptor.forClass(PaymentTimeoutEvent.class);
-		verify(eventPublisher).publishEvent(eventCaptor.capture());
+		verify(outboxUseCase).saveOutbox(eventCaptor.capture());
 
 		PaymentTimeoutEvent event = eventCaptor.getValue();
 		assertThat(event.auctionId()).isEqualTo(AUCTION_ID);
@@ -111,8 +111,6 @@ class PaymentAuctionTimeoutUseCaseTest {
 		given(paymentSupport.findWalletByMemberIdForUpdate(BIDDER_ID)).willReturn(wallet);
 		given(paymentSupport.findMemberById(BIDDER_ID)).willReturn(buyer);
 		given(paymentSupport.findMemberById(SELLER_ID)).willReturn(seller);
-		given(paymentOutboxRepository.save(any(PaymentOutbox.class)))
-			.willAnswer(invocation -> invocation.getArgument(0));
 
 		// when
 		paymentAuctionTimeoutUseCase.processTimeout(AUCTION_ID);
@@ -120,8 +118,10 @@ class PaymentAuctionTimeoutUseCaseTest {
 		// then
 		assertThat(deposit.getStatus()).isEqualTo(DepositStatus.FORFEITED);
 		assertThat(wallet.getHoldingAmount()).isEqualTo(0);
-		verify(paymentOutboxProcessor).process(any());
 		verify(settlementRepository).save(any());
+
+		// 3. paymentOutboxProcessor.process() 검증 제거 후 saveOutbox 호출 검증
+		verify(outboxUseCase).saveOutbox(any(PaymentTimeoutEvent.class));
 	}
 
 	@Test

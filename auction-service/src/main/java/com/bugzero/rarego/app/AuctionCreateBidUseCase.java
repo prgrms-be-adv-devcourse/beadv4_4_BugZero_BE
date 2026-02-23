@@ -46,7 +46,7 @@ public class AuctionCreateBidUseCase {
 		// 회원 조회
 		AuctionMember bidder = support.getPublicMember(memberPublicId);
 
-		// 경매 조회 (비관적 락)
+		// 경매 조회
 		Auction auction = support.findAuctionById(auctionId);
 
 		// 유효성 검증

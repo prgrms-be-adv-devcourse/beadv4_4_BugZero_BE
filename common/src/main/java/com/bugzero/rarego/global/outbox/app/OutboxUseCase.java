@@ -2,10 +2,15 @@ package com.bugzero.rarego.global.outbox.app;
 
 import static com.bugzero.rarego.global.response.ErrorType.*;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +46,14 @@ import lombok.extern.slf4j.Slf4j;
 public class OutboxUseCase {
 
 	private final OutboxEventRepository outboxEventRepository;
+	private final KafkaTemplate<String, Object> kafkaTemplate;
 	private final ObjectMapper objectMapper;
+
+	@Value("${outbox.poller.batch-size:100}") // 각 모듈에 적합하게 설정
+	private int batchSize;
+
+	@Value("${outbox.poller.max-retry:5}") // 각 모듈에 적합하게 설정
+	private int maxRetry;
 
 	@Transactional(propagation = Propagation.MANDATORY)
 	public void saveOutbox(Object event) {
@@ -117,7 +129,47 @@ public class OutboxUseCase {
 		return outboxEventRepository.deleteSentEventsBatch(threshold, batchSize);
 	}
 
-	public List<OutboxEvent> findByStatusOrderByCreatedAt(OutboxStatus status, PageRequest pageRequest) {
-		return outboxEventRepository.findByStatusOrderByCreatedAt(status, pageRequest);
+	// ID 리스트 조회 (트랜잭션 없이 혹은 기본 Read Only)
+	public List<Long> findPendingEventIds() {
+		return outboxEventRepository.findIdsByStatusOrderByCreatedAt(
+			OutboxStatus.PENDING, PageRequest.of(0, batchSize));
+	}
+
+	 // 개별 메시지를 전송하고 상태 업데이트
+	 // REQUIRES_NEW를 통해 각 메시지 처리가 성공할 때마다 즉시 DB에 커밋
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	public void processAndPublish(Long eventId) {
+		OutboxEvent event = outboxEventRepository.findById(eventId)
+			.orElseThrow(() -> new CustomException(ErrorType.OUTBOX_NOT_FOUND));
+
+		try {
+			event.markProcessing();
+
+			// 카프카 전송용 레코드 생성 (헤더 포함)
+			ProducerRecord<String, Object> record = createRecord(event);
+
+			// 동기 전송 (결과가 올 때까지 기다림)
+			kafkaTemplate.send(record).get(5, TimeUnit.SECONDS);
+
+			// 전송 성공 시 상태 변경 (메서드 종료 시 커밋됨)
+			event.markSent();
+
+		} catch (Exception e) {
+			log.error("[Outbox] 전송 실패: id={}, error={}", event.getId(), e.getMessage());
+			// 실패 상태 반영 (메서드 종료 시 커밋됨)
+			event.markFailed(e.getMessage(), maxRetry);
+		}
+	}
+
+	private ProducerRecord<String, Object> createRecord(OutboxEvent event) {
+		ProducerRecord<String, Object> record = new ProducerRecord<>(
+			event.getTopic(),
+			event.getAggregateId(),
+			event.getPayload()
+		);
+		record.headers().add("__TypeId__", event.getEventType().getBytes(StandardCharsets.UTF_8));
+		record.headers().add("messageId", event.generateMessageId().getBytes(StandardCharsets.UTF_8));
+		record.headers().add("aggregateType", event.getAggregateType().getBytes(StandardCharsets.UTF_8));
+		return record;
 	}
 }

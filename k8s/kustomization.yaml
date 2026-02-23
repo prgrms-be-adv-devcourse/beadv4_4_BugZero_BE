@@ -25,22 +25,22 @@ resources:
 images:
   - name: rarego-auth-service
     newName: ghcr.io/prgrms-be-adv-devcourse/beadv4_4_bugzero_be-auth-service
-    newTag: v1.0.0-dev
+    newTag: dev
   - name: rarego-member-service
     newName: ghcr.io/prgrms-be-adv-devcourse/beadv4_4_bugzero_be-member-service
-    newTag: v1.0.0-dev
+    newTag: dev
   - name: rarego-auction-service
     newName: ghcr.io/prgrms-be-adv-devcourse/beadv4_4_bugzero_be-auction-service
-    newTag: v1.0.0-dev
+    newTag: dev
   - name: rarego-product-service
     newName: ghcr.io/prgrms-be-adv-devcourse/beadv4_4_bugzero_be-product-service
-    newTag: v1.0.0-dev
+    newTag: dev
   - name: rarego-payment-service
     newName: ghcr.io/prgrms-be-adv-devcourse/beadv4_4_bugzero_be-payment-service
-    newTag: v1.0.0-dev
+    newTag: dev
   - name: rarego-notification-service
     newName: ghcr.io/prgrms-be-adv-devcourse/beadv4_4_bugzero_be-notification-service
-    newTag: v1.0.0-dev
+    newTag: dev
   - name: rarego-product-elasticsearch
     newName: ghcr.io/prgrms-be-adv-devcourse/beadv4_4_bugzero_be-product-elasticsearch
-    newTag: v1.0.0-dev
+    newTag: dev

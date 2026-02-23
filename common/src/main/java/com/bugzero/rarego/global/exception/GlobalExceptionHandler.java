@@ -37,9 +37,9 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(InvalidDataAccessApiUsageException.class)
 	public ExceptionResponseDto handleInvalidDataAccessApiUsageException(
 		InvalidDataAccessApiUsageException e) {
-		log.error("InvalidDataAccessApiUsageException 발생 (정렬 파라미터 오류 등): {}", e.getMessage());
-
-		return ExceptionResponseDto.from(ErrorType.INVALID_INPUT, "정렬 파라미터가 잘못되었습니다.");
+		log.error("InvalidDataAccessApiUsageException 발생: {}", e.getMessage(), e);
+		
+		return ExceptionResponseDto.from(ErrorType.INVALID_INPUT, "데이터 처리 중 잘못된 요청이 발생했습니다: " + e.getMessage());
 	}
 
 	@ExceptionHandler(MethodArgumentTypeMismatchException.class)

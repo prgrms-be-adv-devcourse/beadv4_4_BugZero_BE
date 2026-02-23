@@ -100,6 +100,11 @@ public class MemberUpdateMemberUseCase {
 		if (nickname.isBlank() || nickname.length() > 50) {
 			throw new CustomException(ErrorType.MEMBER_INVALID_NICKNAME);
 		}
+
+		if (member.getNickname().equals(nickname)) {
+			return;
+		}
+
 		// 닉네임 존재하면 오류
 		if (memberRepository.existsByNickname(nickname)) {
 			throw new CustomException(ErrorType.MEMBER_NICKNAME_ALREADY_EXISTS);

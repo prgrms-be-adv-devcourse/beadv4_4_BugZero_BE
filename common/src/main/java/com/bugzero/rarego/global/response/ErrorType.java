@@ -16,6 +16,7 @@ public enum ErrorType {
     CONCURRENCY_ISSUE(409, 9003, "동시성 이슈가 발생했습니다. 잠시 후 다시 시도해주세요."),
 	JSON_SERIALIZATION_FAILED(400, 9004, "JSON 직렬화에 실패했습니다. 데이터를 확인헤주세요."),
 	UNSUPPORTED_OUTBOX_EVENT(404,9005,"아웃박스 패턴이 지원하지 않는 이벤트 유형입니다"),
+	OUTBOX_NOT_FOUND(404,9006, "아웃박스 데이터를 찾을 수 없습니다."),
 
 
 	// Member (1000 ~ 1499)

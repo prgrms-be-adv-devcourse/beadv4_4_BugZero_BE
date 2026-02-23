@@ -15,6 +15,7 @@ import com.bugzero.rarego.global.exception.CustomException;
 import com.bugzero.rarego.global.exception.InternalApiErrorHandler;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.global.response.SuccessResponseDto;
+import com.bugzero.rarego.global.security.SystemAuthTokenProvider;
 import com.bugzero.rarego.shared.auction.dto.AuctionOrderDto;
 
 @Service
@@ -26,10 +27,16 @@ public class AuctionOrderApiClient {
 
 	public AuctionOrderApiClient(
 		@Value("${custom.global.internalBackUrl}") String internalBackUrl,
-		InternalApiErrorHandler errorHandler) {
+		InternalApiErrorHandler errorHandler,
+		SystemAuthTokenProvider systemAuthTokenProvider
+	) {
 		this.errorHandler = errorHandler;
 		this.restClient = RestClient.builder()
 			.baseUrl(internalBackUrl + "/api/v1/internal/auctions")
+			.requestInterceptor((request, body, execution) -> {
+				request.getHeaders().setBearerAuth(systemAuthTokenProvider.getSystemAccessToken());
+				return execution.execute(request, body);
+			})
 			.build();
 	}
 

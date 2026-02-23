@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,11 +27,13 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class AuctionStartScheduler {
 
+	private static final int START_BATCH_SIZE = 200;
+
 	private final AuctionRepository auctionRepository;
 	private final AuctionBookmarkRepository auctionBookmarkRepository;
 	private final OutboxUseCase outboxUseCase;
 	private final ProductSearchClient productSearchClient;
-	private final AuctionStartScheduler self; // self-injection for REQUIRES_NEW
+	private final AuctionStartScheduler self;
 
 	public AuctionStartScheduler(
 		AuctionRepository auctionRepository,
@@ -48,24 +52,32 @@ public class AuctionStartScheduler {
 	@Scheduled(cron = "0 * * * * *")
 	public void autoStartAuctions() {
 		LocalDateTime now = LocalDateTime.now();
+		int totalCandidates = 0;
 
-		List<Auction> pendingAuctions = auctionRepository.findAllByStatusAndStartTimeBefore(
-			AuctionStatus.SCHEDULED, now
-		);
+		while (true) {
+			Page<Auction> pendingPage = auctionRepository.findAllByStatusAndStartTimeBefore(
+				AuctionStatus.SCHEDULED,
+				now,
+				PageRequest.of(0, START_BATCH_SIZE)
+			);
+			List<Auction> pendingAuctions = pendingPage.getContent();
+			if (pendingAuctions.isEmpty()) {
+				break;
+			}
 
-		if (pendingAuctions.isEmpty()) {
-			return;
+			totalCandidates += pendingAuctions.size();
+
+			for (Auction auction : pendingAuctions) {
+				try {
+					self.processStart(auction.getId());
+				} catch (Exception e) {
+					log.error("경매 ID {} 시작 처리 중 오류 발생", auction.getId(), e);
+				}
+			}
 		}
 
-		log.info("경매 자동 시작 스케줄러 실행: {}건 시작 처리", pendingAuctions.size());
-
-		for (Auction auction : pendingAuctions) {
-			try {
-				// REQUIRES_NEW로 경매별 독립 트랜잭션 - 하나 실패해도 다른 경매에 영향 없음
-				self.processStart(auction.getId());
-			} catch (Exception e) {
-				log.error("경매 ID {} 시작 처리 중 오류 발생", auction.getId(), e);
-			}
+		if (totalCandidates > 0) {
+			log.info("경매 자동 시작 스케줄러 실행: {}건 시작 처리", totalCandidates);
 		}
 	}
 
@@ -98,7 +110,6 @@ public class AuctionStartScheduler {
 			auction.getId(), bookmarkedMemberIds.size());
 	}
 
-	// ES 호출 실패가 경매 시작 트랜잭션 롤백으로 이어지지 않도록 예외를 삼킴
 	private String getProductName(Long productId) {
 		try {
 			return productSearchClient.getProduct(productId)

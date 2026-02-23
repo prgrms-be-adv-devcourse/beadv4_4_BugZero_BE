@@ -34,7 +34,7 @@ public class AuthLoginAccountFacade {
 
 	private Account ensureNotDeleted(Account account) {
 		if (account.isDeleted()) {
-			throw new CustomException(ErrorType.AUTH_FORBIDDEN);
+			throw new CustomException(ErrorType.AUTH_ACCOUNT_DELETED);
 		}
 		return account;
 	}

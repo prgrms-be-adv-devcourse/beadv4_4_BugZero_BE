@@ -1,6 +1,7 @@
 package com.bugzero.rarego.in;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -38,7 +39,7 @@ public class AuctionMemberController {
 	public PagedResponseDto<MyBidResponseDto> getMyBids(
 		@RequestParam(required = false) AuctionStatus auctionStatus,
 		@AuthenticationPrincipal MemberPrincipal principal,
-		@PageableDefault(size = 20) Pageable pageable
+		@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
 	) {
 		return auctionFacade.getMyBids(principal.publicId(), auctionStatus, pageable);
 	}

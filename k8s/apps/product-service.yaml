@@ -99,6 +99,11 @@ spec:
             secretKeyRef:
               name: global-secret
               key: FRONT_URL
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: global-secret
+              key: OPENAI_API_KEY
         - name: INTERNAL_BACK_URL
           value: "http://rarego-nginx"
 ---

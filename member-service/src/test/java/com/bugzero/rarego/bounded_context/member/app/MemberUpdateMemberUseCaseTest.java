@@ -100,6 +100,32 @@ class MemberUpdateMemberUseCaseTest {
 	}
 
 	@Test
+	@DisplayName("동일한 닉네임이면 중복 검사 없이 무시한다")
+	void updateMe_ignoresSameNickname() {
+		// given
+		Member member = baseMember();
+		MemberUpdateRequestDto requestDto = new MemberUpdateRequestDto(
+			" old ",
+			null,
+			null,
+			null,
+			null,
+			null
+		);
+		given(memberSupport.findByPublicId("public-id")).willReturn(member);
+		given(memberRepository.saveAndFlush(member)).willReturn(member);
+
+		// when
+		MemberUpdateResponseDto response = memberUpdateMemberUseCase.updateMe("public-id", requestDto);
+
+		// then
+		assertThat(response.nickname()).isEqualTo("old");
+		verify(memberRepository, never()).existsByNickname(anyString());
+		verify(memberRepository).saveAndFlush(member);
+		verify(outboxUseCase).saveOutbox(any());
+	}
+
+	@Test
 	@DisplayName("clearFields가 전달되면 해당 값이 null로 초기화된다")
 	void updateMe_appliesClearFields() {
 		// given

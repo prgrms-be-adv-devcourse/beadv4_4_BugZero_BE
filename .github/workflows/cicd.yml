@@ -270,6 +270,8 @@ jobs:
           REDIS_PORT: ${{ secrets.REDIS_PORT }}
           KAFKA_BOOTSTRAP_SERVERS: ${{ secrets.KAFKA_BOOTSTRAP_SERVERS }}
           ELASTICSEARCH_URIS: ${{ secrets.ELASTICSEARCH_URIS }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GRAFANA_ADMIN_USER: ${{ secrets.GRAFANA_ADMIN_USER }}
           GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
           GF_SERVER_ROOT_URL: ${{ secrets.GF_SERVER_ROOT_URL }}

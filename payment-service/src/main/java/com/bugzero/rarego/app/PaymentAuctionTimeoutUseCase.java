@@ -3,23 +3,20 @@ package com.bugzero.rarego.app;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.bugzero.rarego.domain.Deposit;
 import com.bugzero.rarego.domain.DepositStatus;
 import com.bugzero.rarego.domain.PaymentMember;
-import com.bugzero.rarego.domain.PaymentOutbox;
 import com.bugzero.rarego.domain.PaymentTransaction;
 import com.bugzero.rarego.domain.ReferenceType;
 import com.bugzero.rarego.domain.Settlement;
 import com.bugzero.rarego.domain.Wallet;
 import com.bugzero.rarego.domain.WalletTransactionType;
 import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.outbox.app.OutboxUseCase;
 import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.out.AuctionOrderApiClient;
 import com.bugzero.rarego.out.DepositRepository;
-import com.bugzero.rarego.out.PaymentOutboxRepository;
 import com.bugzero.rarego.out.PaymentTransactionRepository;
 import com.bugzero.rarego.out.SettlementRepository;
 import com.bugzero.rarego.shared.auction.dto.AuctionOrderDto;
@@ -39,8 +36,7 @@ public class PaymentAuctionTimeoutUseCase {
 	private final SettlementRepository settlementRepository;
 	private final PaymentSupport paymentSupport;
 	private final ApplicationEventPublisher eventPublisher;
-	private final PaymentOutboxRepository paymentOutboxRepository;
-	private final PaymentOutboxProcessor paymentOutboxProcessor;
+	private final OutboxUseCase outboxUseCase;
 
 	@Transactional
 	public void processTimeout(Long auctionId) {
@@ -63,16 +59,15 @@ public class PaymentAuctionTimeoutUseCase {
 		Settlement settlement = Settlement.createFromForfeit(auctionId, seller, deposit.getAmount());
 		settlementRepository.save(settlement);
 
-		// 5. 주문 실패 처리 (커밋 이후 상태 전이 확정)
-		PaymentOutbox outbox = paymentOutboxRepository.save(PaymentOutbox.forAuctionFail(auctionId));
-		registerFailOrderAfterCommit(outbox.getId());
-
-		// 6. 타임아웃 이벤트 발행 (SSE 브로드캐스트용)
-		eventPublisher.publishEvent(new PaymentTimeoutEvent(
+		// 5. 타임 아웃 이벤트 아웃박스 저장
+		PaymentTimeoutEvent event = new PaymentTimeoutEvent(
 			auctionId,
 			order.bidderId(),
 			order.sellerId(),
-			deposit.getAmount()));
+			deposit.getAmount()
+		);
+
+		outboxUseCase.saveOutbox(event);
 
 		log.info("타임아웃 처리 완료: auctionId={}, bidderId={}, depositAmount={}, settlementId={}",
 			auctionId, order.bidderId(), deposit.getAmount(), settlement.getId());
@@ -108,20 +103,6 @@ public class PaymentAuctionTimeoutUseCase {
 			.referenceId(refId)
 			.build();
 		transactionRepository.save(transaction);
-	}
-
-	private void registerFailOrderAfterCommit(Long outboxId) {
-		if (TransactionSynchronizationManager.isSynchronizationActive()) {
-			TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-				@Override
-				public void afterCommit() {
-					paymentOutboxProcessor.process(outboxId);
-				}
-			});
-			return;
-		}
-
-		paymentOutboxProcessor.process(outboxId);
 	}
 }
 

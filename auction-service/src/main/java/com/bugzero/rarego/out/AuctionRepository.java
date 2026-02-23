@@ -38,7 +38,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, JpaSpec
 
 	Optional<Auction> findByProductId(Long productId);
 
-	List<Auction> findAllByStatusAndStartTimeBefore(AuctionStatus status, LocalDateTime now);
+	Page<Auction> findAllByStatusAndStartTimeBefore(AuctionStatus status, LocalDateTime now, Pageable pageable);
 
 	//삭제가 되지 않은 경매 정보만 반환
 	Optional<Auction> findByIdAndDeletedIsFalse(Long auctionId);
