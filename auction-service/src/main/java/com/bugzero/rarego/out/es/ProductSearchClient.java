@@ -127,8 +127,34 @@ public class ProductSearchClient {
 
                 if (StringUtils.hasText(keyword)) {
                     s.query(q -> q.bool(b -> b
-                        .should(sh -> sh.match(m -> m.field("productName").query(keyword).boost(2.0f)))
-                        .should(sh -> sh.match(m -> m.field("description").query(keyword)))
+                        // 1. 정확한 구문 매칭
+                        .should(sh -> sh.matchPhrase(m -> m
+                            .field("productName")
+                            .query(keyword)
+                            .boost(3.0f)))
+                        // 2. 구문 접두사 매칭
+                        .should(sh -> sh.matchPhrasePrefix(m -> m
+                            .field("productName")
+                            .query(keyword)
+                            .maxExpansions(10)
+                            .boost(2.5f)))
+                        // 3. 상품명 매칭
+                        .should(sh -> sh.match(m -> m
+                            .field("productName")
+                            .query(keyword)
+                            .boost(2.0f)))
+                        // 4. 설명 매칭
+                        .should(sh -> sh.match(m -> m
+                            .field("description")
+                            .query(keyword)
+                            .boost(0.7f)))
+                        // 5. 오타 내성 매칭 - AUTO: 1~2자 편집거리 허용
+                        .should(sh -> sh.match(m -> m
+                            .field("productName")
+                            .query(keyword)
+                            .fuzziness("AUTO")
+                            .boost(1.0f)))
+                        .minimumShouldMatch("1")
                         .filter(filters)
                     ));
                 } else {

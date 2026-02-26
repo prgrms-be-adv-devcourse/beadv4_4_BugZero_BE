@@ -363,9 +363,35 @@ public class ProductSearchService {
 				// 텍스트 쿼리 구성
 				if (StringUtils.hasText(keyword)) {
 					s.query(q -> q.bool(b -> b
-						.should(sh -> sh.match(m -> m.field("productName").query(keyword).boost(0.7f)))
-						.should(sh -> sh.match(m -> m.field("description").query(keyword).boost(0.5f)))
-						.filter(filters) // 공통 필터 적용
+						// 1. 정확한 구문 매칭 - 완전한 키워드 구문에 최고 점수 부여
+						.should(sh -> sh.matchPhrase(m -> m
+							.field("productName")
+							.query(keyword)
+							.boost(3.0f)))
+						// 2. 구문 접두사 매칭 - "밀레니엄" 입력 시 "밀레니엄 팔콘" 히트
+						.should(sh -> sh.matchPhrasePrefix(m -> m
+							.field("productName")
+							.query(keyword)
+							.maxExpansions(10)
+							.boost(2.5f)))
+						// 3. 상품명 매칭 (nori 형태소 분석으로 검색 품질 확보)
+						.should(sh -> sh.match(m -> m
+							.field("productName")
+							.query(keyword)
+							.boost(2.0f)))
+						// 4. 설명 매칭
+						.should(sh -> sh.match(m -> m
+							.field("description")
+							.query(keyword)
+							.boost(0.7f)))
+						// 5. 오타 내성 매칭 - "나이끼" → "나이키" 등 오타 허용 (AUTO: 1~2자 편집거리)
+						.should(sh -> sh.match(m -> m
+							.field("productName")
+							.query(keyword)
+							.fuzziness("AUTO")
+							.boost(1.0f)))
+						.minimumShouldMatch("1")
+						.filter(filters)
 					));
 
 					// 벡터(KNN) 쿼리 구성 - 임베딩 실패 시 키워드 검색만 수행
@@ -376,10 +402,10 @@ public class ProductSearchService {
 						s.knn(k -> k
 							.field("embedding")
 							.queryVector(queryVector)
-							.k(10)
-							.numCandidates(100)
+							.k(pageable.getPageSize())
+							.numCandidates(pageable.getPageSize() * 10)
 							.filter(f -> f.bool(b -> b.filter(filters)))
-							.boost(1.5f) // 벡터 점수 비중
+							.boost(1.5f)
 						);
 					}
 				} else {

@@ -110,6 +110,7 @@ public class Auction extends BaseIdAndTime {
 	public void update(int durationDays, int startPrice) {
 		this.durationDays = durationDays;
 		this.startPrice = startPrice;
+		this.currentPrice = startPrice;
 		this.tickSize = AuctionTickPolicy.resolveTickSize(startPrice);
 	}
 
