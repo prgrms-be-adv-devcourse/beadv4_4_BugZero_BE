@@ -7,5 +7,6 @@ public record DepositHoldResponseDto(
 	Long auctionId,
 	int amount,
 	String status,
-	LocalDateTime createdAt) {
+	LocalDateTime createdAt,
+	boolean holdApplied) {
 }

@@ -6,6 +6,7 @@ import static org.mockito.BDDMockito.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,8 +18,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.bugzero.rarego.domain.Deposit;
 import com.bugzero.rarego.domain.DepositStatus;
 import com.bugzero.rarego.domain.PaymentMember;
+import com.bugzero.rarego.domain.PaymentSagaExecution;
+import com.bugzero.rarego.domain.PaymentSagaExecutionStatus;
 import com.bugzero.rarego.domain.Wallet;
 import com.bugzero.rarego.out.DepositRepository;
+import com.bugzero.rarego.out.PaymentSagaExecutionRepository;
 import com.bugzero.rarego.out.PaymentTransactionRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,7 +38,41 @@ class PaymentReleaseDepositUseCaseTest {
 	private PaymentTransactionRepository transactionRepository;
 
 	@Mock
+	private PaymentSagaExecutionRepository sagaExecutionRepository;
+
+	@Mock
 	private PaymentSupport paymentSupport;
+
+	@Mock
+	private PaymentSagaTracker sagaTracker;
+
+	@Test
+	@DisplayName("단건 환급: DEPOSIT_HOLD saga가 CONFIRMED 완료 상태면 late release를 건너뛴다")
+	void releaseDeposit_SkipsWhenConfirmedSagaCompleted() {
+		Long auctionId = 1L;
+		Long memberId = 101L;
+		String memberPublicId = "member-public-id";
+
+		PaymentMember member = mock(PaymentMember.class);
+		when(member.getId()).thenReturn(memberId);
+		Deposit deposit = Deposit.create(member, auctionId, 10000);
+
+		PaymentSagaExecution saga = mock(PaymentSagaExecution.class);
+		when(saga.getStatus()).thenReturn(PaymentSagaExecutionStatus.COMPLETED);
+		when(saga.getCurrentStep()).thenReturn("CONFIRMED");
+
+		when(paymentSupport.findMemberByPublicId(memberPublicId)).thenReturn(member);
+		when(depositRepository.findByMemberIdAndAuctionId(memberId, auctionId)).thenReturn(Optional.of(deposit));
+		when(sagaExecutionRepository.findBySagaTypeAndBusinessKey(any(), anyString())).thenReturn(Optional.of(saga));
+
+		paymentReleaseDepositUseCase.releaseDeposit(auctionId, memberPublicId);
+
+		assertThat(deposit.getStatus()).isEqualTo(DepositStatus.HOLD);
+		verify(paymentSupport, never()).findWalletByMemberIdForUpdate(anyLong());
+		verify(transactionRepository, never()).save(any());
+		verify(sagaTracker, never()).markCheckpoint(any(), anyString(), any());
+		verify(sagaTracker, never()).markCompleted(any(), anyString(), any());
+	}
 
 	@Test
 	@DisplayName("성공: 낙찰자 제외 보증금 환급")
