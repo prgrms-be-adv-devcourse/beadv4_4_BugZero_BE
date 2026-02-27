@@ -21,11 +21,11 @@ spec:
         - containerPort: 3306
         resources:
           requests:
-            memory: "256Mi"
-            cpu: "100m"
-          limits:
             memory: "512Mi"
-            cpu: "500m"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
         env:
         - name: MYSQL_ROOT_PASSWORD
           valueFrom:
@@ -47,6 +47,8 @@ spec:
         args:
         - "--character-set-server=utf8mb4"
         - "--collation-server=utf8mb4_unicode_ci"
+        - "--innodb-buffer-pool-size=256M"
+        - "--performance-schema=OFF"
         volumeMounts:
         - name: mysql-persistent-storage
           mountPath: /var/lib/mysql
