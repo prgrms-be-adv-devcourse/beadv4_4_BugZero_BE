@@ -54,7 +54,7 @@ dependencies {
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 
     // --- [Documentation] ---
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
 
     // --- [Lombok] ---
     compileOnly("org.projectlombok:lombok")

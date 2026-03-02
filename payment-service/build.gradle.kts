@@ -58,7 +58,7 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
 
     // Swagger/OpenAPI
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
 
     // ShedLock for distributed scheduler locking
     implementation("net.javacrumbs.shedlock:shedlock-spring:7.6.0")
