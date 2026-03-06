@@ -8,6 +8,7 @@ import com.bugzero.rarego.global.response.*;
 import com.bugzero.rarego.in.dto.*;
 import com.bugzero.rarego.out.AuctionOrderRepository;
 import com.bugzero.rarego.shared.auction.type.AuctionStatus;
+import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
 import com.bugzero.rarego.shared.payment.out.PaymentApiClient;
 
 import org.junit.jupiter.api.DisplayName;
@@ -33,6 +34,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.verify;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class AuctionFacadeTest {
@@ -82,9 +84,9 @@ class AuctionFacadeTest {
     @Mock
     private AuctionSupport support;
 
-    @Test
-    @DisplayName("입찰 생성 요청 시 UseCase를 호출하고 결과를 반환한다")
-    void createBid_Success() {
+	    @Test
+	    @DisplayName("입찰 생성 요청 시 UseCase를 호출하고 결과를 반환한다")
+	    void createBid_Success() {
         // given
         Long auctionId = 1L;
         Long memberId = 100L;
@@ -93,7 +95,8 @@ class AuctionFacadeTest {
 
         Auction auction = new Auction(1L, 1L, LocalDateTime.now(), 3, LocalDateTime.now().plusDays(3), 100000);
         given(support.findAuctionById(auctionId)).willReturn(auction);
-        given(paymentApiClient.holdDeposit(anyInt(), anyString(), anyLong())).willReturn(null);
+        given(paymentApiClient.holdDeposit(anyInt(), anyString(), anyLong()))
+            .willReturn(new DepositHoldResponseDto(1L, auctionId, 10000, "HOLD", LocalDateTime.now(), true));
 
         BidResponseDto bidResponse = new BidResponseDto(
             1L, auctionId, "public-id", LocalDateTime.now(), (long) bidAmount, (long) bidAmount
@@ -110,8 +113,74 @@ class AuctionFacadeTest {
         assertThat(result.message()).isEqualTo(SuccessType.CREATED.getMessage());
         assertThat(result.data()).isEqualTo(bidResponse);
 
-        verify(auctionCreateBidUseCase).createBid(auctionId, memberPublicId, bidAmount);
-    }
+	        verify(auctionCreateBidUseCase).createBid(auctionId, memberPublicId, bidAmount);
+	        verify(paymentApiClient).confirmDepositHold(auctionId, memberPublicId);
+	    }
+
+	    @Test
+	    @DisplayName("입찰 성공 시 기존 HOLD 재사용 요청(holdApplied=false)이어도 보증금 홀드 확정을 시도한다")
+	    void createBid_Success_ConfirmsDepositHold_WhenHoldAppliedFalse() {
+	        Long auctionId = 1L;
+	        String memberPublicId = "user_uuid";
+	        int bidAmount = 50000;
+
+	        Auction auction = new Auction(1L, 1L, LocalDateTime.now(), 3, LocalDateTime.now().plusDays(3), 100000);
+	        given(support.findAuctionById(auctionId)).willReturn(auction);
+	        given(paymentApiClient.holdDeposit(anyInt(), anyString(), anyLong()))
+	            .willReturn(new DepositHoldResponseDto(1L, auctionId, 10000, "HOLD", LocalDateTime.now(), false));
+
+	        BidResponseDto bidResponse = new BidResponseDto(
+	            1L, auctionId, "public-id", LocalDateTime.now(), (long) bidAmount, (long) bidAmount
+	        );
+	        given(auctionCreateBidUseCase.createBid(auctionId, memberPublicId, bidAmount))
+	            .willReturn(bidResponse);
+
+	        SuccessResponseDto<BidResponseDto> result = auctionFacade.createBid(auctionId, memberPublicId, bidAmount);
+
+	        assertThat(result.data()).isEqualTo(bidResponse);
+	        verify(paymentApiClient).confirmDepositHold(auctionId, memberPublicId);
+	        verify(paymentApiClient, never()).releaseDeposit(anyLong(), anyString());
+	    }
+
+	    @Test
+	    @DisplayName("입찰 실패 시 실제 HOLD가 생성된 요청만 보증금 취소를 요청한다")
+	    void createBid_Failure_ReleasesDeposit_WhenHoldAppliedTrue() {
+	        Long auctionId = 1L;
+	        String memberPublicId = "user_uuid";
+	        int bidAmount = 50000;
+
+	        Auction auction = new Auction(1L, 1L, LocalDateTime.now(), 3, LocalDateTime.now().plusDays(3), 100000);
+	        given(support.findAuctionById(auctionId)).willReturn(auction);
+	        given(paymentApiClient.holdDeposit(anyInt(), anyString(), anyLong()))
+	            .willReturn(new DepositHoldResponseDto(1L, auctionId, 10000, "HOLD", LocalDateTime.now(), true));
+	        given(auctionCreateBidUseCase.createBid(auctionId, memberPublicId, bidAmount))
+	            .willThrow(new RuntimeException("bid failed"));
+
+	        assertThatThrownBy(() -> auctionFacade.createBid(auctionId, memberPublicId, bidAmount))
+	            .isInstanceOf(RuntimeException.class);
+
+	        verify(paymentApiClient).releaseDeposit(auctionId, memberPublicId);
+	    }
+
+	    @Test
+	    @DisplayName("입찰 실패 시 기존 HOLD 재사용 요청이면 보증금 취소를 생략한다")
+	    void createBid_Failure_SkipsRelease_WhenHoldAppliedFalse() {
+	        Long auctionId = 1L;
+	        String memberPublicId = "user_uuid";
+	        int bidAmount = 50000;
+
+	        Auction auction = new Auction(1L, 1L, LocalDateTime.now(), 3, LocalDateTime.now().plusDays(3), 100000);
+	        given(support.findAuctionById(auctionId)).willReturn(auction);
+	        given(paymentApiClient.holdDeposit(anyInt(), anyString(), anyLong()))
+	            .willReturn(new DepositHoldResponseDto(1L, auctionId, 10000, "HOLD", LocalDateTime.now(), false));
+	        given(auctionCreateBidUseCase.createBid(auctionId, memberPublicId, bidAmount))
+	            .willThrow(new RuntimeException("bid failed"));
+
+	        assertThatThrownBy(() -> auctionFacade.createBid(auctionId, memberPublicId, bidAmount))
+	            .isInstanceOf(RuntimeException.class);
+
+	        verify(paymentApiClient, never()).releaseDeposit(anyLong(), anyString());
+	    }
 
     @Test
     @DisplayName("경매 입찰 기록 조회: ReadUseCase에 위임한다")

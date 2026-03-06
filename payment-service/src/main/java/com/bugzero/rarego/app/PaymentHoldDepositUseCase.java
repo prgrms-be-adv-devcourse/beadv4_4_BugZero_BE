@@ -4,19 +4,25 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bugzero.rarego.domain.Deposit;
+import com.bugzero.rarego.domain.DepositHoldSagaStep;
 import com.bugzero.rarego.domain.DepositStatus;
 import com.bugzero.rarego.domain.PaymentMember;
+import com.bugzero.rarego.domain.PaymentSagaType;
 import com.bugzero.rarego.domain.PaymentTransaction;
 import com.bugzero.rarego.domain.ReferenceType;
 import com.bugzero.rarego.domain.Wallet;
 import com.bugzero.rarego.domain.WalletTransactionType;
+import com.bugzero.rarego.global.exception.CustomException;
+import com.bugzero.rarego.global.response.ErrorType;
 import com.bugzero.rarego.out.DepositRepository;
 import com.bugzero.rarego.out.PaymentTransactionRepository;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldRequestDto;
 import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -24,29 +30,76 @@ public class PaymentHoldDepositUseCase {
 	private final DepositRepository depositRepository;
 	private final PaymentTransactionRepository transactionRepository;
 	private final PaymentSupport paymentSupport;
+	private final PaymentSagaTracker sagaTracker;
 
 	@Transactional
 	public DepositHoldResponseDto holdDeposit(DepositHoldRequestDto request) {
 		// publicId → memberId 변환
 		PaymentMember member = paymentSupport.findMemberByPublicId(request.memberPublicId());
 		Long memberId = member.getId();
+		String sagaBusinessKey = String.format("%d:%d", request.auctionId(), memberId);
+		DepositHoldSagaStep failedStep = null;
 
-		// 1. 멱등성 체크 (memberId로 조회)
-		return depositRepository.findByMemberIdAndAuctionId(memberId, request.auctionId())
-			.map(deposit -> {
-				if (deposit.getStatus() == DepositStatus.RELEASED) {
-					// 이미 환급된 경우: 다시 돈을 묶음 (재입찰)
-					return executeReHold(deposit, member, request.amount());
+		try {
+			Deposit existingDeposit = depositRepository.findByMemberIdAndAuctionId(memberId, request.auctionId())
+				.orElse(null);
+
+			if (existingDeposit != null) {
+				if (existingDeposit.getStatus() == DepositStatus.HOLD) {
+					return buildResponse(existingDeposit, false);
 				}
-				// 이미 HOLD 상태이거나 다른 처리 중인 경우: 기존 정보 반환
-				return new DepositHoldResponseDto(
-					deposit.getId(),
-					deposit.getAuctionId(),
-					deposit.getAmount(),
-					deposit.getStatus().name(),
-					deposit.getCreatedAt());
-			})
-			.orElseGet(() -> executeHold(member, request));
+				if (existingDeposit.getStatus() != DepositStatus.RELEASED) {
+					throw new CustomException(ErrorType.INVALID_DEPOSIT_STATUS);
+				}
+
+				sagaTracker.startOrResume(PaymentSagaType.DEPOSIT_HOLD, sagaBusinessKey, DepositHoldSagaStep.INITIATED);
+				failedStep = DepositHoldSagaStep.INITIATED;
+				DepositHoldResponseDto response = executeReHold(existingDeposit, member, request.amount());
+				failedStep = DepositHoldSagaStep.HOLD_LOCAL_DONE;
+				safeMarkStep(sagaBusinessKey, DepositHoldSagaStep.HOLD_LOCAL_DONE);
+				safeMarkCheckpoint(sagaBusinessKey, DepositHoldSagaStep.HOLD_LOCAL_DONE);
+				safeMarkStep(sagaBusinessKey, DepositHoldSagaStep.WAITING_BID_RESULT);
+				safeMarkCheckpoint(sagaBusinessKey, DepositHoldSagaStep.WAITING_BID_RESULT);
+				return response;
+			}
+
+			sagaTracker.startOrResume(PaymentSagaType.DEPOSIT_HOLD, sagaBusinessKey, DepositHoldSagaStep.INITIATED);
+			failedStep = DepositHoldSagaStep.INITIATED;
+			DepositHoldResponseDto response = executeHold(member, request);
+			failedStep = DepositHoldSagaStep.HOLD_LOCAL_DONE;
+			safeMarkStep(sagaBusinessKey, DepositHoldSagaStep.HOLD_LOCAL_DONE);
+			safeMarkCheckpoint(sagaBusinessKey, DepositHoldSagaStep.HOLD_LOCAL_DONE);
+			safeMarkStep(sagaBusinessKey, DepositHoldSagaStep.WAITING_BID_RESULT);
+			safeMarkCheckpoint(sagaBusinessKey, DepositHoldSagaStep.WAITING_BID_RESULT);
+			return response;
+		} catch (Exception ex) {
+			if (failedStep != null) {
+				try {
+					sagaTracker.markFailed(PaymentSagaType.DEPOSIT_HOLD, sagaBusinessKey, failedStep, ex);
+				} catch (Exception sagaEx) {
+					// 보증금 홀드 실패보다 Saga 기록 실패가 응답을 덮어쓰지 않도록 한다.
+				}
+			}
+			throw ex;
+		}
+	}
+
+	private void safeMarkStep(String sagaBusinessKey, DepositHoldSagaStep step) {
+		try {
+			sagaTracker.markStep(PaymentSagaType.DEPOSIT_HOLD, sagaBusinessKey, step);
+		} catch (Exception e) {
+			log.error("보증금 홀드 Saga 단계 기록 실패: businessKey={}, step={}, error={}",
+				sagaBusinessKey, step, e.getMessage());
+		}
+	}
+
+	private void safeMarkCheckpoint(String sagaBusinessKey, DepositHoldSagaStep step) {
+		try {
+			sagaTracker.markCheckpoint(PaymentSagaType.DEPOSIT_HOLD, sagaBusinessKey, step);
+		} catch (Exception e) {
+			log.error("보증금 홀드 Saga 체크포인트 기록 실패: businessKey={}, step={}, error={}",
+				sagaBusinessKey, step, e.getMessage());
+		}
 	}
 
 	private DepositHoldResponseDto executeReHold(Deposit deposit, PaymentMember member, int amount) {
@@ -70,12 +123,7 @@ public class PaymentHoldDepositUseCase {
 			.build();
 		transactionRepository.save(transaction);
 
-		return new DepositHoldResponseDto(
-			deposit.getId(),
-			deposit.getAuctionId(),
-			deposit.getAmount(),
-			deposit.getStatus().name(),
-			deposit.getCreatedAt());
+		return buildResponse(deposit, true);
 	}
 
 	private DepositHoldResponseDto executeHold(PaymentMember member, DepositHoldRequestDto request) {
@@ -100,12 +148,17 @@ public class PaymentHoldDepositUseCase {
 			.build();
 		transactionRepository.save(transaction);
 
+		return buildResponse(deposit, true);
+	}
+
+	private DepositHoldResponseDto buildResponse(Deposit deposit, boolean holdApplied) {
 		return new DepositHoldResponseDto(
 			deposit.getId(),
 			deposit.getAuctionId(),
 			deposit.getAmount(),
 			deposit.getStatus().name(),
-			deposit.getCreatedAt()
+			deposit.getCreatedAt(),
+			holdApplied
 		);
 	}
 }

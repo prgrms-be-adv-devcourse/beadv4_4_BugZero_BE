@@ -48,7 +48,7 @@ class InternalPaymentControllerTest {
 		// given
 		DepositHoldRequestDto request = new DepositHoldRequestDto(20000, "member-uuid-123", 3L);
 		DepositHoldResponseDto response = new DepositHoldResponseDto(
-			1L, 3L, 20000, "HOLD", LocalDateTime.now());
+			1L, 3L, 20000, "HOLD", LocalDateTime.now(), true);
 
 		given(paymentFacade.holdDeposit(any(DepositHoldRequestDto.class)))
 			.willReturn(response);
@@ -64,7 +64,8 @@ class InternalPaymentControllerTest {
 			.andExpect(jsonPath("$.data.depositId").value(1))
 			.andExpect(jsonPath("$.data.auctionId").value(3))
 			.andExpect(jsonPath("$.data.amount").value(20000))
-			.andExpect(jsonPath("$.data.status").value("HOLD"));
+			.andExpect(jsonPath("$.data.status").value("HOLD"))
+			.andExpect(jsonPath("$.data.holdApplied").value(true));
 	}
 
 	@Test

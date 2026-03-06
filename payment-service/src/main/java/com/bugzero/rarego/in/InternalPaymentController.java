@@ -36,6 +36,15 @@ public class InternalPaymentController {
 		return SuccessResponseDto.from(SuccessType.CREATED, paymentFacade.holdDeposit(request));
 	}
 
+	@Operation(summary = "보증금 홀드 확정", description = "입찰 저장 성공 후 보증금 홀드를 확정합니다")
+	@PostMapping("/deposits/hold/confirm/{auctionId}")
+	public SuccessResponseDto<Void> confirmDepositHold(
+		@PathVariable Long auctionId,
+		@RequestParam String memberPublicId) {
+		paymentFacade.confirmDepositHold(auctionId, memberPublicId);
+		return SuccessResponseDto.from(SuccessType.OK);
+	}
+
 	@Operation(summary = "보증금 단건 환급", description = "입찰 실패시 보증금을 환급합니다")
 	@PostMapping("/deposits/release/{auctionId}")
 	public SuccessResponseDto<Void> releaseDeposit(

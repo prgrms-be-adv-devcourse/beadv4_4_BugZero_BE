@@ -58,6 +58,15 @@ public class PaymentApiClient {
 			.toBodilessEntity();
 	}
 
+	public void confirmDepositHold(Long auctionId, String memberPublicId) {
+		restClient.post()
+			.uri("/deposits/hold/confirm/{auctionId}?memberPublicId={memberPublicId}", auctionId, memberPublicId)
+			.header("Authorization", "Bearer " + systemAuthTokenProvider.getSystemAccessToken())
+			.retrieve()
+			.onStatus(HttpStatusCode::isError, errorHandler::handle)
+			.toBodilessEntity();
+	}
+
 	/**
 	 * 처리 중인 주문이 있는지 확인
 	 * PROCESSING 상태 주문이 있으면 true
@@ -75,6 +84,5 @@ public class PaymentApiClient {
 
 		return response != null && Boolean.TRUE.equals(response.data());
 	}
-
 
 }

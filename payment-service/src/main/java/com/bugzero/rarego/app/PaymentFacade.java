@@ -31,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PaymentFacade {
 	private final PaymentHoldDepositUseCase paymentHoldDepositUseCase;
+	private final PaymentConfirmDepositHoldUseCase paymentConfirmDepositHoldUseCase;
 	private final PaymentReleaseDepositUseCase paymentReleaseDepositUseCase;
 	private final PaymentRequestPaymentUseCase paymentRequestPaymentUseCase;
 	private final PaymentConfirmPaymentUseCase paymentConfirmPaymentUseCase;
@@ -51,6 +52,13 @@ public class PaymentFacade {
 	 */
 	public DepositHoldResponseDto holdDeposit(DepositHoldRequestDto request) {
 		return paymentHoldDepositUseCase.holdDeposit(request);
+	}
+
+	/**
+	 * 보증금 홀드 확정 (입찰 저장 성공)
+	 */
+	public void confirmDepositHold(Long auctionId, String memberPublicId) {
+		paymentConfirmDepositHoldUseCase.confirm(auctionId, memberPublicId);
 	}
 
 	/**

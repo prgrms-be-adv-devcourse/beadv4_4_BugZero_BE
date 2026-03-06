@@ -72,3 +72,8 @@ payment:
       cron: "0 */10 * * * *"
       batch-size: 20
       in-progress-timeout-seconds: 600
+    deposit-hold-recovery:
+      enabled: true
+      cron: "0 */10 * * * *"
+      batch-size: 20
+      wait-timeout-seconds: 300

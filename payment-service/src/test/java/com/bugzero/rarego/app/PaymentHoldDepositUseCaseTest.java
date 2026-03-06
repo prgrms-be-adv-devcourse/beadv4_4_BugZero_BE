@@ -44,6 +44,9 @@ class PaymentHoldDepositUseCaseTest {
 	@Mock
 	private PaymentSupport paymentSupport;
 
+	@Mock
+	private PaymentSagaTracker sagaTracker;
+
 	@Test
 	@DisplayName("보증금 홀딩 성공")
 	void holdDeposit_Success() {
@@ -65,6 +68,7 @@ class PaymentHoldDepositUseCaseTest {
 		assertThat(response.amount()).isEqualTo(20000);
 		assertThat(response.auctionId()).isEqualTo(AUCTION_ID);
 		assertThat(response.status()).isEqualTo("HOLD");
+		assertThat(response.holdApplied()).isTrue();
 		verify(depositRepository, times(1)).save(any(Deposit.class));
 		verify(transactionRepository, times(1)).save(any(PaymentTransaction.class));
 	}
@@ -115,7 +119,9 @@ class PaymentHoldDepositUseCaseTest {
 		assertThat(response.auctionId()).isEqualTo(AUCTION_ID);
 		assertThat(response.amount()).isEqualTo(20000);
 		assertThat(response.status()).isEqualTo("HOLD");
+		assertThat(response.holdApplied()).isFalse();
 		verify(depositRepository, never()).save(any());
 		verify(transactionRepository, never()).save(any());
 	}
+
 }

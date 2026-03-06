@@ -30,6 +30,7 @@ import com.bugzero.rarego.in.dto.MyBidResponseDto;
 import com.bugzero.rarego.in.dto.MySaleResponseDto;
 import com.bugzero.rarego.shared.auction.type.AuctionStatus;
 import com.bugzero.rarego.shared.member.domain.MemberDto;
+import com.bugzero.rarego.shared.payment.dto.DepositHoldResponseDto;
 import com.bugzero.rarego.shared.payment.out.PaymentApiClient;
 import com.bugzero.rarego.shared.product.dto.AuctionInfoResponseDto;
 import com.bugzero.rarego.shared.product.dto.ProductAuctionCreateDto;
@@ -67,19 +68,31 @@ public class AuctionFacade {
 		Auction auction = support.findAuctionById(auctionId);
 		int depositAmount = (int)(auction.getStartPrice() * 0.1);
 
-		paymentApiClient.holdDeposit(depositAmount, memberPublicId, auctionId);
+		DepositHoldResponseDto holdResponse = paymentApiClient.holdDeposit(depositAmount, memberPublicId, auctionId);
+		boolean holdApplied = holdResponse != null && holdResponse.holdApplied();
 
 		try {
 			BidResponseDto result = auctionCreateBidUseCase.createBid(auctionId, memberPublicId, bidAmount);
+			try {
+				paymentApiClient.confirmDepositHold(auctionId, memberPublicId);
+			} catch (Exception confirmEx) {
+				log.error("보증금 홀드 확정 요청 실패(입찰은 성공): auctionId={}, memberPublicId={}", auctionId, memberPublicId,
+					confirmEx);
+			}
 
 			return SuccessResponseDto.from(SuccessType.CREATED, result);
 
 		} catch (Exception e) {
-			log.error("입찰 실패로 인한 보증금 취소 요청: auctionId={}, error={}", auctionId, e.getMessage());
-			try {
-				paymentApiClient.releaseDeposit(auctionId, memberPublicId);
-			} catch (Exception payEx) {
-				log.error("CRITICAL: 보증금 취소 실패! 수동 확인 요망.", payEx);
+			if (holdApplied) {
+				log.error("입찰 실패로 인한 보증금 취소 요청: auctionId={}, error={}", auctionId, e.getMessage());
+				try {
+					paymentApiClient.releaseDeposit(auctionId, memberPublicId);
+				} catch (Exception payEx) {
+					log.error("CRITICAL: 보증금 취소 실패! 수동 확인 요망.", payEx);
+				}
+			} else {
+				log.info("입찰 실패 - 기존 HOLD 재사용 요청이므로 보증금 취소 생략: auctionId={}, memberPublicId={}", auctionId,
+					memberPublicId);
 			}
 			throw e;
 		}
