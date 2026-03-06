@@ -36,7 +36,7 @@ RareGo는 대규모 트래픽 환경에서도 데이터 정합성을 유지하�
 | <img src="https://github.com/gawoooon.png" width="100"> | **[이가원](https://github.com/gawoooon)** | • **PO**<br>• 회원 및 인증 도메인 |
 | <img src="https://github.com/Kkimdoyeon.png" width="100"> | **[김도연](https://github.com/Kkimdoyeon)** | • 경매 도메인 |
 | <img src="https://github.com/jin214930.png" width="100"> | **[김진명](https://github.com/jin214930)** | • 예치금 결제 및 정산 프로세스<br>• 알림 도메인 |
-| <img src="https://github.com/P-Taeyoung.png" width="100"> | **[박태영](https://github.com/P-Taeyoung)** | • 상품 도메인<br>• AI 기능<br>• Kafka (Inbox, Outbox, DLQ) |
+| <img src="https://github.com/P-Taeyoung.png" width="100"> | **[박태영](https://github.com/P-Taeyoung)** | • 상품 도메인<br>• AI 기능<br>• Kafka (Inbox, Outbox, DLT) |
 | <img src="https://github.com/geolyun.png" width="100"> | **[신동걸](https://github.com/geolyun)** | • 경매 도메인<br>• Redis 분산락<br>• AI 기능<br>• 부하 테스트 |
 | <img src="https://github.com/JEONELIJAH.png" width="100"> | **[전우진](https://github.com/JEONELIJAH)** | • AWS 배포 및 인프라<br>• 보증금 프로세스 (Saga 패턴)<br>• 모니터링 |
 
