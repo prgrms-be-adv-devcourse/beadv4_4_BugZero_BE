@@ -44,7 +44,6 @@ target/
 
 ### Env / Secrets ###
 .env
-.env.*
 *.pem
 *.key
 *.p12
