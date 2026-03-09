@@ -46,7 +46,7 @@ dependencies {
     // --- [NoSQL & Messaging] ---
     implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
-    implementation("org.redisson:redisson-spring-boot-starter:4.2.0")
+    implementation("org.redisson:redisson-spring-boot-starter:4.3.0")
     implementation("org.springframework.boot:spring-boot-starter-kafka")
 
     // --- [AI & Monitoring] ---
