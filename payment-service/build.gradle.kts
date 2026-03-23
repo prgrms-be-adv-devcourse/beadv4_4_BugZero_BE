@@ -61,8 +61,8 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
 
     // ShedLock for distributed scheduler locking
-    implementation("net.javacrumbs.shedlock:shedlock-spring:7.6.0")
-    implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.6.0")
+    implementation("net.javacrumbs.shedlock:shedlock-spring:7.7.0")
+    implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.7.0")
 }
 
 tasks.withType<Test> {
