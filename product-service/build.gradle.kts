@@ -22,7 +22,7 @@ repositories {
 
 dependencies {
     implementation(project(":common"))
-    implementation(platform("software.amazon.awssdk:bom:2.41.29"))
+    implementation(platform("software.amazon.awssdk:bom:2.42.18"))
     implementation("software.amazon.awssdk:s3")
 
     // --- [Spring Boot Starters: Core & Web] ---
